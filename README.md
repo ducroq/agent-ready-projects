@@ -65,7 +65,7 @@ This is the project's home base. It's the only file guaranteed to be read every 
 
 **Always include:**
 - Project overview (3-5 lines: what this is, who it's for, what it does)
-- Hard constraints and principles (the non-negotiables). Negative constraints ("never remove output fields that downstream apps depend on", "never use external APIs for student data") often land harder than positive ones — they draw a bright line agents won't cross, while positive guidance leaves room for interpretation.
+- Hard constraints and principles (the non-negotiables). Negative constraints ("never remove output fields that downstream apps depend on", "never use external APIs for student data") often land harder than positive ones — they draw a bright line agents won't cross, while positive guidance leaves room for interpretation. Include honesty constraints too — agents confabulate. "Never claim tests pass without running them" and "never claim a file exists without reading it" prevent the most common form of agent failure: confidently asserting something that isn't true.
 - Decision framework — how agents should evaluate their own output (e.g., a simple PASS/REVIEW/FAIL rubric: what meets the bar, what needs a second look, what blocks progress). Without this, agents optimize for whatever seems reasonable. With it, they self-assess against your standards.
 - Architecture sketch (how the pieces fit together)
 - **"Before You Start"** table with task-triggered pointers to deeper docs
@@ -281,6 +281,8 @@ Most agent tools support hooks — commands that run automatically when a sessio
 
 This gives immediate orientation without reading files. It's the difference between walking into an office and seeing the dashboards vs. having to dig through reports. (If your project's runtime state lives on a remote server, consider whether the hook latency is worth the orientation benefit. A cached status file updated by CI/CD may be better than a live SSH call on every session start.)
 
+**Session strategy.** Don't review work in the same session that produced it. An agent that just spent 30 minutes building something has sunk-cost bias baked into its context — it's unlikely to catch its own mistakes. Use a fresh session for review, or a different model entirely. The same applies to any validation task: testing, security review, QA. The agent that built it is the worst one to judge it.
+
 ## The Documentation Rhythm
 
 The biggest shift in practice: **capture during work, curate at end-of-session.**
@@ -293,6 +295,8 @@ The biggest shift in practice: **capture during work, curate at end-of-session.*
 | **Changed operations** | Process or infrastructure changed? | CLAUDE.md or RUNBOOK.md |
 | **End of session** | Review & curate: trim stale entries, promote recurring gotchas | MEMORY.md + topic files (5 min) |
 | **Monthly** | Audit: anything resolved? Anything moved to code? Retire stale entries | Prune all memory files |
+
+**Course-correcting.** When you realize the direction is wrong mid-session — requirements changed, an assumption broke, the approach isn't working — stop building and update the plan first. Assess what's affected, update the relevant docs (project file, ADRs, task list), then continue. Agents won't do this on their own; they'll keep building on a broken foundation. The discipline of stopping to course-correct before continuing is a development practice, not a documentation one, but it's what keeps the documentation honest.
 
 The key shift: end-of-session time becomes **5 minutes of curation**, not 20 minutes of writing from recall. Context captured in the moment is more accurate and takes less effort than context reconstructed afterward.
 
