@@ -65,7 +65,7 @@ This is the project's home base. It's the only file guaranteed to be read every 
 
 **Always include:**
 - Project overview (3-5 lines: what this is, who it's for, what it does)
-- Hard constraints and principles (the non-negotiables)
+- Hard constraints and principles (the non-negotiables). Negative constraints ("never remove output fields that downstream apps depend on", "never use external APIs for student data") often land harder than positive ones — they draw a bright line agents won't cross, while positive guidance leaves room for interpretation.
 - Decision framework — how agents should evaluate their own output (e.g., a simple PASS/REVIEW/FAIL rubric: what meets the bar, what needs a second look, what blocks progress). Without this, agents optimize for whatever seems reasonable. With it, they self-assess against your standards.
 - Architecture sketch (how the pieces fit together)
 - **"Before You Start"** table with task-triggered pointers to deeper docs
@@ -168,6 +168,8 @@ The topic index works the same way as CLAUDE.md's "Before You Start" — task-tr
 
 This is **progressive disclosure** — start broad, go deep only where needed. It keeps the always-loaded context lean while making deep knowledge one `Read` away.
 
+**Feature-level context.** For complex features that span multiple sessions, consider a context file per feature — implementation knowledge, test strategy, patterns discovered, approaches tried and abandoned. This is progressive disclosure applied at the feature level: the project-level docs tell agents *about* the project, the feature-level doc tells them *about this specific piece of work*. Not every feature needs one, but any feature that takes more than two sessions will benefit.
+
 **What goes in memory files**:
 - Current-state facts ("the pipeline processes 3 filters independently")
 - Patterns ("Gemini ignores word count targets — don't try to fix this with prompts")
@@ -211,6 +213,8 @@ Pure session logs — "today we did X, then Y" — are useless. But a **structur
 ```
 
 This isn't daily reading. It's a searchable archive. When an agent (or you) hits something weird, searching the gotcha log often reveals it's been solved before.
+
+**Dead ends belong here too.** The gotcha log captures operational problems, but also document *design approaches you tried and rejected* — "we tried a comprehensive 34-test suite, it was over-engineered for the goal, pivoted to 5 focused tests." Without this, agents will re-propose solutions you've already explored and abandoned. ADRs capture what you *chose*; the gotcha log captures what you *tried and walked away from*.
 
 **The promotion pattern**: When a gotcha keeps coming up, promote it:
 - From gotcha log → relevant topic file (as an "if X, then Y" pattern)
@@ -291,6 +295,8 @@ The biggest shift in practice: **capture during work, curate at end-of-session.*
 | **Monthly** | Audit: anything resolved? Anything moved to code? Retire stale entries | Prune all memory files |
 
 The key shift: end-of-session time becomes **5 minutes of curation**, not 20 minutes of writing from recall. Context captured in the moment is more accurate and takes less effort than context reconstructed afterward.
+
+**Automating the rhythm.** If your agent tool supports hooks (commands triggered by events), parts of this rhythm can be automated — updating component docs when code changes, suggesting an ADR when a design decision is detected, prompting end-of-session curation when a session runs long. Manual capture is the baseline; event-driven updates are the upgrade.
 
 ## The Feedback Loop
 
