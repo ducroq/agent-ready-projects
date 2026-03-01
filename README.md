@@ -413,9 +413,9 @@ Copy what you need, delete the comments, fill in your specifics.
 
 ## How This Guide Was Made
 
-Interested in the process? **[`METHODOLOGY.md`](METHODOLOGY.md)** documents how this guide was iteratively developed and tested — including the concrete failures that shaped it, the multi-agent audit that pressure-tested it against three real projects, and what three independent agents agreed was missing.
+Interested in the process? **[`docs/METHODOLOGY.md`](docs/METHODOLOGY.md)** documents how this guide was iteratively developed and tested — including the concrete failures that shaped it, the multi-agent audit that pressure-tested it against three real projects, and what three independent agents agreed was missing.
 
 ## How This Compares to BMAD-METHOD
 
-**[`COMPARISON.md`](COMPARISON.md)** maps this guide's principles against [BMAD-METHOD](https://github.com/bmad-code-org/BMAD-METHOD) (38K+ stars), the most comprehensive open-source AI-driven development framework. Where BMAD validates these principles, what it adds on top, and what you probably don't need.
+**[`docs/COMPARISON.md`](docs/COMPARISON.md)** maps this guide's principles against [BMAD-METHOD](https://github.com/bmad-code-org/BMAD-METHOD) (38K+ stars), the most comprehensive open-source AI-driven development framework. Where BMAD validates these principles, what it adds on top, and what you probably don't need.
 
