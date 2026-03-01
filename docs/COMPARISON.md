@@ -157,3 +157,11 @@ BMAD answers: **"How do I restructure my entire development process around speci
 The guide is a documentation strategy. BMAD is a development methodology. The guide assumes you have a way of working and want agents to fit into it. BMAD proposes a new way of working built around agents.
 
 For most projects, the guide's approach — lightweight, tool-agnostic, focused on project context — is the right starting point. BMAD's ideas about memory isolation and structured discovery are worth borrowing. The full methodology is worth exploring if you're building something large enough that the overhead pays for itself.
+
+## See also: GitHub's spec-kit
+
+[spec-kit](https://github.com/github/spec-kit) (73K+ stars) is a different kind of project — a Spec-Driven Development methodology where specifications are the primary artifact and code is generated from them. It doesn't address agent context management (the concern of this guide), so a full comparison isn't useful. But one technique is worth noting.
+
+spec-kit uses **templates that structurally constrain LLM output**. Their spec and plan templates force agents to mark ambiguities with `[NEEDS CLARIFICATION]` markers instead of guessing, include checklists that act as "unit tests for specifications," and enforce abstraction levels ("focus on WHAT, not HOW"). The templates shape agent behavior through structure rather than instruction.
+
+This is a complementary practice to this guide's layered model. The guide focuses on giving agents the right *input* context. spec-kit's templates focus on constraining agent *output* quality. Both matter — and they work at different moments in the workflow.
