@@ -66,6 +66,7 @@ This is the project's home base. It's the only file guaranteed to be read every 
 **Always include:**
 - Project overview (3-5 lines: what this is, who it's for, what it does)
 - Hard constraints and principles (the non-negotiables)
+- Decision framework — how agents should evaluate their own output (e.g., a simple PASS/REVIEW/FAIL rubric: what meets the bar, what needs a second look, what blocks progress). Without this, agents optimize for whatever seems reasonable. With it, they self-assess against your standards.
 - Architecture sketch (how the pieces fit together)
 - **"Before You Start"** table with task-triggered pointers to deeper docs
 - Key directories and file paths
@@ -88,7 +89,7 @@ This is the project's home base. It's the only file guaranteed to be read every 
 
 The trigger column matters. "ADR index" is a label — an agent skims past it. "Making architectural decisions" is a task the agent recognizes itself doing. If the table exceeds ~8 rows, group related docs into task categories: "Adding or changing sources → CONFIGURATION.md, SOURCE_QUALITY.md" as a single row.
 
-**Context budget, not line count.** The goal isn't "keep files under N lines" — it's to maximize orientation quality while minimizing what agents pay for every session. Auto-loaded content is loaded whether the agent needs it or not. A 80-line file full of task-triggered pointers can outperform a 200-line file packed with details that apply 10% of the time. But a well-structured 200-line file that's the single authoritative source is better than a 100-line file that punts essentials below the cliff. The signal to split isn't hitting a line count — it's agents missing important constraints because they're buried in operational detail.
+**Context budget, not line count.** The goal isn't "keep files under N lines" — it's to maximize orientation quality while minimizing what agents pay for every session. Auto-loaded content is loaded whether the agent needs it or not. A 80-line file full of task-triggered pointers can outperform a 200-line file packed with details that apply 10% of the time. But a well-structured 200-line file that's the single authoritative source is better than a 100-line file that punts essentials below the cliff. The signal to split isn't hitting a line count — it's agents missing important constraints because they're buried in operational detail. Projects that adopted progressive disclosure — loading context on demand via task-triggered pointers rather than front-loading everything — measured 60-80% reduction in session-start token usage.
 
 ### Layer 2: Runbook (RUNBOOK.md) — most real projects need this
 
@@ -349,6 +350,8 @@ You know it's failing when:
 - Docs are always out of date
 - MEMORY.md is over 150 lines and you're not sure what's still relevant
 - You feel like the agent "doesn't get" the project
+
+**Validating, not just trusting.** Good documentation doesn't guarantee good behavior. Agents can read your constraints and still cut corners when they're confident, ignore warnings when they've invested effort in an approach, or defer to your suggestions even when those suggestions violate the project's own principles. Occasionally test this: ask the agent to do something that should trigger a constraint, or apply time pressure and see if quality holds. If your docs say "never skip tests" but the agent skips them when the task feels urgent, the constraint isn't landing — it may need stronger framing or a concrete example of what "never" means.
 
 ## Tool-Specific Setup
 
