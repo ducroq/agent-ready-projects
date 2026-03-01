@@ -424,11 +424,9 @@ Ready-to-use starter files in [`templates/`](templates/):
 
 Copy what you need, delete the comments, fill in your specifics.
 
-## How This Guide Was Made
+## Further Reading
 
-Interested in the process? **[`docs/METHODOLOGY.md`](docs/METHODOLOGY.md)** documents how this guide was iteratively developed and tested — including the concrete failures that shaped it, the multi-agent audit that pressure-tested it against three real projects, and what three independent agents agreed was missing.
-
-## How This Compares to BMAD-METHOD
-
-**[`docs/COMPARISON.md`](docs/COMPARISON.md)** maps this guide's principles against [BMAD-METHOD](https://github.com/bmad-code-org/BMAD-METHOD) (38K+ stars), the most comprehensive open-source AI-driven development framework. Where BMAD validates these principles, what it adds on top, and what you probably don't need.
+- **[`docs/LANDSCAPE.md`](docs/LANDSCAPE.md)** — State of the art in context engineering for coding agents, gap analysis, and where this guide fits relative to existing work (Fowler, BMAD, spec-kit, HumanLayer, AGENTS.md, and others)
+- **[`docs/COMPARISON.md`](docs/COMPARISON.md)** — Detailed mapping against BMAD-METHOD and spec-kit: where they validate these principles, what they add, and what you probably don't need
+- **[`docs/METHODOLOGY.md`](docs/METHODOLOGY.md)** — How this guide was iteratively developed and tested, including the concrete failures that shaped it and the multi-agent audit that pressure-tested it against three real projects
 
