@@ -91,6 +91,8 @@ The trigger column matters. "ADR index" is a label — an agent skims past it. "
 
 **Context budget, not line count.** The goal isn't "keep files under N lines" — it's to maximize orientation quality while minimizing what agents pay for every session. Auto-loaded content is loaded whether the agent needs it or not. A 80-line file full of task-triggered pointers can outperform a 200-line file packed with details that apply 10% of the time. But a well-structured 200-line file that's the single authoritative source is better than a 100-line file that punts essentials below the cliff. The signal to split isn't hitting a line count — it's agents missing important constraints because they're buried in operational detail. Projects that adopted progressive disclosure — loading context on demand via task-triggered pointers rather than front-loading everything — measured 60-80% reduction in session-start token usage.
 
+When making trade-offs about what to include, prioritize **correctness over completeness over size**. Wrong context (outdated facts, stale paths) is worse than missing context — agents will confidently act on incorrect information. Missing context is worse than noisy context — agents can filter noise, but they can't find what isn't there. All three matter, but in that order.
+
 ### Layer 2: Runbook (RUNBOOK.md) — most real projects need this
 
 **Purpose**: "How do we operate here?"
@@ -282,6 +284,8 @@ Most agent tools support hooks — commands that run automatically when a sessio
 This gives immediate orientation without reading files. It's the difference between walking into an office and seeing the dashboards vs. having to dig through reports. (If your project's runtime state lives on a remote server, consider whether the hook latency is worth the orientation benefit. A cached status file updated by CI/CD may be better than a live SSH call on every session start.)
 
 **Session strategy.** Don't review work in the same session that produced it. An agent that just spent 30 minutes building something has sunk-cost bias baked into its context — it's unlikely to catch its own mistakes. Use a fresh session for review, or a different model entirely. The same applies to any validation task: testing, security review, QA. The agent that built it is the worst one to judge it.
+
+The same principle applies to research and exploration. Offload search, grep, and codebase exploration to subagents or separate sessions so your main working context stays focused on the task. Every search result and file read that isn't directly relevant dilutes the context the agent is working in. Keep the building session clean; do the research elsewhere.
 
 ## The Documentation Rhythm
 
