@@ -1,4 +1,10 @@
-# How BMAD Implements These Principles (And What It Adds)
+# How This Guide Relates to BMAD and spec-kit
+
+Two of the most popular frameworks for AI-driven development — and how they complement (not compete with) this guide.
+
+---
+
+# Part 1: BMAD-METHOD
 
 A side-by-side look at how the [BMAD-METHOD](https://github.com/bmad-code-org/BMAD-METHOD) framework relates to the layered documentation model in this guide. BMAD is the most comprehensive open-source implementation of AI-driven development — 38K+ stars, 34+ workflows, 12+ agent personas. Understanding how it works illuminates both the strengths of structured agent context and where the complexity trade-offs lie.
 
@@ -158,10 +164,120 @@ The guide is a documentation strategy. BMAD is a development methodology. The gu
 
 For most projects, the guide's approach — lightweight, tool-agnostic, focused on project context — is the right starting point. BMAD's ideas about memory isolation and structured discovery are worth borrowing. The full methodology is worth exploring if you're building something large enough that the overhead pays for itself.
 
-## See also: GitHub's spec-kit
+---
 
-[spec-kit](https://github.com/github/spec-kit) (73K+ stars) is a different kind of project — a Spec-Driven Development methodology where specifications are the primary artifact and code is generated from them. It doesn't address agent context management (the concern of this guide), so a full comparison isn't useful. But one technique is worth noting.
+# Part 2: GitHub's spec-kit
 
-spec-kit uses **templates that structurally constrain LLM output**. Their spec and plan templates force agents to mark ambiguities with `[NEEDS CLARIFICATION]` markers instead of guessing, include checklists that act as "unit tests for specifications," and enforce abstraction levels ("focus on WHAT, not HOW"). The templates shape agent behavior through structure rather than instruction.
+## How spec-kit Complements This Guide
 
-This is a complementary practice to this guide's layered model. The guide focuses on giving agents the right *input* context. spec-kit's templates focus on constraining agent *output* quality. Both matter — and they work at different moments in the workflow.
+[spec-kit](https://github.com/github/spec-kit) (73K+ stars) is GitHub's Spec-Driven Development methodology — specifications are the primary artifact, code is generated from them. It's a different kind of project than BMAD: where BMAD prescribes your entire workflow, spec-kit prescribes your *pre-implementation* process and then gets out of the way.
+
+This matters because the two tools solve different problems at different times. **They're not competing — they're sequential.** A project can (and arguably should) use both.
+
+### What spec-kit does
+
+Spec-kit enforces a six-step workflow before any code is written:
+
+1. **Constitution** (`constitution.md`) — non-negotiable project principles ("library-first", "test-first", "security-first")
+2. **Specification** (`spec.md`) — user stories with acceptance criteria (Given/When/Then), edge cases, success metrics
+3. **Clarification** — interactive ambiguity resolution
+4. **Planning** (`plan.md`) — technical architecture, tech stack, research decisions
+5. **Tasking** (`tasks.md`) — parallel-executable work items with file paths
+6. **Analysis** — consistency validation across all artifacts
+
+The output: a set of markdown files committed to Git that define *what* to build and *how* to build it, validated for internal consistency before a single line of code is written.
+
+### What spec-kit doesn't do
+
+Spec-kit stops at the implementation boundary. It explicitly does **not** address:
+
+| Gap | What it means |
+|-----|---------------|
+| **Session context management** | No mechanism for loading the right spec artifacts into the right agent session |
+| **Memory and persistence** | No gotcha logs, no lessons learned, no "we tried X and it failed" |
+| **Progressive disclosure** | No model for what to load when — all artifacts are equally available (or equally invisible) |
+| **Post-implementation guidance** | Nothing about maintaining, debugging, or extending the codebase after initial build |
+| **The auto-loading cliff** | Spec artifacts exist in Git but nothing ensures agents actually read them at the right moment |
+
+### Where spec-kit ends and this guide begins
+
+The handoff point is implementation:
+
+```
+SPEC-KIT (pre-implementation)          THIS GUIDE (during implementation)
+─────────────────────────────          ──────────────────────────────────
+Constitution  ──┐                      CLAUDE.md
+Spec          ──┤                      ├── "Before You Start" table
+Plan          ──┤── Git commit ──→     │   points agents to spec artifacts
+Tasks         ──┤                      ├── Hard constraints
+Analysis      ──┘                      ├── Architecture sketch
+                                       │
+                                       MEMORY.md + topic files
+                                       ├── Lessons from implementation
+                                       ├── Gotcha log
+                                       └── Cross-session knowledge
+```
+
+Spec-kit produces the *what* and *how* artifacts. This guide's layered model ensures agents **actually find and use them** during implementation — and captures everything learned along the way.
+
+### Using them together
+
+A project using both would look like this:
+
+**1. Spec phase (spec-kit owns this)**
+
+```bash
+# Generate specification artifacts
+specify init my-project --agent claude
+/speckit.constitution    # → constitution.md
+/speckit.specify         # → spec.md
+/speckit.plan            # → plan.md
+/speckit.tasks           # → tasks.md
+/speckit.analyze         # → validates consistency
+git commit -m "spec-driven development artifacts"
+```
+
+**2. Implementation phase (this guide owns this)**
+
+CLAUDE.md integrates the spec artifacts via task-triggered pointers:
+
+```markdown
+## Before You Start
+
+| When | Read |
+|------|------|
+| Starting a new task | `tasks.md` — claim your task, check dependencies |
+| Making architectural decisions | `plan.md` — tech stack and design decisions |
+| Unsure about requirements | `spec.md` — user stories and acceptance criteria |
+| Questioning a project principle | `constitution.md` — non-negotiable governance |
+| Stuck or debugging | `memory/gotcha-log.md` — problem-fix archive |
+```
+
+The spec artifacts become **on-demand context** — loaded when the agent needs them, not dumped into every session. The constitution might belong in CLAUDE.md itself (it's short and always-relevant), while spec.md and plan.md live below the cliff, loaded via task triggers.
+
+**3. Memory accumulates (this guide owns this)**
+
+As implementation proceeds, the gotcha log captures what spec-kit couldn't predict:
+- "Task T003 blocked because spec assumed PostgreSQL but we're using SQLite"
+- "Constitution says library-first but auth needs to be a module (see DR-003)"
+- "Plan's API design doesn't account for rate limiting — added in implementation"
+
+These lessons feed back into the spec artifacts when needed, but the *capture mechanism* is the guide's memory layer, not spec-kit.
+
+### What's worth borrowing from spec-kit
+
+**Templates that structurally constrain output.** Spec-kit's templates force agents to mark ambiguities with `[NEEDS CLARIFICATION]` markers instead of guessing, include checklists that act as "unit tests for specifications," and enforce abstraction levels ("focus on WHAT, not HOW"). The templates shape agent behavior through structure rather than instruction.
+
+This is a technique this guide doesn't use enough. The guide's templates are fill-in-the-blank — they show what to include. Spec-kit's templates are *constrained output formats* — they prevent agents from producing low-quality artifacts. A CLAUDE.md template that includes `[NEEDS CLARIFICATION]` markers for unresolved items, or a decision record template with a mandatory "Revisit If" section, would borrow this pattern.
+
+**Pre-implementation consistency checking.** Spec-kit's `/speckit.analyze` validates that spec, plan, and tasks are internally consistent before implementation begins. This guide has no equivalent — it trusts that the human has set up the docs correctly. A lightweight validation step ("does CLAUDE.md reference files that exist? do task triggers match actual file content?") would be valuable.
+
+### The fundamental difference
+
+spec-kit answers: **"What should we build, and is the specification internally consistent?"**
+
+This guide answers: **"How do agents stay effective while building it?"**
+
+spec-kit is a *specification engine*. This guide is an *operational context engine*. You need both: spec-kit so agents build the right thing, this guide so agents know how to work together while building it. A project with great specs but no session context will have agents re-reading plan.md from scratch every session, missing gotchas, and re-debating decisions. A project with great context but no specs will have agents that work smoothly but build the wrong thing.
+
+The two are stronger together than either is alone.
