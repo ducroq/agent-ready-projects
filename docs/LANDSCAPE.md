@@ -117,3 +117,7 @@ This guide was not written from theory. It was developed through iterative testi
 Each major concept in the guide traces to a specific failure or discovery during this process. See [METHODOLOGY.md](METHODOLOGY.md) for the full development story.
 
 The guide continues to evolve through the feedback loop it describes: insights from applying it to active projects feed back into the guide, and updates to the guide are checked against active projects.
+
+---
+
+*Since this landscape was written, the guide has added: the **self-learning loop** (Capture → Surface → Promote → Retire) as a named first-class concept, a **processor memory hierarchy analogy** grounding the layered model in cache design principles, an **agent-driven adoption workflow** ([adopt.md](../adopt.md)) with assess/adopt/update prompts, and **versioning** ([CHANGELOG.md](../CHANGELOG.md)) for tracking framework evolution across adopted projects. None of the existing tools in the landscape offer this combination.*

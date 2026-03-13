@@ -130,3 +130,7 @@ The guide that emerged from this loop is shorter on prescription and longer on h
 The deepest shift: documentation quality for agents isn't about accuracy or completeness. It's about whether the right information surfaces at the right moment without human intervention. A perfectly accurate doc that no agent ever reads is worse than an approximate pointer that triggers the right lookup at the right time.
 
 This is the documentation vector: every change should improve self-navigation, not just content quality.
+
+---
+
+*Since this methodology was written, the guide has gone through additional evolution: the promotion and retirement patterns were unified into a named **self-learning loop** (Capture → Surface → Promote → Retire), grounded in **processor memory hierarchy** principles. The adoption path was itself automated via [adopt.md](../adopt.md) — agent-facing prompts that assess, scaffold, and update the framework in any repo. **Versioning** ([CHANGELOG.md](../CHANGELOG.md)) was added so adopted projects can track which framework version they're running. Each addition followed the same methodology: observed friction in real use → named the pattern → made it actionable.*

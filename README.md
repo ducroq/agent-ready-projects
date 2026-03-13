@@ -1,22 +1,57 @@
 # Working With AI Agents: A Practical Guide
 
-How to set up projects so AI coding agents (Claude Code, Codex, Cursor, Windsurf, Copilot, Aider, etc.) can work effectively across sessions. Lessons learned from 100+ agent sessions across multiple codebases, pressure-tested by multiple agents against real projects.
+**Version 1.0.0** | [Changelog](CHANGELOG.md) | [MIT License](LICENSE)
 
-This is not about prompting. It's about **project infrastructure** — the files, conventions, and habits that make the difference between an agent that spins its wheels and one that ships.
+Your AI agent starts every session cold. It doesn't remember yesterday's bugs, your architectural decisions, or what it tried and failed last week. You end up repeating yourself, undoing its mistakes, and wondering why it's not getting better.
 
-> **Want to get started fast?** Grab a template from [`templates/`](templates/) and adapt it to your project.
+**This guide fixes that.** It gives your project a layered memory system — a project file, a memory index, a gotcha log — that agents auto-load and self-navigate. Lessons get captured during work, promoted as they prove their value, and retired when they're stale. Your agent gets smarter with every session, not just every prompt.
+
+Works with any AI coding agent: Claude Code, Codex, Cursor, Windsurf, GitHub Copilot, Aider, and others.
+
+### Ready to try it?
+
+**Option 1 — Let your agent do it.** Open your terminal in any repo and paste one of the prompts from [`adopt.md`](adopt.md):
+- **Assess**: Have your agent analyze the repo and tell you where this method would help most
+- **Adopt**: Have your agent read this guide and scaffold everything, tailored to your project
+- **Update**: Already adopted? Check if you're behind and apply relevant changes
+
+**Option 2 — Do it manually.** Grab a template from [`templates/`](templates/), rename for your tool (see [`templates/README.md`](templates/README.md)), and fill in your specifics.
+
+---
+
+<details>
+<summary><strong>Table of contents</strong></summary>
+
+- [The Core Problem](#the-core-problem)
+- [The Foundation: Agent Empathy](#the-foundation-agent-empathy)
+- [The Auto-Loading Cliff](#the-auto-loading-cliff)
+- [The Layered Model](#the-layered-model)
+  - [Layer 1: Identity + Operations (project file)](#layer-1-identity--operations-claudemd--always-present)
+  - [Layer 2: Runbook](#layer-2-runbook-runbookmd--most-real-projects-need-this)
+  - [Layer 3: Memory](#layer-3-memory-memorymd--topic-files--always-present)
+  - [Layer 4: History (gotcha log)](#layer-4-history-gotcha-logmd--always-present)
+- [How Agents Self-Navigate](#how-agents-self-navigate)
+- [Decision Records (ADRs)](#decision-records-adrs)
+- [Session Hooks](#session-hooks)
+- [The Documentation Rhythm](#the-documentation-rhythm)
+- [The Self-Learning Loop](#the-self-learning-loop)
+  - [Why this isn't "keep a log"](#why-this-isnt-keep-a-log)
+  - [Why a hierarchy works](#why-a-hierarchy-works)
+- [Guide-Project Feedback](#guide-project-feedback)
+- [What Doesn't Work](#what-doesnt-work)
+- [Measuring Success](#measuring-success)
+- [Tool-Specific Setup](#tool-specific-setup)
+- [Quick Start](#quick-start)
+- [Templates](#templates)
+- [Further Reading](#further-reading)
+
+</details>
 
 **A note on terminology.** This guide uses Claude Code conventions (CLAUDE.md, MEMORY.md) as concrete examples because that's where the patterns were developed and tested. The principles apply to any AI coding agent — see [Tool-Specific Setup](#tool-specific-setup) for how to map the concepts to your tool.
 
 ## The Core Problem
 
-AI agents start every session cold. They don't remember yesterday. They can't see your mental model. They'll read your code, but code doesn't capture *why* you made decisions, what you tried and abandoned, or what's fragile and shouldn't be touched.
-
-Without persistent context, you get:
-- Agents re-investigating problems you already solved
-- Agents undoing intentional decisions they don't understand
-- Agents building on assumptions that changed three sessions ago
-- You repeating the same explanations every session
+Agents can read code, but code doesn't capture *why* you made decisions, what you tried and abandoned, or what's fragile and shouldn't be touched. Without persistent context, every session starts from zero — agents re-investigate solved problems, undo intentional decisions, and build on stale assumptions.
 
 The fix isn't more documentation. It's the **right** documentation, in the **right** place, with the **right** tone.
 
@@ -46,7 +81,7 @@ This changes everything about how you structure documentation:
 
 The bridge across the cliff is **task-triggered pointers** in auto-loaded files. Not just "this exists" but "when doing X, read Y first." The agent matches its current task against these triggers and self-navigates to the right file.
 
-This is the single most practical insight in this guide: **auto-loaded files are indexes that help agents find what they need, exactly when they need it.**
+This is the single most practical insight in this guide: **auto-loaded files are indexes that help agents find what they need, exactly when they need it.** The self-learning loop (covered later) is the mechanism that moves lessons from session history into always-loaded context — the cliff determines *where* knowledge lives; the loop determines *how it gets there*.
 
 **The asymmetry of wrong-layer placement.** When you're unsure which layer something belongs in, err toward keeping it in auto-loaded files. Content placed too high wastes context — agents see information they don't need, performance degrades gradually. Content placed too low is invisible — the agent doesn't know what it doesn't know, and fails silently. Ten extra lines in CLAUDE.md cost less than a missed constraint that was in a file the agent never loaded.
 
@@ -306,7 +341,101 @@ The key shift: end-of-session time becomes **5 minutes of curation**, not 20 min
 
 **Automating the rhythm.** If your agent tool supports hooks (commands triggered by events), parts of this rhythm can be automated — updating component docs when code changes, suggesting an ADR when a design decision is detected, prompting end-of-session curation when a session runs long. Manual capture is the baseline; event-driven updates are the upgrade.
 
-## The Feedback Loop
+## The Self-Learning Loop
+
+The documentation rhythm, promotion pattern, retirement pattern, and end-of-session curation described above aren't separate practices — they're phases of a single cycle. Naming it makes it visible: **Capture → Surface → Promote → Retire.**
+
+```
+    ┌─────────┐
+    │ CAPTURE │  During work: gotcha-log, topic files, ADRs
+    └────┬────┘
+         │
+         ▼
+    ┌─────────┐
+    │ SURFACE │  End-of-session: review, tag patterns, connect dots
+    └────┬────┘
+         │
+         ▼
+    ┌─────────┐
+    │ PROMOTE │  Recurring lessons move up: gotcha → topic file → memory index → project file
+    └────┬────┘
+         │
+         ▼
+    ┌─────────┐
+    │ RETIRE  │  Fixed, refactored, or encoded in code? Remove from memory
+    └────┬────┘
+         │
+         └──────→ (back to CAPTURE — the cycle continues)
+```
+
+**Capture.** During work, you log gotchas as they happen (2-3 lines), note non-obvious learnings in topic files, and write ADRs when choosing between approaches. This is the raw material — cheap to create in the moment, expensive to reconstruct later. (Details: [The Documentation Rhythm](#the-documentation-rhythm), [Layer 4: History](#layer-4-history-gotcha-logmd--always-present).)
+
+**Surface.** At end-of-session, spend 5 minutes reviewing what was captured. Which gotchas appeared before? Which topic file entries are stale? Which lessons apply beyond the subsystem they were learned in? This is curation, not creation — you're connecting dots, not writing from recall. (Details: [The Documentation Rhythm](#the-documentation-rhythm).)
+
+**Promote.** When a lesson proves its value through repetition, move it up the stack. A gotcha that recurs in three sessions becomes an "if X, then Y" entry in the relevant topic file. A topic file pattern that affects multiple subsystems moves to the memory index. A memory index entry that's truly universal — a hard constraint every session needs — graduates to the project file. Each promotion moves the lesson closer to always-loaded context, where agents act on it without being told. (Details: [The promotion pattern](#layer-4-history-gotcha-logmd--always-present).)
+
+**Retire.** When a gotcha's root cause is fixed, mark it resolved. When a topic file entry describes behavior that was refactored away, remove it. When a memory index entry is fully encoded in the project file or in the code itself, remove it — it's reached its permanent home. Monthly audits should prune as much as they add. (Details: [The retirement pattern](#layer-4-history-gotcha-logmd--always-present).)
+
+### A gotcha's full lifecycle
+
+Here's a concrete example of one lesson traveling through the entire loop:
+
+1. **Capture** — Session 4: `scp` works for file transfers to gpu-server but `rsync` fails with dup() errors. Logged in `gotcha-log.md`.
+2. **Surface** — End of session 4: Noted during curation, but only one occurrence. Left in place.
+3. **Surface** — End of session 7: Same gotcha appeared again. Tagged it as recurring.
+4. **Promote** — Session 8 curation: Promoted to `infrastructure.md` as: *"if file transfers to gpu-server fail, use scp — rsync has dup() errors on this LXC container."*
+5. **Promote** — Session 15: Pattern affected image pipeline, TTS workflow, and deployment scripts. Promoted to the memory index as a universal gotcha.
+6. **Retire** — Session 22: LXC container was rebuilt with proper kernel support. rsync works now. Removed from memory index, marked resolved in gotcha-log.
+
+Total effort: ~2 minutes across 6 sessions. The lesson was available at the right level of visibility for each phase of its life.
+
+### Why this isn't "keep a log"
+
+The difference between this and a flat annotation system is the **migration**. Annotation-style approaches (sticky notes on code, inline comments, context-hub-style tagging) keep lessons pinned where they were learned. They're useful but static — a note on file X stays on file X forever, whether it's still relevant or not, whether it applies to file Y too, or whether it's become a project-wide constraint.
+
+The self-learning loop is a **knowledge lifecycle**. Lessons start cheap and local (gotcha log), prove their value through repetition, and migrate toward always-loaded context as they earn it. The most important lessons end up in the project file — loaded every session, acting on every task. The rest stay where they're useful or get retired when they're not. Nothing stays a sticky note forever.
+
+### Why a hierarchy works
+
+The layered model isn't an accident — it mirrors how processor memory hierarchies have solved the same problem for decades. A CPU doesn't store everything in registers. It keeps the hottest data closest (registers, L1 cache), medium-frequency data one step away (L2/L3), and the full record on disk. The same economics apply to agent context:
+
+```
+Processor              Agent context             Shared property
+─────────              ─────────────             ───────────────
+Registers              Project file              Always loaded, tiny, highest cost per bit
+L1 cache               Memory index              Auto-loaded, small, fast access
+L2/L3 cache            Topic files               Loaded on demand, one read away
+RAM                    Gotcha log, ADRs          Searched when needed, larger
+Disk                   Git history               Archive, rarely accessed, complete
+```
+
+Three principles from processor design that sharpen how we manage agent context:
+
+**Miss cost asymmetry.** When a processor misses L1, it checks L2 — cheap. When it misses every cache level, it goes to disk — orders of magnitude slower. Agent context works the same way. A lesson missing from the project file just means the agent checks the memory index — one extra read. But a lesson missing from *all* layers means the agent rediscovers it from scratch: reading code, hitting the bug, debugging it again, at full session cost. This is why promotion matters. Frequently-needed knowledge living too deep in the stack has a "miss penalty" every session — the agent pays for it in wasted time whether you notice or not.
+
+**Eviction discipline.** Caches don't grow forever — they evict entries using principled policies like LRU (least recently used) and LFU (least frequently used). "Monthly audits" is the right instinct, but processors teach us to be specific about *what* to evict. Apply LRU to your memory: if an entry hasn't been relevant in the last N sessions, it's a demotion or retirement candidate. Apply LFU to your project file: if a constraint has never actually prevented a mistake, it's taking up space in the hottest layer without earning its keep. The goal isn't a smaller file — it's a file where everything pulls its weight.
+
+**Locality of reference.** Processors exploit two patterns: *temporal locality* (recently accessed data is likely needed again soon) and *spatial locality* (data near recently accessed data is likely needed too). Both apply to agent context. Temporal: recent gotchas are more relevant than old ones — weight them higher during curation. Spatial: if an agent needs one fact about the API layer, it probably needs related API facts — this is why topic files should be organized by task domain, not by date. A topic file is a cache line: load it once, get everything related.
+
+One more borrowed insight: the guide's task-triggered pointers are **prefetch hints**. Processors predict what data will be needed and load it before it's requested. "When doing calibration work, read `calibration-history.md`" is exactly this — telling the agent to prefetch context before it discovers it needs it. Organizing pointers by task (not by file location) is spatial prefetching: "you're working in this area, so here's the bundle of context you'll need."
+
+### Signals the loop is working
+
+- Gotcha log entries get promoted regularly — the log isn't just growing, it's feeding the system
+- Topic files contain lessons that started as gotchas — you can trace the lineage
+- Memory index entries are things agents *need* every session, not things they *might* need someday
+- Monthly audits remove roughly as much as they keep — the system breathes
+- The same problem rarely appears three times without being promoted
+
+### Signals the loop is failing
+
+- Gotcha log grows but nothing ever moves up — it's a write-only archive
+- Same problem appears 3+ times in different sessions without promotion
+- Memory index is bloated with entries that applied once and were never revisited
+- Topic files have stale entries describing behavior that was refactored away months ago
+- End-of-session curation isn't happening — capture without curation is just journaling
+
+## Guide-Project Feedback
 
 This guide and your project docs should sharpen each other. When you update a project's docs, check whether the insight applies broadly — if so, update this guide. When you update this guide, check whether your active projects reflect the latest thinking — if not, apply it.
 
@@ -314,7 +443,7 @@ In practice:
 - **Guide → project**: After updating the guide, scan your project's CLAUDE.md and MEMORY.md. Are your pointers task-triggered or just descriptive? Are you following your own advice?
 - **Project → guide**: After a doc change that solved a real problem (agent kept missing context, doc was in the wrong layer), ask whether the pattern generalizes. If it does, capture it here.
 
-This is how the guide stays honest. Advice that hasn't survived contact with a real codebase is theory. Advice that worked once but was never generalized is a local fix. The loop turns both into durable practice.
+This is how the guide stays honest. Advice that hasn't survived contact with a real codebase is theory. Advice that worked once but was never generalized is a local fix. The feedback loop turns both into durable practice.
 
 ## What Doesn't Work
 
@@ -356,6 +485,7 @@ You know the system is working when:
 - The agent's first instinct aligns with your preferences
 - Agents load the right on-demand files without being told
 - End-of-session documentation takes 5 minutes, not 20
+- Gotcha log entries get promoted regularly — the self-learning loop is turning
 
 You know it's failing when:
 - You're explaining the same thing every session
@@ -364,6 +494,7 @@ You know it's failing when:
 - Docs are always out of date
 - MEMORY.md is over 150 lines and you're not sure what's still relevant
 - You feel like the agent "doesn't get" the project
+- Same problem appears 3+ times without being promoted — the self-learning loop is stalled
 
 **Validating, not just trusting.** Good documentation doesn't guarantee good behavior. Agents can read your constraints and still cut corners when they're confident, ignore warnings when they've invested effort in an approach, or defer to your suggestions even when those suggestions violate the project's own principles. Occasionally test this: ask the agent to do something that should trigger a constraint, or apply time pressure and see if quality holds. If your docs say "never skip tests" but the agent skips them when the task feels urgent, the constraint isn't landing — it may need stronger framing or a concrete example of what "never" means.
 
@@ -398,20 +529,22 @@ If your team uses different agents (one person on Claude Code, another on Cursor
 
 For a new project:
 
-1. Write your project file (CLAUDE.md / AGENTS.md / `.windsurfrules` / etc.): identity, constraints, architecture, how-to, "Before You Start" pointers with task triggers
-2. If your tool has auto-memory: start a MEMORY.md with current state, key paths, topic file index
-3. Start a gotcha-log.md: first entry will come naturally
+1. Copy [`templates/project-file.md`](templates/project-file.md), rename for your tool (see [`templates/README.md`](templates/README.md)): fill in identity, constraints, architecture, how-to, "Before You Start" pointers with task triggers
+2. If your tool has auto-memory: copy [`templates/memory-index.md`](templates/memory-index.md) — current state, key paths, topic file index
+3. Copy [`templates/gotcha-log.md`](templates/gotcha-log.md): first entry will come naturally
 4. Add a session hook showing system status (if your tool supports hooks)
+
+The self-learning loop starts working from session one — log gotchas as you hit them, curate at end-of-session, and the Capture → Surface → Promote → Retire cycle builds momentum on its own.
 
 For a growing project:
 
 5. When the project file's operational detail is crowding out identity content, extract to `docs/RUNBOOK.md` (most real projects reach this point)
-6. If using auto-memory: split bloated MEMORY.md into index + topic files (non-optional once past ~200 lines due to truncation)
+6. If using auto-memory: split a bloated memory index into index + topic files (non-optional once it gets too long for your tool's auto-load limit)
 7. If you have ADRs, create an index. If you don't, start writing them
 
 For a project with existing doc debt:
 
-Don't reorganize everything at once. Start by adding a "Before You Start" table to your project file — highest ROI, 10 minutes. Create gotcha-log.md on the next session where you hit something weird. Split MEMORY.md only when it's clearly too long. The incremental path matters because wholesale reorganization is the thing most likely to get deferred forever.
+Don't reorganize everything at once. Start by adding a "Before You Start" table to your project file — highest ROI, 10 minutes. Create a gotcha log on the next session where you hit something weird. Split the memory index only when it's clearly too long. The incremental path matters because wholesale reorganization is the thing most likely to get deferred forever.
 
 For any project:
 
@@ -419,14 +552,14 @@ Document as you go (during work), curate at end-of-session (not create). The bes
 
 ## Templates
 
-Ready-to-use starter files in [`templates/`](templates/):
+Ready-to-use starter files in [`templates/`](templates/). Tool-agnostic — rename for your agent (see [`templates/README.md`](templates/README.md) for the naming map).
 
-- **[`CLAUDE.md`](templates/CLAUDE.md)** — Project identity, constraints, and "Before You Start" table
-- **[`MEMORY.md`](templates/MEMORY.md)** — Index + current state (auto-memory)
-- **[`gotcha-log.md`](templates/gotcha-log.md)** — Structured problem/solution journal
+- **[`project-file.md`](templates/project-file.md)** — Project identity, constraints, and "Before You Start" table
+- **[`memory-index.md`](templates/memory-index.md)** — Index + current state (for tools with auto-memory)
+- **[`gotcha-log.md`](templates/gotcha-log.md)** — Structured problem/solution journal with promotion tracking
 - **[`RUNBOOK.md`](templates/RUNBOOK.md)** — Operational principles and how-to
 
-Copy what you need, delete the comments, fill in your specifics.
+Copy, rename for your tool, delete the comments, fill in your specifics.
 
 ## Further Reading
 

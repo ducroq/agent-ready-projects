@@ -1,7 +1,7 @@
 # Runbook
 
-<!-- Operational principles + how-to. Loaded via CLAUDE.md's "Before You Start" table.
-     Keep the most critical commands (test, deploy) in CLAUDE.md as a summary —
+<!-- Operational principles + how-to. Loaded via the project file's "Before You Start" table.
+     Keep the most critical commands (test, deploy) in the project file as a summary —
      this file has the full operational detail. -->
 
 ## Principles
@@ -75,8 +75,8 @@
 
 | Type of change | Update |
 |---------------|--------|
-| New constraint or principle | `CLAUDE.md` |
-| Operational process change | This file (`RUNBOOK.md`) |
+| New constraint or principle | Project file |
+| Operational process change | This file (RUNBOOK.md) |
 | Hit a weird bug | `memory/gotcha-log.md` |
 | Chose between approaches | New ADR + update index |
 | Learned something non-obvious | Relevant memory topic file |

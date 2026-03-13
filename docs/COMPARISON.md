@@ -281,3 +281,7 @@ This guide answers: **"How do agents stay effective while building it?"**
 spec-kit is a *specification engine*. This guide is an *operational context engine*. You need both: spec-kit so agents build the right thing, this guide so agents know how to work together while building it. A project with great specs but no session context will have agents re-reading plan.md from scratch every session, missing gotchas, and re-debating decisions. A project with great context but no specs will have agents that work smoothly but build the wrong thing.
 
 The two are stronger together than either is alone.
+
+---
+
+*Since this comparison was written, the guide has added: the **self-learning loop** (a named knowledge lifecycle that neither BMAD nor spec-kit provides), a **processor memory hierarchy analogy** (miss cost asymmetry, eviction discipline, locality of reference), **agent-driven adoption** ([adopt.md](../adopt.md)) that scaffolds the framework automatically, and **versioning** ([CHANGELOG.md](../CHANGELOG.md)) so adopted projects can track updates. These additions widen the gap with spec-kit (which has no knowledge lifecycle) and complement BMAD (whose role-based personas could feed into the loop's capture phase).*
