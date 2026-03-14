@@ -10,7 +10,7 @@ It was also wrong in an important way.
 
 ## Phase 1: Apply the guide to one project
 
-The first test was vmodel.eu — an AI-powered requirements review tool for engineering students. The project already had a solid CLAUDE.md and structured MEMORY.md, making it a good candidate for adopting the full four-layer model.
+The first test was a mid-size project with complex domain logic and structured decision history. It already had a solid CLAUDE.md and structured MEMORY.md, making it a good candidate for adopting the full four-layer model.
 
 We created all the files the guide prescribed:
 - `docs/WAY-OF-WORKING.md` — principles + runbook extracted from CLAUDE.md
