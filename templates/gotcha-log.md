@@ -24,8 +24,12 @@
 
 ## Promoted
 
-<!-- Track gotchas that have been promoted to topic files or MEMORY.md.
+<!-- Track gotchas that have been promoted to topic files or the memory index.
      This helps you avoid re-promoting and shows the loop is working.
+
+     STATUS TAGS:
+     - [PROMOTED] — lesson was moved up the stack (to a topic file, memory index, or project file)
+     - [RESOLVED] — root cause was fixed; entry stays as history
 
 | Entry | Promoted to | Date |
 |-------|------------|------|

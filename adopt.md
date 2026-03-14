@@ -73,7 +73,7 @@ STEP 5 — Assess whether a runbook is needed.
 If the project has deployment steps, multiple environments, CI/CD, or operational complexity: create docs/RUNBOOK.md with the operational detail. If it's a simple project with one test command and no deployment, skip this.
 
 STEP 6 — Report what you created.
-List every file, what's in it, and one thing I should review or fill in manually (constraints I should confirm, architecture choices I should validate, etc.).
+List every file, what's in it, and one thing where I should review your work and adjust if needed (constraints you might have inferred incorrectly, architecture choices that need my context, etc.).
 
 Important:
 - Derive content from the actual codebase — don't leave placeholders where you can fill in real values
@@ -109,5 +109,5 @@ Don't make changes without showing me the plan first.
 
 - **Run the assess prompt first** if you've never used context engineering. It takes 30 seconds and tells you whether it's worth the setup.
 - **The adopt prompt works best in a fresh session** — the agent needs context window space to read the guide and analyze your repo.
-- **Review what the agent generates.** The project file especially — the agent derives constraints and architecture from code, but you know things the code doesn't say. Spend 5 minutes reviewing and adding what's missing.
+- **Review what the agent generates.** The project file especially — the agent derives constraints and architecture from code, but you know things the code doesn't say. Spend 5 minutes reviewing and adjusting what needs context only you have.
 - **The self-learning loop starts automatically.** Once the files exist, just follow the rhythm: log gotchas during work, curate at end-of-session (5 minutes). The system gets better from there.

@@ -77,6 +77,6 @@
 |---------------|--------|
 | New constraint or principle | Project file |
 | Operational process change | This file (RUNBOOK.md) |
-| Hit a weird bug | `memory/gotcha-log.md` |
+| Hit a weird bug | Gotcha log (see project file for path) |
 | Chose between approaches | New ADR + update index |
 | Learned something non-obvious | Relevant memory topic file |

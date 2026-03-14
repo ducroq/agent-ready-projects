@@ -1,13 +1,13 @@
 # Templates
 
-Starter files for setting up any AI coding agent. Copy what you need, rename for your tool, delete the comments, fill in your specifics.
+Starter files for setting up any AI coding agent. Use the [adopt prompt](../adopt.md) to have your agent scaffold these automatically, or grab them manually if you prefer.
 
 ## Quick adoption
 
 1. Copy `project-file.md` → rename for your tool (see table below)
-2. Fill in: project identity, constraints, architecture, "Before You Start" pointers
+2. Have your agent derive project identity, constraints, architecture, and "Before You Start" pointers from your codebase — then review and adjust what only you know
 3. Copy `gotcha-log.md` → save in your memory/docs directory
-4. First session: let the self-learning loop start naturally — log gotchas as you hit them, curate at end-of-session
+4. First session: let the self-learning loop start naturally — log gotchas as you hit them, agent curates at end-of-session
 
 If your tool has auto-memory (currently Claude Code), also grab `memory-index.md`. If your project has deployment or operational complexity, grab `RUNBOOK.md`.
 

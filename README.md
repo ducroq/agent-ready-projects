@@ -8,14 +8,12 @@ Your AI agent starts every session cold. It doesn't remember yesterday's bugs, y
 
 Works with any AI coding agent: Claude Code, Codex, Cursor, Windsurf, GitHub Copilot, Aider, and others.
 
-### Ready to try it?
+**Works best for projects that are:**
+- Worked on across multiple sessions (not one-off scripts)
+- Complex enough that you find yourself re-explaining things to agents
+- Maintained by someone willing to spend 1-2 minutes per session on lightweight curation
 
-**Option 1 — Let your agent do it.** Open your terminal in any repo and paste one of the prompts from [`adopt.md`](adopt.md):
-- **Assess**: Have your agent analyze the repo and tell you where this method would help most
-- **Adopt**: Have your agent read this guide and scaffold everything, tailored to your project
-- **Update**: Already adopted? Check if you're behind and apply relevant changes
-
-**Option 2 — Do it manually.** Grab a template from [`templates/`](templates/), rename for your tool (see [`templates/README.md`](templates/README.md)), and fill in your specifics.
+If your project is a single file or a weekend hack, this is overkill. If you've ever thought "why doesn't my agent remember this?" — read on.
 
 ---
 
@@ -26,9 +24,9 @@ Works with any AI coding agent: Claude Code, Codex, Cursor, Windsurf, GitHub Cop
 - [The Foundation: Agent Empathy](#the-foundation-agent-empathy)
 - [The Auto-Loading Cliff](#the-auto-loading-cliff)
 - [The Layered Model](#the-layered-model)
-  - [Layer 1: Identity + Operations (project file)](#layer-1-identity--operations-claudemd--always-present)
+  - [Layer 1: Identity + Operations (the project file)](#layer-1-identity--operations-the-project-file--always-present)
   - [Layer 2: Runbook](#layer-2-runbook-runbookmd--most-real-projects-need-this)
-  - [Layer 3: Memory](#layer-3-memory-memorymd--topic-files--always-present)
+  - [Layer 3: Memory](#layer-3-memory-memory-index--topic-files--when-complexity-grows)
   - [Layer 4: History (gotcha log)](#layer-4-history-gotcha-logmd--always-present)
 - [How Agents Self-Navigate](#how-agents-self-navigate)
 - [Decision Records (ADRs)](#decision-records-adrs)
@@ -37,23 +35,25 @@ Works with any AI coding agent: Claude Code, Codex, Cursor, Windsurf, GitHub Cop
 - [The Self-Learning Loop](#the-self-learning-loop)
   - [Why this isn't "keep a log"](#why-this-isnt-keep-a-log)
   - [Why a hierarchy works](#why-a-hierarchy-works)
-- [Guide-Project Feedback](#guide-project-feedback)
 - [What Doesn't Work](#what-doesnt-work)
 - [Measuring Success](#measuring-success)
 - [Tool-Specific Setup](#tool-specific-setup)
-- [Quick Start](#quick-start)
+- [Ready to Try It?](#ready-to-try-it)
+- [Worked Example](docs/EXAMPLE.md)
 - [Templates](#templates)
 - [Further Reading](#further-reading)
 
 </details>
 
-**A note on terminology.** This guide uses Claude Code conventions (CLAUDE.md, MEMORY.md) as concrete examples because that's where the patterns were developed and tested. The principles apply to any AI coding agent — see [Tool-Specific Setup](#tool-specific-setup) for how to map the concepts to your tool.
+**A note on terminology.** This guide uses Claude Code conventions (CLAUDE.md, MEMORY.md) as concrete examples because that's where the patterns were developed and tested. The principles apply to any AI coding agent — see [Tool-Specific Setup](#tool-specific-setup) for how to map the concepts to your tool. To see what populated files look like in practice, see the [Worked Example](docs/EXAMPLE.md).
 
 ## The Core Problem
 
 Agents can read code, but code doesn't capture *why* you made decisions, what you tried and abandoned, or what's fragile and shouldn't be touched. Without persistent context, every session starts from zero — agents re-investigate solved problems, undo intentional decisions, and build on stale assumptions.
 
 The fix isn't more documentation. It's the **right** documentation, in the **right** place, with the **right** tone.
+
+**What success looks like:** Agents find the right context without being told, avoid repeating past mistakes, and produce work that needs less rework each session. You stop explaining the same things. The system gets better over time, not just per-prompt. (Full metrics: [Measuring Success](#measuring-success).)
 
 ## The Foundation: Agent Empathy
 
@@ -71,13 +71,13 @@ This isn't sentimentality. It's engineering pragmatism. An agent that understand
 
 Before the framework, the most important thing to understand: **there is a hard line between auto-loaded files and everything else.**
 
-CLAUDE.md and MEMORY.md are injected into every conversation automatically. The agent sees them without doing anything. Every other file — no matter how prominently linked, no matter how useful — is invisible until the agent actively reads it.
+Every agent tool has files it auto-loads into context — for example, Claude Code injects CLAUDE.md and MEMORY.md into every conversation automatically. The agent sees them without doing anything. Every other file — no matter how prominently linked, no matter how useful — is invisible until the agent actively reads it.
 
 This changes everything about how you structure documentation:
 
 - **Content in auto-loaded files is always available.** Agents act on it from the first message.
 - **Content below the cliff requires a trigger.** The agent must know *when* to read it and *what it contains* — before it's read it.
-- **"Linked prominently" is not a trigger.** A pointer that says "see docs/RUNBOOK.md" gets skimmed past. A pointer that says "before changing prompts, read docs/RUNBOOK.md for the calibration gate" tells the agent *when* and *why*.
+- **"Linked prominently" is not a trigger.** A pointer that says "see docs/RUNBOOK.md" gets skimmed past. A pointer that says "before changing the data pipeline, read docs/RUNBOOK.md for the validation gate" tells the agent *when* and *why*.
 
 The bridge across the cliff is **task-triggered pointers** in auto-loaded files. Not just "this exists" but "when doing X, read Y first." The agent matches its current task against these triggers and self-navigates to the right file.
 
@@ -89,18 +89,19 @@ This is the single most practical insight in this guide: **auto-loaded files are
 
 The model scales with project complexity. Not every project needs every layer.
 
-### Layer 1: Identity + Operations (CLAUDE.md) — always present
+### Layer 1: Identity + Operations (the project file) — always present
 
 **Purpose**: "What is this project, what are the rules, and how do I work here?"
 **Voice**: Welcoming — "here's what you need to know"
 **Location**: Project root (checked into repo)
 **Auto-loaded**: Yes
+**Tool-specific names**: CLAUDE.md (Claude Code), AGENTS.md (Codex), `.cursor/rules/*.mdc` (Cursor), `.windsurfrules` (Windsurf) — see [Tool-Specific Setup](#tool-specific-setup)
 
 This is the project's home base. It's the only file guaranteed to be read every session, so it carries the most weight. For small-to-medium projects, it contains *everything* an agent needs to start working — identity, constraints, architecture, and operational how-to.
 
 **Always include:**
 - Project overview (3-5 lines: what this is, who it's for, what it does)
-- Hard constraints and principles (the non-negotiables). Negative constraints ("never remove output fields that downstream apps depend on", "never use external APIs for student data") often land harder than positive ones — they draw a bright line agents won't cross, while positive guidance leaves room for interpretation. Include honesty constraints too — agents confabulate. "Never claim tests pass without running them" and "never claim a file exists without reading it" prevent the most common form of agent failure: confidently asserting something that isn't true.
+- Hard constraints and principles (the non-negotiables). Negative constraints ("never remove output fields that downstream apps depend on", "never use external APIs for PII (personally identifiable information)") often land harder than positive ones — they draw a bright line agents won't cross, while positive guidance leaves room for interpretation. Include honesty constraints too — agents confabulate. "Never claim tests pass without running them" and "never claim a file exists without reading it" prevent the most common form of agent failure: confidently asserting something that isn't true.
 - Decision framework — how agents should evaluate their own output (e.g., a simple PASS/REVIEW/FAIL rubric: what meets the bar, what needs a second look, what blocks progress). Without this, agents optimize for whatever seems reasonable. With it, they self-assess against your standards.
 - Architecture sketch (how the pieces fit together)
 - **"Before You Start"** table with task-triggered pointers to deeper docs
@@ -117,8 +118,8 @@ This is the project's home base. It's the only file guaranteed to be read every 
 | When | Read |
 |------|------|
 | Making architectural decisions | `docs/adr/README.md` — index of 17 ADRs |
-| Calibration or scoring work | `memory/calibration-history.md` — dead ends, results |
-| Touching PII or student data | `memory/privacy-protocol.md` — never-do list |
+| Debugging or investigating failures | `memory/investigation-log.md` — dead ends, what worked |
+| Touching PII or sensitive data | `memory/privacy-protocol.md` — never-do list |
 | Stuck on infra or tooling | `memory/gotcha-log.md` — problem-fix archive |
 ```
 
@@ -133,15 +134,15 @@ When making trade-offs about what to include, prioritize **correctness over comp
 **Purpose**: "How do we operate here?"
 **Voice**: Normative but warm — "we do X because Y"
 **Location**: `docs/` directory (checked into repo)
-**Auto-loaded**: No — triggered via "Before You Start" in CLAUDE.md
+**Auto-loaded**: No — triggered via "Before You Start" in the project file
 
-Any project with deployment infrastructure, multiple subsystems, and operational principles will outgrow a single CLAUDE.md. That's normal, not a failure. When it happens, extract the operational how-to into `docs/RUNBOOK.md` — but keep the most critical commands (test suite, deploy) in CLAUDE.md as a summary so agents can act without a second read.
+Any project with deployment infrastructure, multiple subsystems, and operational principles will outgrow a single project file. That's normal, not a failure. When it happens, extract the operational how-to into `docs/RUNBOOK.md` — but keep the most critical commands (test suite, deploy) in the project file as a summary so agents can act without a second read.
 
 Simple projects with a single test command and no deployment can skip this. But most real projects need it.
 
 The runbook combines two things that are weaker apart:
 
-**Hard constraints** stay in CLAUDE.md (auto-loaded, always visible). **Operational principles** go in the runbook — guidelines that expand on *how* to apply those constraints:
+**Hard constraints** stay in the project file (auto-loaded, always visible). **Operational principles** go in the runbook — guidelines that expand on *how* to apply those constraints:
 - Opinionated: "Pipeline reliability matters more than feature richness"
 - Actionable: "When in doubt, let articles through — the model handles nuance"
 - Non-obvious: "Adding output fields is safe. Removing them breaks downstream apps"
@@ -159,49 +160,51 @@ Why combine principles and how-to? Because principles without a runbook are too 
 
 *On naming: "runbook" implies operational how-to, but this file also carries principles. Some teams prefer CONTRIBUTING.md, WAY-OF-WORKING.md, or OPERATIONS.md. The name matters less than the structure — pick what fits your culture.*
 
-### Layer 3: Memory (MEMORY.md → topic files) — always present
+### Layer 3: Memory (memory index → topic files) — when complexity grows
+
+**Note**: This layer requires auto-memory (currently Claude Code only). If your tool doesn't have auto-memory, your project file carries more weight — use it as a lean index with task-triggered pointers to the gotcha log, runbook, and ADRs. The self-learning loop still works; promotion targets the project file directly instead of passing through a memory index. See [Tool-Specific Setup](#tool-specific-setup).
 
 **Purpose**: "What have we learned working on this?"
 **Voice**: Declarative — "X works like Y", "if you see A, it's because B"
 **Location**: Auto-memory directory (not in repo — user-specific)
-**Auto-loaded**: MEMORY.md is. Topic files are not.
+**Auto-loaded**: The memory index is. Topic files are not.
 
-**Important**: Claude Code truncates MEMORY.md after ~200 lines. Content past the limit silently vanishes from context. The index-not-dump pattern isn't just good practice — it's forced by the tooling. Beyond a certain project size, topic files are non-optional.
+**Important**: Some tools enforce hard limits on auto-loaded files (e.g., Claude Code truncates MEMORY.md after ~200 lines — content past the limit silently vanishes). Check your tool's limits. Regardless of the specific threshold, the index-not-dump pattern isn't just good practice — keeping auto-loaded files lean is forced by context economics. Beyond a certain project size, topic files are non-optional.
 
 This is institutional memory — the hard-won operational knowledge that isn't obvious from reading the code.
 
-**The critical evolution: MEMORY.md as index, not dump.**
+**The critical evolution: memory index as index, not dump.**
 
-A flat MEMORY.md works for simple projects. Once you have 5+ subsystems, it becomes a wall of text that agents skim past. The fix:
+A flat memory index works for simple projects. Once you have 5+ subsystems, it becomes a wall of text that agents skim past. The fix:
 
 ```
 memory/
 ├── MEMORY.md           # 60-80 line index + current state
-├── llm-quirks.md       # API patterns, model behaviors
-├── infrastructure.md   # Servers, deployment, pipeline
-├── image-pipeline.md   # Subsystem-specific knowledge
+├── api-quirks.md       # API patterns, third-party behaviors
+├── infrastructure.md   # Servers, deployment, environments
+├── auth-patterns.md    # Subsystem-specific knowledge
 └── gotcha-log.md       # Structured problem/solution archive
 ```
 
-**MEMORY.md** contains:
+**The memory index** contains:
 - A brief orientation ("Loaded every session. Topic files loaded on demand.")
 - A **topic index table** — the second bridge across the auto-loading cliff:
 
 ```markdown
 | File | When to load | Key insight |
 |------|-------------|-------------|
-| `calibration-history.md` | Calibration or scoring work | Dead ends, model shootout results |
-| `privacy-protocol.md` | Touching PII or student data | Never-do list, script design pattern |
-| `gotcha-log.md` | Stuck on infra or tooling | Problem-fix archive |
+| `memory/investigation-log.md` | Debugging or investigating failures | Dead ends, what worked and why |
+| `memory/privacy-protocol.md` | Touching PII or sensitive data | Never-do list, script design pattern |
+| `memory/gotcha-log.md` | Stuck on infra or tooling | Problem-fix archive |
 ```
 
 - Current project state (what's shipped, what's blocked)
 - Key file paths (the top 10-15 files an agent needs to know about)
 - Active architecture decisions (one-liners pointing to ADRs)
 
-The topic index works the same way as CLAUDE.md's "Before You Start" — task-triggered pointers that tell agents *when* to load each file. An agent debugging an infra issue sees "stuck on infra or tooling → gotcha-log.md" and loads it. No prompting needed.
+The topic index works the same way as the project file's "Before You Start" — task-triggered pointers that tell agents *when* to load each file. An agent debugging an infra issue sees "stuck on infra or tooling → gotcha-log.md" and loads it. No prompting needed.
 
-**Topic files** contain deep subsystem knowledge. Agents load the relevant one when working on that subsystem. An agent fixing a frontend bug doesn't need to know about GPU memory management.
+**Topic files** contain deep subsystem knowledge. Agents load the relevant one when working on that subsystem. An agent fixing a frontend bug doesn't need to know about the database migration strategy.
 
 This is **progressive disclosure** — start broad, go deep only where needed. It keeps the always-loaded context lean while making deep knowledge one `Read` away.
 
@@ -209,8 +212,8 @@ This is **progressive disclosure** — start broad, go deep only where needed. I
 
 **What goes in memory files**:
 - Current-state facts ("the pipeline processes 3 filters independently")
-- Patterns ("Gemini ignores word count targets — don't try to fix this with prompts")
-- Gotchas framed as "if X, then Y" ("if R2 uploads fail silently, check you're using the EU endpoint")
+- Patterns ("this API silently truncates responses over 4MB — paginate instead of increasing limits")
+- Gotchas framed as "if X, then Y" ("if file uploads fail silently, check the auth token hasn't expired")
 - API signatures and parameter quirks
 - Server/deployment facts
 
@@ -219,7 +222,7 @@ This is **progressive disclosure** — start broad, go deep only where needed. I
 - Chronological narrative ("on Feb 13 we changed X") — that's the gotcha log
 - Principles — that's CLAUDE.md or the runbook
 
-**Auto-memory vs committed documentation.** Some systems (like Claude Code) have auto-memory that persists across sessions but isn't committed to the repo. Use this split intentionally:
+**Auto-memory vs committed documentation.** Some tools have auto-memory — persistent context files that aren't committed to the repo (e.g., MEMORY.md in Claude Code). If your tool supports this, use the split intentionally. If not, your project file carries more weight and should include task-triggered pointers to committed docs like the gotcha log and runbook.
 
 | Auto-memory | Committed docs |
 |-------------|----------------|
@@ -230,23 +233,23 @@ This is **progressive disclosure** — start broad, go deep only where needed. I
 
 The dividing line: would a human engineer benefit from reading this? If yes, it belongs in committed docs. If it's primarily saving an agent from repeating past mistakes, auto-memory is the right home.
 
-**Cross-project knowledge.** For related projects (a pipeline feeding a downstream app, a monorepo with shared services), cross-project facts need a home. Global CLAUDE.md (`~/.claude/CLAUDE.md`) handles universal preferences. Project-level memory topic files handle cross-project facts *this* project's agent needs — e.g., "NexusMind uses branch `main` not `master`" in a FluxusSource memory file. The principle: store the fact where it's *needed*, not where it *originates*. Each repo's CLAUDE.md names the relationship and owns its side; neither duplicates the other's internals.
+**Cross-project knowledge.** For related projects (a pipeline feeding a downstream app, a monorepo with shared services), cross-project facts need a home. A global config file (e.g., `~/.claude/CLAUDE.md` in Claude Code) handles universal preferences. Project-level memory topic files handle cross-project facts *this* project's agent needs — e.g., "the upstream API repo uses branch `main` not `master`" in the downstream consumer's memory file. The principle: store the fact where it's *needed*, not where it *originates*. Each repo's project file names the relationship and owns its side; neither duplicates the other's internals.
 
 ### Layer 4: History (gotcha-log.md) — always present
 
 **Purpose**: "What went wrong before and how was it fixed?"
 **Voice**: Narrative — "Problem → Root cause → Fix"
-**Location**: Auto-memory directory
-**Auto-loaded**: No (loaded when stuck, via MEMORY.md trigger)
+**Location**: `memory/` for tools with auto-memory, `docs/` for others (see [Tool-Specific Setup](#tool-specific-setup))
+**Auto-loaded**: No (loaded when stuck, via the project file's or memory index's trigger)
 **Growth**: Unlimited (append-only)
 
 Pure session logs — "today we did X, then Y" — are useless. But a **structured problem/solution journal** is invaluable:
 
 ```markdown
-### Cloudflare Pages 20K file limit (2026-02-27)
-**Problem**: Deploy broke silently.
-**Root cause**: Each article generates 3 files. 7K articles × 3 = 21K files > 20K limit.
-**Fix**: Hot/cold archiving (ADR-022) + both route files must check summaries exist.
+### Deploy fails silently above asset threshold (2026-02-27)
+**Problem**: CI passed but deploy produced no errors and no output.
+**Root cause**: Each record generates 3 static files. At 7K records the total exceeded the hosting platform's file limit.
+**Fix**: Implemented hot/cold archiving (ADR-022). Build step now validates asset count before deploy.
 ```
 
 This isn't daily reading. It's a searchable archive. When an agent (or you) hits something weird, searching the gotcha log often reveals it's been solved before.
@@ -255,40 +258,40 @@ This isn't daily reading. It's a searchable archive. When an agent (or you) hits
 
 **The promotion pattern**: When a gotcha keeps coming up, promote it:
 - From gotcha log → relevant topic file (as an "if X, then Y" pattern)
-- From topic file → MEMORY.md (if it's truly universal)
+- From topic file → memory index or project file (if it's truly universal)
 
-A concrete example: "scp not rsync on gpu-server" appears in the gotcha log. After it comes up in three sessions, it gets promoted to `infrastructure.md` as "if file transfers fail, use scp — rsync has dup() errors on this LXC." After it affects work across multiple subsystems, it gets promoted to MEMORY.md as a universal gotcha.
+A concrete example: "staging migration fails with timeout" appears in the gotcha log. After it comes up in three sessions, it gets promoted to `infrastructure.md` as "if staging migrations time out, run them with `--lock-timeout=60s` — the shared database has long-running queries." After it affects deployments, data backfills, and test setup, it gets promoted to the memory index as a universal gotcha.
 
-**The retirement pattern**: Promotion moves lessons upward. Retirement moves them out.
-- When a gotcha's root cause is fixed, mark it as resolved in the log (don't delete — it's history)
-- When a topic file entry describes behavior that was refactored away, remove it
-- When a MEMORY.md entry is fully encoded in CLAUDE.md or in the code itself, remove it from memory — it's been promoted to its permanent home
-- Monthly audits should prune as much as they add
+**The retirement pattern**: Promotion moves lessons upward. Retirement moves them out. At end-of-session curation, the agent flags candidates for retirement — you review and confirm:
+- Gotchas whose root cause is fixed → mark resolved in the log (don't delete — it's history)
+- Topic file entries describing behavior that was refactored away → remove
+- Memory index entries fully encoded in the project file or in the code itself → remove from memory, they've reached their permanent home
+- Monthly: the agent audits all memory files and proposes a batch of retirements. Pruning should keep pace with growth.
 
 This keeps the gotcha log as a complete record while surfacing the most important lessons into always-loaded context.
 
 ## How Agents Self-Navigate
 
-The two auto-loaded files work together as a navigation system:
+The auto-loaded files work together as a navigation system. Here's how it looks in Claude Code (other tools have equivalent structures — see [Tool-Specific Setup](#tool-specific-setup)):
 
 ```
-CLAUDE.md (auto-loaded)
+Project file (auto-loaded)
 ├── "Before You Start" table → task-triggered pointers to repo docs
 │   ├── docs/RUNBOOK.md (when needed)
 │   ├── docs/adr/README.md → individual ADRs
 │   └── other deep docs
 │
-MEMORY.md (auto-loaded)
+Memory index (auto-loaded, if tool supports it)
 ├── Topic index table → task-triggered pointers to memory files
 │   ├── gotcha-log.md
-│   ├── calibration-history.md
+│   ├── investigation-log.md
 │   └── other topic files
 └── Current state, file paths, active decisions
 ```
 
 The agent reads both auto-loaded files at session start. When it begins a task, it matches the task against the trigger descriptions and loads the relevant on-demand files. No human intervention required.
 
-This is why the trigger descriptions matter so much. "Calibration history" is vague. "Calibration or scoring work → dead ends, model shootout results" tells the agent exactly when this file is relevant and what it contains.
+This is why the trigger descriptions matter so much. "Investigation log" is vague. "Debugging or investigating failures → dead ends, what worked and why" tells the agent exactly when this file is relevant and what it contains.
 
 **The documentation vector**: Every time you update docs — whether adding content, reorganizing, or trimming — the question isn't "is this accurate?" It's "will a future agent find the right context without being told to look?" Accuracy is table stakes. Self-navigation is the goal. If you find yourself saying "go read X first" in a session, that's a signal that your auto-loaded pointers are missing a trigger.
 
@@ -304,7 +307,7 @@ When you choose between approaches, write a short ADR:
 
 ADRs prevent agents from re-debating settled questions. The most common agent failure isn't writing bad code — it's proposing a redesign of something that was intentionally designed.
 
-**Critical**: Maintain an ADR index (one-line summaries with links). Agents need to scan for relevant precedent quickly. 20+ individual files without an index is a maze. Point to it from CLAUDE.md's "Before You Start" table.
+**Critical**: Maintain an ADR index (one-line summaries with links). Agents need to scan for relevant precedent quickly. 20+ individual files without an index is a maze. Point to it from the project file's "Before You Start" table.
 
 ## Session Hooks
 
@@ -331,19 +334,21 @@ The biggest shift in practice: **capture during work, curate at end-of-session.*
 | **During work** | Hit a gotcha? Log it immediately (2-3 lines) | `gotcha-log.md` |
 | **During work** | Learned something non-obvious? Note it | Relevant topic file |
 | **After a decision** | Chose between approaches? | ADR + update index |
-| **Changed operations** | Process or infrastructure changed? | CLAUDE.md or RUNBOOK.md |
-| **End of session** | Review & curate: trim stale entries, promote recurring gotchas | MEMORY.md + topic files (5 min) |
-| **Monthly** | Audit: anything resolved? Anything moved to code? Retire stale entries | Prune all memory files |
+| **Changed operations** | Process or infrastructure changed? | Project file or RUNBOOK.md |
+| **End of session** | Ask the agent to curate: correlate, summarize, prune, promote (review its proposals) | Memory index + topic files (1-2 min) |
+| **Monthly** | Agent audits all memory files: flags resolved items, stale entries, facts now encoded in code. You review and confirm retirements. | All memory files |
 
-**Course-correcting.** When you realize the direction is wrong mid-session — requirements changed, an assumption broke, the approach isn't working — stop building and update the plan first. Assess what's affected, update the relevant docs (project file, ADRs, task list), then continue. Agents won't do this on their own; they'll keep building on a broken foundation. The discipline of stopping to course-correct before continuing is a development practice, not a documentation one, but it's what keeps the documentation honest.
+**Course-correcting.** When you realize the direction is wrong mid-session — requirements changed, an assumption broke, the approach isn't working — pause and tell the agent to reassess. Have it evaluate what's affected and propose updates to the project file, ADRs, and task list. Review the proposals, then continue. Agents won't initiate course-correction on their own — they'll keep building on a broken foundation — but they can handle the doc updates once you steer them. The discipline is in recognizing the moment to pause; the agent handles the paperwork.
 
-The key shift: end-of-session time becomes **5 minutes of curation**, not 20 minutes of writing from recall. Context captured in the moment is more accurate and takes less effort than context reconstructed afterward.
+The key shift: end-of-session time becomes **1-2 minutes of review**, not 20 minutes of writing from recall. The agent does the heavy lifting — reading across files, spotting patterns, drafting consolidations — and you approve or adjust.
 
-**Automating the rhythm.** If your agent tool supports hooks (commands triggered by events), parts of this rhythm can be automated — updating component docs when code changes, suggesting an ADR when a design decision is detected, prompting end-of-session curation when a session runs long. Manual capture is the baseline; event-driven updates are the upgrade.
+**Automating the rhythm.** If your agent tool supports hooks, the rhythm becomes almost fully automated. Even without hooks, "please curate memory before we wrap up" at end of session is enough. The agent already has the full session context; correlation and summarization are what it's good at.
+
+These practices form a single cycle — the **self-learning loop**.
 
 ## The Self-Learning Loop
 
-The documentation rhythm, promotion pattern, retirement pattern, and end-of-session curation described above aren't separate practices — they're phases of a single cycle. Naming it makes it visible: **Capture → Surface → Promote → Retire.**
+The rhythm above has four phases: **Capture → Surface → Promote → Retire.**
 
 ```
     ┌─────────┐
@@ -368,9 +373,19 @@ The documentation rhythm, promotion pattern, retirement pattern, and end-of-sess
          └──────→ (back to CAPTURE — the cycle continues)
 ```
 
+This loop applies to all tools. File names vary (CLAUDE.md vs AGENTS.md vs `.windsurfrules`), but the progression Capture → Surface → Promote → Retire is universal.
+
 **Capture.** During work, you log gotchas as they happen (2-3 lines), note non-obvious learnings in topic files, and write ADRs when choosing between approaches. This is the raw material — cheap to create in the moment, expensive to reconstruct later. (Details: [The Documentation Rhythm](#the-documentation-rhythm), [Layer 4: History](#layer-4-history-gotcha-logmd--always-present).)
 
-**Surface.** At end-of-session, spend 5 minutes reviewing what was captured. Which gotchas appeared before? Which topic file entries are stale? Which lessons apply beyond the subsystem they were learned in? This is curation, not creation — you're connecting dots, not writing from recall. (Details: [The Documentation Rhythm](#the-documentation-rhythm).)
+**Surface.** At end-of-session, ask the agent to review what was captured. The agent reads across topic files and the gotcha log, then proposes changes. You review and approve — 1-2 minutes, not 5. The agent handles three tasks:
+
+1. **Correlate**: Find entries across different files that stem from the same underlying pattern. A deployment gotcha and an infrastructure gotcha might both be symptoms of the same constraint. The agent links them or merges them into a single entry that captures the real cause.
+2. **Summarize**: Consolidate entries that say the same thing into higher-level norms. Five separate gotchas about API timeouts distill to: *"this provider's API is unreliable under load — always use retry with backoff."* The individual entries are evidence; the summary is the lesson.
+3. **Prune**: Flag stale entries for removal. Identify lessons that have outgrown their subsystem and are candidates for promotion.
+
+This works because the agent has full session context — it knows what was touched, what failed, and what was learned. Correlation and summarization across files is tedious for humans but natural for agents. The human's role shifts from analyst to reviewer: approve the consolidation, reject a bad summary, add nuance the agent missed.
+
+The goal is to continuously refine raw observations into durable norms — not just accumulate entries. A well-maintained topic file with 10 synthesized patterns is worth more than 40 individual gotchas. (Details: [The Documentation Rhythm](#the-documentation-rhythm).)
 
 **Promote.** When a lesson proves its value through repetition, move it up the stack. A gotcha that recurs in three sessions becomes an "if X, then Y" entry in the relevant topic file. A topic file pattern that affects multiple subsystems moves to the memory index. A memory index entry that's truly universal — a hard constraint every session needs — graduates to the project file. Each promotion moves the lesson closer to always-loaded context, where agents act on it without being told. (Details: [The promotion pattern](#layer-4-history-gotcha-logmd--always-present).)
 
@@ -380,12 +395,12 @@ The documentation rhythm, promotion pattern, retirement pattern, and end-of-sess
 
 Here's a concrete example of one lesson traveling through the entire loop:
 
-1. **Capture** — Session 4: `scp` works for file transfers to gpu-server but `rsync` fails with dup() errors. Logged in `gotcha-log.md`.
-2. **Surface** — End of session 4: Noted during curation, but only one occurrence. Left in place.
-3. **Surface** — End of session 7: Same gotcha appeared again. Tagged it as recurring.
-4. **Promote** — Session 8 curation: Promoted to `infrastructure.md` as: *"if file transfers to gpu-server fail, use scp — rsync has dup() errors on this LXC container."*
-5. **Promote** — Session 15: Pattern affected image pipeline, TTS workflow, and deployment scripts. Promoted to the memory index as a universal gotcha.
-6. **Retire** — Session 22: LXC container was rebuilt with proper kernel support. rsync works now. Removed from memory index, marked resolved in gotcha-log.
+1. **Capture** — Session 4: Staging database migrations time out intermittently. Logged in `gotcha-log.md`.
+2. **Surface** — End of session 4: Agent reviewed the gotcha log, noted only one occurrence. Left in place.
+3. **Surface** — End of session 7: Agent flagged the same gotcha as recurring and proposed promoting it.
+4. **Promote** — Session 8 curation: Promoted to `infrastructure.md` as: *"if staging migrations time out, run with `--lock-timeout=60s` — shared database has long-running queries."*
+5. **Promote** — Session 15: Pattern affected deployments, data backfills, and test setup. Promoted to the memory index as a universal gotcha.
+6. **Retire** — Session 22: Database moved to a dedicated staging instance. Timeout issue resolved. Removed from memory index, marked resolved in gotcha-log.
 
 Total effort: ~2 minutes across 6 sessions. The lesson was available at the right level of visibility for each phase of its life.
 
@@ -411,49 +426,23 @@ Disk                   Git history               Archive, rarely accessed, compl
 
 Three principles from processor design that sharpen how we manage agent context:
 
-**Miss cost asymmetry.** When a processor misses L1, it checks L2 — cheap. When it misses every cache level, it goes to disk — orders of magnitude slower. Agent context works the same way. A lesson missing from the project file just means the agent checks the memory index — one extra read. But a lesson missing from *all* layers means the agent rediscovers it from scratch: reading code, hitting the bug, debugging it again, at full session cost. This is why promotion matters. Frequently-needed knowledge living too deep in the stack has a "miss penalty" every session — the agent pays for it in wasted time whether you notice or not.
+**Miss cost asymmetry.** A lesson missing from the project file just means the agent checks the memory index — one extra read. But a lesson missing from *all* layers means the agent rediscovers it from scratch: reading code, hitting the bug, debugging it again, at full session cost. This is why promotion matters — frequently-needed knowledge living too deep in the stack has a "miss penalty" every session.
 
-**Eviction discipline.** Caches don't grow forever — they evict entries using principled policies like LRU (least recently used) and LFU (least frequently used). "Monthly audits" is the right instinct, but processors teach us to be specific about *what* to evict. Apply LRU to your memory: if an entry hasn't been relevant in the last N sessions, it's a demotion or retirement candidate. Apply LFU to your project file: if a constraint has never actually prevented a mistake, it's taking up space in the hottest layer without earning its keep. The goal isn't a smaller file — it's a file where everything pulls its weight.
+**Eviction discipline.** If an entry hasn't been relevant in the last N sessions, it's a demotion candidate. If a constraint in the project file has never actually prevented a mistake, it's taking space in the hottest layer without earning its keep. The goal isn't a smaller file — it's a file where everything pulls its weight.
 
-**Locality of reference.** Processors exploit two patterns: *temporal locality* (recently accessed data is likely needed again soon) and *spatial locality* (data near recently accessed data is likely needed too). Both apply to agent context. Temporal: recent gotchas are more relevant than old ones — weight them higher during curation. Spatial: if an agent needs one fact about the API layer, it probably needs related API facts — this is why topic files should be organized by task domain, not by date. A topic file is a cache line: load it once, get everything related.
+**Locality of reference.** If an agent needs one fact about the API layer, it probably needs related API facts too — this is why topic files should be organized by task domain, not by date. And task-triggered pointers are prefetch hints: "you're working in this area, so here's the bundle of context you'll need."
 
-One more borrowed insight: the guide's task-triggered pointers are **prefetch hints**. Processors predict what data will be needed and load it before it's requested. "When doing calibration work, read `calibration-history.md`" is exactly this — telling the agent to prefetch context before it discovers it needs it. Organizing pointers by task (not by file location) is spatial prefetching: "you're working in this area, so here's the bundle of context you'll need."
-
-### Signals the loop is working
-
-- Gotcha log entries get promoted regularly — the log isn't just growing, it's feeding the system
-- Topic files contain lessons that started as gotchas — you can trace the lineage
-- Memory index entries are things agents *need* every session, not things they *might* need someday
-- Monthly audits remove roughly as much as they keep — the system breathes
-- The same problem rarely appears three times without being promoted
-
-### Signals the loop is failing
-
-- Gotcha log grows but nothing ever moves up — it's a write-only archive
-- Same problem appears 3+ times in different sessions without promotion
-- Memory index is bloated with entries that applied once and were never revisited
-- Topic files have stale entries describing behavior that was refactored away months ago
-- End-of-session curation isn't happening — capture without curation is just journaling
-
-## Guide-Project Feedback
-
-This guide and your project docs should sharpen each other. When you update a project's docs, check whether the insight applies broadly — if so, update this guide. When you update this guide, check whether your active projects reflect the latest thinking — if not, apply it.
-
-In practice:
-- **Guide → project**: After updating the guide, scan your project's CLAUDE.md and MEMORY.md. Are your pointers task-triggered or just descriptive? Are you following your own advice?
-- **Project → guide**: After a doc change that solved a real problem (agent kept missing context, doc was in the wrong layer), ask whether the pattern generalizes. If it does, capture it here.
-
-This is how the guide stays honest. Advice that hasn't survived contact with a real codebase is theory. Advice that worked once but was never generalized is a local fix. The feedback loop turns both into durable practice.
+**Is the loop turning?** The clearest signal: gotcha log entries get promoted regularly and the same problem rarely appears three times. If the log only grows but nothing moves up, capture is happening without curation — the loop is stalled. See [Measuring Success](#measuring-success) for the full diagnostic.
 
 ## What Doesn't Work
 
 ### Flat memory files
-A single MEMORY.md that grows to 200 lines of mixed concerns. An agent looking for "why is my API call failing" has to wade through curated image library details and frontend rendering patterns. Split into topic files and use MEMORY.md as an index. (And remember: Claude Code hard-truncates MEMORY.md at ~200 lines, so anything past the limit is silently invisible.)
+A single memory index that grows to hundreds of lines of mixed concerns. An agent looking for "why is my API call failing" has to wade through unrelated subsystem details. Split into topic files and use the memory index as a lean pointer file. (Some tools enforce hard limits — e.g., Claude Code truncates after ~200 lines — but even without a hard limit, bloated auto-loaded files waste context budget every session.)
 
 ### Duplicating content across docs
 The same fact stated identically in two places will drift — one gets updated, the other doesn't. This applies to code-to-doc copies (API specs pasted into markdown) and doc-to-doc overlap (README, CLAUDE.md, and RUNBOOK.md all describing the same architecture).
 
-However, the same fact **framed differently for different purposes** can be valuable: a constraint ("never use external APIs for student data") in CLAUDE.md and an operational reminder ("when adding a new model provider, verify it's EU-hosted") in the runbook serve different cognitive moments. The test: if you removed one copy, would agents reliably find the other at the moment they need it? If not, the duplication is justified — but one copy should be canonical, and the other should defer to it.
+However, the same fact **framed differently for different purposes** can be valuable: a constraint ("never use external APIs for PII") in CLAUDE.md and an operational reminder ("when adding a new model provider, verify it's EU-hosted") in the runbook serve different cognitive moments. The test: if you removed one copy, would agents reliably find the other at the moment they need it? If not, the duplication is justified — but one copy should be canonical, and the other should defer to it.
 
 The drift risk of duplicated facts is proportional to how often the fact changes and how similar the framings are. A stable architectural fact (like a pipeline order) referenced in different contexts is low risk. A configuration rule restated with slightly different wording in two docs is high risk — the framings will diverge within a few sessions.
 
@@ -479,22 +468,25 @@ It feels like overhead until an agent makes a decision that violates a principle
 
 You know the system is working when:
 - New sessions start productive within the first exchange
-- Agents don't re-investigate solved problems
-- Agents don't undo intentional decisions
-- You rarely say "no, we tried that and it doesn't work"
-- The agent's first instinct aligns with your preferences
+- Agents don't re-investigate solved problems or undo intentional decisions
 - Agents load the right on-demand files without being told
-- End-of-session documentation takes 5 minutes, not 20
 - Gotcha log entries get promoted regularly — the self-learning loop is turning
 
 You know it's failing when:
 - You're explaining the same thing every session
-- Agents produce work you have to significantly rework
 - You keep saying "go read X first"
-- Docs are always out of date
-- MEMORY.md is over 150 lines and you're not sure what's still relevant
-- You feel like the agent "doesn't get" the project
-- Same problem appears 3+ times without being promoted — the self-learning loop is stalled
+- Your project file or memory index is over 150 lines of mixed concerns
+- Same problem appears 3+ times without being promoted
+
+**Common fixes:**
+
+| Symptom | Likely cause | Fix |
+|---------|-------------|-----|
+| Agent ignores a constraint | Constraint is buried in a non-auto-loaded file, or phrased too softly | Move it to the project file. Use "never" / "always" language with a concrete example |
+| Agent doesn't load the right file | Missing or vague trigger in the "Before You Start" table | Add a task-triggered pointer: "when doing X, read Y" — not just "see Y" |
+| Agent re-investigates solved problems | No gotcha log, or gotcha log isn't referenced from auto-loaded files | Create the log and add a trigger: "stuck or debugging → gotcha-log.md" |
+| Context feels stale | End-of-session curation is being skipped | Ask the agent to curate before wrapping up. 1-2 minutes, not optional |
+| Project file is a wall of text | Everything was put in Layer 1 instead of using progressive disclosure | Extract operational detail to a runbook, split memory into topic files |
 
 **Validating, not just trusting.** Good documentation doesn't guarantee good behavior. Agents can read your constraints and still cut corners when they're confident, ignore warnings when they've invested effort in an approach, or defer to your suggestions even when those suggestions violate the project's own principles. Occasionally test this: ask the agent to do something that should trigger a constraint, or apply time pressure and see if quality holds. If your docs say "never skip tests" but the agent skips them when the task feels urgent, the constraint isn't landing — it may need stronger framing or a concrete example of what "never" means.
 
@@ -525,30 +517,56 @@ This guide's concepts map to every major AI coding agent. The file names and mec
 
 If your team uses different agents (one person on Claude Code, another on Cursor), maintain one canonical project file and symlink or copy to tool-specific locations. The content is the same — only the filename differs. Avoid maintaining parallel files with the same content; they will drift.
 
-## Quick Start
+### Multi-agent workflows
 
-For a new project:
+If you use different agents for different tasks (e.g., one for architecture, another for implementation, a third for code review), the project file becomes even more important — it's the shared orientation document all agents load. Keep universal truths there. Per-agent context (e.g., "the review agent should enforce these style rules") belongs in agent-specific topic files or directory-level rules.
 
-1. Copy [`templates/project-file.md`](templates/project-file.md), rename for your tool (see [`templates/README.md`](templates/README.md)): fill in identity, constraints, architecture, how-to, "Before You Start" pointers with task triggers
-2. If your tool has auto-memory: copy [`templates/memory-index.md`](templates/memory-index.md) — current state, key paths, topic file index
-3. Copy [`templates/gotcha-log.md`](templates/gotcha-log.md): first entry will come naturally
-4. Add a session hook showing system status (if your tool supports hooks)
+### Projects with zero documentation
 
-The self-learning loop starts working from session one — log gotchas as you hit them, curate at end-of-session, and the Capture → Surface → Promote → Retire cycle builds momentum on its own.
+If you're adding an agent to a codebase with no existing docs, the [adopt prompt](adopt.md) is the fastest path — the agent derives what it can from code structure, dependencies, and tests. You then review and add what the code doesn't say. This is faster than writing from scratch because the agent handles the mechanical parts (file paths, architecture skeleton, test commands) while you focus on constraints, decisions, and gotchas.
 
-For a growing project:
+### Long-lived feature branches
 
-5. When the project file's operational detail is crowding out identity content, extract to `docs/RUNBOOK.md` (most real projects reach this point)
-6. If using auto-memory: split a bloated memory index into index + topic files (non-optional once it gets too long for your tool's auto-load limit)
-7. If you have ADRs, create an index. If you don't, start writing them
+For feature branches that span weeks, consider a feature-level context file (see [Feature-level context](#layer-3-memory-memory-index--topic-files--when-complexity-grows)) that lives on the branch. It captures implementation decisions, patterns discovered, and approaches tried and abandoned — context that would clutter the main project file but is essential for the branch's lifetime. Merge or retire it when the branch lands.
 
-For a project with existing doc debt:
+## Ready to Try It?
+
+**Option 1 — Let your agent do it.** Open your terminal in any repo and paste one of the prompts from [`adopt.md`](adopt.md):
+- **Assess**: Have your agent analyze the repo and tell you where this method would help most
+- **Adopt**: Have your agent read this guide and scaffold everything, tailored to your project
+- **Update**: Already adopted? Check if you're behind and apply relevant changes
+
+**Option 2 — Do it manually.** Follow the quick start below, or grab a template from [`templates/`](templates/).
+
+### Quick Start
+
+**Fastest path**: Use the [adopt prompt](adopt.md) — paste it into your agent, and it will scaffold everything from your codebase. Review and adjust what only you know. (~5 minutes)
+
+### Minimum Viable Setup (10 minutes)
+
+You need exactly one file to start: a **project file** with a "Before You Start" table. Everything else is optional and additive.
+
+1. Copy [`templates/project-file.md`](templates/project-file.md), rename for your tool (see [`templates/README.md`](templates/README.md))
+2. Fill in: project overview (3-5 lines), hard constraints, and the "Before You Start" table with task-triggered pointers
+3. That's it. Your agent now has orientation and self-navigation from session one.
+
+### Growing from there
+
+Add layers as your project needs them — not before:
+
+4. **Gotcha log** — Copy [`templates/gotcha-log.md`](templates/gotcha-log.md) when you hit your first weird bug worth remembering
+5. **Memory index** — Copy [`templates/memory-index.md`](templates/memory-index.md) when your project file is getting long (only for tools with auto-memory)
+6. **Runbook** — Extract to `docs/RUNBOOK.md` when operational detail is crowding out identity content
+7. **ADR index** — When you start making architectural decisions worth recording
+8. **Topic files** — When the memory index gets too long, split into per-subsystem files
+
+### For a project with existing docs
 
 Don't reorganize everything at once. Start by adding a "Before You Start" table to your project file — highest ROI, 10 minutes. Create a gotcha log on the next session where you hit something weird. Split the memory index only when it's clearly too long. The incremental path matters because wholesale reorganization is the thing most likely to get deferred forever.
 
-For any project:
+### The ongoing rhythm
 
-Document as you go (during work), curate at end-of-session (not create). The best documentation is written when context is fresh and takes 2-3 lines, not reconstructed from memory in a 20-minute session-end dump.
+Document as you go (during work), let the agent curate at end-of-session (1-2 minutes of review). The self-learning loop starts working from session one — the Capture → Surface → Promote → Retire cycle builds momentum on its own.
 
 ## Templates
 
@@ -566,4 +584,13 @@ Copy, rename for your tool, delete the comments, fill in your specifics.
 - **[`docs/LANDSCAPE.md`](docs/LANDSCAPE.md)** — State of the art in context engineering for coding agents, gap analysis, and where this guide fits relative to existing work (Fowler, BMAD, spec-kit, HumanLayer, AGENTS.md, and others)
 - **[`docs/COMPARISON.md`](docs/COMPARISON.md)** — Detailed mapping against BMAD-METHOD and spec-kit: where they validate these principles, what they add, and what you probably don't need
 - **[`docs/METHODOLOGY.md`](docs/METHODOLOGY.md)** — How this guide was iteratively developed and tested, including the concrete failures that shaped it and the multi-agent audit that pressure-tested it against three real projects
+
+## Contributing to This Guide
+
+This guide and your project docs should sharpen each other. When you update a project's docs, check whether the insight applies broadly — if so, consider updating this guide. When you update this guide, check whether your active projects reflect the latest thinking.
+
+- **Project → guide**: After a doc change that solved a real problem (agent kept missing context, doc was in the wrong layer), ask whether the pattern generalizes. If it does, open an issue or PR.
+- **Guide → project**: After updating the guide, scan your project files. Are your pointers task-triggered? Are you following your own advice?
+
+Advice that hasn't survived contact with a real codebase is theory. The feedback loop turns local fixes into durable practice.
 

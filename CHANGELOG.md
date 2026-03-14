@@ -23,7 +23,7 @@ First stable release.
 - `RUNBOOK.md` — operational principles and how-to
 
 ### Adoption
-- `adopt.md` — agent-facing prompts for assess and adopt workflows
+- `adopt.md` — agent-facing prompts for assess, adopt, and update workflows
 - `templates/README.md` — tool-naming map (Claude Code, Codex, Cursor, Windsurf, Copilot, Aider)
 
 ### Documentation

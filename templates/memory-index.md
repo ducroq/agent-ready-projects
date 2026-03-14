@@ -16,7 +16,7 @@
 
 | File | When to load | Key insight |
 |------|-------------|-------------|
-| `gotcha-log.md` | Stuck or debugging | Problem-fix archive |
+| `memory/gotcha-log.md` | Stuck or debugging | Problem-fix archive |
 
 ## Current State
 

@@ -71,10 +71,10 @@ With the guide revised, we sent a one-line prompt to agents working on three dif
 
 > Read the guide and audit this project against it. Show me what's missing, what's in the wrong layer, and what needs task-triggered pointers. Don't change anything yet — just the audit.
 
-The three projects were:
-- **ovr.news** — an editorial/news platform (brand-heavy, content-generating)
-- **FluxusSource** — a data aggregation pipeline (infrastructure-heavy, multi-service)
-- **NexusMind** — a deployment platform (ops-heavy, cross-repo dependencies)
+The three test projects were chosen to cover different project archetypes:
+- An editorial/news platform (brand-heavy, content-generating)
+- A data aggregation pipeline (infrastructure-heavy, multi-service)
+- A deployment platform (ops-heavy, cross-repo dependencies)
 
 Each agent returned structured feedback: what worked, what was missing from the guide, what was in the wrong layer in their project. The feedback was consolidated and analyzed for patterns.
 
