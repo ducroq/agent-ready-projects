@@ -162,7 +162,7 @@ Why combine principles and how-to? Because principles without a runbook are too 
 
 ### Layer 3: Memory (memory index → topic files) — when complexity grows
 
-**Note**: This layer requires auto-memory (currently Claude Code only). If your tool doesn't have auto-memory, your project file carries more weight — use it as a lean index with task-triggered pointers to the gotcha log, runbook, and ADRs. The self-learning loop still works; promotion targets the project file directly instead of passing through a memory index. See [Tool-Specific Setup](#tool-specific-setup).
+**Note**: This layer requires auto-memory (currently Claude Code only). **If your tool doesn't have auto-memory (Cursor, Windsurf, Copilot, Aider)**, your project file carries more weight — use it as a lean index with task-triggered pointers to the gotcha log, runbook, and ADRs. The self-learning loop still works; promotion targets the project file directly instead of passing through a memory index. You can [skip to Layer 4](#layer-4-history-gotcha-logmd--always-present).
 
 **Purpose**: "What have we learned working on this?"
 **Voice**: Declarative — "X works like Y", "if you see A, it's because B"
@@ -512,6 +512,34 @@ This guide's concepts map to every major AI coding agent. The file names and mec
 **If your tool supports directory-level rules** (Claude Code, Codex, Cursor): Use them for subsystem-specific constraints. A `src/api/CLAUDE.md` (or `src/api/AGENTS.md`) can carry API-specific rules without cluttering the root project file. This is progressive disclosure at the file system level.
 
 **If your tool supports glob-based rules** (Cursor `.mdc` files): You can target rules to specific file patterns — e.g., a rule that only activates when editing `*.test.ts` files. This is a more granular form of task-triggered loading.
+
+**Cursor `.mdc` example.** Cursor rule files use markdown with a YAML frontmatter block. Here's what a project rule looks like:
+
+```markdown
+---
+description: Project conventions and constraints for Task Tracker API
+globs:
+alwaysApply: true
+---
+
+# Task Tracker API
+
+A REST API with React frontend and PostgreSQL backend.
+
+## Before You Start
+
+| When | Read |
+|------|------|
+| Making architectural decisions | `docs/adr/README.md` — decision index |
+| Stuck or debugging something weird | `docs/gotcha-log.md` — problem-fix archive |
+
+## Hard Constraints
+
+- Never modify migration files after they've been deployed to staging
+- Never skip tests. If tests fail, fix them or explain why they should change.
+```
+
+Save this as `.cursor/rules/project.mdc`. For subsystem-specific rules, create additional `.mdc` files with `globs` targeting specific file patterns (e.g., `globs: ["src/api/**"]` for API-only constraints).
 
 ### Multi-tool projects
 
