@@ -490,6 +490,8 @@ You know it's failing when:
 
 **Validating, not just trusting.** Good documentation doesn't guarantee good behavior. Agents can read your constraints and still cut corners when they're confident, ignore warnings when they've invested effort in an approach, or defer to your suggestions even when those suggestions violate the project's own principles. Occasionally test this: ask the agent to do something that should trigger a constraint, or apply time pressure and see if quality holds. If your docs say "never skip tests" but the agent skips them when the task feels urgent, the constraint isn't landing — it may need stronger framing or a concrete example of what "never" means.
 
+**Parallel specialized review.** After adopting the framework or making significant changes, run multiple agents in parallel — each focused on a different concern (doc quality, consistency, traceability, completeness). In practice, 5-6 parallel reviewers surface cross-cutting issues in minutes that single-pass review misses: broken cross-references, stale metadata, traceability gaps. See [METHODOLOGY.md](docs/METHODOLOGY.md) for details.
+
 ## Tool-Specific Setup
 
 This guide's concepts map to every major AI coding agent. The file names and mechanisms differ, but the principles — auto-loaded context, task-triggered pointers, layered documentation — are universal.

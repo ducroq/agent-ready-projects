@@ -131,8 +131,6 @@ The deepest shift: documentation quality for agents isn't about accuracy or comp
 
 This is the documentation vector: every change should improve self-navigation, not just content quality.
 
----
-
 ## Validation technique: parallel specialized review
 
 After adopting the framework (or making significant changes), run multiple specialized review agents in parallel — each focused on a different concern (doc quality, consistency, traceability, completeness, etc.). In practice, 5-6 parallel reviewers can surface 10-15 cross-cutting issues in minutes that single-pass review misses: broken cross-references, stale metadata, calculation errors, traceability gaps. This technique was validated during the driven-pendulum adoption, where 6 agents found 14 real issues across the repo in ~2 minutes.

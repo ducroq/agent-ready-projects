@@ -12,7 +12,7 @@ A REST API for managing tasks and projects, with a React frontend and PostgreSQL
 - **Stack**: Express.js, TypeScript, React, PostgreSQL 15, Redis
 - **Status**: Production (v2.3.1)
 - **Repo**: github.com/example/task-tracker
-- **agent-ready-projects**: v1.0.0
+- **agent-ready-projects**: v1.1.0
 
 ## Before You Start
 
@@ -22,6 +22,7 @@ A REST API for managing tasks and projects, with a React frontend and PostgreSQL
 | Changing API endpoints or response shapes | `docs/RUNBOOK.md` — versioning policy, backwards compatibility rules |
 | Stuck or debugging something weird | `memory/gotcha-log.md` — problem-fix archive |
 | Touching auth or permissions | `memory/auth-patterns.md` — RBAC model, token lifecycle |
+| Ending a session | `memory/gotcha-log.md` — review, promote patterns, retire stale entries |
 
 ## Hard Constraints
 
