@@ -2,6 +2,19 @@
 
 All notable changes to the agent-ready-projects framework. Adopters can check their project file's `agent-ready-projects` version against this log to see what's changed.
 
+## v1.1.0 (2026-03-16)
+
+Adoption feedback from [driven-pendulum](https://github.com/ducroq/driven-pendulum) — 5 operational patterns from real use.
+
+### Templates
+- `memory-index.md` — "Recently Promoted" now says to retire entries immediately once they land in their destination, not at next audit
+- `memory-index.md` — "Active Decisions" nudges toward creating an ADR if a decision survives more than one session
+- `project-file.md` — "Before You Start" table gains an "Ending a session" row for end-of-session curation
+- `RUNBOOK.md` — added ~150-line document size heuristic (split and link when docs grow too large)
+
+### Documentation
+- `METHODOLOGY.md` — added parallel specialized review as a validation technique (5-6 agents, cross-cutting issues)
+
 ## v1.0.0 (2026-03-13)
 
 First stable release.
