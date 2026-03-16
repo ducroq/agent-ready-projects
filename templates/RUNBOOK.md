@@ -69,6 +69,12 @@
 |---------|-------------|-----|
 | [ symptom ] | [ cause ] | [ fix ] |
 
+## Document Size Heuristic
+
+<!-- If any document exceeds ~150 lines during a session, consider splitting the new
+     content into a separate file and linking to it. Documents that grow unbounded
+     become hard to navigate and expensive to load. Split early, link back. -->
+
 ## Documentation Practices
 
 <!-- What goes where, when to update -->

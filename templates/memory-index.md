@@ -28,8 +28,8 @@
 
 <!-- Gotchas that proved their value and were promoted from the gotcha log.
      These are lessons that recurred enough to earn always-loaded or topic-level visibility.
-     When an entry here is stable and well-understood, move it to the appropriate
-     topic file (or the project file if truly universal) and remove it from this section.
+     Retire entries from this section as soon as they appear in their destination
+     (project file or topic file). Don't wait for the next audit.
 
      Format: "if [situation], then [what to do] — promoted from gotcha-log YYYY-MM-DD" -->
 
@@ -40,4 +40,7 @@
 
 ## Active Decisions
 
-<!-- One-liners about recent architectural choices, pointing to ADRs if they exist -->
+<!-- One-liners about recent architectural choices, pointing to ADRs if they exist.
+     If a decision lives here for more than one session without a formal ADR,
+     create one — decisions that seem "too small for an ADR" are often the ones
+     that bite hardest when context is lost. -->

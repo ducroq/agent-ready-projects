@@ -133,4 +133,10 @@ This is the documentation vector: every change should improve self-navigation, n
 
 ---
 
+## Validation technique: parallel specialized review
+
+After adopting the framework (or making significant changes), run multiple specialized review agents in parallel — each focused on a different concern (doc quality, consistency, traceability, completeness, etc.). In practice, 5-6 parallel reviewers can surface 10-15 cross-cutting issues in minutes that single-pass review misses: broken cross-references, stale metadata, calculation errors, traceability gaps. This technique was validated during the driven-pendulum adoption, where 6 agents found 14 real issues across the repo in ~2 minutes.
+
+---
+
 *Since this methodology was written, the guide has gone through additional evolution: the promotion and retirement patterns were unified into a named **self-learning loop** (Capture → Surface → Promote → Retire), grounded in **processor memory hierarchy** principles. The adoption path was itself automated via [adopt.md](../adopt.md) — agent-facing prompts that assess, scaffold, and update the framework in any repo. **Versioning** ([CHANGELOG.md](../CHANGELOG.md)) was added so adopted projects can track which framework version they're running. Each addition followed the same methodology: observed friction in real use → named the pattern → made it actionable.*

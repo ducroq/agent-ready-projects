@@ -22,6 +22,7 @@
 | Making architectural decisions | `docs/adr/README.md` — decision index |
 | Changing deployment or infra | `docs/RUNBOOK.md` — operational how-to |
 | Stuck or debugging something weird | `memory/gotcha-log.md` — problem-fix archive |
+| Ending a session | `memory/gotcha-log.md` — review, promote patterns, retire stale entries |
 
 ## Hard Constraints
 
