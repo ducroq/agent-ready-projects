@@ -162,12 +162,10 @@ Why combine principles and how-to? Because principles without a runbook are too 
 
 ### Layer 3: Memory (memory index → topic files) — when complexity grows
 
-**Note**: This layer requires auto-memory (currently Claude Code only). **If your tool doesn't have auto-memory (Cursor, Windsurf, Copilot, Aider)**, your project file carries more weight — use it as a lean index with task-triggered pointers to the gotcha log, runbook, and ADRs. The self-learning loop still works; promotion targets the project file directly instead of passing through a memory index. You can [skip to Layer 4](#layer-4-history-gotcha-logmd--always-present).
-
 **Purpose**: "What have we learned working on this?"
 **Voice**: Declarative — "X works like Y", "if you see A, it's because B"
-**Location**: Auto-memory directory (not in repo — user-specific)
-**Auto-loaded**: The memory index is. Topic files are not.
+**Location**: In-repo `memory/` directory (see [ADR-001](docs/decisions/ADR-001-in-repo-memory-over-auto-memory.md) for rationale)
+**Auto-loaded**: The memory index is auto-loaded if your tool supports it. Topic files are not — they're loaded on demand via task-triggered pointers.
 
 **Important**: Some tools enforce hard limits on auto-loaded files (e.g., Claude Code truncates MEMORY.md after ~200 lines — content past the limit silently vanishes). Check your tool's limits. Regardless of the specific threshold, the index-not-dump pattern isn't just good practice — keeping auto-loaded files lean is forced by context economics. Beyond a certain project size, topic files are non-optional.
 
@@ -222,24 +220,26 @@ This is **progressive disclosure** — start broad, go deep only where needed. I
 - Chronological narrative ("on Feb 13 we changed X") — that's the gotcha log
 - Principles — that's CLAUDE.md or the runbook
 
-**Auto-memory vs committed documentation.** Some tools have auto-memory — persistent context files that aren't committed to the repo (e.g., MEMORY.md in Claude Code). If your tool supports this, use the split intentionally. If not, your project file carries more weight and should include task-triggered pointers to committed docs like the gotcha log and runbook.
+**In-repo memory vs auto-memory.** Memory files should live in-repo by default — in a `memory/` directory that is visible in your editor, version-controlled with git, and reviewable by humans and agents alike. This was a deliberate decision after experiencing the problems with hidden auto-memory across 28 projects (see [ADR-001](docs/decisions/ADR-001-in-repo-memory-over-auto-memory.md)).
 
-| Auto-memory | Committed docs |
-|-------------|----------------|
-| Agent-specific gotchas (API quirks, model behaviors) | Process and principles (how we work) |
-| Debug patterns from past sessions | Architecture decisions (ADRs) |
-| Codebase navigation shortcuts | Infrastructure documentation |
-| Session-learned patterns | Runbooks and how-to guides |
+| In-repo memory (default) | Auto-memory (exception) |
+|--------------------------|------------------------|
+| Gotcha logs, topic files, project state | Content you would never commit (personal notes, credential hints) |
+| Visible in editor, searchable, reviewable | Hidden, user-specific, not version controlled |
+| Survives repo moves and renames | Tied to filesystem path at creation time |
+| Supports the self-learning loop (you see what's there) | Easy to forget, hard to curate |
 
-The dividing line: would a human engineer benefit from reading this? If yes, it belongs in committed docs. If it's primarily saving an agent from repeating past mistakes, auto-memory is the right home.
+The dividing line: **commit by default**. Use auto-memory only for content you would never put in a repository. In practice, this is rare — nearly all memory benefits from human review.
 
-**Cross-project knowledge.** For related projects (a pipeline feeding a downstream app, a monorepo with shared services), cross-project facts need a home. A global config file (e.g., `~/.claude/CLAUDE.md` in Claude Code) handles universal preferences. Project-level memory topic files handle cross-project facts *this* project's agent needs — e.g., "the upstream API repo uses branch `main` not `master`" in the downstream consumer's memory file. The principle: store the fact where it's *needed*, not where it *originates*. Each repo's project file names the relationship and owns its side; neither duplicates the other's internals.
+**Cross-project knowledge.** For related projects (a pipeline feeding a downstream app, a monorepo with shared services), cross-project facts need a home. Project-level memory topic files handle cross-project facts *this* project's agent needs — e.g., "the upstream API repo uses branch `main` not `master`" in the downstream consumer's memory file. The principle: store the fact where it's *needed*, not where it *originates*. Each repo's project file names the relationship and owns its side; neither duplicates the other's internals.
+
+**The global file cliff.** Most tools support a global instructions file (e.g., `~/.claude/CLAUDE.md` in Claude Code) that loads in every project. This file has its own auto-loading cliff — content placed here burns context tokens in every session across every repo. Keep it lean: user preferences, cross-project infrastructure (shared server access), universal behavioral instructions. Project-specific content — even if used by several projects — belongs in those projects' files. Loading a 30-row voice library table in a hardware verification project is the global version of the 500-line README that nobody reads. Duplication across two repos is cheaper than irrelevant context in thirty.
 
 ### Layer 4: History (gotcha-log.md) — always present
 
 **Purpose**: "What went wrong before and how was it fixed?"
 **Voice**: Narrative — "Problem → Root cause → Fix"
-**Location**: `memory/` for tools with auto-memory, `docs/` for others (see [Tool-Specific Setup](#tool-specific-setup))
+**Location**: `memory/` directory (in-repo, alongside other memory files)
 **Auto-loaded**: No (loaded when stuck, via the project file's or memory index's trigger)
 **Growth**: Unlimited (append-only)
 

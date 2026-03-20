@@ -2,6 +2,26 @@
 
 All notable changes to the agent-ready-projects framework. Adopters can check their project file's `agent-ready-projects` version against this log to see what's changed.
 
+## v1.2.0 (2026-03-19)
+
+In-repo memory by default, global file cliff guidance, and first ADR.
+
+### Framework
+- **In-repo memory over auto-memory** — Layer 3 location changed from "auto-memory directory (not in repo)" to in-repo `memory/` directory. Based on evidence from 28 projects where hidden auto-memory led to uncurated, orphaned, and invisible knowledge files.
+- **Global file cliff** — new guidance on keeping the global instructions file lean and project-agnostic. Project-specific content belongs in project files, not the global file.
+- **Commit by default** — replaced the "human benefit" heuristic for routing content. New guidance: commit memory to the repo by default; use auto-memory only for content you would never put in a repository.
+
+### Guide (README.md)
+- Layer 3 location updated to reference in-repo `memory/` with link to ADR-001
+- Replaced auto-memory vs committed docs table with in-repo vs auto-memory table
+- Added "The global file cliff" subsection under Cross-project knowledge
+- Layer 4 location simplified to "in-repo `memory/`"
+- Removed Claude Code-only note that directed non-Claude users to skip Layer 3
+
+### Decisions
+- Added `docs/decisions/` directory
+- Added ADR-001: In-Repo Memory Over Auto-Memory — documents the decision, the three problems that motivated it, consequences, and migration guide
+
 ## v1.1.0 (2026-03-16)
 
 Framework generalization, worked example, Cursor support, and adoption feedback from [driven-pendulum](https://github.com/ducroq/driven-pendulum).
