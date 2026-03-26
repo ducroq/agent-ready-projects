@@ -1,6 +1,6 @@
 # Working With AI Agents: A Practical Guide
 
-**Version 1.1.0** | [Changelog](CHANGELOG.md) | [MIT License](LICENSE)
+**Version 1.3.0** | [Changelog](CHANGELOG.md) | [MIT License](LICENSE)
 
 Your AI agent starts every session cold. It doesn't remember yesterday's bugs, your architectural decisions, or what it tried and failed last week. You end up repeating yourself, undoing its mistakes, and wondering why it's not getting better.
 
@@ -404,6 +404,38 @@ Here's a concrete example of one lesson traveling through the entire loop:
 
 Total effort: ~2 minutes across 6 sessions. The lesson was available at the right level of visibility for each phase of its life.
 
+### Self-learning agents
+
+The self-learning loop applies to agents themselves, not just project documentation. When you create **review agents** — instruction documents that tell an agent how to systematically review an artifact (code, rubrics, designs, assessments) — you can make the agent surface its own blind spots.
+
+The pattern is simple. A review agent defines **issue categories** (typed findings with severity levels) and a **review procedure** (step-by-step checks). After completing a review, the agent runs a **self-check**:
+
+> "Did I flag any issue that does NOT fit cleanly into one of my defined issue categories? Did I notice a recurring pattern that isn't captured as a named check?"
+
+If so, the agent reports the new pattern and **asks the user** whether to add it to the agent's issue categories. This closes the loop: agents that review artifacts improve their own review capability over time.
+
+```
+    Review agent runs          Agent finds issue X
+         │                          │
+         ▼                          ▼
+    Produces report ──────► Self-check: is X in my categories?
+                                    │
+                           ┌────────┴────────┐
+                           │ Yes             │ No
+                           │ (normal)        │ (new pattern)
+                           ▼                 ▼
+                        Report only    Ask user: "Add to my
+                                       issue categories?"
+                                             │
+                                        ┌────┴────┐
+                                        │ Yes    │ No
+                                        ▼        ▼
+                                   Update agent  Note it
+                                   definition    for later
+```
+
+A reusable template for building review agents is available in [`templates/review-agent.md`](templates/review-agent.md). It includes the self-check step and works for any domain — code review, rubric design, paper review, assessment audit, or anything else that benefits from structured, repeatable review.
+
 ### Why this isn't "keep a log"
 
 The difference between this and a flat annotation system is the **migration**. Annotation-style approaches (sticky notes on code, inline comments, context-hub-style tagging) keep lessons pinned where they were learned. They're useful but static — a note on file X stays on file X forever, whether it's still relevant or not, whether it applies to file Y too, or whether it's become a project-wide constraint.
@@ -445,6 +477,10 @@ The same fact stated identically in two places will drift — one gets updated, 
 However, the same fact **framed differently for different purposes** can be valuable: a constraint ("never use external APIs for PII") in CLAUDE.md and an operational reminder ("when adding a new model provider, verify it's EU-hosted") in the runbook serve different cognitive moments. The test: if you removed one copy, would agents reliably find the other at the moment they need it? If not, the duplication is justified — but one copy should be canonical, and the other should defer to it.
 
 The drift risk of duplicated facts is proportional to how often the fact changes and how similar the framings are. A stable architectural fact (like a pipeline order) referenced in different contexts is low risk. A configuration rule restated with slightly different wording in two docs is high risk — the framings will diverge within a few sessions.
+
+**The ground truth principle.** When multiple artifacts describe the same thing (a spec, a rubric, a schema), designate one as canonical and align the others to it. An educational assessment project found that a Word template, markdown rubric, Excel scoring sheet, and agent prompt all described the same scoring criteria — and had already diverged in three places within weeks. The fix: declare the student-facing template as ground truth, align all instruments to it, and never edit a downstream artifact without checking the source. This generalizes to any domain: API spec vs. generated docs, design system vs. component code, schema vs. migration files.
+
+**The three-document pattern.** For any structured evaluation (scoring, review, assessment), separate the **instructions** (how to evaluate), the **criteria** (how to score), and the **output template** (what the result looks like) into three files. Embedding criteria inside the instructions creates a monolithic document that resists updates — changing one score descriptor requires editing the instruction prompt. Tested on a 651-line assessment prompt that was refactored into three ~150-line files; the criteria immediately stopped drifting from the external rubric because there was only one copy.
 
 ### Metadata that duplicates derivable facts
 Config-level metadata like `total_sources: 103` / `enabled_sources: 77` in YAML files seems helpful but is never read by code and drifts every time you add or disable a source. If a fact is derivable from the data itself, don't maintain a separate count — it will be wrong within a week.
@@ -606,11 +642,14 @@ Ready-to-use starter files in [`templates/`](templates/). Tool-agnostic — rena
 - **[`memory-index.md`](templates/memory-index.md)** — Index + current state (for tools with auto-memory)
 - **[`gotcha-log.md`](templates/gotcha-log.md)** — Structured problem/solution journal with promotion tracking
 - **[`RUNBOOK.md`](templates/RUNBOOK.md)** — Operational principles and how-to
+- **[`review-agent.md`](templates/review-agent.md)** — Reusable skeleton for domain review agents with self-learning
 
 Copy, rename for your tool, delete the comments, fill in your specifics.
 
 ## Further Reading
 
+- **[`docs/EXAMPLE.md`](docs/EXAMPLE.md)** — Worked example: Task Tracker API (software project)
+- **[`docs/EXAMPLE-ASSESSMENT.md`](docs/EXAMPLE-ASSESSMENT.md)** — Worked example: Educational assessment system (non-code project) — demonstrates review agents, three-document pattern, ground truth principle, and self-learning agents
 - **[`docs/LANDSCAPE.md`](docs/LANDSCAPE.md)** — State of the art in context engineering for coding agents, gap analysis, and where this guide fits relative to existing work (Fowler, BMAD, spec-kit, HumanLayer, AGENTS.md, and others)
 - **[`docs/COMPARISON.md`](docs/COMPARISON.md)** — Detailed mapping against BMAD-METHOD and spec-kit: where they validate these principles, what they add, and what you probably don't need
 - **[`docs/METHODOLOGY.md`](docs/METHODOLOGY.md)** — How this guide was iteratively developed and tested, including the concrete failures that shaped it and the multi-agent audit that pressure-tested it against three real projects

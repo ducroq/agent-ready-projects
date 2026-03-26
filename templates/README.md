@@ -30,3 +30,4 @@ If your tool has auto-memory (currently Claude Code), also grab `memory-index.md
 - **[`memory-index.md`](memory-index.md)** — Auto-loaded index + current state (for tools with auto-memory)
 - **[`gotcha-log.md`](gotcha-log.md)** — Structured problem/solution journal with promotion tracking
 - **[`RUNBOOK.md`](RUNBOOK.md)** — Operational principles and how-to
+- **[`review-agent.md`](review-agent.md)** — Reusable skeleton for domain review agents (code review, rubric design, assessment audit, etc.) with self-learning capability

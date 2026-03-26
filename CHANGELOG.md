@@ -2,6 +2,31 @@
 
 All notable changes to the agent-ready-projects framework. Adopters can check their project file's `agent-ready-projects` version against this log to see what's changed.
 
+## v1.3.0 (2026-03-26)
+
+Self-learning review agents, non-code domain example, and three new patterns from adopting the framework for educational assessment.
+
+### Framework
+- **Self-learning agents** — New section in the self-learning loop: agents can surface their own blind spots. After completing a review, agents run a self-check against their issue categories and ask the user whether to promote new patterns. Closes the loop without requiring the user to notice patterns themselves.
+- **Review agent pattern** — Formalized as a reusable skeleton. A review agent is an instruction document with: role + principles, typed issue categories, step-by-step procedure, structured output format, self-check step. Works for any domain (code review, rubric design, assessment audit, paper review).
+- **Ground truth principle** — When multiple artifacts describe the same thing, designate one as canonical. Everything else aligns to it. Prevents drift when specs, rubrics, templates, and prompts all describe the same criteria.
+- **Three-document pattern** — For structured evaluations, separate instructions (how to evaluate), criteria (how to score), and output template (what the result looks like) into three files. Prevents monolithic prompts that resist updates and drift from external criteria.
+
+### Templates
+- Added `templates/review-agent.md` — Reusable skeleton for domain review agents with operating principles, issue categories, review procedure, output format, self-check step, and rules. Includes comments explaining each section.
+
+### Docs
+- Added `docs/EXAMPLE-ASSESSMENT.md` — Second worked example: educational assessment system (non-code project). Demonstrates the layered model applied to university assessment with review agents, three-document pattern, ground truth principle, and self-learning loop in practice.
+
+### Guide (README.md)
+- Added "Self-learning agents" subsection under The Self-Learning Loop with flow diagram
+- Added "Ground truth principle" and "Three-document pattern" under What Doesn't Work > Duplicating content
+- Updated Templates section and Further Reading with new files
+- Version bumped to 1.3.0
+
+### Adoption evidence
+- Framework adopted for [agent-ready-assessment](https://github.com/ducroq/agent-ready-assessment): educational assessment system with 3 course modules (EVML ML/DL, EML), 4 review agents, and full self-learning loop. Non-code domain validates that the layered model works beyond software projects.
+
 ## v1.2.0 (2026-03-19)
 
 In-repo memory by default, global file cliff guidance, and first ADR.
