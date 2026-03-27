@@ -2,6 +2,13 @@
 
 All notable changes to the agent-ready-projects framework. Adopters can check their project file's `agent-ready-projects` version against this log to see what's changed.
 
+## v1.3.2 (2026-03-27)
+
+New anti-pattern: files with implicit runtime semantics.
+
+### Guide (README.md)
+- Added "Files with implicit runtime semantics" to What Doesn't Work — agents create config-format files "for documentation" that tooling auto-discovers and interprets at runtime (wrangler.toml, docker-compose overrides, .npmrc). Real incident: a review agent added wrangler.toml to document Cloudflare Pages settings; Cloudflare interpreted it at build time, breaking 7+ consecutive deploys.
+
 ## v1.3.1 (2026-03-27)
 
 Negative results pattern, adoption evidence from vmodel.eu.

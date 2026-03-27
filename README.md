@@ -1,6 +1,6 @@
 # Working With AI Agents: A Practical Guide
 
-**Version 1.3.1** | [Changelog](CHANGELOG.md) | [MIT License](LICENSE)
+**Version 1.3.2** | [Changelog](CHANGELOG.md) | [MIT License](LICENSE)
 
 Your AI agent starts every session cold. It doesn't remember yesterday's bugs, your architectural decisions, or what it tried and failed last week. You end up repeating yourself, undoing its mistakes, and wondering why it's not getting better.
 
@@ -506,6 +506,11 @@ A constitution that says "we value simplicity" without showing how to run the de
 
 ### Skipping the constitution entirely
 It feels like overhead until an agent makes a decision that violates a principle you thought was obvious. "Don't remove output fields that downstream apps depend on" seems obvious to you. It's not obvious to an agent optimizing for clean code.
+
+### Files with implicit runtime semantics
+Agents sometimes create documentation files in formats that tooling interprets at runtime. A review agent recommends adding a `wrangler.toml` "for reference" — but Cloudflare Pages reads it at build time, overriding dashboard settings and breaking every deploy. A `docker-compose.override.yml` added "as documentation" gets picked up by `docker compose up`. A `.npmrc` created to "document registry settings" changes where packages install from.
+
+The pattern: agents see a knowledge gap (infrastructure settings aren't documented) and fill it with a file whose format matches the domain — a reasonable instinct that ignores how build tools discover config files. The fix isn't "don't create files" but "document infrastructure in plain markdown, not in config formats that tools auto-discover." Hard constraints like "never add a wrangler.toml to this repo" belong in the project file.
 
 ### Pure session logs
 "Today we did X, then Y, then Z" grows without bound and buries signal. But don't go to the other extreme — a structured gotcha log (Problem → Root cause → Fix) is genuinely useful. The distinction: journals of activity are noise; journals of problems and solutions are knowledge.
