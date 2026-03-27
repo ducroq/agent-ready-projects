@@ -1,6 +1,6 @@
 # Working With AI Agents: A Practical Guide
 
-**Version 1.3.0** | [Changelog](CHANGELOG.md) | [MIT License](LICENSE)
+**Version 1.3.1** | [Changelog](CHANGELOG.md) | [MIT License](LICENSE)
 
 Your AI agent starts every session cold. It doesn't remember yesterday's bugs, your architectural decisions, or what it tried and failed last week. You end up repeating yourself, undoing its mistakes, and wondering why it's not getting better.
 
@@ -435,6 +435,16 @@ If so, the agent reports the new pattern and **asks the user** whether to add it
 ```
 
 A reusable template for building review agents is available in [`templates/review-agent.md`](templates/review-agent.md). It includes the self-check step and works for any domain — code review, rubric design, paper review, assessment audit, or anything else that benefits from structured, repeatable review.
+
+### Negative results are knowledge
+
+Most teams only document what worked. But for agents, knowing what *didn't* work — and why — is equally valuable. Without it, a future agent will retry the same failed approach, waste time, and reach the same dead end.
+
+When an experiment fails, document it in the gotcha log or a topic file with three things: **what you tried**, **quantified results**, and **why it failed**. This turns a dead end into a guardrail.
+
+> *Example: [vmodel.eu](https://github.com/ducroq/vmodel.eu) tried using LLM findings counts to adjust deterministic scores. A 3-hour calibration run across 64 held-out reports showed the adjustment hurt more than it helped (within-1 accuracy dropped from 96% to 92%). Root cause: reports with few LLM findings aren't necessarily good — short text gives the LLM less to criticize, mimicking a "clean bill of health." Documented in `memory/calibration-history.md` with full data. No future agent will retry this approach.*
+
+The self-learning loop already handles this — negative results enter through Capture (gotcha log), get promoted when they prove durable (topic file), and prevent wasted effort in future sessions. The key habit is treating "this doesn't work" as a first-class finding, not a failed experiment to forget.
 
 ### Why this isn't "keep a log"
 

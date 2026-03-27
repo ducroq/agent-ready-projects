@@ -2,6 +2,16 @@
 
 All notable changes to the agent-ready-projects framework. Adopters can check their project file's `agent-ready-projects` version against this log to see what's changed.
 
+## v1.3.1 (2026-03-27)
+
+Negative results pattern, adoption evidence from vmodel.eu.
+
+### Guide (README.md)
+- Added "Negative results are knowledge" subsection under The Self-Learning Loop — documents the pattern of treating failed experiments as first-class findings that prevent future agents from retrying dead ends.
+
+### Adoption evidence
+- [vmodel.eu](https://github.com/ducroq/vmodel.eu) adopted v1.3.0. Key evidence: LLM-assisted score adjustment calibrated on 64 held-out reports, proved harmful, documented as negative result in `memory/calibration-history.md`. INCOSE rule checker (Agent 6) calibrated on 186 reports — detectors tuned from 28 findings/report to 1 using corpus data.
+
 ## v1.3.0 (2026-03-26)
 
 Self-learning review agents, non-code domain example, and three new patterns from adopting the framework for educational assessment.
