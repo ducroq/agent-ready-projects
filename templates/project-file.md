@@ -11,7 +11,7 @@
 - **Stack**: [e.g., Python 3.12, FastAPI, PostgreSQL]
 - **Status**: [e.g., Production / MVP / Prototype]
 - **Repo**: [e.g., github.com/org/project]
-- **agent-ready-projects**: v1.3.0 <!-- framework version — check CHANGELOG for updates -->
+- **agent-ready-projects**: v1.3.3 <!-- framework version — check CHANGELOG for updates -->
 
 ## Before You Start
 

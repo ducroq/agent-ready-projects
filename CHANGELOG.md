@@ -2,6 +2,35 @@
 
 All notable changes to the agent-ready-projects framework. Adopters can check their project file's `agent-ready-projects` version against this log to see what's changed.
 
+## v1.3.4 (2026-03-29)
+
+Fix curate command path for Claude Code — skills, not commands.
+
+### Templates
+- Updated `templates/curate.md` — changed Claude Code install path from `.claude/commands/curate.md` to `.claude/skills/curate/SKILL.md` with frontmatter example. The legacy `.claude/commands/` location is no longer discovered by Claude Code; skills require `SKILL.md` inside a named directory under `.claude/skills/`.
+
+### Guide (README.md)
+- Fixed three remaining references from `.claude/commands/curate.md` to `.claude/skills/curate/SKILL.md`: concept mapping table, "Automating the rhythm" paragraph, and "Growing from there" list.
+
+### Adoption evidence
+- [augur](https://github.com/ducroq/augur) hit the bug: `/curate` returned "Unknown skill" when installed at `.claude/commands/`. Confirmed working after moving to `.claude/skills/curate/SKILL.md` with frontmatter.
+
+## v1.3.3 (2026-03-28)
+
+Curate command template — automates the end-of-session self-learning loop.
+
+### Templates
+- Added `templates/curate.md` — end-of-session curation skill that automates gotcha review, pattern promotion, memory index update, and reference verification. For Claude Code, installs as `.claude/skills/curate/SKILL.md` giving a `/curate` skill. For other tools, use as an end-of-session prompt.
+
+### Adopt prompt (adopt.md)
+- Added Step 6: install the curate command during project scaffolding.
+- Added curate template URL to the template list.
+
+### Guide (README.md)
+- Added curate command to the concept mapping table (Tool-Specific Setup).
+- Updated "Automating the rhythm" paragraph to reference `/curate` instead of generic "please curate" phrasing.
+- Added curate command to the "Growing from there" incremental adoption list.
+
 ## v1.3.2 (2026-03-27)
 
 New anti-pattern: files with implicit runtime semantics.

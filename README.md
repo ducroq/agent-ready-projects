@@ -1,6 +1,6 @@
 # Working With AI Agents: A Practical Guide
 
-**Version 1.3.2** | [Changelog](CHANGELOG.md) | [MIT License](LICENSE)
+**Version 1.3.4** | [Changelog](CHANGELOG.md) | [MIT License](LICENSE)
 
 Your AI agent starts every session cold. It doesn't remember yesterday's bugs, your architectural decisions, or what it tried and failed last week. You end up repeating yourself, undoing its mistakes, and wondering why it's not getting better.
 
@@ -342,7 +342,7 @@ The biggest shift in practice: **capture during work, curate at end-of-session.*
 
 The key shift: end-of-session time becomes **1-2 minutes of review**, not 20 minutes of writing from recall. The agent does the heavy lifting — reading across files, spotting patterns, drafting consolidations — and you approve or adjust.
 
-**Automating the rhythm.** If your agent tool supports hooks, the rhythm becomes almost fully automated. Even without hooks, "please curate memory before we wrap up" at end of session is enough. The agent already has the full session context; correlation and summarization are what it's good at.
+**Automating the rhythm.** For Claude Code, install the [`curate.md`](templates/curate.md) template as `.claude/skills/curate/SKILL.md` (with frontmatter — see template comments) — this gives you a `/curate` skill that automates the end-of-session curation (gotcha review, pattern promotion, memory index update). For other tools, paste the curate template as an end-of-session prompt. Either way, the agent does the heavy lifting and you review its proposals.
 
 These practices form a single cycle — the **self-learning loop**.
 
@@ -553,6 +553,7 @@ This guide's concepts map to every major AI coding agent. The file names and mec
 |----------------|------------|----------------|--------|----------|----------------|-------|
 | "Project file" (Layer 1) | `CLAUDE.md` | `AGENTS.md` | `.cursor/rules/*.mdc` | `.windsurfrules` | `.github/copilot-instructions.md` | `.aider.conf.yml` + convention files |
 | "Memory" (Layer 3) | `MEMORY.md` + topic files | — | — | — | — | — |
+| "Curate command" | `.claude/skills/curate/SKILL.md` (`/curate`) | End-of-session prompt | End-of-session prompt | End-of-session prompt | End-of-session prompt | End-of-session prompt |
 | "Session hooks" | `.claude/hooks/` | — | — | — | — | — |
 | Nested/directory rules | `CLAUDE.md` in subdirs | `AGENTS.md` in subdirs | `.mdc` files with globs | — | — | — |
 
@@ -636,10 +637,11 @@ You need exactly one file to start: a **project file** with a "Before You Start"
 Add layers as your project needs them — not before:
 
 4. **Gotcha log** — Copy [`templates/gotcha-log.md`](templates/gotcha-log.md) when you hit your first weird bug worth remembering
-5. **Memory index** — Copy [`templates/memory-index.md`](templates/memory-index.md) when your project file is getting long (only for tools with auto-memory)
-6. **Runbook** — Extract to `docs/RUNBOOK.md` when operational detail is crowding out identity content
-7. **ADR index** — When you start making architectural decisions worth recording
-8. **Topic files** — When the memory index gets too long, split into per-subsystem files
+5. **Curate skill** — Copy [`templates/curate.md`](templates/curate.md) to `.claude/skills/curate/SKILL.md` (Claude Code) with frontmatter for a `/curate` skill that automates end-of-session curation
+6. **Memory index** — Copy [`templates/memory-index.md`](templates/memory-index.md) when your project file is getting long (only for tools with auto-memory)
+7. **Runbook** — Extract to `docs/RUNBOOK.md` when operational detail is crowding out identity content
+8. **ADR index** — When you start making architectural decisions worth recording
+9. **Topic files** — When the memory index gets too long, split into per-subsystem files
 
 ### For a project with existing docs
 

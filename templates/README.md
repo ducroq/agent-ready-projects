@@ -19,6 +19,7 @@ If your tool has auto-memory (currently Claude Code), also grab `memory-index.md
 | `memory-index.md` | `MEMORY.md` | — | — | — | — | — |
 | `gotcha-log.md` | `memory/gotcha-log.md` | `docs/gotcha-log.md` | `docs/gotcha-log.md` | `docs/gotcha-log.md` | `docs/gotcha-log.md` | `docs/gotcha-log.md` |
 | `RUNBOOK.md` | `docs/RUNBOOK.md` | `docs/RUNBOOK.md` | `docs/RUNBOOK.md` | `docs/RUNBOOK.md` | `docs/RUNBOOK.md` | `docs/RUNBOOK.md` |
+| `curate.md` | `.claude/skills/curate/SKILL.md` | End-of-session prompt | End-of-session prompt | End-of-session prompt | End-of-session prompt | End-of-session prompt |
 
 **Tools without auto-memory**: The project file carries more weight — it's your only auto-loaded file. Keep it lean, use it as an index with task-triggered pointers to the runbook, gotcha log, and ADRs. The self-learning loop still works; promotion just targets the project file directly instead of passing through a memory index.
 
@@ -31,3 +32,4 @@ If your tool has auto-memory (currently Claude Code), also grab `memory-index.md
 - **[`gotcha-log.md`](gotcha-log.md)** — Structured problem/solution journal with promotion tracking
 - **[`RUNBOOK.md`](RUNBOOK.md)** — Operational principles and how-to
 - **[`review-agent.md`](review-agent.md)** — Reusable skeleton for domain review agents (code review, rubric design, assessment audit, etc.) with self-learning capability
+- **[`curate.md`](curate.md)** — End-of-session curation skill that automates the self-learning loop (gotcha review, pattern promotion, memory index update). For Claude Code, save as `.claude/skills/curate/SKILL.md` with frontmatter (see template comments) to get a `/curate` skill; for other tools, use as an end-of-session prompt
