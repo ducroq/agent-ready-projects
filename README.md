@@ -15,6 +15,17 @@ Works with any AI coding agent: Claude Code, Codex, Cursor, Windsurf, GitHub Cop
 
 If your project is a single file or a weekend hack, this is overkill. If you've ever thought "why doesn't my agent remember this?" — read on.
 
+### Visual Walkthrough
+
+New here? Start with the four-page visual guide — diagrams and flowcharts, no wall of text.
+
+1. **[The Cliff](docs/guide/01-the-cliff.md)** — Why your agent ignores your docs (and how to fix it)
+2. **[The Layers](docs/guide/02-the-layers.md)** — Where to put what (and which layers you actually need)
+3. **[The Loop](docs/guide/03-the-loop.md)** — How context stays fresh across sessions
+4. **[The Rhythm](docs/guide/04-the-rhythm.md)** — When to do what (during work, end of session, monthly)
+
+The full reference guide continues below.
+
 ---
 
 <details>
