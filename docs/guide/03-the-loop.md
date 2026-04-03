@@ -56,7 +56,8 @@ sequenceDiagram
     Agent->>Agent: Update files
 ```
 
-The agent does three things:
+The agent does four things:
+- **Freshness check** — Verify references still exist, flag stale memory and lingering gotchas from previous sessions
 - **Correlate** — Link entries that stem from the same root cause
 - **Summarize** — Five timeout gotchas → "this API is unreliable under load"
 - **Prune** — Flag stale entries for removal
@@ -109,7 +110,7 @@ Total effort: ~2 minutes across 6 sessions. The lesson was visible at the right 
 - Remove topic file entries for refactored-away behavior
 - Remove memory index entries that are now in the project file or code
 
-**Monthly audit:** The agent scans all memory files and proposes batch retirements. You review and confirm. Pruning should roughly match growth — if memory only grows, it's accumulating noise.
+**Monthly audit:** Deep audit — the agent scans all memory for drift, proposes batch retirements, and checks ground truth designations still hold. You review and confirm. Pruning should roughly match growth — if memory only grows, it's accumulating noise. (Basic staleness is now caught every session via the freshness check in `/curate`.)
 
 ---
 
