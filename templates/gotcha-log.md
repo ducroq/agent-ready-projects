@@ -22,6 +22,13 @@
 
 -->
 
+<!-- WORKED EXAMPLE — delete or keep as a reference for entry style -->
+
+### Tests pass locally but fail in deployment (2026-04-04)
+**Problem**: All tests green (`pytest`, manual `python3 scripts/...`), but the service fails when triggered by its actual execution context (systemd, Docker, CI). Failure was silent — discovered hours later.
+**Root cause**: Sandboxed execution contexts impose constraints that manual/local runs bypass. Examples: systemd `ProtectHome=read-only` blocks cache writes; Docker read-only layers drop capabilities; CI uses a different user with restricted network and ephemeral filesystem. Unit tests and manual runs never exercise these constraints.
+**Fix**: Always verify through the actual execution context after deploying — `systemctl start`, `docker run`, or CI trigger — not just `python3 script.py`. Add a post-deploy smoke test that runs _inside_ the sandbox.
+
 ## Promoted
 
 <!-- Track gotchas that have been promoted to topic files or the memory index.

@@ -1,6 +1,6 @@
 # Working With AI Agents: A Practical Guide
 
-**Version 1.4.0** | [Changelog](CHANGELOG.md) | [MIT License](LICENSE)
+**Version 1.5.0** | [Changelog](CHANGELOG.md) | [MIT License](LICENSE)
 
 Your AI agent starts every session cold. It doesn't remember yesterday's bugs, your architectural decisions, or what it tried and failed last week. You end up repeating yourself, undoing its mistakes, and wondering why it's not getting better.
 
@@ -653,6 +653,7 @@ Add layers as your project needs them — not before:
 7. **Runbook** — Extract to `docs/RUNBOOK.md` when operational detail is crowding out identity content
 8. **ADR index** — When you start making architectural decisions worth recording
 9. **Topic files** — When the memory index gets too long, split into per-subsystem files
+10. **Checklists** — Copy [`templates/checklists/`](templates/checklists/) to `docs/checklists/` when you want definition-of-done gates for architecture, implementation, testing, and QA stages
 
 ### For a project with existing docs
 
@@ -671,6 +672,8 @@ Ready-to-use starter files in [`templates/`](templates/). Tool-agnostic — rena
 - **[`gotcha-log.md`](templates/gotcha-log.md)** — Structured problem/solution journal with promotion tracking
 - **[`RUNBOOK.md`](templates/RUNBOOK.md)** — Operational principles and how-to
 - **[`review-agent.md`](templates/review-agent.md)** — Reusable skeleton for domain review agents with self-learning
+- **[`curate.md`](templates/curate.md)** — End-of-session curation skill that automates the self-learning loop. For Claude Code, save as `.claude/skills/curate/SKILL.md`; for other tools, use as an end-of-session prompt
+- **[`checklists/`](templates/checklists/)** — Validation checklists for each workflow stage: architect, test, implement, QA. Lightweight definition-of-done gates with git-reality validation and adversarial review requirements
 
 Copy, rename for your tool, delete the comments, fill in your specifics.
 

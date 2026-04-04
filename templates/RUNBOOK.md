@@ -50,6 +50,16 @@
 
 ### Post-deploy verification
 
+<!-- CRITICAL: Test through the actual execution context, not manual invocation.
+     Sandboxed environments (systemd, Docker, CI) impose constraints that local runs bypass:
+     - systemd: ProtectHome, ReadWritePaths, NoNewPrivileges, PrivateTmp
+     - Docker: read-only layers, dropped capabilities, non-root user
+     - CI: different user, restricted network, ephemeral filesystem
+     Manual "it works on my machine" verification misses all of these. -->
+
+- [ ] Trigger via actual execution context (`systemctl start`, `docker run`, CI trigger) — NOT manual invocation
+- [ ] Check logs for errors in the first run after deploy
+- [ ] Verify the service is healthy (health endpoint, process status, expected output)
 - [ what to check after deploying ]
 
 ## Adding a New [Extension Point]

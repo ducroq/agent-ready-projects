@@ -11,7 +11,7 @@
 - **Stack**: [e.g., Python 3.12, FastAPI, PostgreSQL]
 - **Status**: [e.g., Production / MVP / Prototype]
 - **Repo**: [e.g., github.com/org/project]
-- **agent-ready-projects**: v1.3.4 <!-- framework version — check CHANGELOG for updates -->
+- **agent-ready-projects**: v1.5.0 <!-- framework version — check CHANGELOG for updates -->
 
 ## Before You Start
 
@@ -23,6 +23,12 @@
 | Changing deployment or infra | `docs/RUNBOOK.md` — operational how-to |
 | Stuck or debugging something weird | `memory/gotcha-log.md` — problem-fix archive |
 | Ending a session | `memory/gotcha-log.md` — review, promote patterns, retire stale entries |
+<!-- Optional: add if you're using the workflow checklists from templates/checklists/
+| Finishing architecture/design | `docs/checklists/architect-checklist.md` — definition-of-done |
+| Writing or reviewing tests | `docs/checklists/test-checklist.md` — definition-of-done |
+| Completing implementation | `docs/checklists/implement-checklist.md` — definition-of-done |
+| Reviewing before merge | `docs/checklists/qa-checklist.md` — definition-of-done |
+-->
 
 ## Hard Constraints
 
