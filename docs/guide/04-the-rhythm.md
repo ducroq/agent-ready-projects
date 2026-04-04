@@ -67,7 +67,11 @@ flowchart TD
 
     Step3["3. Update memory index"]
     Step3 --> Update["Reflect what changed,<br/>add new paths,<br/>remove stale entries"]
-    Update --> Report["4. Report summary"]
+    Update --> Step4
+
+    Step4["4. Doc sync check"]
+    Step4 --> Sync["Verify project file, runbook,<br/>backlog match current repo"]
+    Sync --> Report["5. Report summary"]
 
     style Start fill:#f0fdf4,stroke:#16803c
     style Step0 fill:#eff6ff,stroke:#1d6fa5
@@ -109,6 +113,7 @@ flowchart TD
         Curate --> Summarize["Summarize repeated lessons"]
         Curate --> Prune["Flag stale entries"]
         Curate --> Promote["Promote recurring patterns"]
+        Curate --> DocSync["Doc sync check<br/>(project file, runbook, backlog)"]
     end
 
     subgraph monthly["Monthly"]

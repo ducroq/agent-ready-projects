@@ -1,6 +1,6 @@
 # Working With AI Agents: A Practical Guide
 
-**Version 1.5.0** | [Changelog](CHANGELOG.md) | [MIT License](LICENSE)
+**Version 1.6.0** | [Changelog](CHANGELOG.md) | [MIT License](LICENSE)
 
 Your AI agent starts every session cold. It doesn't remember yesterday's bugs, your architectural decisions, or what it tried and failed last week. You end up repeating yourself, undoing its mistakes, and wondering why it's not getting better.
 
@@ -346,7 +346,7 @@ The biggest shift in practice: **capture during work, curate at end-of-session.*
 | **During work** | Learned something non-obvious? Note it | Relevant topic file |
 | **After a decision** | Chose between approaches? | ADR + update index |
 | **Changed operations** | Process or infrastructure changed? | Project file or RUNBOOK.md |
-| **End of session** | Ask the agent to curate: correlate, summarize, prune, promote (review its proposals) | Memory index + topic files (1-2 min) |
+| **End of session** | Ask the agent to curate: correlate, summarize, prune, promote, doc sync (review its proposals) | Memory index + topic files + project file (1-2 min) |
 | **Monthly** | Agent audits all memory files: flags resolved items, stale entries, facts now encoded in code. You review and confirm retirements. | All memory files |
 
 **Course-correcting.** When you realize the direction is wrong mid-session — requirements changed, an assumption broke, the approach isn't working — pause and tell the agent to reassess. Have it evaluate what's affected and propose updates to the project file, ADRs, and task list. Review the proposals, then continue. Agents won't initiate course-correction on their own — they'll keep building on a broken foundation — but they can handle the doc updates once you steer them. The discipline is in recognizing the moment to pause; the agent handles the paperwork.

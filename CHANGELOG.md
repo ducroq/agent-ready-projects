@@ -2,7 +2,28 @@
 
 All notable changes to the agent-ready-projects framework. Adopters can check their project file's `agent-ready-projects` version against this log to see what's changed.
 
-## v1.5.0 (2026-04-04)
+## v1.6.0 (2026-04-04)
+
+Doc sync step — `/curate` now catches documentation drift from code changes, not just memory staleness.
+
+### Templates
+- **`templates/curate.md`** — Added Step 4 (Doc sync check) between memory index update and reference verification. Checks project file architecture section, key commands, runbook operational details, and backlog against current repo state. Steps 4-5 renumbered to 5-6. Report template updated to include doc sync findings.
+
+### Guide
+- **`docs/guide/03-the-loop.md`** — Surface phase now lists "Doc sync" as the fifth agent action during end-of-session curation.
+- **`docs/guide/04-the-rhythm.md`** — `/curate` flowchart updated with Step 4 (Doc sync check) between memory index and report. Full-picture diagram updated to show doc sync in end-of-session subgraph.
+
+### Guide (README.md)
+- Documentation Rhythm table updated: end-of-session action now includes "doc sync."
+- Version bumped to 1.6.0.
+
+### Templates
+- `templates/project-file.md` — Version bumped to 1.6.0.
+
+### Motivation
+Observed in [podcast-generator](https://github.com/ducroq/podcast-generator): a large session with 18 file changes, new modules, renamed CLI flags, and changed defaults left CLAUDE.md and RUNBOOK stale. The existing curate steps (gotcha log, memory index, references) didn't catch documentation drift because they focus on the memory layer, not the project documentation layer. Adding a doc sync step closes this gap — inline updates prevent drift, curate catches what slips through.
+
+
 
 Validation checklists, adversarial QA, git-reality validation, and deployment context gotcha.
 
