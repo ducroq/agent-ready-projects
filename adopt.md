@@ -99,13 +99,37 @@ Read the changelog at https://github.com/ducroq/agent-ready-projects/blob/master
 
 Then check THIS repo's project file for the `agent-ready-projects` version line. Compare the adopted version against the latest version in the changelog.
 
+PART 1 — VERSION DRIFT
+
 If we're behind:
 1. List what changed between our version and the latest
 2. For each change, assess whether it applies to this project (not every change matters to every project)
 3. Propose specific updates to our project file, memory index, gotcha log, or runbook — only what's relevant
 4. Update the `agent-ready-projects` version line to the new version
 
-If we're current, just confirm and stop.
+If we're current, just confirm and continue to Part 2.
+
+PART 2 — STRUCTURAL HEALTH
+
+Whether or not the version changed, audit the quality of the current adoption:
+
+1. **Document size**: Count lines in auto-loaded files (project file, memory index). Flag if the project file exceeds ~100 lines or the memory index exceeds ~60 lines. Identify reference material that could move to topic files behind "Before You Start" pointers.
+
+2. **Cross-layer duplication**: Check whether the same fact appears in multiple layers (project file, memory index, topic files, tool-specific auto-memory). For each duplicate, recommend which layer should be the single source of truth — always-needed → project file, navigational → memory index, on-demand reference → topic file, user-specific → tool auto-memory.
+
+3. **Wrong-layer placement**: Check for content in the wrong layer:
+   - User-specific data (preferences, positions, local machine quirks) in project-level files → should be in tool auto-memory
+   - Always-needed constraints buried in topic files → should be in the project file
+   - Derivable-from-code content persisted in memory → shouldn't be persisted at all
+
+4. **Reference integrity**: Verify every file path in the project file and memory index still exists. Check that "Before You Start" pointers use task-triggered language ("when doing X, read Y") not passive language ("see Y").
+
+5. **Topic file reachability**: Check that every topic file in memory/ has a task-triggered pointer in the "Before You Start" table. Flag orphaned files.
+
+Report all findings before making changes. Group by severity:
+- **Fix now**: broken references, misplaced secrets/credentials, orphaned files
+- **Fix soon**: duplication, bloated auto-loaded files, passive pointer language
+- **Consider**: minor size optimizations, optional restructuring
 
 Don't make changes without showing me the plan first.
 ```
