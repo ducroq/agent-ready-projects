@@ -1,6 +1,6 @@
 # Working With AI Agents: A Practical Guide
 
-**Version 1.6.0** | [Changelog](CHANGELOG.md) | [MIT License](LICENSE)
+**Version 1.7.0** | [Changelog](CHANGELOG.md) | [MIT License](LICENSE)
 
 Your AI agent starts every session cold. It doesn't remember yesterday's bugs, your architectural decisions, or what it tried and failed last week. You end up repeating yourself, undoing its mistakes, and wondering why it's not getting better.
 
@@ -355,6 +355,8 @@ The key shift: end-of-session time becomes **1-2 minutes of review**, not 20 min
 
 **Automating the rhythm.** For Claude Code, install the [`curate.md`](templates/curate.md) template as `.claude/skills/curate/SKILL.md` (with frontmatter — see template comments) — this gives you a `/curate` skill that automates the end-of-session curation (gotcha review, pattern promotion, memory index update). For other tools, paste the curate template as an end-of-session prompt. Either way, the agent does the heavy lifting and you review its proposals.
 
+**Structural audits.** Install [`audit-context.md`](templates/audit-context.md) as `.claude/skills/audit-context/SKILL.md` for a `/audit-context` skill that checks framework-level health: document size, cross-layer duplication, wrong-layer placement, reference integrity, topic file reachability, and gitignore correctness. Run monthly or after major restructuring — it catches structural decay that session-level curation misses.
+
 These practices form a single cycle — the **self-learning loop**.
 
 ## The Self-Learning Loop
@@ -565,6 +567,7 @@ This guide's concepts map to every major AI coding agent. The file names and mec
 | "Project file" (Layer 1) | `CLAUDE.md` | `AGENTS.md` | `.cursor/rules/*.mdc` | `.windsurfrules` | `.github/copilot-instructions.md` | `.aider.conf.yml` + convention files |
 | "Memory" (Layer 3) | `MEMORY.md` + topic files | — | — | — | — | — |
 | "Curate command" | `.claude/skills/curate/SKILL.md` (`/curate`) | End-of-session prompt | End-of-session prompt | End-of-session prompt | End-of-session prompt | End-of-session prompt |
+| "Audit command" | `.claude/skills/audit-context/SKILL.md` (`/audit-context`) | Ad-hoc prompt | Ad-hoc prompt | Ad-hoc prompt | Ad-hoc prompt | Ad-hoc prompt |
 | "Session hooks" | `.claude/hooks/` | — | — | — | — | — |
 | Nested/directory rules | `CLAUDE.md` in subdirs | `AGENTS.md` in subdirs | `.mdc` files with globs | — | — | — |
 
@@ -654,6 +657,7 @@ Add layers as your project needs them — not before:
 8. **ADR index** — When you start making architectural decisions worth recording
 9. **Topic files** — When the memory index gets too long, split into per-subsystem files
 10. **Checklists** — Copy [`templates/checklists/`](templates/checklists/) to `docs/checklists/` when you want definition-of-done gates for architecture, implementation, testing, and QA stages
+11. **Structural audit** — Copy [`templates/audit-context.md`](templates/audit-context.md) to `.claude/skills/audit-context/SKILL.md` (Claude Code) for a `/audit-context` skill that catches framework-level structural decay monthly
 
 ### For a project with existing docs
 
@@ -673,6 +677,7 @@ Ready-to-use starter files in [`templates/`](templates/). Tool-agnostic — rena
 - **[`RUNBOOK.md`](templates/RUNBOOK.md)** — Operational principles and how-to
 - **[`review-agent.md`](templates/review-agent.md)** — Reusable skeleton for domain review agents with self-learning
 - **[`curate.md`](templates/curate.md)** — End-of-session curation skill that automates the self-learning loop. For Claude Code, save as `.claude/skills/curate/SKILL.md`; for other tools, use as an end-of-session prompt
+- **[`audit-context.md`](templates/audit-context.md)** — Periodic structural audit of the layered memory system. For Claude Code, save as `.claude/skills/audit-context/SKILL.md`; for other tools, run as an ad-hoc prompt monthly or after major restructuring
 - **[`checklists/`](templates/checklists/)** — Validation checklists for each workflow stage: architect, test, implement, QA. Lightweight definition-of-done gates with git-reality validation and adversarial review requirements
 
 Copy, rename for your tool, delete the comments, fill in your specifics.

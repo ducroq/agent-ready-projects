@@ -2,6 +2,27 @@
 
 All notable changes to the agent-ready-projects framework. Adopters can check their project file's `agent-ready-projects` version against this log to see what's changed.
 
+## v1.7.0 (2026-04-08)
+
+Structural health audit — `/audit-context` skill catches framework-level issues that version drift checks and session-level curation miss.
+
+### Templates
+- **`templates/audit-context.md`** — New skill template for periodic structural audits. Seven-step check: document size, cross-layer duplication, wrong-layer placement, reference integrity, topic file reachability, gitignore correctness, and severity-grouped report. Complements `/curate` (session-level) with framework-level health checks. Install as `.claude/skills/audit-context/SKILL.md`.
+
+### Adopt prompt (adopt.md)
+- STEP 6 now installs both `/curate` and `/audit-context` skills. "Before You Start" table instruction includes both: "Ending a session → Run /curate" and "Monthly or after major restructuring → Run /audit-context".
+- Template URL list updated with `templates/audit-context.md`.
+- Update prompt PART 2 (Structural Health) now references the `/audit-context` skill instead of inlining duplicate checks — single source of truth for audit logic.
+
+### Guide (README.md)
+- Version bumped to 1.7.0.
+
+### Templates
+- `templates/project-file.md` — Version bumped to 1.7.0.
+
+### Motivation
+Observed across multiple adoptions: version drift checks catch framework updates, and `/curate` catches session-level staleness, but neither catches structural decay — bloated auto-loaded files, duplicated facts across layers, content in the wrong layer, orphaned topic files, or gitignore mismatches. These issues accumulate silently between sessions. A periodic structural audit closes this gap.
+
 ## v1.6.0 (2026-04-04)
 
 Doc sync step — `/curate` now catches documentation drift from code changes, not just memory staleness.

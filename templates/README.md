@@ -20,6 +20,7 @@ If your tool has auto-memory (currently Claude Code), also grab `memory-index.md
 | `gotcha-log.md` | `memory/gotcha-log.md` | `docs/gotcha-log.md` | `docs/gotcha-log.md` | `docs/gotcha-log.md` | `docs/gotcha-log.md` | `docs/gotcha-log.md` |
 | `RUNBOOK.md` | `docs/RUNBOOK.md` | `docs/RUNBOOK.md` | `docs/RUNBOOK.md` | `docs/RUNBOOK.md` | `docs/RUNBOOK.md` | `docs/RUNBOOK.md` |
 | `curate.md` | `.claude/skills/curate/SKILL.md` | End-of-session prompt | End-of-session prompt | End-of-session prompt | End-of-session prompt | End-of-session prompt |
+| `audit-context.md` | `.claude/skills/audit-context/SKILL.md` | Ad-hoc prompt | Ad-hoc prompt | Ad-hoc prompt | Ad-hoc prompt | Ad-hoc prompt |
 | `checklists/` | `docs/checklists/` | `docs/checklists/` | `docs/checklists/` | `docs/checklists/` | `docs/checklists/` | `docs/checklists/` |
 
 **Tools without auto-memory**: The project file carries more weight — it's your only auto-loaded file. Keep it lean, use it as an index with task-triggered pointers to the runbook, gotcha log, and ADRs. The self-learning loop still works; promotion just targets the project file directly instead of passing through a memory index.
@@ -34,4 +35,5 @@ If your tool has auto-memory (currently Claude Code), also grab `memory-index.md
 - **[`RUNBOOK.md`](RUNBOOK.md)** — Operational principles and how-to
 - **[`review-agent.md`](review-agent.md)** — Reusable skeleton for domain review agents (code review, rubric design, assessment audit, etc.) with self-learning capability
 - **[`curate.md`](curate.md)** — End-of-session curation skill that automates the self-learning loop (gotcha review, pattern promotion, memory index update). For Claude Code, save as `.claude/skills/curate/SKILL.md` with frontmatter (see template comments) to get a `/curate` skill; for other tools, use as an end-of-session prompt
+- **[`audit-context.md`](audit-context.md)** — Periodic structural audit of the layered memory system (duplication, wrong-layer placement, bloat, broken references, gitignore correctness). For Claude Code, save as `.claude/skills/audit-context/SKILL.md` for a `/audit-context` skill; for other tools, run as an ad-hoc prompt monthly or after major restructuring
 - **[`checklists/`](checklists/)** — Validation checklists for each workflow stage: [architect](checklists/architect-checklist.md), [test](checklists/test-checklist.md), [implement](checklists/implement-checklist.md), [qa](checklists/qa-checklist.md). Lightweight definition-of-done gates (10-15 items each)
