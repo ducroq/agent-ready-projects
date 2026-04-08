@@ -64,7 +64,7 @@ Check that every topic file in memory/ has a task-triggered pointer in the "Befo
 
 Check what's tracked vs untracked:
 - Project-level context (project file, memory index, gotcha log, topic files) should be tracked in git
-- User-specific data (tool auto-memory, personal trading logs, local credentials) should be gitignored
+- User-specific data (tool auto-memory, personal notes, local credentials) should be gitignored
 - Flag any mismatches
 
 ## Step 7 — Report

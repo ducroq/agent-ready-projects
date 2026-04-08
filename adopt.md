@@ -75,7 +75,7 @@ STEP 5 — Assess whether a runbook is needed.
 If the project has deployment steps, multiple environments, CI/CD, or operational complexity: create docs/RUNBOOK.md with the operational detail. If it's a simple project with one test command and no deployment, skip this.
 
 STEP 6 — Install skills.
-For Claude Code: save both skill templates as .claude/skills/curate/SKILL.md and .claude/skills/audit-context/SKILL.md (with the frontmatter from the template comments). This gives the user /curate for end-of-session curation and /audit-context for periodic structural audits. Update the project file's "Before You Start" table to include: "Ending a session → Run /curate".
+For Claude Code: save both skill templates as .claude/skills/curate/SKILL.md and .claude/skills/audit-context/SKILL.md (with the frontmatter from the template comments). This gives the user /curate for end-of-session curation and /audit-context for periodic structural audits. Update the project file's "Before You Start" table to include: "Ending a session → Run /curate" and "Monthly or after major restructuring → Run /audit-context".
 For other tools: note in the project file that end-of-session curation should be done by pasting the curate template as a prompt, and periodic audits by pasting the audit-context template.
 
 STEP 7 — Report what you created.
@@ -112,20 +112,7 @@ If we're current, just confirm and continue to Part 2.
 
 PART 2 — STRUCTURAL HEALTH
 
-Whether or not the version changed, audit the quality of the current adoption:
-
-1. **Document size**: Count lines in auto-loaded files (project file, memory index). Flag if the project file exceeds ~100 lines or the memory index exceeds ~60 lines. Identify reference material that could move to topic files behind "Before You Start" pointers.
-
-2. **Cross-layer duplication**: Check whether the same fact appears in multiple layers (project file, memory index, topic files, tool-specific auto-memory). For each duplicate, recommend which layer should be the single source of truth — always-needed → project file, navigational → memory index, on-demand reference → topic file, user-specific → tool auto-memory.
-
-3. **Wrong-layer placement**: Check for content in the wrong layer:
-   - User-specific data (preferences, positions, local machine quirks) in project-level files → should be in tool auto-memory
-   - Always-needed constraints buried in topic files → should be in the project file
-   - Derivable-from-code content persisted in memory → shouldn't be persisted at all
-
-4. **Reference integrity**: Verify every file path in the project file and memory index still exists. Check that "Before You Start" pointers use task-triggered language ("when doing X, read Y") not passive language ("see Y").
-
-5. **Topic file reachability**: Check that every topic file in memory/ has a task-triggered pointer in the "Before You Start" table. Flag orphaned files.
+Whether or not the version changed, audit the quality of the current adoption by running the /audit-context skill (or, if not installed, follow the audit-context template at https://github.com/ducroq/agent-ready-projects/blob/master/templates/audit-context.md).
 
 Report all findings before making changes. Group by severity:
 - **Fix now**: broken references, misplaced secrets/credentials, orphaned files
