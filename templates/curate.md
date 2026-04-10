@@ -13,7 +13,7 @@
      ---
      name: curate
      description: End-of-session curation — review gotcha log, promote patterns, update memory index
-     disable-model-invocation: true
+     disable-model-invocation: false
      --- -->
 
 End-of-session curation for the agent-ready-projects framework.
