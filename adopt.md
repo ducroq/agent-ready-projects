@@ -10,6 +10,7 @@ Use this first if you're not sure whether the method fits your project. The agen
 
 ```
 Read the guide at https://github.com/ducroq/agent-ready-projects/blob/master/README.md
+Also read the full reference: https://github.com/ducroq/agent-ready-projects/blob/master/docs/GUIDE.md
 
 Then analyze THIS repo — its structure, existing documentation, size, complexity, and how agent sessions currently work here. Based on what you find, answer:
 
@@ -38,6 +39,7 @@ Use this when you're ready. The agent reads the guide, analyzes your repo, and s
 
 ```
 Read the guide at https://github.com/ducroq/agent-ready-projects/blob/master/README.md
+Also read the full reference: https://github.com/ducroq/agent-ready-projects/blob/master/docs/GUIDE.md
 Also read the templates at:
 - https://github.com/ducroq/agent-ready-projects/blob/master/templates/project-file.md
 - https://github.com/ducroq/agent-ready-projects/blob/master/templates/memory-index.md
