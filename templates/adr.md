@@ -65,8 +65,8 @@ superseded_by:
 <!-- Concrete conditions that would reopen this decision.
      Not "if things change" — specific triggers. -->
 
-- [ trigger 1 ]
-- [ trigger 2 ]
+- [trigger 1]
+- [trigger 2]
 
 ## Implementation
 

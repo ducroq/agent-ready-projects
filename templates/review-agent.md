@@ -1,7 +1,7 @@
 ---
 domain: [e.g., Code Quality, Rubric Design, Paper, Assessment]
 artifact_type: [e.g., pull request, rubric, manuscript, exam]
-categories: [number of issue categories, e.g., 6]
+tags: [e.g., security, performance, maintainability]
 ---
 
 # [Domain] Review Agent

@@ -21,6 +21,7 @@ If your tool has auto-memory (currently Claude Code), also grab `memory-index.md
 | `RUNBOOK.md` | `docs/RUNBOOK.md` | `docs/RUNBOOK.md` | `docs/RUNBOOK.md` | `docs/RUNBOOK.md` | `docs/RUNBOOK.md` | `docs/RUNBOOK.md` |
 | `curate.md` | `.claude/skills/curate/SKILL.md` | End-of-session prompt | End-of-session prompt | End-of-session prompt | End-of-session prompt | End-of-session prompt |
 | `audit-context.md` | `.claude/skills/audit-context/SKILL.md` | Ad-hoc prompt | Ad-hoc prompt | Ad-hoc prompt | Ad-hoc prompt | Ad-hoc prompt |
+| `review-agent.md` | `docs/reviews/[domain]-review.md` | `docs/reviews/[domain]-review.md` | `docs/reviews/[domain]-review.md` | `docs/reviews/[domain]-review.md` | `docs/reviews/[domain]-review.md` | `docs/reviews/[domain]-review.md` |
 | `adr.md` | `docs/decisions/ADR-NNN-slug.md` | `docs/decisions/ADR-NNN-slug.md` | `docs/decisions/ADR-NNN-slug.md` | `docs/decisions/ADR-NNN-slug.md` | `docs/decisions/ADR-NNN-slug.md` | `docs/decisions/ADR-NNN-slug.md` |
 | `checklists/` | `docs/checklists/` | `docs/checklists/` | `docs/checklists/` | `docs/checklists/` | `docs/checklists/` | `docs/checklists/` |
 
