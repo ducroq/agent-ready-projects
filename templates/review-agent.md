@@ -1,3 +1,9 @@
+---
+domain: [e.g., Code Quality, Rubric Design, Paper, Assessment]
+artifact_type: [e.g., pull request, rubric, manuscript, exam]
+categories: [number of issue categories, e.g., 6]
+---
+
 # [Domain] Review Agent
 
 <!-- TEMPLATE: Copy this file to create a review agent for any domain.

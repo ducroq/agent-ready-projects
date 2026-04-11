@@ -2,6 +2,20 @@
 
 All notable changes to the agent-ready-projects framework. Adopters can check their project file's `agent-ready-projects` version against this log to see what's changed.
 
+## v1.7.2 (2026-04-11)
+
+YAML frontmatter for project file and review agent templates — machine-parseable metadata for any AI tool.
+
+### Templates
+- **`templates/project-file.md`** — Project metadata (`stack`, `status`, `repo`, `framework`) moved from inline bold list items to YAML frontmatter. Any tool or script can now parse project identity without markdown interpretation. Version bumped to 1.7.2.
+- **`templates/review-agent.md`** — Added YAML frontmatter (`domain`, `artifact_type`, `categories`) so tools can discover and select review agents programmatically.
+
+### Guide (README.md)
+- Version bumped to 1.7.2.
+
+### Motivation
+The ADR template (v1.7.1) introduced YAML frontmatter for machine-readable lifecycle state. Reviewing the remaining templates through an AI-agnostic lens revealed that project-file and review-agent metadata was locked in markdown formatting only humans (or LLMs) could parse. Frontmatter makes this structured data accessible to any tool — Obsidian, static site generators, linters, CI scripts — not just the AI reading the document.
+
 ## v1.7.1 (2026-04-11)
 
 ADR template — codifies the decision record pattern that was previously demonstrated by example only.

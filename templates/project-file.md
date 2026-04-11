@@ -1,3 +1,10 @@
+---
+stack: [e.g., Python 3.12, FastAPI, PostgreSQL]
+status: [Production | MVP | Prototype]
+repo: [e.g., github.com/org/project]
+framework: agent-ready-projects v1.7.2
+---
+
 # [Project Name]
 
 <!-- SAVE AS: CLAUDE.md (Claude Code), AGENTS.md (Codex), .windsurfrules (Windsurf),
@@ -7,11 +14,6 @@
 <!-- 3-5 lines: what this is, who it's for, what it does -->
 
 [One-line description of the project.]
-
-- **Stack**: [e.g., Python 3.12, FastAPI, PostgreSQL]
-- **Status**: [e.g., Production / MVP / Prototype]
-- **Repo**: [e.g., github.com/org/project]
-- **agent-ready-projects**: v1.7.1 <!-- framework version — check CHANGELOG for updates -->
 
 ## Before You Start
 
