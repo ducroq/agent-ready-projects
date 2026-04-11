@@ -2,6 +2,24 @@
 
 All notable changes to the agent-ready-projects framework. Adopters can check their project file's `agent-ready-projects` version against this log to see what's changed.
 
+## v1.7.1 (2026-04-11)
+
+ADR template — codifies the decision record pattern that was previously demonstrated by example only.
+
+### Templates
+- **`templates/adr.md`** — New Architecture Decision Record template with YAML frontmatter (`status`, `date`, `deciders`, `superseded_by`), options comparison tables, consequences (positive/negative/risks), "Revisit If" triggers with concrete conditions, implementation steps, and an embedded decision index template. Synthesized from ADR patterns across three adopter projects (agent-ready-papers, RenkumSpot, shared_vault).
+
+### Guide (README.md)
+- Step 8 in the adoption ladder now links to `templates/adr.md` instead of being a bare mention.
+- Version bumped to 1.7.1.
+
+### Templates README
+- `templates/README.md` — Added `adr.md` to the tool-naming table and the file descriptions list.
+- `templates/project-file.md` — Version bumped to 1.7.1.
+
+### Origin
+Investigated ADR/DR practices across three adopter repositories. `shared_vault` contributed the "Revisit If" pattern with concrete trigger conditions. `RenkumSpot` contributed status badges, decision matrices, and a battle-tested template across 17 decisions. `agent-ready-papers` contributed YAML frontmatter with `superseded_by` tracking. The framework had ADRs at step 8 of adoption and one example (ADR-001) but no reusable template — this closes that gap.
+
 ## v1.7.0 (2026-04-08)
 
 Structural health audit — `/audit-context` skill catches framework-level issues that version drift checks and session-level curation miss.

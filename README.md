@@ -1,6 +1,6 @@
 # Working With AI Agents: A Practical Guide
 
-**Version 1.7.0** | [Changelog](CHANGELOG.md) | [MIT License](LICENSE)
+**Version 1.7.1** | [Changelog](CHANGELOG.md) | [MIT License](LICENSE)
 
 Your AI agent starts every session cold. It doesn't remember yesterday's bugs, your architectural decisions, or what it tried and failed last week. You end up repeating yourself, undoing its mistakes, and wondering why it's not getting better.
 
@@ -38,7 +38,7 @@ Add layers as your project needs them — not before:
 5. **Curate skill** — [`templates/curate.md`](templates/curate.md) to automate end-of-session curation
 6. **Memory index** — [`templates/memory-index.md`](templates/memory-index.md) when your project file is getting long
 7. **Runbook** — [`templates/RUNBOOK.md`](templates/RUNBOOK.md) when operational detail crowds out identity
-8. **ADR index** — When you start making architectural decisions worth recording
+8. **ADR index** — [`templates/adr.md`](templates/adr.md) when you start making architectural decisions worth recording
 9. **Topic files** — When the memory index gets too long, split into per-subsystem files
 10. **Checklists** — [`templates/checklists/`](templates/checklists/) for definition-of-done gates
 11. **Structural audit** — [`templates/audit-context.md`](templates/audit-context.md) to catch framework-level decay monthly
