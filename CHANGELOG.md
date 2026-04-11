@@ -8,10 +8,15 @@ YAML frontmatter for project file and review agent templates — machine-parseab
 
 ### Templates
 - **`templates/project-file.md`** — Project metadata (`stack`, `status`, `repo`, `framework`) moved from inline bold list items to YAML frontmatter. Any tool or script can now parse project identity without markdown interpretation. Version bumped to 1.7.2.
-- **`templates/review-agent.md`** — Added YAML frontmatter (`domain`, `artifact_type`, `categories`) so tools can discover and select review agents programmatically.
+- **`templates/review-agent.md`** — Added YAML frontmatter (`domain`, `artifact_type`, `tags`) so tools can discover and select review agents programmatically. Added to tool-naming table in `templates/README.md`.
+- **`templates/adr.md`** — Fixed `[ trigger ]` placeholders that rendered as GitHub checkboxes (removed interior spaces).
 
 ### Guide (README.md)
+- Step 8 in the adoption ladder renamed from "ADR index" to "Decision index" for consistency with the template's own terminology.
 - Version bumped to 1.7.2.
+
+### Guide (docs/GUIDE.md)
+- Version badge bumped to 1.7.2.
 
 ### Motivation
 The ADR template (v1.7.1) introduced YAML frontmatter for machine-readable lifecycle state. Reviewing the remaining templates through an AI-agnostic lens revealed that project-file and review-agent metadata was locked in markdown formatting only humans (or LLMs) could parse. Frontmatter makes this structured data accessible to any tool — Obsidian, static site generators, linters, CI scripts — not just the AI reading the document.
