@@ -17,6 +17,15 @@
 | File | When to load | Key insight |
 |------|-------------|-------------|
 | `memory/gotcha-log.md` | Stuck or debugging | Problem-fix archive |
+<!-- MULTI-CONTRIBUTOR PROJECTS:
+     Add a pointer for coordination:
+     | `COORDINATION.md` | Starting work or proposing conventions | Team agreements, WIP |
+
+     Memory convention: all topic files are committed (shared by default).
+     Personal scratch notes go in auto-memory or a gitignored personal/ directory.
+     Gotcha log entries should include your name/handle so the team knows who
+     found what. At end-of-session curation, check for entries that duplicate
+     what other contributors logged — deduplicate rather than accumulate. -->
 
 ## Current State
 

@@ -28,6 +28,8 @@ Then analyze THIS repo — its structure, existing documentation, size, complexi
 
 5. **Skip if**: Any reasons this project might NOT benefit (too small, too simple, single-session scope, etc.)
 
+6. **Multiplayer readiness**: Does this project have (or expect) multiple contributors, each using their own AI agent? Check git log for multiple authors. If so, is there coordination infrastructure (COORDINATION.md, shared constraints, WIP visibility) — or are contributors working in isolation?
+
 Don't generate any files yet — just give me the analysis so I can decide.
 ```
 
@@ -47,6 +49,7 @@ Also read the templates at:
 - https://github.com/ducroq/agent-ready-projects/blob/master/templates/RUNBOOK.md
 - https://github.com/ducroq/agent-ready-projects/blob/master/templates/curate.md
 - https://github.com/ducroq/agent-ready-projects/blob/master/templates/audit-context.md
+- https://github.com/ducroq/agent-ready-projects/blob/master/templates/coordination.md
 
 Now analyze THIS repo thoroughly — read the codebase structure, existing docs, config files, test setup, deployment scripts, CI/CD, and recent git history. Then scaffold the layered memory system for this project:
 
@@ -79,6 +82,9 @@ If the project has deployment steps, multiple environments, CI/CD, or operationa
 STEP 6 — Install skills.
 For Claude Code: save both skill templates as .claude/skills/curate/SKILL.md and .claude/skills/audit-context/SKILL.md (with the frontmatter from the template comments). This gives the user /curate for end-of-session curation and /audit-context for periodic structural audits. Update the project file's "Before You Start" table to include: "Ending a session → Run /curate" and "Monthly or after major restructuring → Run /audit-context".
 For other tools: note in the project file that end-of-session curation should be done by pasting the curate template as a prompt, and periodic audits by pasting the audit-context template.
+
+STEP 6.5 — Assess whether coordination is needed.
+Check git log for multiple authors, or ask if multiple contributors are expected. If yes: create COORDINATION.md from the coordination template. Fill in the contributors list from git log, any shared constraints from the project file, and initial memory conventions. Add the coordination pointer to the project file's "Before You Start" table. If it's a solo project, skip this.
 
 STEP 7 — Report what you created.
 List every file, what's in it, and one thing where I should review your work and adjust if needed (constraints you might have inferred incorrectly, architecture choices that need my context, etc.).

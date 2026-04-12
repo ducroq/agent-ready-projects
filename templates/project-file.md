@@ -2,7 +2,7 @@
 stack: [e.g., Python 3.12, FastAPI, PostgreSQL]
 status: [Production | MVP | Prototype]
 repo: [e.g., github.com/org/project]
-framework: agent-ready-projects v1.7.2
+framework: agent-ready-projects v1.8.0
 ---
 
 # [Project Name]
@@ -30,6 +30,9 @@ framework: agent-ready-projects v1.7.2
 | Writing or reviewing tests | `docs/checklists/test-checklist.md` — definition-of-done |
 | Completing implementation | `docs/checklists/implement-checklist.md` — definition-of-done |
 | Reviewing before merge | `docs/checklists/qa-checklist.md` — definition-of-done |
+-->
+<!-- Optional: add for multi-contributor projects (see templates/coordination.md)
+| Starting work as a contributor | `COORDINATION.md` — team agreements, WIP, conventions |
 -->
 
 ## Hard Constraints

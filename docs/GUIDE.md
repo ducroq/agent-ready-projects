@@ -1,6 +1,6 @@
 # The Complete Reference Guide
 
-**Version 1.7.2** | [Back to README](../README.md) | [Changelog](../CHANGELOG.md)
+**Version 1.8.0** | [Back to README](../README.md) | [Changelog](../CHANGELOG.md)
 
 This is the full reference for the agent-ready projects method. For a quick overview and getting started, see the [README](../README.md).
 
@@ -29,6 +29,7 @@ This is the full reference for the agent-ready projects method. For a quick over
 - [What Doesn't Work](#what-doesnt-work)
 - [Measuring Success](#measuring-success)
 - [Tool-Specific Setup](#tool-specific-setup)
+  - [Multi-contributor projects](#multi-contributor-projects)
 - [Contributing](#contributing-to-this-guide)
 
 </details>
@@ -591,6 +592,85 @@ If your team uses different agents (one person on Claude Code, another on Cursor
 ### Multi-agent workflows
 
 If you use different agents for different tasks (e.g., one for architecture, another for implementation, a third for code review), the project file becomes even more important — it's the shared orientation document all agents load. Keep universal truths there. Per-agent context (e.g., "the review agent should enforce these style rules") belongs in agent-specific topic files or directory-level rules.
+
+### Multi-contributor projects
+
+The sections above address tool heterogeneity (different agents, same person) and role heterogeneity (different agents, different tasks). Multi-contributor projects face a different challenge: **contributor heterogeneity** — different people, each with their own agent, working in the same codebase.
+
+Layer 5 lives here under Tool-Specific Setup rather than alongside Layers 1–4 by design. Layers 1–4 are the baseline architecture that every project builds on. Layer 5 is genuinely optional in a way the others are not — most projects never need it, and adding it when you don't have multiple contributors adds overhead with no benefit. It is opt-in infrastructure, not a progression step.
+
+If you're working alone, skip this section entirely.
+
+#### What breaks when contributor #2 joins
+
+Three friction points emerge that Layers 1–4 don't address. These were observed in a real project ([RenkumSpot](https://github.com/ducroq/RenkumSpot)) where a second contributor joined an agent-ready codebase:
+
+1. **Constraint visibility.** A contributor's agent submitted a PR that broke a documented constraint. The constraint existed in the project file — but the contributor's agent treated it as the project owner's context, not a shared contract. There was no mechanism to distinguish "what the owner learned" from "what the team agreed to."
+
+2. **Convention divergence.** The new contributor proposed enterprise-grade coding standards (DDD, full TDD) that didn't fit the project's scope. Without a staging area for convention proposals, the first signal of misalignment was a fully-formed document that needed significant rework.
+
+3. **Work overlap.** No visibility into who was working on what. The project's memory, gotcha log, and project file were shaped entirely by one person's workflow. A second contributor's agent inherited this context without knowing which parts were team truth and which were personal preference.
+
+These are coordination problems, not knowledge problems. The documentation was good — the agreement mechanisms were missing.
+
+#### Layer 5: Coordination
+
+For multi-contributor projects, add a `COORDINATION.md` file (from [`templates/coordination.md`](../templates/coordination.md)). This is Layer 5 in the layered model:
+
+| Layer | What | Auto-loaded? | When to add |
+|-------|------|-------------|-------------|
+| **1. Project file** | Identity, constraints, "Before You Start" table | Yes | Always |
+| **2. Runbook** | Operational how-to, principles | No | When the project file gets crowded |
+| **3. Memory** | Index + topic files of learned knowledge | Index: yes | When complexity grows |
+| **4. Gotcha log** | Problem → Root cause → Fix journal | No | When you hit your first weird bug |
+| **5. Coordination** | Contributors, shared constraints, WIP, conventions | No | When the project has multiple contributors |
+
+Layer 5 is **not auto-loaded**. It sits below the auto-loading cliff, accessed via a task-triggered pointer in the project file:
+
+```
+| Starting work as a contributor | COORDINATION.md — team agreements, WIP, conventions |
+```
+
+This keeps the auto-loading budget unchanged. Contributors read it once at session start; experienced contributors who have internalized the coordination context skip it.
+
+Five sections:
+
+- **Contributors** — who's active, their focus areas, how they work. Not permissions — a "who to talk to about what" index.
+- **Shared Constraints** — constraints all contributors agreed to (promoted from the project file when they carry team-agreement weight).
+- **Convention Proposals** — lightweight staging for proposed changes. Propose first, then PR — no surprise conventions.
+- **Work in Progress** — collision-avoidance signals. Before starting work in an area, check if someone else is there.
+- **Memory Conventions** — shared vs personal memory, gotcha log tagging with contributor names.
+
+#### What coordination does NOT solve
+
+Layer 5 is for small teams (2–5 contributors). It explicitly does not cover:
+
+- **Task assignment or sprint planning** — use your existing project management tools.
+- **Access control or permissions** — see [OWASP Top 10 for Agentic Applications](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/) and [Microsoft Agent Governance Toolkit](https://github.com/microsoft/agent-governance-toolkit) for runtime security.
+- **Agent personas** — if you need personas, see BMAD-METHOD's approach described in [COMPARISON.md](COMPARISON.md).
+- **Enterprise governance** — if you have 10+ contributors, you need organizational infrastructure beyond what a markdown file provides.
+
+#### The self-learning loop in multiplayer
+
+The [self-learning loop](#the-self-learning-loop) (Capture → Surface → Promote → Retire) works the same way with one addition: **deduplication at the Surface step**.
+
+When curating at end-of-session in a multi-contributor project:
+
+1. Review your session's gotchas as usual.
+2. **Check the gotcha log for entries that duplicate or conflict with what other contributors logged.** If someone already captured the same lesson, merge rather than accumulate. If your entry conflicts with theirs, flag it — that's a sign an ADR is needed.
+3. Promote as usual, with one adjusted criterion: a gotcha that appears in two different contributors' sessions is as strong a signal as one that recurs three times in your own sessions.
+
+Tag every gotcha log entry with your name or handle. This isn't about blame — it's about provenance. When reviewing a gotcha, knowing who found it tells you who to ask for context.
+
+#### Setting it up
+
+1. Copy [`templates/coordination.md`](../templates/coordination.md), save as `COORDINATION.md` in the project root.
+2. Add the task-triggered pointer to your project file's "Before You Start" table.
+3. Fill in the Contributors table and agree on memory conventions with your team.
+
+That's it. Convention proposals and WIP entries accumulate organically as people work. Review and prune during end-of-session curation, just like the gotcha log.
+
+See [ADR-002](decisions/ADR-002-multiplayer-coordination-layer.md) for the full design rationale.
 
 ### Projects with zero documentation
 

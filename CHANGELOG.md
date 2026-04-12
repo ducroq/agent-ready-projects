@@ -2,6 +2,46 @@
 
 All notable changes to the agent-ready-projects framework. Adopters can check their project file's `agent-ready-projects` version against this log to see what's changed.
 
+## v1.8.0 (2026-04-11)
+
+Multi-contributor coordination — Layer 5 for projects where multiple developers use AI agents on the same codebase.
+
+### Templates
+- **`templates/coordination.md`** — New coordination template for multi-contributor projects. Five sections: Contributors (who's active and how they work), Shared Constraints (team-agreed rules promoted from project file), Convention Proposals (lightweight staging for proposed changes), Work in Progress (collision-avoidance signals), Memory Conventions (shared vs personal memory, gotcha log tagging). Layer 5: opt-in, not auto-loaded, accessed via task-triggered pointer.
+- **`templates/project-file.md`** — Added commented-out "Before You Start" row for `COORDINATION.md` (opt-in for multi-contributor projects).
+- **`templates/memory-index.md`** — Added comment block for multi-contributor memory conventions (shared vs personal memory, gotcha log tagging).
+
+### Guide (`docs/GUIDE.md`)
+- New subsection: "Multi-contributor projects" under Tool-Specific Setup — Layer 5 explanation, three friction points grounded in the RenkumSpot case study, self-learning loop deduplication phase, scope boundaries, setup guide.
+- Table of contents updated with multi-contributor projects entry.
+- Version bumped to 1.8.0.
+
+### Adoption (`adopt.md`)
+- Assess prompt: added question 6 — multiplayer readiness (multiple contributors? coordination infrastructure?).
+- Adopt prompt: added STEP 6.5 — if multiple contributors detected, create `COORDINATION.md` from template and add pointer to project file.
+- Template URL list updated with `coordination.md`.
+
+### Decisions
+- **ADR-002** — [Multiplayer coordination layer](docs/decisions/ADR-002-multiplayer-coordination-layer.md). Design stance: opt-in Layer 5 over extending existing layers or personal overlay files. Grounded in three observed friction points from RenkumSpot.
+- **`docs/decisions/README.md`** — Decision index created, listing ADR-001 and ADR-002.
+
+### README
+- Layered model table extended with Layer 5 row.
+- Growing-from-there list includes coordination template.
+- Version bumped to 1.8.0.
+
+### Origin
+
+Observed in [RenkumSpot](https://github.com/ducroq/RenkumSpot): a second contributor (Robert/csourcenl) joined a well-documented agent-ready project and still hit coordination friction — PR #5 broke a documented constraint because there was no agreement mechanism, a convention proposal required negotiation that had no staging area, and work overlap had no visibility. Research (April 2026) confirmed the gap: all existing multi-agent frameworks solve single-user orchestration; no framework addresses multi-user-multi-agent coordination for small teams.
+
+### References
+
+- [OWASP Top 10 for Agentic Applications 2026](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/) — security framework for agentic systems (complementary, not overlapping)
+- [Microsoft Agent Governance Toolkit](https://github.com/microsoft/agent-governance-toolkit) — runtime security for AI agents (April 2026)
+- [Cooperative AI: Multi-Agent Risks from Advanced AI](https://www.cooperativeai.com/post/new-report-multi-agent-risks-from-advanced-ai) — research on multi-agent coordination risks
+
+---
+
 ## v1.7.2 (2026-04-11)
 
 YAML frontmatter for project file and review agent templates — machine-parseable metadata for any AI tool.

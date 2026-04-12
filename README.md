@@ -1,6 +1,6 @@
 # Working With AI Agents: A Practical Guide
 
-**Version 1.7.2** | [Changelog](CHANGELOG.md) | [MIT License](LICENSE)
+**Version 1.8.0** | [Changelog](CHANGELOG.md) | [MIT License](LICENSE)
 
 Your AI agent starts every session cold. It doesn't remember yesterday's bugs, your architectural decisions, or what it tried and failed last week. You end up repeating yourself, undoing its mistakes, and wondering why it's not getting better.
 
@@ -39,6 +39,7 @@ Add layers as your project needs them — not before:
 6. **Memory index** — [`templates/memory-index.md`](templates/memory-index.md) when your project file is getting long
 7. **Runbook** — [`templates/RUNBOOK.md`](templates/RUNBOOK.md) when operational detail crowds out identity
 8. **Decision index** — [`templates/adr.md`](templates/adr.md) when you start making architectural decisions worth recording
+   - **Coordination** — [`templates/coordination.md`](templates/coordination.md) when a second contributor joins
 9. **Topic files** — When the memory index gets too long, split into per-subsystem files
 10. **Checklists** — [`templates/checklists/`](templates/checklists/) for definition-of-done gates
 11. **Structural audit** — [`templates/audit-context.md`](templates/audit-context.md) to catch framework-level decay monthly
@@ -74,6 +75,7 @@ Documentation scales with project complexity across four layers:
 | **2. Runbook** | Operational how-to, principles | No | When the project file gets crowded |
 | **3. Memory** | Index + topic files of learned knowledge | Index: yes | When complexity grows |
 | **4. Gotcha log** | Problem → Root cause → Fix journal | No | When you hit your first weird bug |
+| **5. Coordination** | Contributors, shared constraints, WIP, conventions | No | When the project has multiple contributors |
 
 ### The self-learning loop
 
@@ -104,6 +106,7 @@ Ready-to-use starter files in [`templates/`](templates/). Tool-agnostic — rena
 - **[`review-agent.md`](templates/review-agent.md)** — Reusable skeleton for domain review agents with self-learning
 - **[`curate.md`](templates/curate.md)** — End-of-session curation skill (automates the self-learning loop)
 - **[`audit-context.md`](templates/audit-context.md)** — Periodic structural audit of the layered memory system
+- **[`coordination.md`](templates/coordination.md)** — Layer 5: contributors, shared constraints, WIP, conventions (multi-contributor projects only)
 - **[`checklists/`](templates/checklists/)** — Validation checklists for each workflow stage
 
 ## Further Reading
