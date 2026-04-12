@@ -1,6 +1,8 @@
 # Landscape: Context Engineering for AI Coding Agents
 
-Where this guide sits relative to existing work. Last updated April 2026.
+This is a practitioner framework, not a platform. The value is in the patterns — the auto-loading cliff, layered memory, the self-learning loop, multiplayer coordination — not in tooling or institutional backing. We know where the ecosystem is ahead of us (standards authority, runtime governance, distribution) and where we're ahead of it (coordination patterns nobody else has built, dynamic context that the research says works better than static files). Most framework authors only write the "ahead" section. We write both.
+
+Last updated April 2026.
 
 ## State of the Art
 
