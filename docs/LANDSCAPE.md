@@ -1,6 +1,6 @@
 # Landscape: Context Engineering for AI Coding Agents
 
-Where this guide sits relative to existing work. Last updated March 2026.
+Where this guide sits relative to existing work. Last updated April 2026.
 
 ## State of the Art
 
@@ -32,7 +32,8 @@ Complete systems that prescribe how to work with AI agents.
 
 - **[BMAD-METHOD](https://github.com/bmad-code-org/BMAD-METHOD)** (38K+ stars) — a full AI-driven agile development methodology with 12+ agent personas, 34+ workflows, module system, and installer. Addresses context management through agent-specific sidecar memory and manifests. Comprehensive but heavyweight — prescribes your entire development process. See [COMPARISON.md](COMPARISON.md) for a detailed mapping.
 - **[GitHub spec-kit](https://github.com/github/spec-kit)** (73K+ stars) — Spec-Driven Development where specifications generate code. Addresses context through constitutions and template-driven LLM constraint. Covers the pre-implementation phase (what to build, how to design it) but not the implementation phase (session context, memory, progressive disclosure). The two are complementary — spec-kit produces the specification artifacts, this guide ensures agents find and use them effectively. See [COMPARISON.md](COMPARISON.md) for how to use them together.
-- **[AGENTS.md](https://agents.md/)** (60K+ projects) — an open format for agent instructions. "A README for agents." Standardizes *where* to put instructions but doesn't address *how* to structure them, when to split, or how to handle progressive disclosure. A format spec, not a guide.
+- **[AGENTS.md](https://agents.md/)** (60K+ projects) — an open format for agent instructions, donated to the Agentic AI Foundation under the Linux Foundation (December 2025) alongside Anthropic's MCP and Block's Goose. Platinum members: AWS, Anthropic, Block, Bloomberg, Cloudflare, Google, Microsoft, OpenAI. Standardizes *where* to put instructions but doesn't address *how* to structure them, when to split, or how to handle progressive disclosure. A format spec, not a guide. GitHub's analysis of 2,500+ AGENTS.md files (March 2026) shows adoption is broad but quality varies — most files lack the structural patterns this guide provides.
+- **[Agent Skills](https://agentskills.io/)** (agentskills.io) — open standard for portable agent skills. YAML frontmatter (`name`, `description`) + markdown body. Adopted by 26+ platforms including Claude Code, Codex, Cursor, Copilot, Gemini CLI. Released by Anthropic (December 2025), now community-maintained. Defines the format for skills; doesn't address how skills compose into a layered memory system or how teams coordinate shared skills.
 
 ### 4. Analytical frameworks (researchers)
 
@@ -49,6 +50,23 @@ Individual concepts explored in isolation.
 
 - **[Progressive Disclosure for AI Agents](https://aipositive.substack.com/p/progressive-disclosure-matters)** and **[Marta Fernández García on progressive disclosure](https://medium.com/@martia_es/progressive-disclosure-the-technique-that-helps-control-context-and-tokens-in-ai-agents-8d6108b09289)** — apply the UX concept of progressive disclosure to agent context. Treat it as a single technique rather than part of a larger system.
 - **[Claude-mem](https://docs.claude-mem.ai/progressive-disclosure)** — a third-party tool adding memory persistence to Claude Code. Solves the mechanical problem without addressing the structural question of what to persist and how to organize it.
+
+### 6. Empirical research on context files
+
+- **[Gloaguen et al. — "Evaluating AGENTS.md"](https://arxiv.org/abs/2602.11988)** (ETH Zurich, February 2026) — the first rigorous evaluation of whether context files help coding agents. Key findings: LLM-generated context files *reduced* task success rates by an average of 3%. Human-written files improved success by 4% but increased inference costs by over 19%. Agents followed unnecessary instructions, running extra tests and checks that made tasks harder. Implication: context files need to be surgical — only what the agent cannot infer from the code. Validates the "be surgical" principle and the layered approach (don't dump everything in one auto-loaded file).
+
+### 7. Multi-agent coordination and security
+
+Frameworks and standards addressing what happens when multiple agents (or multiple users' agents) interact.
+
+- **[OWASP Top 10 for Agentic Applications](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/)** (December 2025) — security framework covering goal hijacking, tool misuse, identity abuse, memory poisoning, insecure inter-agent communication, cascading failures, rogue agents. 100+ expert contributors. Addresses runtime security risks, not team coordination.
+- **[Microsoft Agent Governance Toolkit](https://github.com/microsoft/agent-governance-toolkit)** (April 2026) — open-source runtime security for AI agents. Policy enforcement at sub-millisecond latency, covers all 10 OWASP risks. Integrates with LangChain, CrewAI, Google ADK. Python, Rust, TypeScript, Go, .NET. Addresses runtime governance, not project-level coordination.
+- **[Google A2A Protocol](https://github.com/google/A2A)** (v1.0.0, March 2026) — agent-to-agent interoperability via JSON-RPC. Agents publish "Agent Cards" describing capabilities. Enables cross-boundary agent communication but provides no coordination semantics (who goes first, conflict resolution, shared state).
+- **[Cooperative AI — "Multi-Agent Risks from Advanced AI"](https://www.cooperativeai.com/post/new-report-multi-agent-risks-from-advanced-ai)** (February 2025) — taxonomy of multi-agent risks: miscoordination, conflict, collusion. 50+ researchers from DeepMind, Anthropic, CMU, Harvard. Analyzes risks at the system level, not at the project/team level.
+
+**Multi-agent orchestration frameworks** (CrewAI, LangGraph, AutoGen/AG2, OpenAI Agents SDK, Semantic Kernel, MetaGPT) — all solve single-user-multi-agent orchestration. One person coordinating multiple AI agents for different tasks. None address multi-user-multi-agent coordination — different people, each with their own agent, working in the same codebase. As of April 2026, this remains an unoccupied gap.
+
+**Memory systems** (Mem0, Letta/MemGPT, Graphiti/Zep) — single-user or multi-user-isolated. No open-source system supports shared team memory with write governance and attribution. Zep's commercial platform claims governance features but is not open-source.
 
 ## Gap Analysis
 
@@ -71,6 +89,8 @@ What's missing:
 | **Agent behavior validation** | Pressure testing, honesty constraints, sunk-cost bias — existing work trusts that good context produces good behavior without addressing validation |
 | **Session strategy** | No existing guide addresses when to use fresh sessions, why reviewing in the building session is problematic, or cross-model validation |
 | **Development practices** | Course-correction, documentation rhythm, the feedback loop between guide and project — treated as project management concerns, not agent effectiveness concerns |
+| **Multi-contributor coordination** | No framework addresses what happens when multiple users' agents work in the same codebase — constraint visibility, convention divergence, work overlap. Every guide assumes a single author. Security is being addressed (OWASP, Microsoft AGT), but team coordination patterns remain uncharted. This guide addresses this gap with Layer 5 (v1.8.0). |
+| **Context file effectiveness** | The ETH Zurich study (February 2026) shows that naive context files can hurt agent performance. No guide except this one integrates the finding that context must be surgical — only non-inferable constraints and task-triggered pointers, not exhaustive documentation. |
 
 ## Where This Guide Fits
 
@@ -120,4 +140,28 @@ The guide continues to evolve through the feedback loop it describes: insights f
 
 ---
 
-*Since this landscape was written, the guide has added: the **self-learning loop** (Capture → Surface → Promote → Retire) as a named first-class concept, a **processor memory hierarchy analogy** grounding the layered model in cache design principles, an **agent-driven adoption workflow** ([adopt.md](../adopt.md)) with assess/adopt/update prompts, and **versioning** ([CHANGELOG.md](../CHANGELOG.md)) for tracking framework evolution across adopted projects. In v1.1.0, the framework was **generalized to be fully tool-agnostic**, a [worked example](EXAMPLE.md) was added, and **real adoption feedback** drove improvements to curation triggers, document size heuristics, and a parallel specialized review validation technique. None of the existing tools in the landscape offer this combination.*
+## Positioning: ahead, at parity, and behind
+
+### Ahead
+
+- **Multiplayer coordination** (Layer 5, v1.8.0) — the only practical pattern for multi-user-multi-agent coordination. No competing framework, standard, or guide addresses this. Validated through the RenkumSpot case study.
+- **The self-learning loop** — Capture/Surface/Promote/Retire with `/curate` and `/audit-context` skills. More sophisticated than static context file approaches. The ETH Zurich finding (static files can hurt) implicitly validates dynamic, curated context.
+- **The auto-loading cliff** — named and formalized as an architectural concept. No other framework identifies this boundary or its consequences for documentation design.
+- **Verification infrastructure** — the companion [agent-ready-papers](https://github.com/ducroq/agent-ready-papers) framework provides typed claim verification (CLAIM/ARGUMENT/PROPOSITION with Toulmin/Whetten checklists) that catches real errors in AI-assisted writing.
+
+### At parity
+
+- **Project file conventions** — aligned with AGENTS.md standard and agentskills.io spec (markdown + YAML frontmatter). Standard format, not proprietary.
+- **Skills format** — follows agentskills.io spec. Portable across 26+ platforms.
+- **ADR patterns** — solid but common across many frameworks.
+
+### Behind
+
+- **Standards authority** — AGENTS.md has the Linux Foundation, AWS, Google, Microsoft, OpenAI behind it. This framework has one practitioner and 28 projects. The patterns may be better, but the institutional backing is not comparable.
+- **Runtime governance** — Microsoft's Agent Governance Toolkit does sub-millisecond policy enforcement covering all 10 OWASP risks. Our Layer 5 is a coordination file, not a runtime security system. Different scope, and that's by design.
+- **Tooling and distribution** — no CLI, no VS Code extension, no registry. Adoption is "read the guide, paste the prompt." The ecosystem is moving toward discoverable, composable components with SDK support.
+- **Scale of evidence** — deep but narrow. 28 projects, one primary user, one multiplayer case study. The ETH Zurich study tested across SWE-bench with multiple agents and configurations.
+
+### Strategic positioning
+
+This is a **practitioner framework**, not a platform or standard. The value is in the patterns (cliff, layers, loop, coordination) and the discipline (curate, audit, typed verification). The path forward is contributing these patterns *into* the standards ecosystem — not competing with AGENTS.md or agentskills.io, but complementing them with the structural and coordination patterns they lack.
