@@ -114,6 +114,6 @@ Ready-to-use starter files in [`templates/`](templates/). Tool-agnostic — rena
 - **[Full reference guide](docs/GUIDE.md)** — Deep dive into every concept: the cliff, layers, self-learning loop, anti-patterns, measuring success
 - **[Worked example: software project](docs/EXAMPLE.md)** — Task Tracker API
 - **[Worked example: non-code project](docs/EXAMPLE-ASSESSMENT.md)** — Educational assessment system
-- **[Landscape analysis](docs/LANDSCAPE.md)** — State of the art in context engineering for coding agents
-- **[Framework comparison](docs/COMPARISON.md)** — Detailed mapping against BMAD-METHOD and spec-kit
-- **[Methodology](docs/METHODOLOGY.md)** — How this guide was developed and tested
+- **[Landscape analysis](docs/archive/LANDSCAPE.md)** — State of the art in context engineering (April 2026 snapshot)
+- **[Framework comparison](docs/archive/COMPARISON.md)** — Mapping against BMAD-METHOD and spec-kit
+- **[Methodology](docs/archive/METHODOLOGY.md)** — How this guide was developed and tested

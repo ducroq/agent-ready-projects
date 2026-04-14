@@ -557,7 +557,7 @@ You know it's failing when:
 
 **Validating, not just trusting.** Good documentation doesn't guarantee good behavior. Agents can read your constraints and still cut corners when they're confident, ignore warnings when they've invested effort in an approach, or defer to your suggestions even when those suggestions violate the project's own principles. Occasionally test this: ask the agent to do something that should trigger a constraint, or apply time pressure and see if quality holds. If your docs say "never skip tests" but the agent skips them when the task feels urgent, the constraint isn't landing — it may need stronger framing or a concrete example of what "never" means.
 
-**Parallel specialized review.** After adopting the framework or making significant changes, run multiple agents in parallel — each focused on a different concern (doc quality, consistency, traceability, completeness). In practice, 5-6 parallel reviewers surface cross-cutting issues in minutes that single-pass review misses: broken cross-references, stale metadata, traceability gaps. See [METHODOLOGY.md](METHODOLOGY.md) for details.
+**Parallel specialized review.** After adopting the framework or making significant changes, run multiple agents in parallel — each focused on a different concern (doc quality, consistency, traceability, completeness). In practice, 5-6 parallel reviewers surface cross-cutting issues in minutes that single-pass review misses: broken cross-references, stale metadata, traceability gaps. See [METHODOLOGY.md](archive/METHODOLOGY.md) for details.
 
 ## Tool-Specific Setup
 
@@ -674,7 +674,7 @@ Layer 5 is for small teams (2–5 contributors). It explicitly does not cover:
 
 - **Task assignment or sprint planning** — use your existing project management tools.
 - **Access control or permissions** — see [OWASP Top 10 for Agentic Applications](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/) and [Microsoft Agent Governance Toolkit](https://github.com/microsoft/agent-governance-toolkit) for runtime security.
-- **Agent personas** — if you need personas, see BMAD-METHOD's approach described in [COMPARISON.md](COMPARISON.md).
+- **Agent personas** — if you need personas, see BMAD-METHOD's approach described in [COMPARISON.md](archive/COMPARISON.md).
 - **Enterprise governance** — if you have 10+ contributors, you need organizational infrastructure beyond what a markdown file provides.
 
 #### The self-learning loop in multiplayer
