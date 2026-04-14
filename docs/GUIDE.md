@@ -1,6 +1,6 @@
 # The Complete Reference Guide
 
-**Version 1.8.0** | [Back to README](../README.md) | [Changelog](../CHANGELOG.md)
+**Version 1.9.0** | [Back to README](../README.md) | [Changelog](../CHANGELOG.md)
 
 This is the full reference for the agent-ready projects method. For a quick overview and getting started, see the [README](../README.md).
 
@@ -201,6 +201,33 @@ This is **progressive disclosure** — start broad, go deep only where needed. I
 - Gotchas framed as "if X, then Y" ("if file uploads fail silently, check the auth token hasn't expired")
 - API signatures and parameter quirks
 - Server/deployment facts
+
+#### Self-verifying memory
+
+A session observation ("I called the endpoint and it returned 200") is not the same as deployed state ("this endpoint is in the persisted codebase and survives restarts"). Memory entries that say "shipped," "deployed," or "working in production" carry implicit trust — future agents will skip verification and build on that claim. The cost of a false "shipped" memory is high: it silently suppresses investigation for as long as the memory persists. In one case ([issue #8](https://github.com/ducroq/agent-ready-projects/issues/8)), an agent recorded "ML classifier shipped" after a session test. The endpoint only existed in the running process — after a restart it returned 404, silently failing for 230 articles until a human noticed.
+
+The fix is **self-verifying memory** — verification commands that travel with the claim, executed by the agent, invisible to the user. Three touchpoints:
+
+1. **On write**: When recording a state claim, embed a verification command as an HTML comment:
+   ```markdown
+   The ML classifier endpoint is deployed on gpu-server.
+   <!-- verify: curl -s https://api.example.com/classify/logo -d '{"url":"test"}' | grep -q '"label"' && echo PASS || echo FAIL -->
+   ```
+2. **On read**: Before trusting a memory entry with a verify comment, run the command. If it fails, treat the entry as stale — flag it, don't build on it.
+3. **On curate**: The `/curate` skill scans for state claims, runs embedded verify commands, and reports pass/fail. Entries without a verify comment are flagged as unverified.
+
+Not every memory entry needs this. Agents can infer the claim type from language:
+
+| Claim type | Trigger words | Agent action |
+|---|---|---|
+| **State** | "shipped," "deployed," "live," "running" | Embed `<!-- verify: command -->` |
+| **Observation** | "during session," "tested," "responded" | Qualify with session context, no verify needed |
+| **Decision** | "chose," "decided," "because" | Stable unless reversed — no verify needed |
+| **Pattern** | "always," "never," "when X do Y" | Include repro command if useful, no verify needed |
+
+If a verification command cannot be written (e.g., requires credentials the agent doesn't have), note that explicitly: `<!-- verify: manual — requires production SSH access -->`. The curate skill will flag these for human attention.
+
+This is lightweight by design. No frontmatter schema, no mandatory fields. The verification comment is a convention that agents follow because the guide tells them to. The user never sees the ceremony — the agent handles it on write, read, and curate.
 
 **What stays out**:
 - Instructions ("run X to do Y") — that's CLAUDE.md or the runbook

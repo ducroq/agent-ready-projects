@@ -29,6 +29,11 @@
 **Root cause**: Sandboxed execution contexts impose constraints that manual/local runs bypass. Examples: systemd `ProtectHome=read-only` blocks cache writes; Docker read-only layers drop capabilities; CI uses a different user with restricted network and ephemeral filesystem. Unit tests and manual runs never exercise these constraints.
 **Fix**: Always verify through the actual execution context after deploying — `systemctl start`, `docker run`, or CI trigger — not just `python3 script.py`. Add a post-deploy smoke test that runs _inside_ the sandbox.
 
+### Memory claimed "shipped" but feature only existed in running process (2026-04-13)
+**Problem**: Agent memory stated an ML classifier endpoint was "shipped and working." The endpoint returned 404 after a service restart. 230 articles (10%) were affected before a human noticed.
+**Root cause**: The endpoint was added to a running process during a dev session but never persisted to the deployed codebase. Memory recorded "shipped" based on a point-in-time test. Future sessions trusted the memory and never re-verified.
+**Fix**: Never write "shipped" or "deployed" in memory based on a session observation alone. Qualify: *"responded correctly during session — verify persistence after restart."* Include a verification command (e.g., `curl https://endpoint | grep expected`) so future sessions can check before trusting the claim.
+
 ## Promoted
 
 <!-- Track gotchas that have been promoted to topic files or the memory index.

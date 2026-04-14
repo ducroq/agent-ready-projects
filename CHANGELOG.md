@@ -2,6 +2,58 @@
 
 All notable changes to the agent-ready-projects framework. Adopters can check their project file's `agent-ready-projects` version against this log to see what's changed.
 
+## v1.9.0 (2026-04-14)
+
+Self-verifying memory — agents embed verification commands in state claims on write, run them on read, and audit them on curate. No user-facing ceremony.
+
+### Guide (`docs/GUIDE.md`)
+- New subsection "Self-verifying memory" under Layer 3. Covers the write/read/curate protocol, claim-type detection table (State/Observation/Decision/Pattern), worked example, and lightweight design rationale.
+- Version bumped to 1.9.0.
+
+### Templates
+- **`templates/curate.md`** — Step 0 sub-step 5 (Unverified state claims) extended with three-outcome protocol: PASS/FAIL for embedded verify commands, MANUAL CHECK NEEDED for manual-only claims, UNVERIFIED for claims without verification. Step 6 report template updated with verification summary row.
+- **`templates/test-verify-memory.md`** — New skill that tests the self-verifying memory protocol against fixture files with known expected outcomes. Validates claim-type detection, verify command execution, and three-outcome classification.
+- **`templates/test-fixtures/memory/`** — Ten fixture files exercising all curate verification branches: passing verify, failing verify, manual verify, erroring verify, unverified state claim (×3 — covering "deployed"/"running", "live", and "working in production" trigger words), decision, observation, and pattern.
+
+### Landscape (`docs/LANDSCAPE.md`)
+- Added "Self-verifying memory" to the gap analysis table — no other framework embeds verification in memory entries.
+- Added to "Ahead" positioning section with reference to the ovr.news incident and ETH Zurich finding.
+- Added Superpowers (151K+ stars) to Category 3 and positioning diagram.
+
+### README
+- Version bumped to 1.9.0.
+
+### Origin
+
+Issue #10, building on issue #8. The v1.8.1 fix (distinguish observations from deployed state) was guidance-only — it told agents what to do but provided no mechanism. Self-verifying memory closes the loop: verification commands travel with the claim, are executed when the claim is consumed, and are audited during curation. The ovr.news incident (230 articles affected by a false "shipped" memory) demonstrated that guidance alone is insufficient when future sessions trust memory entries unconditionally.
+
+---
+
+## v1.8.1 (2026-04-14)
+
+Memory hallucination prevention — distinguishing session observations from deployed state, plus landscape update.
+
+### Guide (`docs/GUIDE.md`)
+- New paragraph "Distinguish observations from deployed state" in Layer 3 memory guidance. Explains the observation-vs-state conflation, advises qualifying claims with verification commands, warns against unqualified "shipped" entries.
+- Version bumped to 1.8.1.
+
+### Templates
+- **`templates/gotcha-log.md`** — New worked example: memory claimed "shipped" but feature only existed in a running process (based on ovr.news incident, 230 articles affected). Shows the pattern and the fix.
+- **`templates/curate.md`** — Added freshness check step 5: "Unverified state claims." The `/curate` skill now scans memory for "shipped"/"deployed"/"live", flags entries without verification commands, and runs existing verification commands to check for failures.
+
+### Landscape (`docs/LANDSCAPE.md`)
+- Added [Superpowers](https://github.com/obra/superpowers) (151K+ stars) under Category 3 (Frameworks and methodologies). Workflow-discipline framework complementary to this guide's knowledge-structure approach.
+- Updated positioning diagram and narrative to reflect the orthogonal relationship.
+
+### README
+- Version bumped to 1.8.1.
+
+### Origin
+
+Issue #8: ovr.news ML logo classifier endpoint was tested during a dev session and memory recorded "shipped." The endpoint only existed in the running process — after restart it returned 404, silently failing for 230 articles (10%) until a human noticed. The memory system had no mechanism to distinguish a session observation from verified deployed state.
+
+---
+
 ## v1.8.0 (2026-04-11)
 
 Multi-contributor coordination — Layer 5 for projects where multiple developers use AI agents on the same codebase.
@@ -121,7 +173,9 @@ Doc sync step — `/curate` now catches documentation drift from code changes, n
 ### Motivation
 Observed in [podcast-generator](https://github.com/ducroq/podcast-generator): a large session with 18 file changes, new modules, renamed CLI flags, and changed defaults left CLAUDE.md and RUNBOOK stale. The existing curate steps (gotcha log, memory index, references) didn't catch documentation drift because they focus on the memory layer, not the project documentation layer. Adding a doc sync step closes this gap — inline updates prevent drift, curate catches what slips through.
 
+---
 
+## v1.5.0 (2026-04-06)
 
 Validation checklists, adversarial QA, git-reality validation, and deployment context gotcha.
 

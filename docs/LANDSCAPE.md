@@ -33,6 +33,7 @@ These are valuable for getting started. They don't explain the underlying dynami
 Complete systems that prescribe how to work with AI agents.
 
 - **[BMAD-METHOD](https://github.com/bmad-code-org/BMAD-METHOD)** (38K+ stars) — a full AI-driven agile development methodology with 12+ agent personas, 34+ workflows, module system, and installer. Addresses context management through agent-specific sidecar memory and manifests. Comprehensive but heavyweight — prescribes your entire development process. See [COMPARISON.md](COMPARISON.md) for a detailed mapping.
+- **[Superpowers](https://github.com/obra/superpowers)** (151K+ stars) — an agentic skills framework that enforces a disciplined development workflow: brainstorming through Socratic questioning, git worktree isolation, plan decomposition into small tasks, subagent dispatch with two-stage code review, and mandatory TDD (red-green-refactor). Installable as skills across Claude Code, Cursor, Codex, Copilot, Gemini CLI, and others. Prescribes *how the agent works* (workflow discipline) rather than *what the agent knows* (persistent context). Strong on in-session methodology — no cross-session memory, no layered documentation model, no curation loop. Complementary: Superpowers could consume this guide's context structures while enforcing its own workflow on top.
 - **[GitHub spec-kit](https://github.com/github/spec-kit)** (73K+ stars) — Spec-Driven Development where specifications generate code. Addresses context through constitutions and template-driven LLM constraint. Covers the pre-implementation phase (what to build, how to design it) but not the implementation phase (session context, memory, progressive disclosure). The two are complementary — spec-kit produces the specification artifacts, this guide ensures agents find and use them effectively. See [COMPARISON.md](COMPARISON.md) for how to use them together.
 - **[AGENTS.md](https://agents.md/)** (60K+ projects) — an open format for agent instructions, donated to the Agentic AI Foundation under the Linux Foundation (December 2025) alongside Anthropic's MCP and Block's Goose. Platinum members: AWS, Anthropic, Block, Bloomberg, Cloudflare, Google, Microsoft, OpenAI. Standardizes *where* to put instructions but doesn't address *how* to structure them, when to split, or how to handle progressive disclosure. A format spec, not a guide. GitHub's analysis of 2,500+ AGENTS.md files (March 2026) shows adoption is broad but quality varies — most files lack the structural patterns this guide provides.
 - **[Agent Skills](https://agentskills.io/)** (agentskills.io) — open standard for portable agent skills. YAML frontmatter (`name`, `description`) + markdown body. Adopted by 26+ platforms including Claude Code, Codex, Cursor, Copilot, Gemini CLI. Released by Anthropic (December 2025), now community-maintained. Defines the format for skills; doesn't address how skills compose into a layered memory system or how teams coordinate shared skills.
@@ -93,6 +94,7 @@ What's missing:
 | **Development practices** | Course-correction, documentation rhythm, the feedback loop between guide and project — treated as project management concerns, not agent effectiveness concerns |
 | **Multi-contributor coordination** | No framework addresses what happens when multiple users' agents work in the same codebase — constraint visibility, convention divergence, work overlap. Every guide assumes a single author. Security is being addressed (OWASP, Microsoft AGT), but team coordination patterns remain uncharted. This guide addresses this gap with Layer 5 (v1.8.0). |
 | **Context file effectiveness** | The ETH Zurich study (February 2026) shows that naive context files can hurt agent performance. No guide except this one integrates the finding that context must be surgical — only non-inferable constraints and task-triggered pointers, not exhaustive documentation. |
+| **Self-verifying memory** | No framework embeds verification commands in memory entries. State claims ("shipped," "deployed") are written once and trusted forever. Memory systems (Mem0, Letta, Graphiti) solve storage and retrieval but not trust. This guide introduces write-time verification embedding, read-time execution, and curate-time audit — closing the loop between observation and deployed truth (v1.9.0). |
 
 ## Where This Guide Fits
 
@@ -104,10 +106,10 @@ This guide occupies a specific position in the landscape:
      Full SDLC      │  BMAD-METHOD    spec-kit
      methodology    │
                     │
-     Project        │  ┌─────────────────────┐
-     infrastructure │  │  This guide          │
-                    │  └─────────────────────┘
-                    │
+     Project        │  Superpowers  ┌─────────────┐
+     infrastructure │  (workflow)   │  This guide  │
+                    │              └─────────────┘
+                    │                (knowledge)
      Session-level  │  HumanLayer     Fowler/Böckeler
      optimization   │
                     │
@@ -117,7 +119,7 @@ This guide occupies a specific position in the landscape:
                    Prescriptive              Descriptive
 ```
 
-- **More prescriptive than Fowler** (who maps features without recommending structure) but **less prescriptive than BMAD** (which prescribes your entire workflow)
+- **More prescriptive than Fowler** (who maps features without recommending structure) but **less prescriptive than BMAD** (which prescribes your entire workflow). **Orthogonal to Superpowers** — they prescribe workflow discipline (how the agent works), we prescribe knowledge structure (what the agent knows). The two compose naturally.
 - **Broader than HumanLayer** (which optimizes single sessions) but **narrower than spec-kit** (which addresses the full build process)
 - **Principled rather than tactical** — explains *why* patterns work, not just *what* to do
 - **Tool-agnostic** — principles apply across Claude Code, Codex, Cursor, Windsurf, Copilot, and others
@@ -150,6 +152,7 @@ The guide continues to evolve through the feedback loop it describes: insights f
 - **The self-learning loop** — Capture/Surface/Promote/Retire with `/curate` and `/audit-context` skills. More sophisticated than static context file approaches. The ETH Zurich finding (static files can hurt) implicitly validates dynamic, curated context.
 - **The auto-loading cliff** — named and formalized as an architectural concept. No other framework identifies this boundary or its consequences for documentation design.
 - **Verification infrastructure** — the companion [agent-ready-papers](https://github.com/ducroq/agent-ready-papers) framework provides typed claim verification (CLAIM/ARGUMENT/PROPOSITION with Toulmin/Whetten checklists) that catches real errors in AI-assisted writing.
+- **Self-verifying memory** (v1.9.0) — agents embed `<!-- verify: command -->` in state claims on write, execute them on read, and audit them on curate. No other framework distinguishes state claims from observations in memory, or provides a mechanism for memory entries to prove themselves true. Motivated by the ovr.news incident ([issue #8](https://github.com/ducroq/agent-ready-projects/issues/8), 230 articles affected by a false "shipped" claim); validated by the ETH Zurich finding that static context files can hurt performance.
 
 ### At parity
 
