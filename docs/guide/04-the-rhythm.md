@@ -29,15 +29,21 @@ flowchart LR
     E["Something<br/>went wrong"] --> GL["Log in<br/>gotcha-log.md"]
     L["Learned something<br/>non-obvious"] --> TF["Note in<br/>topic file"]
     D["Chose between<br/>approaches"] --> ADR["Write ADR +<br/>update index"]
+    P["Took a<br/>provisional position"] --> HL["Log in<br/>hypothesis-log.md"]
 
     style GL fill:#fefce8,stroke:#a16207
     style TF fill:#fefce8,stroke:#a16207
     style ADR fill:#eff6ff,stroke:#1d6fa5
+    style HL fill:#eff6ff,stroke:#1d6fa5
 ```
 
 **Time cost:** Seconds. You're writing 2-3 lines, not a report.
 
 **The rule:** If you'd explain it to a colleague arriving tomorrow, write it down now. If it's obvious from the code, don't.
+
+**A provisional position is different from a decision.** An ADR captures a choice you've already made with rationale frozen. A hypothesis log entry captures a bet whose evidence lives in the future — "we think X will happen by date Y; we'll know we were wrong if we see Z." See [`templates/hypothesis-log.md`](../../templates/hypothesis-log.md) for the format.
+
+**Why bother?** Without a hypothesis log, provisional bets either drift into ADRs (over-committing) or get forgotten (under-revisiting). With one, you pin the falsification criterion *before* the data lands — hard discipline against post-hoc rationalization. `/curate` surfaces due entries automatically so you don't have to remember.
 
 ## End of session: curate (1-2 minutes)
 
@@ -67,7 +73,11 @@ flowchart TD
 
     Step3["3. Update memory index"]
     Step3 --> Update["Reflect what changed,<br/>add new paths,<br/>remove stale entries"]
-    Update --> Step4
+    Update --> StepHL
+
+    StepHL["3.5 Hypothesis log surface"]
+    StepHL --> SurfaceHL["Flag entries past Review by;<br/>flag entries whose Revisit trigger fired"]
+    SurfaceHL --> Step4
 
     Step4["4. Doc sync check"]
     Step4 --> Sync["Verify project file, runbook,<br/>backlog match current repo"]

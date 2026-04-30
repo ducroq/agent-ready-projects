@@ -33,6 +33,11 @@ Check for context rot from *previous* sessions. This catches what the session-fo
    - **Has `<!-- verify: manual — ... -->` comment**: Flag as **MANUAL CHECK NEEDED** with the noted reason. Surface to the engineer.
    - **No verification comment**: Flag as **UNVERIFIED**. These claims decay immediately after the session that wrote them. Suggest adding a `<!-- verify: -->` comment or requalifying the claim as a session observation.
 
+6. **Hypothesis log surface**: If `docs/hypothesis-log.md` exists, scan its `## Open` section. For each entry:
+   - **Past `Review by:`**: Flag as **DUE FOR REVIEW** — the deadline has arrived. Surface to the engineer with the entry's Position and Method so they can resolve (move to `## Resolved`) or extend the deadline.
+   - **`Revisit trigger:` fired**: If the trigger references an evidence threshold ("once 7 days of cycles complete," "after 14 contiguous eval rows"), check whether that threshold is now met. If yes, flag as **TRIGGERED**. The agent shouldn't resolve the hypothesis — only surface it; resolution requires reading the Method and applying it, which is the engineer's call.
+   - **Stale (no movement, no trigger)**: Just count how many open entries exist. If more than ~10, flag as memory-cluttering — entries that never resolve should either be promoted to ADRs or marked `dormant` / closed.
+
 Report findings before proceeding. Don't fix anything in this step — just surface what's stale so the engineer can decide.
 
 ## Step 1 — Gotcha log review

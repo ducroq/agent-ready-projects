@@ -2,6 +2,29 @@
 
 All notable changes to the agent-ready-projects framework. Adopters can check their project file's `agent-ready-projects` version against this log to see what's changed.
 
+## v1.10.0 (candidate, unreleased)
+
+Hypothesis log — first-class home for provisional positions whose evidence lives in the future. Replaces the implicit-but-fragile pattern of using `/schedule` (cron) or memory pointers for "I'll come back and check this in N days" with an in-repo file whose entries pin the falsification criterion *before* the data lands.
+
+### Templates
+- **`templates/hypothesis-log.md`** — New template. Format: Position / Alternative / Method / Revisit trigger / Review by / Domain / Status. `open` → resolved (close or promote to ADR). Distinguished from gotcha log (problems solved), ADRs (decisions accepted), and TODO (tasks ready to execute) by the future-evidence frame.
+- **`templates/curate.md`** — Step 0 freshness check extended with sub-step 6 ("Hypothesis log surface"). The `/curate` skill flags entries past their `Review by:` date and entries whose `Revisit trigger:` has fired. The skill surfaces — it does not resolve — to keep the hypothesis-log discipline (engineer applies Method, agent doesn't shortcut it).
+
+### Guide (`docs/guide/04-the-rhythm.md`)
+- "During work" diagram + prose updated: provisional positions get a fourth capture path alongside gotchas, topic-file learnings, and ADRs. Explicit contrast with ADRs ("decision frozen") to prevent confusion.
+- End-of-session flowchart: new step "3.5 Hypothesis log surface" between memory-index update and doc sync.
+
+### Origin
+
+The pattern emerged on the ovr.news project (`docs/hypothesis-log.md`, first commit 2026-04-19) where Claude was scheduling cron-style reminders for predictions that needed to be tested. The cron approach checked *that* you remembered, not *whether the prediction was right*. The Method field — written before the data — turns each entry into a small pre-registered experiment. After several months of use it became clear the pattern wasn't project-specific. The augur EXP-009 milestone-3 review battery surfaced multiple "we'll see how this performs in 14 days" cases that were good fits, prompting promotion here.
+
+Compared to existing tools:
+- ADRs freeze rationale at decision time. Hypothesis entries are the *bet* before the rationale fully settles.
+- Gotcha log captures problems with known root causes. Hypothesis entries capture predictions whose root cause is *what we're trying to learn*.
+- TODO captures tasks. Hypothesis entries capture *expectations*, with the trigger that brings them back.
+
+---
+
 ## v1.9.0 (2026-04-14)
 
 Self-verifying memory — agents embed verification commands in state claims on write, run them on read, and audit them on curate. No user-facing ceremony.
