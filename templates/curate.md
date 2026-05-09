@@ -38,6 +38,12 @@ Check for context rot from *previous* sessions. This catches what the session-fo
    - **`Revisit trigger:` fired**: If the trigger references an evidence threshold ("once 7 days of cycles complete," "after 14 contiguous eval rows"), check whether that threshold is now met. If yes, flag as **TRIGGERED**. The agent shouldn't resolve the hypothesis — only surface it; resolution requires reading the Method and applying it, which is the engineer's call.
    - **Stale (no movement, no trigger)**: Just count how many open entries exist. If more than ~10, flag as memory-cluttering — entries that never resolve should either be promoted to ADRs or marked `dormant` / closed.
 
+7. **Project file size budget**: Check the project file (`CLAUDE.md` for Claude Code, equivalent for other tools). Claude Code warns at 40k chars; the soft target is under 35k to leave headroom. If the file is approaching or over budget:
+   - The most common cause is **session-narrative footers** (blocks like `_Last updated: ..._` / `_Earlier ..._`) accreting from prior sessions. These duplicate content that already lives in `memory/project_session_*.md` and is indexed in `MEMORY.md`.
+   - Rule: keep at most **one** session footer block (the most recent), and only if it adds at-a-glance value the index can't carry. Drop older `_Earlier ..._` blocks — their content is preserved in session-memory files.
+   - Don't trim structural sections (Hard Constraints, Before You Start, Architecture, Key Paths). Those are what the project file is *for*.
+   - If trimming wouldn't get under budget, surface to the engineer — structural restructuring is their call, not the agent's.
+
 Report findings before proceeding. Don't fix anything in this step — just surface what's stale so the engineer can decide.
 
 ## Step 1 — Gotcha log review
@@ -69,6 +75,8 @@ Read the memory index (`MEMORY.md` for Claude Code, or the project file for othe
 - **Key File Paths** — add any important files discovered during work
 - **Active Decisions** — add any architectural choices made, with ADR pointers if created
 - Remove or correct anything that is now stale
+
+**Don't accrete session narrative onto the project file footer.** Session-level "what happened today" belongs in `memory/project_session_YYYY_MM_DD.md`, with a one-line pointer added to `MEMORY.md`. The project file is structural context (constraints, architecture, key paths) — appending session footers there bloats it past the 40k Claude Code perf threshold within ~7 sessions and duplicates what the index already holds. If a previous workflow left footer blocks behind, Step 0 sub-step 7 catches and trims them.
 
 ## Step 4 — Doc sync check
 

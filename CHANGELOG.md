@@ -4,11 +4,14 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 ## v1.10.0 (candidate, unreleased)
 
-Hypothesis log — first-class home for provisional positions whose evidence lives in the future. Replaces the implicit-but-fragile pattern of using `/schedule` (cron) or memory pointers for "I'll come back and check this in N days" with an in-repo file whose entries pin the falsification criterion *before* the data lands.
+Three additions: hypothesis log (first-class home for provisional positions), session-start framework-drift check, and project-file size budget enforcement.
 
 ### Templates
 - **`templates/hypothesis-log.md`** — New template. Format: Position / Alternative / Method / Revisit trigger / Review by / Domain / Status. `open` → resolved (close or promote to ADR). Distinguished from gotcha log (problems solved), ADRs (decisions accepted), and TODO (tasks ready to execute) by the future-evidence frame.
-- **`templates/curate.md`** — Step 0 freshness check extended with sub-step 6 ("Hypothesis log surface"). The `/curate` skill flags entries past their `Review by:` date and entries whose `Revisit trigger:` has fired. The skill surfaces — it does not resolve — to keep the hypothesis-log discipline (engineer applies Method, agent doesn't shortcut it).
+- **`templates/project-file.md`** — "Before You Start" gains a new top row: **Starting any session** → compare the `framework: agent-ready-projects vX.Y.Z` header line against `CHANGELOG.md` (GitHub URL or local clone). If behind, surface the drift before starting work. Don't auto-update — adopting changes is the engineer's call. Closes the gap where adopted projects could fall multiple versions behind without anyone noticing (e.g., ovr.news ran on v1.7.0 from adoption through 2026-05-09, never flagged).
+- **`templates/curate.md`** — Two extensions to Step 0 freshness check:
+  - Sub-step 6 ("Hypothesis log surface"): `/curate` flags entries past their `Review by:` date and entries whose `Revisit trigger:` has fired. The skill surfaces — it does not resolve — to keep the hypothesis-log discipline (engineer applies Method, agent doesn't shortcut it).
+  - Sub-step 7 ("Project file size budget"): `/curate` checks the project file against the 40k Claude Code perf threshold. The most common cause of bloat is session-narrative footers (`_Last updated: ..._` / `_Earlier ..._`) accreting across sessions while the same content already lives in `memory/project_session_*.md` and is indexed in `MEMORY.md` — pure duplication. Rule: keep at most one footer block, drop older `_Earlier_` blocks. Step 3 gets a paired discipline note: don't accrete narrative onto the project file footer in the first place; it belongs in session-memory files.
 
 ### Guide (`docs/guide/04-the-rhythm.md`)
 - "During work" diagram + prose updated: provisional positions get a fourth capture path alongside gotchas, topic-file learnings, and ADRs. Explicit contrast with ADRs ("decision frozen") to prevent confusion.
@@ -16,12 +19,16 @@ Hypothesis log — first-class home for provisional positions whose evidence liv
 
 ### Origin
 
-The pattern emerged on the ovr.news project (`docs/hypothesis-log.md`, first commit 2026-04-19) where Claude was scheduling cron-style reminders for predictions that needed to be tested. The cron approach checked *that* you remembered, not *whether the prediction was right*. The Method field — written before the data — turns each entry into a small pre-registered experiment. After several months of use it became clear the pattern wasn't project-specific. The augur EXP-009 milestone-3 review battery surfaced multiple "we'll see how this performs in 14 days" cases that were good fits, prompting promotion here.
+**Hypothesis log** emerged on the ovr.news project (`docs/hypothesis-log.md`, first commit 2026-04-19) where Claude was scheduling cron-style reminders for predictions that needed to be tested. The cron approach checked *that* you remembered, not *whether the prediction was right*. The Method field — written before the data — turns each entry into a small pre-registered experiment. After several months of use it became clear the pattern wasn't project-specific. The augur EXP-009 milestone-3 review battery surfaced multiple "we'll see how this performs in 14 days" cases that were good fits, prompting promotion here.
 
 Compared to existing tools:
 - ADRs freeze rationale at decision time. Hypothesis entries are the *bet* before the rationale fully settles.
 - Gotcha log captures problems with known root causes. Hypothesis entries capture predictions whose root cause is *what we're trying to learn*.
 - TODO captures tasks. Hypothesis entries capture *expectations*, with the trigger that brings them back.
+
+**Session-start drift check** emerged when ovr.news's CLAUDE.md hit Claude Code's 40k perf warning on 2026-05-09 and inspection showed the project still pinned to `agent-ready-projects: v1.7.0` — two minor versions behind, undetected for months. The intent that adopters track framework drift had no enforcement: the "Update" prompt in `adopt.md` requires the user to manually paste it into a session, while the version line in the header was inert metadata that no instruction told the agent to act on. The fix is the cheapest possible mechanism: a task-triggered pointer in "Before You Start" that uses the same idiom as every other row in the table. Tool-agnostic; works for Claude Code, Cursor, Codex, Aider, Copilot.
+
+**Project-file size budget** emerged in the same session: the bloat that triggered the 40k warning was 7 accreted `_Last updated_` / `_Earlier_` session-narrative blocks, each duplicating a `memory/project_session_*.md` file already indexed in `MEMORY.md`. The trim was straightforward (keep one, drop six) but the question that surfaced was structural: nothing in `/curate` told the agent *not* to keep adding these, and nothing told it to detect the bloat. Step 0 sub-step 7 closes the detection side; Step 3's discipline note closes the prevention side.
 
 ---
 
