@@ -1,6 +1,6 @@
 # The Complete Reference Guide
 
-**Version 1.9.0** | [Back to README](../README.md) | [Changelog](../CHANGELOG.md)
+**Version 1.10.0** | [Back to README](../README.md) | [Changelog](../CHANGELOG.md)
 
 This is the full reference for the agent-ready projects method. For a quick overview and getting started, see the [README](../README.md).
 
