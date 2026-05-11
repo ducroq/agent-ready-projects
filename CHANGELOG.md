@@ -2,6 +2,16 @@
 
 All notable changes to the agent-ready-projects framework. Adopters can check their project file's `agent-ready-projects` version against this log to see what's changed.
 
+<!-- Maintainer release process (issue #14):
+     When promoting a `vX.Y.Z (candidate, unreleased)` block to a dated release,
+     also tag the release commit:
+
+         git tag vX.Y.Z <commit>
+         git push --tags
+
+     Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
+     `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
+
 ## v1.10.0 (candidate, unreleased)
 
 Three additions: hypothesis log (first-class home for provisional positions), session-start framework-drift check, and project-file size budget enforcement.
