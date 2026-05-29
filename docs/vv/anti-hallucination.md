@@ -4,6 +4,8 @@
 
 Run for every citation. Step 0 catches fabrications in seconds. Full checklist ~2 min per source.
 
+*Rationale: [`docs/verification-rationale.md`](../verification-rationale.md), principle 2 (tier-monotonicity for claim language — verify that the language used sits at or below the registered confidence tier).*
+
 ---
 
 ## Source Verification Status

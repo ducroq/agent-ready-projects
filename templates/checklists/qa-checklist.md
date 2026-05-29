@@ -3,6 +3,8 @@
 <!-- Definition-of-done for quality assurance review.
      Use before approving a merge or declaring work complete. -->
 
+*Rationale: [`docs/verification-rationale.md`](../../docs/verification-rationale.md), principle 1 (multi-pass verification as invariant coverage — each section preserves invariants the others do not).*
+
 ## Git Reality Check
 
 - [ ] Run `git diff --stat` and compare against claimed changes
