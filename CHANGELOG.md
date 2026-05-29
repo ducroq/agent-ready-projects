@@ -12,6 +12,33 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.10.1 (candidate, unreleased)
+
+Documentation: verification rationale doc names the three principles organizing the framework's verification patterns. Adopts the category-theory framing landed upstream in `agent-ready-papers#12` and `#13`. No template or slash-command content changed; no adopter action required. First patch-version release.
+
+### Docs
+- **`docs/verification-rationale.md`** — New design-rationale doc. Three structural principles, each with an explicit decision rule:
+  1. *Multi-pass verification is a limit of functors.* Each verification layer preserves invariants the others do not; the battery's strength is invariant coverage, not redundancy. Makes adding, skipping, or retiring a layer decidable.
+  2. *Citation drift is tier-monotonicity failure.* Manuscript language must sit at or below the registered confidence tier. Subsumes the separate rules of thumb in the writing-guide and anti-hallucination templates.
+  3. *Validation is compositional, not monolithic.* Verification of a complex artifact factors as composition of verifications of its parts. Organizes the layered memory system (`docs/decisions/ADR-001` + `docs/self-verifying-memory.md`).
+
+  Plus an explicit out-of-scope section (task-triggered pointers, Before-You-Start tables, versioning/CHANGELOG discipline). Category-theory vocabulary stays in the rationale doc; templates and slash commands are untouched. Closes #15.
+
+### Pointers
+- **`templates/checklists/qa-checklist.md`** — Rationale pointer in the header, principle 1.
+- **`docs/vv/anti-hallucination.md`** — Rationale pointer in the intro, principle 2.
+- **`templates/review-agent.md`** — Rationale pointer in the template guidance, principle 1 applied to batteries of review agents.
+
+### Origin
+
+Upstream sibling issues `agent-ready-papers#12` (writing-guide tier-monotonicity) and `#13` (DR-011 functorial-composition rationale) opened 2026-05-28 and closed 2026-05-29 via commits `a294361` and `74d7976`. The anchor doc `agent-ready-papers/docs/category-theory-as-design-lens.md` (commit `f79b6f0`) was already in place. The framework's verification rationale was implicit before this: adopters wanting to reason about whether to add a fourth review agent, or why three checklist sections rather than one, had to reconstruct it from examples. The new doc lets downstream consumers cite a single principle.
+
+### Versioning precedent
+
+This is the framework's first patch-version release. Going forward, documentation-only changes (new rationale docs, clarifications, cross-reference adds) go to patch versions; new templates, patterns, or behaviors continue to get minor bumps. The maintainer release-tagging process (`git tag v1.10.1 <commit>; git push --tags`) in the CHANGELOG header applies unchanged.
+
+---
+
 ## v1.10.0 (2026-05-11)
 
 Three additions: hypothesis log (first-class home for provisional positions), session-start framework-drift check, and project-file size budget enforcement.
