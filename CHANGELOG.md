@@ -12,7 +12,7 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.10.1 (candidate, unreleased)
+## v1.10.1 (2026-05-30)
 
 Documentation: verification rationale doc names the three principles organizing the framework's verification patterns. Adopts the category-theory framing landed upstream in `agent-ready-papers#12` and `#13`. No template or slash-command content changed; no adopter action required. First patch-version release.
 

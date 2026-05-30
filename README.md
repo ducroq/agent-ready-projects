@@ -1,6 +1,6 @@
 # Working With AI Agents: A Practical Guide
 
-**Version 1.10.0** | [Changelog](CHANGELOG.md) | [MIT License](LICENSE)
+**Version 1.10.1** | [Changelog](CHANGELOG.md) | [MIT License](LICENSE)
 
 Your AI agent starts every session cold. It doesn't remember yesterday's bugs, your architectural decisions, or what it tried and failed last week. You end up repeating yourself, undoing its mistakes, and wondering why it's not getting better.
 
@@ -120,3 +120,4 @@ Ready-to-use starter files in [`templates/`](templates/). Tool-agnostic — rena
 - **[Landscape analysis](docs/archive/LANDSCAPE.md)** — State of the art in context engineering (April 2026 snapshot)
 - **[Framework comparison](docs/archive/COMPARISON.md)** — Mapping against BMAD-METHOD and spec-kit
 - **[Methodology](docs/archive/METHODOLOGY.md)** — How this guide was developed and tested
+- **[Verification rationale](docs/verification-rationale.md)** — Three structural principles organizing the framework's verification patterns: multi-pass verification as invariant coverage, tier-monotonicity for claim language, compositional validation. Decision rules for when to add, skip, or retire a verification layer.
