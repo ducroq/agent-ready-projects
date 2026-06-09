@@ -12,6 +12,34 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.10.2 (2026-06-09)
+
+Maintainer infrastructure: the framework that teaches the layered memory method finally applies it to itself. Root `CLAUDE.md` + in-repo `memory/` directory + `.gitignore` entry. No template, guide, or adopter-facing surface changed. No adopter action required. Closes #17.
+
+### Maintainer-only additions
+- **`CLAUDE.md`** — New file at repo root. Header pin (`agent-ready-projects: v1.10.2`), Hard Constraints (in-repo memory rule + templates-are-normative + patch-vs-minor precedent + don't-re-promote + tool-agnostic adopter content), Before You Start table with task-triggered pointers to `memory/`, `templates/`, `docs/`, etc., Architecture section, "What is intentionally not shipped" honesty note, Key Paths, How to Work Here.
+- **`memory/`** — New directory (gitignored). Holds maintainer's project-typed state: `MEMORY.md` index plus three topic files migrated from user-level Claude Code auto-memory at `~/.claude/projects/C--local-dev-agent-ready-projects/memory/`:
+  - `project_framework_pivot.md` — April 2026 wrapper-archive decision
+  - `project_session_bloat_profile.md` — token-bloat measurements; basis for rejecting `lean-ctx`
+  - `project_dead_end_pattern_rollout.md` — PAUSED 2026-06-05 pending #16 gate 4
+- **`.gitignore`** — Added `memory/` line. Consistent with the framework's own guidance in `adopt.md` STEP 7 ("If the memory/ directory is user-specific, add it to .gitignore").
+
+### Adopter notes
+
+No action required. Templates, guide, and `adopt.md` are unchanged. Pinned consumers do not need to bump their adopted version line.
+
+### Origin
+
+Surfaced 2026-06-08 evening during the agent-ready-papers v1.5.0–v1.6.3 session, where the same structural failure mode prompted the downstream Hard Constraint at agent-ready-papers v1.6.2. Without root `CLAUDE.md` routing to in-repo `memory/`, the global Claude Code instruction ("you have a memory system at `~/.claude/projects/<slug>/memory/`") wins by default — same precedence default that bit agent-ready-papers and was codified there. The source framework had the same gap; the downstream repo fixed it first.
+
+Filed as #17 with the proposed ~30-minute fix (CLAUDE.md + memory/ + 3-file migration + .gitignore + user-level cleanup). Executed 2026-06-09. The user-level files at `~/.claude/projects/C--local-dev-agent-ready-projects/memory/` are preserved as historical record but the user-level `MEMORY.md` index now marks them as migrated, pointing at the in-repo canonical copies.
+
+### Versioning rationale
+
+PATCH per the v1.10.1 precedent: no template, pattern, or behavior change for adopters. The change is bounded to maintainer infrastructure (one new committed file `CLAUDE.md`, one new gitignored directory `memory/`, one `.gitignore` line). Framework *teaching* unchanged.
+
+---
+
 ## v1.10.1 (2026-05-30)
 
 Documentation: verification rationale doc names the three principles organizing the framework's verification patterns. Adopts the category-theory framing landed upstream in `agent-ready-papers#12` and `#13`. No template or slash-command content changed; no adopter action required. First patch-version release.

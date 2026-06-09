@@ -1,4 +1,5 @@
 .claude/
+memory/
 .DS_Store
 Thumbs.db
 *.stackdump
