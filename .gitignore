@@ -1,5 +1,6 @@
 .claude/
 memory/
+.pytest_cache/
 .DS_Store
 Thumbs.db
 *.stackdump

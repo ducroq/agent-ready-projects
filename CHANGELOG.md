@@ -12,6 +12,36 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.10.3 (2026-06-09)
+
+Maintainer infrastructure: structural-lint self-tests at `tests/lint/`. Four deterministic checks (no LLM) for drift between `CLAUDE.md`, `memory/MEMORY.md`, templates, and disk state. No template, guide, or adopter-facing surface changed. No adopter action required.
+
+### Maintainer-only additions
+- **`tests/lint/run.sh`** — Four-rule structural lint, exits non-zero on drift:
+  1. Every path referenced in `CLAUDE.md` (Before You Start, Key Paths, backticked refs) resolves on disk
+  2. `memory/MEMORY.md` index integrity — no orphans (project file without index entry), no stale links (index entry without project file)
+  3. Skill-shape templates (`curate.md`, `audit-context.md`, `test-verify-memory.md`) retain their embedded `name:`/`description:` lines inside the `SAVE AS: .claude/skills/...` HTML comment
+  4. Templates that open with `---` close it within first 30 lines
+- **`tests/lint/README.md`** — Rule catalog with what each rule catches and what is deliberately *not* checked (semantic pairing between Hard Constraints and Before You Start, version-pin coherence, content correctness, LLM-driven behavioral testing).
+- **`CLAUDE.md`** — New row in Before You Start: "Before committing structural changes → run `bash tests/lint/run.sh`". Architecture diagram updated to surface `tests/` and the existing `templates/test-verify-memory.md` + `templates/test-fixtures/` (now visible as the Phase B/C behavioral-test precedent).
+- **`.gitignore`** — Added `.pytest_cache/`.
+
+### Adopter notes
+
+No action required. Templates, guide, and `adopt.md` are unchanged. Pinned consumers do not need to bump their adopted version line.
+
+### Origin
+
+Same 2026-06-09 session as v1.10.2. After dog-fooding the in-repo memory adoption, the question surfaced: how do we *test* the methodology this repo teaches? Initial design discussion landed on a hybrid plan — structural lint (deterministic, cheap) plus eventual multi-vendor behavioral fixtures (LLM-in-the-loop, expensive, validates the tool-agnostic claim via cross-vendor independence). The reviewer-battery idea (extending "fire up a battery of multi-model reviewers" to Gemini and Copilot CLIs) and the methodology-test idea converged on the same harness: a script that fans out a fixture + prompt to multiple vendors and compares results. v1.10.3 ships the deterministic Phase A only. Phase B/C (behavioral fixtures + cross-vendor harness for the four load-bearing tricks: `curate`, `audit-context`, memory recall, `hypothesis-log`) is deferred — Phase A earns its keep standalone and Phase C has unresolved design choices best made after seeing Phase A drift get caught in real session use.
+
+The existing `templates/test-verify-memory.md` is the Phase B/C precedent — single-trick behavioral fixture with 10 expected-outcome fixtures under `templates/test-fixtures/memory/`. Generalizing that pattern to the other three load-bearing tricks + adding a cross-vendor wrapper is the Phase C scope.
+
+### Versioning rationale
+
+PATCH per the v1.10.2 precedent: no template, pattern, or behavior change for adopters. Maintainer infrastructure only. The new `tests/lint/` is repo-specific (not templatized) and the new Before You Start row is in the maintainer's own `CLAUDE.md`, not in `templates/project-file.md`. If Phase C templatizes a per-trick behavioral-test pattern that adopters can copy, *that* would be MINOR.
+
+---
+
 ## v1.10.2 (2026-06-09)
 
 Maintainer infrastructure: the framework that teaches the layered memory method finally applies it to itself. Root `CLAUDE.md` + in-repo `memory/` directory + `.gitignore` entry. No template, guide, or adopter-facing surface changed. No adopter action required. Closes #17.
