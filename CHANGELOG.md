@@ -12,6 +12,27 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.10.4 (2026-06-24)
+
+Documentation: new "Two Kinds of Context" section in `docs/GUIDE.md` distinguishing persistent (curated) from ephemeral (per-turn) context and naming mechanical context-compression tools as a complementary layer, plus a fourth "Prefix stability" principle folded into the existing cache-hierarchy section. No template or behavior change; no adopter action required.
+
+### Docs
+- **`docs/GUIDE.md`** — New section "Two Kinds of Context (and What This Method Reduces)", placed after "The Auto-Loading Cliff": names the boundary between what curation reduces (persistent/auto-loaded context) and what it does not (ephemeral per-turn context — tool output, large reads, inline images/PDFs), and positions mechanical context-compression tools as a complementary layer with two cautions — profile your actual bloat before adopting (savings depend on matching the tool to your bloat category), and keep compression off auto-loaded files (the faithful-read premise). New **"Prefix stability"** principle added to "Why a hierarchy works" — the provider-side version of that section's existing eviction discipline: churn at the top of an auto-loaded file can invalidate a cached prompt prefix, so keep the head stable. Caching is framed provider-agnostically (some providers cache automatically, others require marking the span; magnitude is provider-dependent). Version badge bumped to 1.10.4; TOC updated.
+
+### Adopter notes
+
+No action required. Templates and `adopt.md` are unchanged. Pinned consumers do not need to bump their adopted version line.
+
+### Origin
+
+Prompted by a maintainer question (2026-06-24) about adopting Headroom (an open-source context-compression tool) to reduce Claude cost. Adopting the tool was declined for the maintainer's own use — same category as `lean-ctx`, already rejected: the maintainer's session bloat is inline images/PDFs, not the tool output these compressors target (maintainer-local memory). But mining Headroom's design surfaced a real gap: the guide only ever addressed persistent context and never named the ephemeral layer or its different economics. Headroom's prefix-alignment feature motivated the prefix-stability principle. Tool-agnostic: no compression tool is named or depended on in the adopter-facing text — the section names the *category* with a functional definition. Draft was pressure-tested by a four-lens review battery (framework fidelity, tool-agnosticism, adversarial claims, voice/structure) before landing; the battery caught a false cross-reference, an over-stated caching claim, and an "estimated"-vs-"measured" evidence slip, all corrected here.
+
+### Versioning rationale
+
+PATCH per the v1.10.1 precedent. The change is documentation-only: a new conceptual section and a new principle in the reference guide, with no new template, skill, `adopt.md` step, or adopter action. The "is a named concept a new pattern?" question resolves to **no** — in this framework's vocabulary a *pattern* is a reusable artifact adopters install (hypothesis-log, coordination, curate), whereas this is explanatory reference prose. New templates/patterns/behaviors would be MINOR; this is neither.
+
+---
+
 ## v1.10.3 (2026-06-09)
 
 Maintainer infrastructure: structural-lint self-tests at `tests/lint/`. Four deterministic checks (no LLM) for drift between `CLAUDE.md`, `memory/MEMORY.md`, templates, and disk state. No template, guide, or adopter-facing surface changed. No adopter action required.

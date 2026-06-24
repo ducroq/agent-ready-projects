@@ -1,6 +1,6 @@
 # The Complete Reference Guide
 
-**Version 1.10.0** | [Back to README](../README.md) | [Changelog](../CHANGELOG.md)
+**Version 1.10.4** | [Back to README](../README.md) | [Changelog](../CHANGELOG.md)
 
 This is the full reference for the agent-ready projects method. For a quick overview and getting started, see the [README](../README.md).
 
@@ -14,6 +14,7 @@ This is the full reference for the agent-ready projects method. For a quick over
 - [The Core Problem](#the-core-problem)
 - [The Foundation: Agent Empathy](#the-foundation-agent-empathy)
 - [The Auto-Loading Cliff](#the-auto-loading-cliff)
+- [Two Kinds of Context](#two-kinds-of-context-and-what-this-method-reduces)
 - [The Layered Model](#the-layered-model)
   - [Layer 1: Identity + Operations (the project file)](#layer-1-identity--operations-the-project-file--always-present)
   - [Layer 2: Runbook](#layer-2-runbook-runbookmd--most-real-projects-need-this)
@@ -71,6 +72,19 @@ The bridge across the cliff is **task-triggered pointers** in auto-loaded files.
 This is the single most practical insight in this guide: **auto-loaded files are indexes that help agents find what they need, exactly when they need it.** The self-learning loop (covered later) is the mechanism that moves lessons from session history into always-loaded context — the cliff determines *where* knowledge lives; the loop determines *how it gets there*.
 
 **The asymmetry of wrong-layer placement.** When you're unsure which layer something belongs in, err toward keeping it in auto-loaded files. Content placed too high wastes context — agents see information they don't need, performance degrades gradually. Content placed too low is invisible — the agent doesn't know what it doesn't know, and fails silently. Ten extra lines in CLAUDE.md cost less than a missed constraint that was in a file the agent never loaded.
+
+## Two Kinds of Context (and What This Method Reduces)
+
+This method reduces tokens by **curation** — a lean auto-loaded index, deep knowledge one task-triggered read away. Everything that follows (the layered model) governs **persistent context**: what the agent carries into every session. That's the [60–80% session-start reduction](#layer-1-identity--operations-the-project-file--always-present) progressive disclosure buys.
+
+But persistent context is only one of the two places tokens go. The other is **ephemeral context** — the per-turn content: tool output, search dumps, large file reads, inline images and PDFs. This method does nothing about that, by design. No amount of memory curation shrinks a 15,000-token search result or a pasted screenshot.
+
+A different class of tool handles the ephemeral layer: **mechanical context compression** — proxies or wrappers that compress tool output and re-read caches before they reach the model (several open-source proxies and shell wrappers do this). These are largely complementary to this method — they operate on a different layer — provided they're scoped per the second caution below. The method decides *what the agent loads*; a compression tool decides *how much that costs once loaded*.
+
+Two cautions before reaching for one:
+
+1. **Profile your bloat first.** Compression tools advertise large savings (one such tool pitched 60–95%), but those numbers assume your bloat is the kind they compress — usually structured tool output and repeated reads. In one informal evaluation, a maintainer estimated near-zero savings on their largest sessions: those transcripts were dominated by inline images and PDFs, which a shell-output compressor doesn't touch (one data point, that maintainer's workload — not a benchmark). Conversely, if your sessions *are* dominated by build logs, test output, or repeated large reads, such a tool may deliver close to the advertised savings. Measure where your tokens actually go before adopting a tool that compresses a category you don't have.
+2. **Keep compression off your auto-loaded files.** Compression that rewrites or summarizes the agent's input fights this method's premise: the agent acts faithfully on a curated project file and memory index. If a tool compresses those, the agent is acting on a lossy copy of your constraints. Scope mechanical compression to high-volume *ephemeral* content; leave the auto-loaded project file and memory index untouched.
 
 ## The Layered Model
 
@@ -482,13 +496,15 @@ RAM                    Gotcha log, ADRs          Searched when needed, larger
 Disk                   Git history               Archive, rarely accessed, complete
 ```
 
-Three principles from processor design that sharpen how we manage agent context:
+Four principles from processor design that sharpen how we manage agent context:
 
 **Miss cost asymmetry.** A lesson missing from the project file just means the agent checks the memory index — one extra read. But a lesson missing from *all* layers means the agent rediscovers it from scratch: reading code, hitting the bug, debugging it again, at full session cost. This is why promotion matters — frequently-needed knowledge living too deep in the stack has a "miss penalty" every session.
 
 **Eviction discipline.** If an entry hasn't been relevant in the last N sessions, it's a demotion candidate. If a constraint in the project file has never actually prevented a mistake, it's taking space in the hottest layer without earning its keep. The goal isn't a smaller file — it's a file where everything pulls its weight.
 
 **Locality of reference.** If an agent needs one fact about the API layer, it probably needs related API facts too — this is why topic files should be organized by task domain, not by date. And task-triggered pointers are prefetch hints: "you're working in this area, so here's the bundle of context you'll need."
+
+**Prefix stability.** The same economics apply on the provider side. Where a provider caches prompt prefixes — some do this automatically, others require you to mark the cacheable span — an unchanged prefix is far cheaper to reprocess than a changed one. Auto-loaded files sit near the front of almost every prompt, so churn at the *top* of one can invalidate the cached portion below it, and a following session that would otherwise reuse the cache re-pays to process it. The magnitude depends on the provider and isn't guaranteed, but the direction is stable and costs nothing to honor: treat the head of your auto-loaded files as stable infrastructure — append rarely, reorder less, and keep volatile state (current status, work-in-progress) lower down or in a session hook.
 
 **Is the loop turning?** The clearest signal: gotcha log entries get promoted regularly and the same problem rarely appears three times. If the log only grows but nothing moves up, capture is happening without curation — the loop is stalled. See [Measuring Success](#measuring-success) for the full diagnostic.
 
