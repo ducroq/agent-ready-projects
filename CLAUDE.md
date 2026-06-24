@@ -4,7 +4,7 @@ The source framework that teaches the layered memory method for AI coding agents
 
 - **Type**: Public methodology repo (guide + templates + skills)
 - **License**: MIT
-- **agent-ready-projects** (this repo): v1.10.3 (structural-lint self-tests, 2026-06-09)
+- **agent-ready-projects** (this repo): v1.10.4 (context-economics doc — ephemeral-vs-persistent context + prefix stability, 2026-06-24)
 
 > Live project state (current threads, deferred items, surfaced patterns) lives in `memory/MEMORY.md` (maintainer-local — see *What is intentionally not shipped* below). Release notes live in `CHANGELOG.md`.
 
