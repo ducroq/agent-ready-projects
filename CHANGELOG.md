@@ -12,6 +12,27 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.10.6 (2026-07-09)
+
+Documentation: new **"The agent-write boundary"** principle in `docs/GUIDE.md`, adopted from BDS's `ai-wiki` (an independently-built instance of this framework) via #19. States crisply what the framework previously only gestured at: agents may write the derived/memory layer autonomously (gotchas, index, lint, session notes) but must not edit human-authored knowledge surfaces (project file, guide, templates, runbook, ADRs) or commit without in-session human approval. No template or behavior change; no adopter action required. Closes #19.
+
+### Docs
+- **`docs/GUIDE.md`** — New "The agent-write boundary" paragraph after the in-repo-memory / commit-by-default block. Maps `ai-wiki`'s `raw/ → wiki/ → CLAUDE.md` layering onto this framework's layers: the memory layer is the agent's regenerable working notes (cheap to correct, reviewed at curate time); the project file is the contract every future session inherits (a wrong edit propagates silently). Decision rule: "could a human reasonably need to disagree with this edit?" — if yes, it's human-authored, ask first. Version badge bumped to 1.10.6.
+
+### Adopter notes
+
+No action required. Templates and `adopt.md` are unchanged. Pinned consumers do not need to bump their adopted version line.
+
+### Origin
+
+Filed as #19 (2026-07-08) from a learn-from-BDS pass (`veen-systems/brainstorm/.../LEARN-FROM-BDS.md`, capability #1). BDS's `ai-wiki` proposed two transferable rules; **only the content-write boundary was adopted.** The other — quantified note decay (`confidence × exp(−days/τ)` frontmatter) — was **declined on principle**: it reintroduces the frontmatter schema this guide deliberately rejected ("lightweight by design. No frontmatter schema, no mandatory fields") and its `confidence` score is unsourced precision of the kind removed in v1.10.5/#18; the framework's existing `<!-- verify: -->` comment checks ground truth (PASS/FAIL) rather than time-since-touch, a stronger staleness signal. A third folded-in note (esm.sh single-file demo shape) was declined as out of scope for a tool-agnostic layered-memory methodology.
+
+### Versioning rationale
+
+PATCH per the v1.10.1 precedent. Explanatory reference prose articulating a boundary the framework already implied (commit-by-default, normative templates) — no new template, skill, `adopt.md` step, or adopter action. Same category as v1.10.4's "Two Kinds of Context" section. In this framework's vocabulary a *pattern* is a reusable artifact adopters install; this is a principle, so PATCH not MINOR.
+
+---
+
 ## v1.10.5 (2026-07-09)
 
 Documentation: removed the unattributed "60–80% reduction in session-start token usage" figure from `docs/GUIDE.md`. The number appeared in two places with no source, method, or n anywhere in the repo, and its restatement in the v1.10.4 "Two Kinds of Context" section risked a future reader mistaking text-convergence for evidence-convergence. No template or behavior change; no adopter action required. Closes #18.

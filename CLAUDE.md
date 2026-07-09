@@ -4,7 +4,7 @@ The source framework that teaches the layered memory method for AI coding agents
 
 - **Type**: Public methodology repo (guide + templates + skills)
 - **License**: MIT
-- **agent-ready-projects** (this repo): v1.10.5 (hedged the unsourced 60–80% session-start-reduction claim in GUIDE.md — #18, 2026-07-09)
+- **agent-ready-projects** (this repo): v1.10.6 (agent-write-boundary principle in GUIDE.md, adopted from BDS ai-wiki — #19, 2026-07-09)
 
 > Live project state (current threads, deferred items, surfaced patterns) lives in `memory/MEMORY.md` (maintainer-local — see *What is intentionally not shipped* below). Release notes live in `CHANGELOG.md`.
 

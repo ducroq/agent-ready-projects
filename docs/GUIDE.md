@@ -1,6 +1,6 @@
 # The Complete Reference Guide
 
-**Version 1.10.5** | [Back to README](../README.md) | [Changelog](../CHANGELOG.md)
+**Version 1.10.6** | [Back to README](../README.md) | [Changelog](../CHANGELOG.md)
 
 This is the full reference for the agent-ready projects method. For a quick overview and getting started, see the [README](../README.md).
 
@@ -258,6 +258,8 @@ This is lightweight by design. No frontmatter schema, no mandatory fields. The v
 | Supports the self-learning loop (you see what's there) | Easy to forget, hard to curate |
 
 The dividing line: **commit by default**. Use auto-memory only for content you would never put in a repository. In practice, this is rare — nearly all memory benefits from human review.
+
+**The agent-write boundary.** The self-learning loop lets agents maintain the memory layer autonomously — writing gotchas, updating the index, promoting patterns. That autonomy stops at the memory layer's edge. Agents may freely write **derived, regenerable artifacts**: memory files, gotcha logs, lint output, session notes. They should **not** edit **human-authored knowledge surfaces** — the project file, the guide, templates, the runbook, architectural decisions — without in-session human approval, and should not commit any change unless asked. The test: *could a human reasonably need to disagree with this edit?* Memory is the agent's working notes, cheap to correct and reviewed at curate time; the project file is the contract every future session inherits, where a wrong edit propagates silently. When unsure which side a file is on, treat it as human-authored and ask.
 
 **Cross-project knowledge.** For related projects (a pipeline feeding a downstream app, a monorepo with shared services), cross-project facts need a home. Project-level memory topic files handle cross-project facts *this* project's agent needs — e.g., "the upstream API repo uses branch `main` not `master`" in the downstream consumer's memory file. The principle: store the fact where it's *needed*, not where it *originates*. Each repo's project file names the relationship and owns its side; neither duplicates the other's internals.
 
