@@ -12,7 +12,7 @@ Exits `0` on pass, non-zero on any failure. Each failure prints what drifted and
 
 | Rule | Drift mode | Example failure |
 |------|-----------|-----------------|
-| **1. CLAUDE.md path references resolve** | A file gets renamed or deleted, but `CLAUDE.md` still points at the old path | `FAIL  CLAUDE.md references \`docs/old-guide.md\` but it does not exist` |
+| **1. CLAUDE.md path references resolve** | A file gets renamed or deleted, but `CLAUDE.md` still points at the old path. Gitignored maintainer dirs (`.claude/`, `memory/`) are exempt when absent — they are documented in `CLAUDE.md` but intentionally not shipped, so a fresh clone lacking them is not drift. | `FAIL  CLAUDE.md references \`docs/old-guide.md\` but it does not exist` |
 | **2. memory/MEMORY.md index integrity** | A `memory/project_*.md` file is added but never linked from `MEMORY.md` (orphan), or `MEMORY.md` links to a file that does not exist (stale link) | `FAIL  memory/project_X.md exists but is not referenced in MEMORY.md` |
 | **3. Skill template embedded frontmatter** | A skill-shape template (curate, audit-context, test-verify-memory) loses its embedded `name:`/`description:` lines inside the `SAVE AS: .claude/skills/...` comment, breaking installation for adopters | `FAIL  templates/curate.md: skill template missing \`name:\` in SAVE AS comment` |
 | **4. Top-level YAML frontmatter closure** | A template starting with `---` loses its closing `---`, leaving the file unparseable as YAML+markdown | `FAIL  templates/project-file.md: opens with \`---\` but no closing \`---\` within first 30 lines` |

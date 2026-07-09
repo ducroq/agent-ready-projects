@@ -15,7 +15,16 @@ while IFS= read -r path; do
 done < <(grep -oE '`[A-Za-z0-9_./-]+\.(md|yml|yaml|json|sh)`' CLAUDE.md | tr -d '`' | sort -u)
 
 while IFS= read -r path; do
-  [ -d "$path" ] || fail "CLAUDE.md references directory \`$path\` but it does not exist"
+  # The two documented maintainer dirs (.claude/, memory/) are gitignored and may be
+  # legitimately absent from a fresh clone — exempt them when absent AND still gitignored.
+  # Scoped to an explicit allowlist, NOT a blanket "any gitignored dir" skip, so a shipped
+  # dir mistakenly added to .gitignore and then deleted still FAILs.
+  # (A stale ref to an exempted dir under its exact gitignored name is out of scope here.)
+  [ -d "$path" ] && continue
+  case "$path" in
+    .claude/|memory/) git check-ignore -q "$path" && continue ;;
+  esac
+  fail "CLAUDE.md references directory \`$path\` but it does not exist"
 done < <(grep -oE '`[A-Za-z0-9_./-]+/`' CLAUDE.md | tr -d '`' | sort -u)
 
 echo "[2/4] memory/MEMORY.md index integrity"
