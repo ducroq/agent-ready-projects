@@ -1,6 +1,6 @@
 # The Complete Reference Guide
 
-**Version 1.10.4** | [Back to README](../README.md) | [Changelog](../CHANGELOG.md)
+**Version 1.10.5** | [Back to README](../README.md) | [Changelog](../CHANGELOG.md)
 
 This is the full reference for the agent-ready projects method. For a quick overview and getting started, see the [README](../README.md).
 
@@ -75,7 +75,7 @@ This is the single most practical insight in this guide: **auto-loaded files are
 
 ## Two Kinds of Context (and What This Method Reduces)
 
-This method reduces tokens by **curation** — a lean auto-loaded index, deep knowledge one task-triggered read away. Everything that follows (the layered model) governs **persistent context**: what the agent carries into every session. That's the [60–80% session-start reduction](#layer-1-identity--operations-the-project-file--always-present) progressive disclosure buys.
+This method reduces tokens by **curation** — a lean auto-loaded index, deep knowledge one task-triggered read away. Everything that follows (the layered model) governs **persistent context**: what the agent carries into every session. That's the [session-start reduction](#layer-1-identity--operations-the-project-file--always-present) progressive disclosure buys.
 
 But persistent context is only one of the two places tokens go. The other is **ephemeral context** — the per-turn content: tool output, search dumps, large file reads, inline images and PDFs. This method does nothing about that, by design. No amount of memory curation shrinks a 15,000-token search result or a pasted screenshot.
 
@@ -126,7 +126,7 @@ This is the project's home base. It's the only file guaranteed to be read every 
 
 The trigger column matters. "ADR index" is a label — an agent skims past it. "Making architectural decisions" is a task the agent recognizes itself doing. If the table exceeds ~8 rows, group related docs into task categories: "Adding or changing sources → CONFIGURATION.md, SOURCE_QUALITY.md" as a single row.
 
-**Context budget, not line count.** The goal isn't "keep files under N lines" — it's to maximize orientation quality while minimizing what agents pay for every session. Auto-loaded content is loaded whether the agent needs it or not. A 80-line file full of task-triggered pointers can outperform a 200-line file packed with details that apply 10% of the time. But a well-structured 200-line file that's the single authoritative source is better than a 100-line file that punts essentials below the cliff. The signal to split isn't hitting a line count — it's agents missing important constraints because they're buried in operational detail. Projects that adopted progressive disclosure — loading context on demand via task-triggered pointers rather than front-loading everything — measured 60-80% reduction in session-start token usage.
+**Context budget, not line count.** The goal isn't "keep files under N lines" — it's to maximize orientation quality while minimizing what agents pay for every session. Auto-loaded content is loaded whether the agent needs it or not. A 80-line file full of task-triggered pointers can outperform a 200-line file packed with details that apply 10% of the time. But a well-structured 200-line file that's the single authoritative source is better than a 100-line file that punts essentials below the cliff. The signal to split isn't hitting a line count — it's agents missing important constraints because they're buried in operational detail. Projects that adopt progressive disclosure — loading context on demand via task-triggered pointers rather than front-loading everything — can substantially cut what an agent pays at session start, since the bulk of deep detail moves below the cliff and is read only when a task calls for it.
 
 When making trade-offs about what to include, prioritize **correctness over completeness over size**. Wrong context (outdated facts, stale paths) is worse than missing context — agents will confidently act on incorrect information. Missing context is worse than noisy context — agents can filter noise, but they can't find what isn't there. All three matter, but in that order.
 

@@ -12,6 +12,30 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.10.5 (2026-07-09)
+
+Documentation: removed the unattributed "60–80% reduction in session-start token usage" figure from `docs/GUIDE.md`. The number appeared in two places with no source, method, or n anywhere in the repo, and its restatement in the v1.10.4 "Two Kinds of Context" section risked a future reader mistaking text-convergence for evidence-convergence. No template or behavior change; no adopter action required. Closes #18.
+
+### Docs
+- **`docs/GUIDE.md`** — Two edits, both dropping the fabricated figure:
+  - "Two Kinds of Context" intro — the anchor link "60–80% session-start reduction" becomes "session-start reduction" (keeps the pointer, drops the number).
+  - "Context budget, not line count" — "measured 60-80% reduction in session-start token usage" becomes a qualitative claim grounded in the mechanism ("can substantially cut what an agent pays at session start, since the bulk of deep detail moves below the cliff and is read only when a task calls for it").
+  - The two locations no longer read as two independent measurements. Version badge bumped to 1.10.5.
+
+### Adopter notes
+
+No action required. Templates and `adopt.md` are unchanged. Pinned consumers do not need to bump their adopted version line.
+
+### Origin
+
+Filed as #18 by the adversarial reviewer during the v1.10.4 review battery: restating the same unsourced number in a second location was flagged as a provenance risk, but the pre-existing gap was out of scope for the v1.10.4 doc-only PATCH. Resolved here after a repo-wide grep confirmed the figure has no attribution, method, or n anywhere — so it was hedged rather than cited (per the issue's resolution options, "downshift the language if no measurement exists").
+
+### Versioning rationale
+
+PATCH per the v1.10.1 precedent. Documentation-only correction: no new template, skill, `adopt.md` step, or adopter action. Removing an unsupported claim tightens the guide's evidentiary discipline without changing what adopters install or do.
+
+---
+
 ## v1.10.4 (2026-06-24)
 
 Documentation: new "Two Kinds of Context" section in `docs/GUIDE.md` distinguishing persistent (curated) from ephemeral (per-turn) context and naming mechanical context-compression tools as a complementary layer, plus a fourth "Prefix stability" principle folded into the existing cache-hierarchy section. No template or behavior change; no adopter action required.
