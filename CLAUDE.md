@@ -4,7 +4,7 @@ The source framework that teaches the layered memory method for AI coding agents
 
 - **Type**: Public methodology repo (guide + templates + skills)
 - **License**: MIT
-- **agent-ready-projects** (this repo): v1.10.6 (agent-write-boundary principle in GUIDE.md, adopted from BDS ai-wiki — #19, 2026-07-09)
+- **agent-ready-projects** (this repo): v1.11.0 (work-item template for multi-session work, "memory as residue" + "index wins" principles — #21, 2026-07-28)
 
 > Live project state (current threads, deferred items, surfaced patterns) lives in `memory/MEMORY.md` (maintainer-local — see *What is intentionally not shipped* below). Release notes live in `CHANGELOG.md`.
 
@@ -21,7 +21,9 @@ The source framework that teaches the layered memory method for AI coding agents
 | Considering reviving landscape / positioning docs | `memory/project_framework_pivot.md` — 2026-04-14 wrapper-archive decision still stands for positioning. Don't re-promote without explicit user signal. |
 | Considering the dead-end log pattern | `memory/project_dead_end_pattern_rollout.md` — PAUSED 2026-06-05; #16 is the canonical tracker. No new sibling adoptions, no templatization, until gate 4 (Referenced-by-session ≥1 from an unrelated future session) clears. |
 | Cutting a release | `CHANGELOG.md` header — maintainer release process (#14) + tag-and-push protocol. v1.10.1 set the precedent that doc-only changes are PATCH; new templates/patterns/behaviors are MINOR. |
-| Ending a session | Run `/curate` if installed locally — the framework's own skill, per `templates/curate.md`. |
+| Starting multi-session work (feature, migration, refactor, investigation) | Create `docs/work-items/<slug>.md` from `templates/work-item.md`. Add a one-line pointer in `memory/MEMORY.md` Current State: `- [Short description] → docs/work-items/slug.md [in progress]`. |
+| Resuming work on an existing initiative | Read the work-item file in `docs/work-items/` — the Current Status section is the savepoint. |
+| Ending a session | Update any active work-item file's Current Status section (the savepoint). Then run `/curate` if installed locally — the framework's own skill, per `templates/curate.md`. |
 | Monthly or after major restructuring | Run `/audit-context` if installed locally — structural health check per `templates/audit-context.md`. |
 
 ## Hard Constraints

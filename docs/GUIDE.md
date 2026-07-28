@@ -1,6 +1,6 @@
 # The Complete Reference Guide
 
-**Version 1.10.6** | [Back to README](../README.md) | [Changelog](../CHANGELOG.md)
+**Version 1.11.0** | [Back to README](../README.md) | [Changelog](../CHANGELOG.md)
 
 This is the full reference for the agent-ready projects method. For a quick overview and getting started, see the [README](../README.md).
 
@@ -203,11 +203,35 @@ memory/
 
 The topic index works the same way as the project file's "Before You Start" — task-triggered pointers that tell agents *when* to load each file. An agent debugging an infra issue sees "stuck on infra or tooling → gotcha-log.md" and loads it. No prompting needed.
 
+**The index is canonical.** When the memory index and a topic file disagree about current state, trust the index. The index is curated at end-of-session; topic files are written during work and can go stale. If you find a contradiction, update the topic file to match — don't weaken the index to accommodate an outdated topic entry.
+
 **Topic files** contain deep subsystem knowledge. Agents load the relevant one when working on that subsystem. An agent fixing a frontend bug doesn't need to know about the database migration strategy.
 
 This is **progressive disclosure** — start broad, go deep only where needed. It keeps the always-loaded context lean while making deep knowledge one `Read` away.
 
-**Feature-level context.** For complex features that span multiple sessions, consider a context file per feature — implementation knowledge, test strategy, patterns discovered, approaches tried and abandoned. This is progressive disclosure applied at the feature level: the project-level docs tell agents *about* the project, the feature-level doc tells them *about this specific piece of work*. Not every feature needs one, but any feature that takes more than two sessions will benefit.
+**Work items (feature-level context).** A feature, refactor, or bug fix that spans multiple sessions needs a savepoint — something that tells the agent "here is where I left off, here is what I learned, here is what is still open." Without a savepoint, each session after a context reset re-explores the same ground: re-reading code, re-discovering patterns, re-making decisions.
+
+The fix is a lightweight work-item file (see [`templates/work-item.md`](../templates/work-item.md)) created at the start of multi-session work and saved as `docs/work-items/[slug].md`. It has five sections:
+
+- **What & Why** — what this is building and why
+- **Current Status** — the savepoint: what is done, what is next, what is blocked
+- **Decisions** — lightweight rationale so future sessions don't re-debate
+- **Open Questions** — unresolved items the agent shouldn't guess at
+- **Outcome** — filled on completion as the durable residue
+
+The work-item file is not a lifecycle state machine. There's no "draft to in-progress to review to done" progression. The sections are structure for a savepoint — enough context to resume after a context reset.
+
+**The savepoint convention.** At the end of a working session, the agent updates the Current Status section with concrete progress, open questions, and anything the next session needs to know. At the start of a session, the agent reads the work-item file first to pick up where it left off. This is the same rhythm as the rest of the framework — capture during work, curate at end-of-session — applied at the work-item level.
+
+**Memory as residue.** When multi-session work is done, what persists beyond the code? Three things: (1) ADRs and gotchas — the durable decisions and problems encountered, (2) the work-item Outcome section — what happened that isn't captured anywhere else: approaches tried and abandoned, trade-offs that don't rise to ADR level, context the next person working in this area needs, and (3) the memory index — no longer pointing to an active work item. The work-item file itself is temporary. Create it when you start multi-session work. Fill the Outcome when the work lands or is abandoned. The Outcome is the residue — the knowledge that survives the work item. Delete the file or leave it as implementation history once its residue has been promoted to more permanent homes.
+
+Reference active work items in the memory index's Current State section as one-line pointers:
+```
+- Refactoring auth middleware → docs/work-items/auth-refactor.md [in progress]
+```
+When work completes, update the pointer to `[done]` or remove it. If the index pointer and the work-item file disagree about status, the index wins — it's curated at end-of-session; the file is written during work. Update the file to match.
+
+Not every task needs a work-item file. Create one when work spans more than two sessions and you find yourself re-explaining context. Single-session work doesn't need it.
 
 **What goes in memory files**:
 - Current-state facts ("the pipeline processes 3 filters independently")
@@ -404,6 +428,8 @@ The rhythm above has four phases: **Capture → Surface → Promote → Retire.*
          │
          └──────→ (back to CAPTURE — the cycle continues)
 ```
+
+The goal of this loop is **memory as residue, not choreography**. You shouldn't need to write documentation about your work after you finish it. Instead, work in a way that leaves a record on its own: gotchas logged as they happen, patterns promoted as they recur, the memory index updated at end-of-session, the work-item savepoint refreshed before you walk away. The loop isn't a separate documentation task — it's the natural byproduct of working within the layered model.
 
 This loop applies to all tools. File names vary (CLAUDE.md vs AGENTS.md vs `.windsurfrules`), but the progression Capture → Surface → Promote → Retire is universal.
 
@@ -723,7 +749,7 @@ If you're adding an agent to a codebase with no existing docs, the [adopt prompt
 
 ### Long-lived feature branches
 
-For feature branches that span weeks, consider a feature-level context file (see [Feature-level context](#layer-3-memory-memory-index--topic-files--when-complexity-grows)) that lives on the branch. It captures implementation decisions, patterns discovered, and approaches tried and abandoned — context that would clutter the main project file but is essential for the branch's lifetime. Merge or retire it when the branch lands.
+Feature branches that span weeks face the same savepoint problem as multi-session work on the main branch. Create a work-item file (see [Work items](#layer-3-memory-memory-index--topic-files--when-complexity-grows) and [`templates/work-item.md`](../templates/work-item.md)) that lives on the branch — it captures implementation decisions, patterns discovered, and approaches tried and abandoned without cluttering the main branch's documentation. Fill the Outcome section when the branch merges; the file can be deleted or left as history on the branch.
 
 ## Contributing to This Guide
 

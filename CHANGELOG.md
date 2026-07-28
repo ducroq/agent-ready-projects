@@ -12,6 +12,42 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.11.0 (2026-07-28)
+
+New **work-item template** for tracking multi-session work, adopted from patterns observed in [Plastic](https://github.com/zalom/plastic) (zalom/plastic, MIT). Plus two new principles in the guide: "memory as residue" framing and "index wins" canonical-source rule. New template = MINOR bump. Closes #21.
+
+### Templates
+- **`templates/work-item.md`** (new) — Lightweight savepoint for multi-session work (features, migrations, refactors, investigations). Five sections: What & Why, Current Status (the savepoint), Decisions, Open Questions, and Outcome. Not a lifecycle state machine — just enough structure to resume after a context reset. Save as `docs/work-items/[slug].md` and add a one-line pointer in the memory index's Current State section.
+- **`templates/README.md`** — Added `work-item.md` to naming map and file descriptions.
+- **`templates/memory-index.md`** — Updated Current State section comment to show work-item pointer format and "index wins" convention.
+
+### Docs
+- **`docs/GUIDE.md`** — Three additions + one update:
+  - Expanded the one-paragraph "Feature-level context" mention into a full **"Work items (feature-level context)"** subsection within Layer 3. Covers the savepoint convention, the five-section structure, memory-index integration, and when to create one (more than two sessions).
+  - New **"memory as residue, not choreography"** framing in the Self-Learning Loop section — names the goal the loop already implements. After multi-session work, what persists beyond code: ADRs/gotchas, the work-item Outcome, and the memory index.
+  - New **"The index is canonical"** principle in Layer 3 — the memory index wins when it disagrees with a topic file. Index is curated at end-of-session; topic files are written during work and can go stale.
+  - Updated "Long-lived feature branches" to cross-reference the work-item template.
+- **`templates/README.md`** — Added `work-item.md` to the naming map (all tools: `docs/work-items/[slug].md`) and file descriptions.
+
+### Adopter notes
+
+New adopters: `work-item.md` is available in `templates/`. Create one when work spans more than two sessions — it replaces the ad-hoc todo file you're probably using now. Save as `docs/work-items/[slug].md` and add a one-line pointer in the memory index's Current State section.
+
+Existing adopters: no action required. The new template and guide prose are additive. To adopt, copy `templates/work-item.md` and create your first work-item file for your next multi-session initiative.
+
+### Origin
+
+Analysis of [Plastic](https://github.com/zalom/plastic) (zalom/plastic, MIT) — an intent-driven development tool with a "memory as residue" philosophy and a four-stage pipeline (What → Why → How → Exec). Three patterns identified as adoptable; all three shipped here:
+1. **Work-item savepoints** — Plastic's intent files inspired the five-section structure. Plastic's full intent lifecycle state machine (brainstorming → speccing → grilling → locking, 14 skills) was deliberately NOT adopted — it would make the framework into a development methodology, which is BMAD-METHOD and Superpowers territory.
+2. **"Memory as residue, not choreography"** — Plastic's core philosophical framing, adopted as a named principle in the Self-Learning Loop.
+3. **"Index wins"** — Plastic's rule that `INDEX.md` is the single-writer status authority, adapted here as the memory index being canonical over topic files.
+
+### Versioning rationale
+
+MINOR per the v1.10.1 precedent. New template (`work-item.md`) is a reusable artifact adopters install — same category as the coordination template (v1.5.0) and hypothesis-log (v1.7.0). The two new guide principles alone would be PATCH; the template makes this MINOR.
+
+---
+
 ## v1.10.6 (2026-07-09)
 
 Documentation: new **"The agent-write boundary"** principle in `docs/GUIDE.md`, adopted from BDS's `ai-wiki` (an independently-built instance of this framework) via #19. States crisply what the framework previously only gestured at: agents may write the derived/memory layer autonomously (gotchas, index, lint, session notes) but must not edit human-authored knowledge surfaces (project file, guide, templates, runbook, ADRs) or commit without in-session human approval. No template or behavior change; no adopter action required. Closes #19.

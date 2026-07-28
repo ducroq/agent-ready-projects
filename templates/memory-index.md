@@ -29,7 +29,12 @@
 
 ## Current State
 
-<!-- What's shipped, what's in progress, what's blocked -->
+<!-- What's shipped, what's in progress, what's blocked.
+     For multi-session work items, use one-line pointers here:
+       "- [Short description] → docs/work-items/slug.md [in progress]"
+     Update status when the work lands or is abandoned.
+     If a pointer and its work-item file disagree, the index wins —
+     it is curated at end-of-session; the file is written during work. -->
 
 - [ current status ]
 
