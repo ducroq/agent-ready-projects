@@ -9,7 +9,7 @@ Ship the v1.11.0 release: commit all changed files and tag `v1.11.0`. New `templ
 
 ## Current Status
 
-**State:** in progress
+**State:** done
 
 - [x] Create `templates/work-item.md`
 - [x] Update `templates/README.md` (naming map + description)
@@ -20,11 +20,10 @@ Ship the v1.11.0 release: commit all changed files and tag `v1.11.0`. New `templ
 - [x] Update `memory/MEMORY.md` (current release + active work items)
 - [x] Create `docs/work-items/README.md` (lint requirement)
 - [x] Lint passes
-- [ ] Commit all changes
-- [ ] Tag v1.11.0
-- [ ] Push commit + tag
-- [ ] Fill Outcome section below
-- [ ] Update MEMORY.md pointer to [done]
+- [x] Tag v1.11.0
+- [x] Push commit + tag
+- [x] Fill Outcome section below
+- [x] Update MEMORY.md pointer to [done]
 
 ## Decisions
 
@@ -39,4 +38,11 @@ Ship the v1.11.0 release: commit all changed files and tag `v1.11.0`. New `templ
 
 ## Outcome
 
-*(fill after commit and tag)*
+**Status**: Completed
+**Date**: 2026-07-28
+
+**What happened**: Committed 8 files (220 insertions, 6 deletions) as 2784391, tagged v1.11.0, pushed to master. Release includes new `templates/work-item.md`, GUIDE.md additions (work items subsection, memory-as-residue, index-wins), wiring in CLAUDE.md, and `docs/work-items/` directory.
+
+**What remains**: Nothing — this release is shipped. The pattern itself will be tested over time as real multi-session work uses it.
+
+**Related**: Commit 2784391, tag v1.11.0, #21
