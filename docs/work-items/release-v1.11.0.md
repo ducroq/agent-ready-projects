@@ -41,8 +41,8 @@ Ship the v1.11.0 release: commit all changed files and tag `v1.11.0`. New `templ
 **Status**: Completed
 **Date**: 2026-07-28
 
-**What happened**: Committed 8 files (220 insertions, 6 deletions) as 2784391, tagged v1.11.0, pushed to master. Release includes new `templates/work-item.md`, GUIDE.md additions (work items subsection, memory-as-residue, index-wins), wiring in CLAUDE.md, and `docs/work-items/` directory.
+**What happened**: Committed 8 files (220 insertions, 6 deletions) as 2784391, tagged v1.11.0, pushed to master. Release includes new `templates/work-item.md`, GUIDE.md additions (work items subsection, memory-as-residue, index-wins), wiring in CLAUDE.md, and `docs/work-items/` directory. Follow-up v1.11.1 PATCH refined curate + audit-context skills to cover the work-item pattern.
 
 **What remains**: Nothing — this release is shipped. The pattern itself will be tested over time as real multi-session work uses it.
 
-**Related**: Commit 2784391, tag v1.11.0, #21
+**Related**: Commits 2784391, 84735fc, tag v1.11.0, tag v1.11.1, #21

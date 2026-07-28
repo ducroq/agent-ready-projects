@@ -72,6 +72,7 @@ Scan the gotcha log for entries that have recurred 2-3 times. For each:
 
 Read the memory index (`MEMORY.md` for Claude Code, or the project file for other tools). Update:
 - **Current State** — reflect what shipped or changed this session
+- **Active work items** — for each active work-item file in `docs/work-items/`, update its Current Status section (the savepoint): mark completed items, update "Last action" and "Next action," note blockers. If a work item completed this session, fill its Outcome section and update the MEMORY.md pointer to `[done]`. If a new multi-session initiative started, create the work-item file from `templates/work-item.md` and add a pointer
 - **Key File Paths** — add any important files discovered during work
 - **Active Decisions** — add any architectural choices made, with ADR pointers if created
 - Remove or correct anything that is now stale
@@ -85,7 +86,10 @@ Check whether key docs reflect the current repo state. Code changes during a ses
 1. **Project file Architecture section**: Compare listed files/directories against actual repo contents. Flag new files not listed, or listed files that no longer exist.
 2. **Project file Key Commands / How to Work Here**: Verify commands still match actual CLI flags and defaults. Flag any mismatches (e.g., a renamed flag, a changed default).
 3. **Runbook** (if it exists): Check that operational details (environment setup, deployment steps, common problems) match reality. Flag anything that looks stale.
-4. **Backlog / active work tracking**: Check if any open items were resolved during this session. Mark them.
+4. **Work-item check**: Scan `docs/work-items/` for files with an incomplete Outcome section. For each:
+   - If the work completed this session, fill the Outcome and suggest updating the MEMORY.md pointer to `[done]`
+   - If the Current Status shows no activity for 14+ days, flag as potentially abandoned — surface to the engineer
+   - If the file has no corresponding pointer in MEMORY.md, add one (or flag if unclear)
 
 Fix what you can. Flag anything that needs engineer input.
 

@@ -56,9 +56,11 @@ For every "Before You Start" pointer:
 - Verify the target file exists
 - Check that the trigger language is task-based ("when doing X, read Y") not passive ("see Y")
 
-## Step 5 — Topic file reachability
+## Step 5 — Topic file and work-item reachability
 
 Check that every topic file in memory/ has a task-triggered pointer in the "Before You Start" table. Flag orphaned topic files — they exist but no pointer leads to them, so an agent will never know to load them.
+
+Check that every work-item file in `docs/work-items/` (other than `README.md`) has a corresponding pointer in the memory index's Current State section. Flag orphaned work-item files — they exist but no pointer tracks them. Also flag pointers in MEMORY.md whose target files no longer exist (stale pointer cleanup).
 
 ## Step 6 — Gitignore correctness
 

@@ -12,7 +12,25 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.11.0 (2026-07-28)
+## v1.11.1 (2026-07-28)
+
+Template refinement: **curate** and **audit-context** skills updated to cover the work-item pattern introduced in v1.11.0. PATCH — no new template, existing templates refined. Closes #21.
+
+### Templates
+- **`templates/curate.md`** — Two updates:
+  - **Step 3** (Memory index update): New "Active work items" bullet — agent updates work-item Current Status savepoints at end-of-session, fills Outcome for completed items, creates work-item files for new multi-session initiatives.
+  - **Step 4.4**: Replaced vague "Backlog / active work tracking" with explicit work-item check — scans `docs/work-items/` for incomplete files, flags abandoned items (14+ days stale), checks MEMORY.md pointer consistency.
+- **`templates/audit-context.md`** — **Step 5** extended from "Topic file reachability" to "Topic file and work-item reachability" — catches orphaned work-item files (no MEMORY.md pointer) and stale pointers (target file missing).
+
+### Adopter notes
+
+Existing adopters who adopted v1.11.0: update your installed `curate` and `audit-context` skills from the updated templates. The v1.11.0 work-item template works without these skill updates — the refinements automate the savepoint convention at end-of-session and catch orphaned files at audit time.
+
+### Versioning rationale
+
+PATCH per the v1.10.1 precedent. Template refinement only — no new template, pattern, or behavior. The work-item pattern itself shipped in v1.11.0; these changes wire existing skills to support it.
+
+---
 
 New **work-item template** for tracking multi-session work, adopted from patterns observed in [Plastic](https://github.com/zalom/plastic) (zalom/plastic, MIT). Plus two new principles in the guide: "memory as residue" framing and "index wins" canonical-source rule. New template = MINOR bump. Closes #21.
 
