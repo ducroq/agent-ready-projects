@@ -12,7 +12,28 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.11.1 (2026-07-28)
+## v1.12.0 (2026-07-28)
+
+New **review-changes** skill for diff-driven pre-commit review. Picks review lenses based on what changed — templates touched → full 3-4 lens battery, docs-only → two lenses, CHANGELOG-only → single adversarial pass. New template = MINOR bump. Closes #22.
+
+### Templates
+- **`templates/review-changes.md`** (new) — Diff-driven pre-commit review skill. Four lenses (guarantee-preservation, adversarial, doc-accuracy, shell-correctness), risk-based scoping (HIGH/MEDIUM/LOW), concurrent subagent execution. For Claude Code, install as `/review-changes`; for other tools, run as a pre-commit prompt.
+- **`templates/README.md`** — Added `review-changes.md` to naming map and file descriptions.
+
+### Docs
+- **`CLAUDE.md`** — Updated "Before committing structural changes" row to include `/review-changes` as the complementary LLM review step after `tests/lint/run.sh`.
+
+### Adopter notes
+
+New adopters: `review-changes.md` is available in `templates/`. Install as `/review-changes` (Claude Code) or use as a pre-commit prompt (other tools). Run before committing structural changes — it complements `tests/lint/run.sh` (deterministic) with judgment-based review.
+
+Existing adopters: no action required. The skill is additive and optional.
+
+### Versioning rationale
+
+MINOR per the v1.10.1 precedent. New template (`review-changes.md`) is a reusable artifact adopters install.
+
+---
 
 Template refinement: **curate** and **audit-context** skills updated to cover the work-item pattern introduced in v1.11.0. PATCH — no new template, existing templates refined. Closes #21.
 

@@ -4,7 +4,7 @@ The source framework that teaches the layered memory method for AI coding agents
 
 - **Type**: Public methodology repo (guide + templates + skills)
 - **License**: MIT
-- **agent-ready-projects** (this repo): v1.11.1 (curate + audit-context skill updates for work-item pattern — #21, 2026-07-28)
+- **agent-ready-projects** (this repo): v1.12.0 (review-changes skill for diff-driven pre-commit review — #22, 2026-07-28)
 
 > Live project state (current threads, deferred items, surfaced patterns) lives in `memory/MEMORY.md` (maintainer-local — see *What is intentionally not shipped* below). Release notes live in `CHANGELOG.md`.
 
@@ -13,7 +13,7 @@ The source framework that teaches the layered memory method for AI coding agents
 | When | Read |
 |------|------|
 | Starting any session (self drift) | Compare the `agent-ready-projects: vX.Y.Z` line in this file's header against `CHANGELOG.md`. If a newer version has shipped since you last worked here, surface the drift before starting. |
-| Before committing structural changes (CLAUDE.md, `memory/`, `templates/`) | Run `bash tests/lint/run.sh` — deterministic structural check. Catches stale `CLAUDE.md` path references, `memory/MEMORY.md` orphans, broken skill-template frontmatter, unclosed YAML frontmatter. See `tests/lint/README.md` for the rule catalog. |
+| Before committing structural changes (CLAUDE.md, `memory/`, `templates/`) | Run `bash tests/lint/run.sh` — deterministic structural check. Catches stale `CLAUDE.md` path references, `memory/MEMORY.md` orphans, broken skill-template frontmatter, unclosed YAML frontmatter. See `tests/lint/README.md` for the rule catalog. Then run `/review-changes` for diff-driven LLM review — picks review lenses based on what changed (templates touched → full battery; docs-only → adversarial + doc-accuracy). |
 | Picking up project state | `memory/MEMORY.md` for the index; topic files in `memory/` for depth. |
 | Editing templates | `templates/README.md` for the tool-agnostic naming map. Templates are the adopter-facing surface; changes ripple to every downstream consumer. |
 | Editing the guide | `docs/GUIDE.md` is the full reference; `README.md` is the on-ramp. Keep them in sync — when you change one, ask whether the other needs the same change. |
