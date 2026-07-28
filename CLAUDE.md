@@ -48,6 +48,7 @@ agent-ready-projects/
 │   ├── GUIDE.md
 │   ├── verification-rationale.md
 │   ├── guide/                 <- Four-page visual walkthrough
+│   ├── work-items/            <- Per-work-item context files (v1.11.0)
 │   ├── archive/               <- LANDSCAPE.md, COMPARISON.md, METHODOLOGY.md (per 2026-04-14 pivot)
 │   └── ...
 ├── templates/                 <- Tool-agnostic starter files adopters consume
@@ -56,8 +57,10 @@ agent-ready-projects/
 │   ├── gotcha-log.md          <- Layer 4
 │   ├── hypothesis-log.md      <- Future-evidence provisional positions
 │   ├── RUNBOOK.md             <- Layer 2 operational doc
+│   ├── work-item.md           <- Multi-session work tracking with savepoint (v1.11.0)
 │   ├── curate.md              <- End-of-session curation skill
 │   ├── audit-context.md       <- Periodic structural audit skill
+│   ├── review-changes.md      <- Diff-driven pre-commit review skill (v1.12.0)
 │   ├── coordination.md        <- Layer 5 (multi-contributor)
 │   ├── review-agent.md        <- Reusable review-agent skeleton
 │   ├── test-verify-memory.md  <- Behavioral-test pattern (Phase B/C precedent)
@@ -96,6 +99,8 @@ Listed here so the architecture diagram above is honest about what an adopter se
 | `docs/GUIDE.md` | Full reference |
 | `docs/verification-rationale.md` | Three structural principles + decision rules (v1.10.1) |
 | `templates/project-file.md` | Layer-1 project file template |
+| `templates/work-item.md` | Multi-session work tracking with built-in savepoint |
+| `templates/review-changes.md` | Diff-driven pre-commit review skill |
 | `templates/curate.md` | End-of-session curation skill |
 | `templates/audit-context.md` | Periodic structural audit skill |
 | `memory/MEMORY.md` | This repo's in-repo memory index (maintainer-local) |
