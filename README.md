@@ -1,6 +1,6 @@
 # Working With AI Agents: A Practical Guide
 
-**Version 1.10.6** | [Changelog](CHANGELOG.md) | [MIT License](LICENSE)
+**Version 1.12.0** | [Changelog](CHANGELOG.md) | [MIT License](LICENSE)
 
 Your AI agent starts every session cold. It doesn't remember yesterday's bugs, your architectural decisions, or what it tried and failed last week. You end up repeating yourself, undoing its mistakes, and wondering why it's not getting better.
 
@@ -38,12 +38,14 @@ Add layers as your project needs them — not before:
 5. **Hypothesis log** — [`templates/hypothesis-log.md`](templates/hypothesis-log.md) when you place a bet whose evidence lives in the future ("we'll see how this performs in 14 days")
 6. **Curate skill** — [`templates/curate.md`](templates/curate.md) to automate end-of-session curation
 7. **Memory index** — [`templates/memory-index.md`](templates/memory-index.md) when your project file is getting long
-8. **Runbook** — [`templates/RUNBOOK.md`](templates/RUNBOOK.md) when operational detail crowds out identity
-9. **Decision index** — [`templates/adr.md`](templates/adr.md) when you start making architectural decisions worth recording
-   - **Coordination** — [`templates/coordination.md`](templates/coordination.md) when a second contributor joins
-10. **Topic files** — When the memory index gets too long, split into per-subsystem files
-11. **Checklists** — [`templates/checklists/`](templates/checklists/) for definition-of-done gates
-12. **Structural audit** — [`templates/audit-context.md`](templates/audit-context.md) to catch framework-level decay monthly
+8. **Work-item files** — [`templates/work-item.md`](templates/work-item.md) when work spans more than two sessions (features, migrations, refactors, investigations)
+9. **Runbook** — [`templates/RUNBOOK.md`](templates/RUNBOOK.md) when operational detail crowds out identity
+10. **Decision index** — [`templates/adr.md`](templates/adr.md) when you start making architectural decisions worth recording
+    - **Coordination** — [`templates/coordination.md`](templates/coordination.md) when a second contributor joins
+11. **Topic files** — When the memory index gets too long, split into per-subsystem files
+12. **Checklists** — [`templates/checklists/`](templates/checklists/) for definition-of-done gates
+13. **Review-changes skill** — [`templates/review-changes.md`](templates/review-changes.md) for diff-driven pre-commit review — picks review lenses based on what changed
+14. **Structural audit** — [`templates/audit-context.md`](templates/audit-context.md) to catch framework-level decay monthly
 
 ### Already have docs?
 
@@ -106,8 +108,10 @@ Ready-to-use starter files in [`templates/`](templates/). Tool-agnostic — rena
 - **[`hypothesis-log.md`](templates/hypothesis-log.md)** — Provisional positions whose evidence lives in the future (`Position` / `Method` / `Revisit trigger` / `Review by`); resolves to closed or promoted to ADR
 - **[`RUNBOOK.md`](templates/RUNBOOK.md)** — Operational principles and how-to
 - **[`review-agent.md`](templates/review-agent.md)** — Reusable skeleton for domain review agents with self-learning
+- **[`work-item.md`](templates/work-item.md)** — Lightweight savepoint for multi-session work (features, migrations, refactors, investigations)
 - **[`curate.md`](templates/curate.md)** — End-of-session curation skill (automates the self-learning loop)
 - **[`audit-context.md`](templates/audit-context.md)** — Periodic structural audit of the layered memory system
+- **[`review-changes.md`](templates/review-changes.md)** — Diff-driven pre-commit review with risk-based lens selection
 - **[`coordination.md`](templates/coordination.md)** — Layer 5: contributors, shared constraints, WIP, conventions (multi-contributor projects only)
 - **[`physics-tests/`](templates/physics-tests/)** — Specialized test-scaffolding family for physics simulation code: energy conservation, MMS convergence, intercomparison, conservation logs
 - **[`checklists/`](templates/checklists/)** — Validation checklists for each workflow stage
