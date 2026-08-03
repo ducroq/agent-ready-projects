@@ -12,9 +12,9 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.14.0 (candidate, unreleased)
+## v1.14.0 (2026-08-03)
 
-New **Verification Hooks** section in `docs/GUIDE.md` — the deterministic counterpart to session hooks, closing the edit → check → fix loop without a human relaying the error. Plus a release-skill fix for the class of staleness that let two templates sit three minors behind.
+New **Verification Hooks** section in `docs/GUIDE.md` — the deterministic counterpart to session hooks, closing the edit → check → fix loop without a human relaying the error. Plus a release-skill fix for the class of staleness that let two templates sit three minors behind, and a full de-identification pass over this public repo. MINOR — new concept and new skill behavior, nothing breaks.
 
 ### Docs
 - **`docs/GUIDE.md`** — New `## Verification Hooks` section, placed after Session Hooks (orientation at session start; verification at edit end). Covers what the mechanism buys (the agent carries its own error message, correcting while the reasoning that produced the bug is still in context), a fast/diagnostic/actionable test for what's worth wiring, three failure modes — the silent hook, the green-at-any-cost loop where the agent weakens the check rather than the code, and the tightened leash — and the rule that hook output feeds the gotcha log only when it surprised you or recurred. Tool-support table states the honest limit: most tools have no native mechanism, and an instruction is a request where a hook is a guarantee. Added to the TOC and to the concept-mapping table.
