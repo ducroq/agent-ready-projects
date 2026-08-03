@@ -10,13 +10,14 @@ Adapted from [raoulg/codestyle](https://github.com/raoulg/codestyle) (evaluated 
 
 ## Current Status
 
-**State:** drafted, not landed
+**State:** landed in v1.13.1
 
 - [x] Source evaluated — codestyle has zero content overlap with this repo (universal Python standards vs. project-specific memory); the stage framework is the only transferable part
 - [x] Draft section written (full text in Proposed Section below)
-- [ ] Engineer review of wording — not yet read
-- [ ] Land in `docs/GUIDE.md` under `## The Layered Model`, replacing the one-line intro ("The model scales with project complexity. Not every project needs every layer.") immediately before `### Layer 1`
-- [ ] Decide whether a per-stage column also goes in `templates/README.md` — that would change the bump from PATCH to MINOR
+- [x] Engineer approved on the plain-language summary rather than the draft text
+- [x] Landed in `docs/GUIDE.md` under `## The Layered Model`, before `### Layer 1`
+- [x] README.md on-ramp cross-reference added (CLAUDE.md requires guide/README sync)
+- [x] Decided: **no** per-stage column in `templates/README.md` — kept the change doc-only so it stays PATCH. Revisit if adopters ask for it
 
 ## Decisions
 
@@ -69,11 +70,11 @@ Adapted from [raoulg/codestyle](https://github.com/raoulg/codestyle) (evaluated 
 
 ## Outcome
 
-**Status**: [pending]
-**Date**: —
+**Status**: Completed
+**Date**: 2026-08-03
 
-**What happened**: —
+**What happened**: Landed in `docs/GUIDE.md` as "How deep to go: layer depth by project stage" — a four-stage table (Explore / Consolidate / Cooperate / Deploy) whose load-bearing column is **Premature**, plus three concrete ways an early layer hurts and a "friction, not calendar" rule for moving between stages. Shipped in v1.13.1 as a doc-only PATCH. A one-paragraph cross-reference went into `README.md` under its layered-model table, per the CLAUDE.md guide/README sync requirement.
 
-**What remains**: —
+**What remains**: The open question about a per-stage column in `templates/README.md` was closed as **no** — it would have made this MINOR and widened the normative surface for a benefit no adopter has asked for. Reopen if that changes. The second open question (whether the four-stage vocabulary reads cleanly outside a Python/DS context) was not resolved by evidence; the terms were kept as-is and should be revisited if adopter feedback suggests otherwise.
 
-**Related**: Source evaluation 2026-08-03; sibling change in the same session added the pre-commit and per-release rows to the guide's Documentation Rhythm table.
+**Related**: Source evaluation of [raoulg/codestyle](https://github.com/raoulg/codestyle), 2026-08-03. Sibling change in the same session added the pre-commit and per-release rows to the guide's Documentation Rhythm table (v1.13.0). The MCP-delivery rejection recorded under Decisions is the durable residue most worth keeping — it prevents re-litigating a settled evaluation.

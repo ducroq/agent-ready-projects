@@ -12,6 +12,31 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.13.1 (2026-08-03)
+
+Documentation: new **"How deep to go: layer depth by project stage"** section in `docs/GUIDE.md`, plus two naming-map omissions fixed in `templates/README.md`. PATCH — no new template, no behavior change, no adopter action required.
+
+### Docs
+- **`docs/GUIDE.md`** — New subsection under "The Layered Model", before Layer 1. The guide's per-layer "when to add" triggers describe when a layer *starts paying off*; nothing said when adopting one early *costs* you. Adds a four-stage table (Explore / Consolidate / Cooperate / Deploy) whose load-bearing column is **Premature**, with three concrete failure modes: a runbook written before operations stabilize goes stale faster than it gets fixed (and the agent then runs the documented command instead of asking); memory topic files created before there's anything to remember fill with restatements of the code and charge for it every session; coordination structure with one contributor has no team-truth-versus-personal-preference distinction to draw. Closes with a "friction, not calendar" rule — stage tells you what to expect, friction tells you what to do.
+- **`README.md`** — One-paragraph cross-reference under the layered-model table, per the CLAUDE.md requirement that guide and on-ramp stay in sync.
+
+### Templates
+- **`templates/README.md`** — Two long-standing omissions in the naming map: **`coordination.md`** was absent from the file entirely (both map and descriptions) despite being referenced in `README.md` and `adopt.md`, and **`test-verify-memory.md`** appeared in the descriptions but had no naming-map row. Both added. No content change to either template.
+
+### Adopter notes
+
+No action required. The guide section is new guidance for deciding *when not* to adopt a layer; nothing existing changed meaning. If you previously looked for `coordination.md` in the naming map and didn't find it, it's there now — save as `COORDINATION.md` at the project root.
+
+### Versioning rationale
+
+PATCH per the v1.10.1 precedent. Rule 1 does not fire — nothing existing breaks. Rule 2 resolves to PATCH: no new artifact, only a new section in an existing document and corrections to an existing map. A per-stage column in `templates/README.md` was considered and **declined** — it would have made this MINOR and widened the normative surface for a benefit no adopter has requested.
+
+### Provenance
+
+Adapted from [raoulg/codestyle](https://github.com/raoulg/codestyle), evaluated 2026-08-03, which applies the same four-stage axis to Python coding standards with per-stage 🐌 / 💡 / 🏅 marks. Zero content overlap with this repo — universal language standards versus project-specific memory — but it supplies the project-maturity axis the guide lacked, and specifically the idea that **the mark can be negative, not merely absent**. Its MCP delivery model (guidelines as a queryable server) was evaluated and declined: this framework's content is per-project by definition, and file-based memory in git is what makes it reviewable. Full working notes at `docs/work-items/guide-stage-depth.md`.
+
+---
+
 ## v1.13.0 (2026-08-03)
 
 New **release** skill for cutting versioned releases, completing the skill set's cadence coverage. Plus the guide's Documentation Rhythm table gains the two cadences it was missing. New template = MINOR bump. Closes #22.

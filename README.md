@@ -1,6 +1,6 @@
 # Working With AI Agents: A Practical Guide
 
-**Version 1.13.0** | [Changelog](CHANGELOG.md) | [MIT License](LICENSE)
+**Version 1.13.1** | [Changelog](CHANGELOG.md) | [MIT License](LICENSE)
 
 Your AI agent starts every session cold. It doesn't remember yesterday's bugs, your architectural decisions, or what it tried and failed last week. You end up repeating yourself, undoing its mistakes, and wondering why it's not getting better.
 
@@ -80,6 +80,8 @@ Documentation scales with project complexity across four layers:
 | **3. Memory** | Index + topic files of learned knowledge | Index: yes | When complexity grows |
 | **4. Gotcha log** | Problem → Root cause → Fix journal | No | When you hit your first weird bug |
 | **5. Coordination** | Contributors, shared constraints, WIP, conventions | No | When the project has multiple contributors |
+
+Adding a layer before you need it isn't neutral — a runbook written while the commands still change daily goes stale faster than you'll fix it, and your agent then runs the documented command instead of asking. The guide's [layer depth by project stage](docs/GUIDE.md#how-deep-to-go-layer-depth-by-project-stage) table says which layers are premature at each stage, not just which are essential.
 
 ### The self-learning loop
 
