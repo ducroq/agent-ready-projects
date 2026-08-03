@@ -25,7 +25,11 @@ Review the session's work and update the layered memory system:
 Check for context rot from *previous* sessions. This catches what the session-focused steps below miss.
 
 1. **Dead references**: Read the memory index and project file. For every file path mentioned, verify it still exists. List any broken paths.
-2. **Stale memory**: Check modification dates of files in `memory/`. Flag any that haven't been modified in 30+ days — they may be outdated. (Use `git log -1 --format=%ci -- <file>` for each.)
+2. **Stale memory**: Check modification dates of memory files. Flag any not modified in 30+ days — they may be outdated. Read dates from the **filesystem**, e.g. `ls -l --time-style=+%Y-%m-%d memory/` or `stat -c '%y %n' memory/*.md`.
+
+   Do not use `git log -1 --format=%ci -- <file>` as the primary check. When the memory directory is gitignored — the recommended setup, and this framework's own — `git log` returns **empty with exit 0** for every file, so the check reports nothing stale while having examined nothing. Empty `git log` output here means "the check did not run", not "no files are stale".
+
+   If your memory files *are* tracked in git, `git log -1 --format=%ci -- <file>` is the better signal, since it reflects real edits rather than incidental touches (checkouts, formatters, syncs). Verify which case you're in first: `git check-ignore -q memory/ && echo "gitignored — use filesystem mtime" || echo "tracked — git log is fine"`.
 3. **Lingering gotchas**: Read the gotcha log. Flag any unresolved entries older than 14 days — they're either fixed (mark `[RESOLVED]`) or stuck (surface to the user).
 4. **Ground truth drift**: If the project file has a "Ground Truth Designations" table, verify each listed file exists and has been modified more recently than the artifacts that defer to it. Flag any where a downstream artifact is newer than its source of truth.
 5. **Unverified state claims**: Scan memory files for state claims ("shipped," "deployed," "live," "running," "working in production"). For each claim found:
