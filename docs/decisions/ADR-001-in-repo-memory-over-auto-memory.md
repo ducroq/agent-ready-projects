@@ -111,4 +111,4 @@ This decision changes the guidance in the main README:
 
 - agent-ready-projects README.md, lines 169 and 225-234 — current (pre-decision) guidance
 - Migration session (2026-03-19) — 28 projects, ~75 files moved from auto-memory to in-repo
-- ovr.news ADR-026 — precedent for using ADRs to document process decisions in this ecosystem
+- a sibling project's ADR — precedent for using ADRs to document process decisions in this ecosystem

@@ -94,7 +94,7 @@ New **release** skill for cutting versioned releases, completing the skill set's
 - **`docs/GUIDE.md`** — Documentation Rhythm table gained two rows: **Before committing** (never added when `review-changes` shipped in v1.12.0) and **Cutting a release**. Added "Pre-commit review" and "Releases" paragraphs matching the existing `curate` / `audit-context` ones, plus a **"Why these four and not more"** note stating the cadence rule — skills attach to recurring moments with a real decision in them; single writes with no branching don't earn a slot, because skill names and descriptions occupy context every session.
 - **`README.md`** — `release.md` added to the progressive-adoption list and the template catalogue.
 - **`CLAUDE.md`** — `release.md` in the architecture diagram and Key Paths; the "Cutting a release" row now routes to `/release`. Also listed the previously-missing `templates/adr.md` in the diagram.
-- **`CHANGELOG.md`** — Corrected three false issue references: v1.12.0 claimed "Closes #22" (which did not exist at the time) and both v1.11.0 and v1.11.1 claimed "Closes #21" (open, and about unrelated ovr.news memory-audit patterns). Restored the missing `## v1.11.0` and `## v1.11.1` version headings — both were tagged but appeared only as untitled blocks after a `---`.
+- **`CHANGELOG.md`** — Corrected three false issue references: v1.12.0 claimed "Closes #22" (which did not exist at the time) and both v1.11.0 and v1.11.1 claimed "Closes #21" (open, and about unrelated news-aggregator memory-audit patterns). Restored the missing `## v1.11.0` and `## v1.11.1` version headings — both were tagged but appeared only as untitled blocks after a `---`.
 
 ### Adopter notes
 
@@ -350,7 +350,7 @@ Three additions: hypothesis log (first-class home for provisional positions), se
 
 ### Templates
 - **`templates/hypothesis-log.md`** — New template. Format: Position / Alternative / Method / Revisit trigger / Review by / Domain / Status. `open` → resolved (close or promote to ADR). Distinguished from gotcha log (problems solved), ADRs (decisions accepted), and TODO (tasks ready to execute) by the future-evidence frame.
-- **`templates/project-file.md`** — "Before You Start" gains a new top row: **Starting any session** → compare the `framework: agent-ready-projects vX.Y.Z` header line against `CHANGELOG.md` (GitHub URL or local clone). If behind, surface the drift before starting work. Don't auto-update — adopting changes is the engineer's call. Closes the gap where adopted projects could fall multiple versions behind without anyone noticing (e.g., ovr.news ran on v1.7.0 from adoption through 2026-05-09, never flagged).
+- **`templates/project-file.md`** — "Before You Start" gains a new top row: **Starting any session** → compare the `framework: agent-ready-projects vX.Y.Z` header line against `CHANGELOG.md` (GitHub URL or local clone). If behind, surface the drift before starting work. Don't auto-update — adopting changes is the engineer's call. Closes the gap where adopted projects could fall multiple versions behind without anyone noticing (e.g., the news-aggregator project ran on v1.7.0 from adoption through 2026-05-09, never flagged).
 - **`templates/curate.md`** — Two extensions to Step 0 freshness check:
   - Sub-step 6 ("Hypothesis log surface"): `/curate` flags entries past their `Review by:` date and entries whose `Revisit trigger:` has fired. The skill surfaces — it does not resolve — to keep the hypothesis-log discipline (engineer applies Method, agent doesn't shortcut it).
   - Sub-step 7 ("Project file size budget"): `/curate` checks the project file against the 40k Claude Code perf threshold. The most common cause of bloat is session-narrative footers (`_Last updated: ..._` / `_Earlier ..._`) accreting across sessions while the same content already lives in `memory/project_session_*.md` and is indexed in `MEMORY.md` — pure duplication. Rule: keep at most one footer block, drop older `_Earlier_` blocks. Step 3 gets a paired discipline note: don't accrete narrative onto the project file footer in the first place; it belongs in session-memory files.
@@ -361,14 +361,14 @@ Three additions: hypothesis log (first-class home for provisional positions), se
 
 ### Origin
 
-**Hypothesis log** emerged on the ovr.news project (`docs/hypothesis-log.md`, first commit 2026-04-19) where Claude was scheduling cron-style reminders for predictions that needed to be tested. The cron approach checked *that* you remembered, not *whether the prediction was right*. The Method field — written before the data — turns each entry into a small pre-registered experiment. After several months of use it became clear the pattern wasn't project-specific. The augur EXP-009 milestone-3 review battery surfaced multiple "we'll see how this performs in 14 days" cases that were good fits, prompting promotion here.
+**Hypothesis log** emerged on a news-aggregator project (`docs/hypothesis-log.md`, first commit 2026-04-19) where Claude was scheduling cron-style reminders for predictions that needed to be tested. The cron approach checked *that* you remembered, not *whether the prediction was right*. The Method field — written before the data — turns each entry into a small pre-registered experiment. After several months of use it became clear the pattern wasn't project-specific. The augur EXP-009 milestone-3 review battery surfaced multiple "we'll see how this performs in 14 days" cases that were good fits, prompting promotion here.
 
 Compared to existing tools:
 - ADRs freeze rationale at decision time. Hypothesis entries are the *bet* before the rationale fully settles.
 - Gotcha log captures problems with known root causes. Hypothesis entries capture predictions whose root cause is *what we're trying to learn*.
 - TODO captures tasks. Hypothesis entries capture *expectations*, with the trigger that brings them back.
 
-**Session-start drift check** emerged when ovr.news's CLAUDE.md hit Claude Code's 40k perf warning on 2026-05-09 and inspection showed the project still pinned to `agent-ready-projects: v1.7.0` — two minor versions behind, undetected for months. The intent that adopters track framework drift had no enforcement: the "Update" prompt in `adopt.md` requires the user to manually paste it into a session, while the version line in the header was inert metadata that no instruction told the agent to act on. The fix is the cheapest possible mechanism: a task-triggered pointer in "Before You Start" that uses the same idiom as every other row in the table. Tool-agnostic; works for Claude Code, Cursor, Codex, Aider, Copilot.
+**Session-start drift check** emerged when one adopter's CLAUDE.md hit Claude Code's 40k perf warning on 2026-05-09 and inspection showed the project still pinned to `agent-ready-projects: v1.7.0` — two minor versions behind, undetected for months. The intent that adopters track framework drift had no enforcement: the "Update" prompt in `adopt.md` requires the user to manually paste it into a session, while the version line in the header was inert metadata that no instruction told the agent to act on. The fix is the cheapest possible mechanism: a task-triggered pointer in "Before You Start" that uses the same idiom as every other row in the table. Tool-agnostic; works for Claude Code, Cursor, Codex, Aider, Copilot.
 
 **Project-file size budget** emerged in the same session: the bloat that triggered the 40k warning was 7 accreted `_Last updated_` / `_Earlier_` session-narrative blocks, each duplicating a `memory/project_session_*.md` file already indexed in `MEMORY.md`. The trim was straightforward (keep one, drop six) but the question that surfaced was structural: nothing in `/curate` told the agent *not* to keep adding these, and nothing told it to detect the bloat. Step 0 sub-step 7 closes the detection side; Step 3's discipline note closes the prevention side.
 
@@ -389,7 +389,7 @@ Self-verifying memory — agents embed verification commands in state claims on 
 
 ### Landscape (`docs/LANDSCAPE.md`)
 - Added "Self-verifying memory" to the gap analysis table — no other framework embeds verification in memory entries.
-- Added to "Ahead" positioning section with reference to the ovr.news incident and ETH Zurich finding.
+- Added to "Ahead" positioning section with reference to the news-aggregator incident and ETH Zurich finding.
 - Added Superpowers (151K+ stars) to Category 3 and positioning diagram.
 
 ### README
@@ -397,7 +397,7 @@ Self-verifying memory — agents embed verification commands in state claims on 
 
 ### Origin
 
-Issue #10, building on issue #8. The v1.8.1 fix (distinguish observations from deployed state) was guidance-only — it told agents what to do but provided no mechanism. Self-verifying memory closes the loop: verification commands travel with the claim, are executed when the claim is consumed, and are audited during curation. The ovr.news incident (230 articles affected by a false "shipped" memory) demonstrated that guidance alone is insufficient when future sessions trust memory entries unconditionally.
+Issue #10, building on issue #8. The v1.8.1 fix (distinguish observations from deployed state) was guidance-only — it told agents what to do but provided no mechanism. Self-verifying memory closes the loop: verification commands travel with the claim, are executed when the claim is consumed, and are audited during curation. The news-aggregator incident (230 articles affected by a false "shipped" memory) demonstrated that guidance alone is insufficient when future sessions trust memory entries unconditionally.
 
 ---
 
@@ -410,7 +410,7 @@ Memory hallucination prevention — distinguishing session observations from dep
 - Version bumped to 1.8.1.
 
 ### Templates
-- **`templates/gotcha-log.md`** — New worked example: memory claimed "shipped" but feature only existed in a running process (based on ovr.news incident, 230 articles affected). Shows the pattern and the fix.
+- **`templates/gotcha-log.md`** — New worked example: memory claimed "shipped" but feature only existed in a running process (based on news-aggregator incident, 230 articles affected). Shows the pattern and the fix.
 - **`templates/curate.md`** — Added freshness check step 5: "Unverified state claims." The `/curate` skill now scans memory for "shipped"/"deployed"/"live", flags entries without verification commands, and runs existing verification commands to check for failures.
 
 ### Landscape (`docs/LANDSCAPE.md`)
@@ -422,7 +422,7 @@ Memory hallucination prevention — distinguishing session observations from dep
 
 ### Origin
 
-Issue #8: ovr.news ML logo classifier endpoint was tested during a dev session and memory recorded "shipped." The endpoint only existed in the running process — after restart it returned 404, silently failing for 230 articles (10%) until a human noticed. The memory system had no mechanism to distinguish a session observation from verified deployed state.
+Issue #8: A news aggregator's ML logo classifier endpoint was tested during a dev session and memory recorded "shipped." The endpoint only existed in the running process — after restart it returned 404, silently failing for 230 articles (10%) until a human noticed. The memory system had no mechanism to distinguish a session observation from verified deployed state.
 
 ---
 

@@ -10,7 +10,7 @@ status: draft
 
 ## The incident
 
-A news aggregation site — ovr.news — was publishing articles with a broken processing pipeline. 230 articles were affected before anyone noticed. The root cause wasn't a code bug. It was a memory entry.
+A news aggregation site was publishing articles with a broken processing pipeline. 230 articles were affected before anyone noticed. The root cause wasn't a code bug. It was a memory entry.
 
 An agent had written "article processing pipeline: shipped and deployed" in its memory weeks earlier. Every subsequent session read that entry, trusted it, and moved on. The pipeline had been partially deployed — a staging artifact that never made it to production. But the memory said "shipped," so the agent treated it as shipped.
 
@@ -35,7 +35,7 @@ The idea is simple: when an agent writes a state claim in memory, it also writes
 ```markdown
 ### Article processing pipeline
 Status: deployed to production
-<!-- verify: curl -s https://ovr.news/api/health | jq '.pipeline_status' -->
+<!-- verify: curl -s https://example.com/api/health | jq '.pipeline_status' -->
 
 Last checked: 2026-03-15
 ```
@@ -62,7 +62,7 @@ The heuristic: if the claim uses a past participle describing current state (shi
 
 Low. A `curl` to a health endpoint takes milliseconds. A `git log --oneline -1` is instant. The overhead is one command per state claim, executed on read.
 
-The cost of *not* verifying is the ovr.news incident: 230 articles processed through a pipeline that wasn't actually running in production, caught only when a human happened to check.
+The cost of *not* verifying is the news-aggregator incident: 230 articles processed through a pipeline that wasn't actually running in production, caught only when a human happened to check.
 
 ## Why benchmarks miss this
 
