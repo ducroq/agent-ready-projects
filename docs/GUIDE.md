@@ -389,8 +389,10 @@ The biggest shift in practice: **capture during work, curate at end-of-session.*
 | **During work** | Learned something non-obvious? Note it | Relevant topic file |
 | **After a decision** | Chose between approaches? | ADR + update index |
 | **Changed operations** | Process or infrastructure changed? | Project file or RUNBOOK.md |
+| **Before committing** | Agent reviews the pending diff, picking review depth from what changed — normative surfaces get more lenses than a changelog edit | The diff (nothing written unless a finding lands) |
 | **End of session** | Ask the agent to curate: correlate, summarize, prune, promote, doc sync (review its proposals) | Memory index + topic files + project file (1-2 min) |
 | **Monthly** | Agent audits all memory files: flags resolved items, stale entries, facts now encoded in code. You review and confirm retirements. | All memory files |
+| **Cutting a release** | Agent classifies the version bump, verifies preconditions, drafts the changelog entry, syncs version strings — then stops for you to publish | Changelog + version references |
 
 **Course-correcting.** When you realize the direction is wrong mid-session — requirements changed, an assumption broke, the approach isn't working — pause and tell the agent to reassess. Have it evaluate what's affected and propose updates to the project file, ADRs, and task list. Review the proposals, then continue. Agents won't initiate course-correction on their own — they'll keep building on a broken foundation — but they can handle the doc updates once you steer them. The discipline is in recognizing the moment to pause; the agent handles the paperwork.
 
@@ -399,6 +401,12 @@ The key shift: end-of-session time becomes **1-2 minutes of review**, not 20 min
 **Automating the rhythm.** For Claude Code, install the [`curate.md`](../templates/curate.md) template as `.claude/skills/curate/SKILL.md` (with frontmatter — see template comments) — this gives you a `/curate` skill that automates the end-of-session curation (gotcha review, pattern promotion, memory index update). For other tools, paste the curate template as an end-of-session prompt. Either way, the agent does the heavy lifting and you review its proposals.
 
 **Structural audits.** Install [`audit-context.md`](../templates/audit-context.md) as `.claude/skills/audit-context/SKILL.md` for a `/audit-context` skill that checks framework-level health: document size, cross-layer duplication, wrong-layer placement, reference integrity, topic file reachability, and gitignore correctness. Run monthly or after major restructuring — it catches structural decay that session-level curation misses.
+
+**Pre-commit review.** Install [`review-changes.md`](../templates/review-changes.md) as `.claude/skills/review-changes/SKILL.md` for a `/review-changes` skill that reads the pending diff and picks its review depth from what changed — a changelog edit gets one adversarial pass, a change to a normative surface gets the full lens battery. It complements deterministic checks (linters, structural tests) with the judgment-based kind: whether a change is broader than its stated intent, whether a document now contradicts itself.
+
+**Releases.** Install [`release.md`](../templates/release.md) as `.claude/skills/release/SKILL.md` for a `/release` skill that classifies the semver bump, verifies preconditions, drafts the changelog entry, and syncs version strings across the repo — then stops before tagging. Note this one ships `disable-model-invocation: true`: it is user-invoked only, never something the agent starts on its own. The judgment worth automating here is the bump decision, which otherwise lives in a prose header and drifts.
+
+**Why these four and not more.** Each attaches to a recurring moment with a real decision in it — end of session, monthly, pre-commit, per release. The other rows in the rhythm table are single writes with no branching: logging a gotcha is a two-line append, and wrapping it in a skill adds ceremony without adding judgment. Skills are worth their slot when they encode a *procedure you'd otherwise get wrong*, not when they merely save typing. Their names and descriptions occupy context in every session, so a small, well-chosen set outperforms a large one — the auto-loading cliff applies to tooling, not just documents.
 
 These practices form a single cycle — the **self-learning loop**.
 

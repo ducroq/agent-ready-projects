@@ -20,7 +20,7 @@ The source framework that teaches the layered memory method for AI coding agents
 | Working with the verification rationale | `docs/verification-rationale.md` (v1.10.1) — the three structural principles, each with a decision rule. Cite the rationale doc rather than re-deriving. |
 | Considering reviving landscape / positioning docs | `memory/project_framework_pivot.md` — 2026-04-14 wrapper-archive decision still stands for positioning. Don't re-promote without explicit user signal. |
 | Considering the dead-end log pattern | `memory/project_dead_end_pattern_rollout.md` — PAUSED 2026-06-05; #16 is the canonical tracker. No new sibling adoptions, no templatization, until gate 4 (Referenced-by-session ≥1 from an unrelated future session) clears. |
-| Cutting a release | `CHANGELOG.md` header — maintainer release process (#14) + tag-and-push protocol. v1.10.1 set the precedent that doc-only changes are PATCH; new templates/patterns/behaviors are MINOR. |
+| Cutting a release | Run `/release` if installed locally, per `templates/release.md` — it classifies the bump, runs the preconditions, drafts the changelog entry, and stops before tagging. Background: `CHANGELOG.md` header — maintainer release process (#14) + tag-and-push protocol. v1.10.1 set the precedent that doc-only changes are PATCH; new templates/patterns/behaviors are MINOR. |
 | Starting multi-session work (feature, migration, refactor, investigation) | Create `docs/work-items/<slug>.md` from `templates/work-item.md`. Add a one-line pointer in `memory/MEMORY.md` Current State: `- [Short description] → docs/work-items/slug.md [in progress]`. |
 | Resuming work on an existing initiative | Read the work-item file in `docs/work-items/` — the Current Status section is the savepoint. |
 | Ending a session | Update any active work-item file's Current Status section (the savepoint). Then run `/curate` if installed locally — the framework's own skill, per `templates/curate.md`. |
@@ -61,6 +61,8 @@ agent-ready-projects/
 │   ├── curate.md              <- End-of-session curation skill
 │   ├── audit-context.md       <- Periodic structural audit skill
 │   ├── review-changes.md      <- Diff-driven pre-commit review skill (v1.12.0)
+│   ├── release.md             <- Release skill: bump classification + preconditions, stops before publishing
+│   ├── adr.md                 <- Architecture Decision Record template
 │   ├── coordination.md        <- Layer 5 (multi-contributor)
 │   ├── review-agent.md        <- Reusable review-agent skeleton
 │   ├── test-verify-memory.md  <- Behavioral-test pattern (Phase B/C precedent)
@@ -101,6 +103,7 @@ Listed here so the architecture diagram above is honest about what an adopter se
 | `templates/project-file.md` | Layer-1 project file template |
 | `templates/work-item.md` | Multi-session work tracking with built-in savepoint |
 | `templates/review-changes.md` | Diff-driven pre-commit review skill |
+| `templates/release.md` | Release skill — bump classification, preconditions, changelog entry; stops before tagging |
 | `templates/curate.md` | End-of-session curation skill |
 | `templates/audit-context.md` | Periodic structural audit skill |
 | `memory/MEMORY.md` | This repo's in-repo memory index (maintainer-local) |

@@ -46,6 +46,7 @@ Add layers as your project needs them — not before:
 12. **Checklists** — [`templates/checklists/`](templates/checklists/) for definition-of-done gates
 13. **Review-changes skill** — [`templates/review-changes.md`](templates/review-changes.md) for diff-driven pre-commit review — picks review lenses based on what changed
 14. **Structural audit** — [`templates/audit-context.md`](templates/audit-context.md) to catch framework-level decay monthly
+15. **Release skill** — [`templates/release.md`](templates/release.md) once you cut versioned releases — classifies the semver bump, verifies preconditions, drafts the changelog entry, stops before publishing
 
 ### Already have docs?
 
@@ -112,6 +113,7 @@ Ready-to-use starter files in [`templates/`](templates/). Tool-agnostic — rena
 - **[`curate.md`](templates/curate.md)** — End-of-session curation skill (automates the self-learning loop)
 - **[`audit-context.md`](templates/audit-context.md)** — Periodic structural audit of the layered memory system
 - **[`review-changes.md`](templates/review-changes.md)** — Diff-driven pre-commit review with risk-based lens selection
+- **[`release.md`](templates/release.md)** — Release skill: classify the semver bump, verify preconditions, draft the changelog entry, sync version strings — stops before tagging or pushing
 - **[`coordination.md`](templates/coordination.md)** — Layer 5: contributors, shared constraints, WIP, conventions (multi-contributor projects only)
 - **[`physics-tests/`](templates/physics-tests/)** — Specialized test-scaffolding family for physics simulation code: energy conservation, MMS convergence, intercomparison, conservation logs
 - **[`checklists/`](templates/checklists/)** — Validation checklists for each workflow stage
