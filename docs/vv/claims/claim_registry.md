@@ -31,8 +31,8 @@
 | S5-2 | No open-source shared memory system supports team governance | Central gap claim |
 | S5-3 | OWASP Top 10 for Agentic Applications released December 2025 | Temporal claim anchoring landscape context |
 | S5-4 | Microsoft Agent Governance Toolkit released April 2026 | Temporal claim anchoring landscape context |
-| S5-5 | RenkumSpot case: PR #5 broke rendering due to constraint visibility gap | Core evidence for coordination layer — if misrepresented, credibility lost |
-| S5-6 | RenkumSpot case: convention divergence (DDD proposal for volunteer site) | Core evidence for coordination layer |
+| S5-5 | Case study: a PR broke rendering due to constraint visibility gap | Core evidence for coordination layer — if misrepresented, credibility lost |
+| S5-6 | Case study: convention divergence (DDD proposal for volunteer site) | Core evidence for coordination layer |
 
 ### P1 (Important) — target 90%
 
@@ -47,7 +47,7 @@
 | S5-7 | CrewAI, LangGraph, AutoGen, OpenAI Agents SDK all single-user | Specific framework claims |
 | S5-8 | Mem0, Letta, Graphiti are single-user or multi-user-isolated | Specific system claims |
 | S6-1 | Framework tested across 28+ active projects | Scale of evidence |
-| S6-2 | Coordination layer designed from RenkumSpot case | Provenance claim |
+| S6-2 | Coordination layer designed from the multi-contributor case | Provenance claim |
 | S6-3 | Gap confirmed across all major frameworks as of April 2026 | Landscape completeness |
 | S1-5 | MCP tool descriptions served as structured text | Technical accuracy |
 
@@ -60,7 +60,7 @@
 | S2-2 | Every agent tool has auto-loaded files and invisible-until-read files | Generalization |
 | S3-1 | Agents don't remember yesterday / every session starts cold | Generalization (some tools have persistent memory) |
 | S3-2 | Agent Skills spec standardizes name + description in frontmatter | Spec detail |
-| S5-9 | RenkumSpot had 17 ADRs, 828 tests | Specific numbers |
+| S5-9 | Case-study project had 17 ADRs, 828 tests | Specific numbers |
 | S5-10 | Every AGENTS.md guide assumes single author | Landscape claim |
 
 ---
@@ -109,11 +109,11 @@
 | S5-2 | No open-source shared memory system (Mem0, Letta, Graphiti) supports team memory with governance | ARGUMENT | P0 | SUPPORTED | Web research April 2026; framework docs review | D | [ ] |
 | S5-3 | OWASP Top 10 for Agentic Applications released December 2025 | CLAIM | P0 | ESTABLISHED | genai.owasp.org | D | [ ] |
 | S5-4 | Microsoft Agent Governance Toolkit open-sourced April 2026 | CLAIM | P0 | ESTABLISHED | opensource.microsoft.com/blog/2026/04/02 | D | [ ] |
-| S5-5 | RenkumSpot: PR #5 changed data format, broke rendering due to constraint visibility gap | CLAIM | P0 | ESTABLISHED | github.com/ducroq/RenkumSpot PR #5, gotcha-log.md | E | [ ] |
-| S5-6 | RenkumSpot: contributor proposed DDD/TDD standards for volunteer static site, requiring ADR-015 negotiation | CLAIM | P0 | ESTABLISHED | RenkumSpot constitution-robert.md, ADR-015 | E | [ ] |
+| S5-5 | Case study: a PR changed data format, broke rendering due to constraint visibility gap | CLAIM | P0 | ESTABLISHED | Case-study repo (private) PR + gotcha-log.md | E | [ ] |
+| S5-6 | Case study: contributor proposed DDD/TDD standards for volunteer static site, requiring a negotiated ADR | CLAIM | P0 | ESTABLISHED | Case-study repo (private): contributor constitution file, negotiated ADR | E | [ ] |
 | S5-7 | CrewAI, LangGraph, AutoGen, OpenAI Agents SDK are all single-user orchestration | CLAIM | P1 | SUPPORTED | Framework documentation, web research April 2026 | D | [ ] |
 | S5-8 | Mem0, Letta, Graphiti are single-user or multi-user-isolated | CLAIM | P1 | SUPPORTED | Framework documentation, web research April 2026 | D | [ ] |
-| S5-9 | RenkumSpot had 17 ADRs and 828 schema validation tests | CLAIM | P2 | ESTABLISHED | RenkumSpot repo inspection | E | [ ] |
+| S5-9 | Case-study project had 17 ADRs and 828 schema validation tests | CLAIM | P2 | ESTABLISHED | Case-study repo inspection | E | [ ] |
 | S5-10 | The guides we surveyed (Augment, Builder.io, HumanLayer, GitHub 2500+ repos) all assume a single author | CLAIM | P2 | SUPPORTED | Web research April 2026 | D | [x] |
 
 ### Section 6: Where This Comes From
@@ -121,7 +121,7 @@
 | ID | Statement | Type | Priority | Confidence | Source | Source Tier | Status |
 |----|-----------|------|----------|------------|--------|-------------|--------|
 | S6-1 | Patterns developed and tested across 28+ active projects | CLAIM | P1 | ESTABLISHED | OWN WORK (ADR-001 migration evidence) | E | [ ] |
-| S6-2 | Coordination layer designed from observed friction in RenkumSpot | CLAIM | P1 | ESTABLISHED | OWN WORK (ADR-002) | E | [ ] |
+| S6-2 | Coordination layer designed from observed friction in the case-study project | CLAIM | P1 | ESTABLISHED | OWN WORK (ADR-002) | E | [ ] |
 | S6-3 | Gap confirmed across all major frameworks as of April 2026 | ARGUMENT | P1 | SUPPORTED | Web research April 2026 | D | [ ] |
 
 ### Section 7: Honest Limitations
@@ -183,9 +183,9 @@
 
 | Data Source | Claims | What to Check |
 |-------------|--------|---------------|
-| RenkumSpot repo | S5-5, S5-6, S5-9 | PR #5 exists, constitution-robert.md exists, ADR count, test count |
+| Case-study repo (private) | S5-5, S5-6, S5-9 | field-mismatch PR exists, contributor constitution file exists, ADR count, test count |
 | agent-ready-projects ADR-001 | S6-1 | "28 active projects" claim in ADR text |
-| agent-ready-projects ADR-002 | S6-2 | RenkumSpot case documented |
+| agent-ready-projects ADR-002 | S6-2 | Case study documented |
 
 ### Web Research (April 2026)
 

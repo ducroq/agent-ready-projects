@@ -12,6 +12,50 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.14.0 (candidate, unreleased)
+
+New **Verification Hooks** section in `docs/GUIDE.md` — the deterministic counterpart to session hooks, closing the edit → check → fix loop without a human relaying the error. Plus a release-skill fix for the class of staleness that let two templates sit three minors behind.
+
+### Docs
+- **`docs/GUIDE.md`** — New `## Verification Hooks` section, placed after Session Hooks (orientation at session start; verification at edit end). Covers what the mechanism buys (the agent carries its own error message, correcting while the reasoning that produced the bug is still in context), a fast/diagnostic/actionable test for what's worth wiring, three failure modes — the silent hook, the green-at-any-cost loop where the agent weakens the check rather than the code, and the tightened leash — and the rule that hook output feeds the gotcha log only when it surprised you or recurred. Tool-support table states the honest limit: most tools have no native mechanism, and an instruction is a request where a hook is a guarantee. Added to the TOC and to the concept-mapping table.
+
+### Templates
+- **`templates/project-file.md`, `templates/coordination.md`** — Framework stamp corrected from `v1.10.0` to the current version. Both had been stuck since v1.10.0 while the repo moved three minors ahead. The consequence was adopter-facing and self-inflicted: `project-file.md`'s own "Before You Start" table tells the agent to compare that stamp against this changelog and surface drift. An adopter scaffolding from the template got current template *content* carrying a three-minor-old *stamp*, so their first session reported drift against files that were in fact up to date.
+- **`templates/release.md`** — Step 3, check 5 now runs **version-agnostic** greps after the current-version grep. The step already warned in prose that a file stuck at an older version wouldn't appear; it gave no command that would find one. Two targeted patterns are used — the project's own stamp string, and version-labelled lines — rather than a bare version-shaped match, which returns hundreds of dependency pins in any repo with a committed lockfile and gets skipped for that reason (git grep's gitignore-awareness doesn't help: lockfiles are committed). Caveats added for untracked files (invisible to `git grep`), for deliberately dated snapshots, and for the fact that these greps have no pass/fail state to stop on. **Step 5 amended in the same pass** — it said "update every file found in Step 3, check 5," which combined with the new greps would have instructed bulk-rewriting of historical citations, and its "confirm no stale references remain" exit criterion was unreachable by construction. Step 5 now scopes to files meant to track the current version, names template stamps explicitly as the category releases habitually miss, and re-runs only the current-version grep.
+
+- **`templates/physics-tests/`** (all five files) — Removed the named triggering project and its experimental citation throughout. The worked examples are unchanged in substance and now read as generic scenarios ("a bare-pendulum simulation," "a fixed-step RK4 pendulum integrator") rather than a case study of a specific repo; the Tier 6 source entry now points the reader at *their own* primary experimental reference, which is the more useful instruction anyway. No test logic, tier mapping, or tolerance changed. Same de-naming applied to `docs/archive/METHODOLOGY.md`, `docs/archive/COMPARISON.md`, and the historical v1.1.0 changelog entry, which now credit "an early adopter project."
+
+### De-identification
+
+This repo is public. It named several private repositories and one third-party contributor, in files that had been published for months. All of it is now removed; the evidence it supported is unchanged.
+
+- **A named contributor** appeared in `docs/decisions/ADR-002`, `docs/it-starts-with-markdown.md`, `docs/vv/verification-log.md`, and a v1.8.0 changelog entry — by first name and GitHub handle, in connection with a PR that broke rendering and a standards proposal that had to be negotiated down. Now "the second contributor" / "the contributor's agent" throughout, with the personal constitution file referred to generically.
+- **Private repositories** (a community platform, a report-scoring project, a simulation project) were named and hyperlinked from a public repo — links that 404 for readers while still disclosing that the projects exist and what they do. Replaced with descriptors: "a community-platform project," "a report-scoring project." The `docs/vv/` claim registry, which catalogued private-repo internals as verification evidence, now cites "Case-study repo (private)."
+- **A dead link** to a repository that no longer resolves was de-linked.
+
+Retained: links to `agent-ready-papers`, `augur`, and `podcast-generator`, all public.
+
+The case-study evidence keeps its specificity — 102 commits versus 2, 17 ADRs, 820 tests, the 64-report calibration run, the exact failure mechanisms. Only the identifiers are gone, and they were unverifiable to a reader anyway, since the repos are private.
+
+### Tests
+- **`tests/lint/README.md`** — The "deliberately does not check" list stated that template version stamps "are allowed to lag the current repo version intentionally — bumping every template on every release would be noise." That position is retired: it's what let two stamps sit three minors behind. The bullet now explains why lint still can't check it (distinguishing a tracking stamp from a dated snapshot needs judgment) and routes ownership to `release.md` Step 5.
+
+### Adopter notes
+
+New adopters: nothing to do — you get the corrected stamps and the new guide section by default.
+
+Existing adopters: **re-install your `release` skill** if you installed it from v1.13.0 — the old Step 3 could not detect a file stuck at an older version, which is exactly the bug this release fixes in its own templates. The Verification Hooks section is new guidance, not a change to anything you already have; if you adopt it, add the "tests are not modified to make them pass" Hard Constraint at the same time, not after.
+
+### Versioning rationale
+
+MINOR, provisionally. Rule 1 does not fire — nothing breaks. Rule 2 is the judgment call: the v1.13.1 precedent made a new GUIDE section alone a PATCH ("no new artifact, only a new section in an existing document"), which taken alone would put this at PATCH too. What tips it to MINOR is the `release.md` procedure change — new steps and an amended Step 5 in a shipped skill are new behavior under the v1.10.1 rule — combined with Verification Hooks introducing a named concept adopters are meant to act on rather than a clarification of an existing one. Reclassify at release time if that reads as overreach.
+
+### Review notes
+
+The first draft of this change shipped three defects that a pre-commit review caught, all worth recording because they are the same *kind* of error: **a fix that recreates its own bug class one level up.** (1) The `release.md` sweep was a bare version-shaped grep — 601 hits against a 300-dependency lockfile, i.e. a check no agent would run. (2) Step 5 was left un-amended and directly contradicted the Step 3 it depends on. (3) The GUIDE's Verification Hooks section told readers to use a Claude Code `PostToolUse` command hook for the edit → error → fix loop; on exit 0 that hook's output goes to a debug log the agent never reads, making the recommended configuration an instance of the section's own "silent hook" failure mode. Corrected to name the exit-2 / `continueOnBlock` / `Stop`-hook mechanisms that actually deliver feedback.
+
+---
+
 ## v1.13.1 (2026-08-03)
 
 Documentation: new **"How deep to go: layer depth by project stage"** section in `docs/GUIDE.md`, plus two naming-map omissions fixed in `templates/README.md`. PATCH — no new template, no behavior change, no adopter action required.
@@ -392,7 +436,7 @@ Multi-contributor coordination — Layer 5 for projects where multiple developer
 - **`templates/memory-index.md`** — Added comment block for multi-contributor memory conventions (shared vs personal memory, gotcha log tagging).
 
 ### Guide (`docs/GUIDE.md`)
-- New subsection: "Multi-contributor projects" under Tool-Specific Setup — Layer 5 explanation, three friction points grounded in the RenkumSpot case study, self-learning loop deduplication phase, scope boundaries, setup guide.
+- New subsection: "Multi-contributor projects" under Tool-Specific Setup — Layer 5 explanation, three friction points grounded in the multi-contributor case study, self-learning loop deduplication phase, scope boundaries, setup guide.
 - Table of contents updated with multi-contributor projects entry.
 - Version bumped to 1.8.0.
 
@@ -402,7 +446,7 @@ Multi-contributor coordination — Layer 5 for projects where multiple developer
 - Template URL list updated with `coordination.md`.
 
 ### Decisions
-- **ADR-002** — [Multiplayer coordination layer](docs/decisions/ADR-002-multiplayer-coordination-layer.md). Design stance: opt-in Layer 5 over extending existing layers or personal overlay files. Grounded in three observed friction points from RenkumSpot.
+- **ADR-002** — [Multiplayer coordination layer](docs/decisions/ADR-002-multiplayer-coordination-layer.md). Design stance: opt-in Layer 5 over extending existing layers or personal overlay files. Grounded in three observed friction points from the multi-contributor case study.
 - **`docs/decisions/README.md`** — Decision index created, listing ADR-001 and ADR-002.
 
 ### README
@@ -412,7 +456,7 @@ Multi-contributor coordination — Layer 5 for projects where multiple developer
 
 ### Origin
 
-Observed in [RenkumSpot](https://github.com/ducroq/RenkumSpot): a second contributor (Robert/csourcenl) joined a well-documented agent-ready project and still hit coordination friction — PR #5 broke a documented constraint because there was no agreement mechanism, a convention proposal required negotiation that had no staging area, and work overlap had no visibility. Research (April 2026) confirmed the gap: all existing multi-agent frameworks solve single-user orchestration; no framework addresses multi-user-multi-agent coordination for small teams.
+Observed in a community-platform project: a second contributor joined a well-documented agent-ready project and still hit coordination friction — a PR broke a documented constraint because there was no agreement mechanism, a convention proposal required negotiation that had no staging area, and work overlap had no visibility. Research (April 2026) confirmed the gap: all existing multi-agent frameworks solve single-user orchestration; no framework addresses multi-user-multi-agent coordination for small teams.
 
 ### References
 
@@ -446,7 +490,7 @@ The ADR template (v1.7.1) introduced YAML frontmatter for machine-readable lifec
 ADR template — codifies the decision record pattern that was previously demonstrated by example only.
 
 ### Templates
-- **`templates/adr.md`** — New Architecture Decision Record template with YAML frontmatter (`status`, `date`, `deciders`, `superseded_by`), options comparison tables, consequences (positive/negative/risks), "Revisit If" triggers with concrete conditions, implementation steps, and an embedded decision index template. Synthesized from ADR patterns across three adopter projects (agent-ready-papers, RenkumSpot, shared_vault).
+- **`templates/adr.md`** — New Architecture Decision Record template with YAML frontmatter (`status`, `date`, `deciders`, `superseded_by`), options comparison tables, consequences (positive/negative/risks), "Revisit If" triggers with concrete conditions, implementation steps, and an embedded decision index template. Synthesized from ADR patterns across three adopter projects.
 
 ### Guide (README.md)
 - Step 8 in the adoption ladder now links to `templates/adr.md` instead of being a bare mention.
@@ -457,7 +501,7 @@ ADR template — codifies the decision record pattern that was previously demons
 - `templates/project-file.md` — Version bumped to 1.7.1.
 
 ### Origin
-Investigated ADR/DR practices across three adopter repositories. `shared_vault` contributed the "Revisit If" pattern with concrete trigger conditions. `RenkumSpot` contributed status badges, decision matrices, and a battle-tested template across 17 decisions. `agent-ready-papers` contributed YAML frontmatter with `superseded_by` tracking. The framework had ADRs at step 8 of adoption and one example (ADR-001) but no reusable template — this closes that gap.
+Investigated ADR/DR practices across three adopter repositories. One adopter contributed the "Revisit If" pattern with concrete trigger conditions. A community-platform adopter contributed status badges, decision matrices, and a battle-tested template across 17 decisions. `agent-ready-papers` contributed YAML frontmatter with `superseded_by` tracking. The framework had ADRs at step 8 of adoption and one example (ADR-001) but no reusable template — this closes that gap.
 
 ## v1.7.0 (2026-04-08)
 
@@ -578,13 +622,13 @@ New anti-pattern: files with implicit runtime semantics.
 
 ## v1.3.1 (2026-03-27)
 
-Negative results pattern, adoption evidence from vmodel.eu.
+Negative results pattern, adoption evidence from a report-scoring adopter.
 
 ### Guide (README.md)
 - Added "Negative results are knowledge" subsection under The Self-Learning Loop — documents the pattern of treating failed experiments as first-class findings that prevent future agents from retrying dead ends.
 
 ### Adoption evidence
-- [vmodel.eu](https://github.com/ducroq/vmodel.eu) adopted v1.3.0. Key evidence: LLM-assisted score adjustment calibrated on 64 held-out reports, proved harmful, documented as negative result in `memory/calibration-history.md`. INCOSE rule checker (Agent 6) calibrated on 186 reports — detectors tuned from 28 findings/report to 1 using corpus data.
+- A report-scoring project adopted v1.3.0. Key evidence: LLM-assisted score adjustment calibrated on 64 held-out reports, proved harmful, documented as negative result in `memory/calibration-history.md`. INCOSE rule checker (Agent 6) calibrated on 186 reports — detectors tuned from 28 findings/report to 1 using corpus data.
 
 ## v1.3.0 (2026-03-26)
 
@@ -609,7 +653,7 @@ Self-learning review agents, non-code domain example, and three new patterns fro
 - Version bumped to 1.3.0
 
 ### Adoption evidence
-- Framework adopted for [agent-ready-assessment](https://github.com/ducroq/agent-ready-assessment): educational assessment system with 3 course modules (EVML ML/DL, EML), 4 review agents, and full self-learning loop. Non-code domain validates that the layered model works beyond software projects.
+- Framework adopted for an educational-assessment project: educational assessment system with 3 course modules (EVML ML/DL, EML), 4 review agents, and full self-learning loop. Non-code domain validates that the layered model works beyond software projects.
 
 ## v1.2.0 (2026-03-19)
 
@@ -633,7 +677,7 @@ In-repo memory by default, global file cliff guidance, and first ADR.
 
 ## v1.1.0 (2026-03-16)
 
-Framework generalization, worked example, Cursor support, and adoption feedback from [driven-pendulum](https://github.com/ducroq/driven-pendulum).
+Framework generalization, worked example, Cursor support, and adoption feedback from an early adopter project.
 
 ### Framework
 - Generalized all guidance to be tool-agnostic — "project file" and "memory index" as primary terms, with tool-specific names as examples

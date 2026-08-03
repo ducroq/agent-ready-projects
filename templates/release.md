@@ -101,14 +101,30 @@ git ls-remote --exit-code --tags origin "refs/tags/vX.Y.Z" && echo "REMOTE TAG E
 # written ("**Version 1.2.3** | [Changelog](CHANGELOG.md)"), silently hiding
 # the most visible version reference in the project.
 git grep -n "1\.2\.3" -- ':!CHANGELOG.md'
+
+# Then sweep VERSION-AGNOSTICALLY. This is the only check that finds a file stuck
+# two releases back — the grep above cannot, because such a file does not contain
+# the current version. Do NOT do this by matching any version-shaped number: in a
+# repo with a lockfile that returns hundreds of dependency pins, and lockfiles are
+# committed, so git grep's gitignore-awareness does not save you. An agent facing
+# that output will rationally skip the check.
+#
+# Match the two things that actually carry your version instead. Substitute your
+# own project name in the first pattern.
+git grep -nE "your-project-name v?[0-9]+\.[0-9]+" -- ':!CHANGELOG.md'
+git grep -niE "version[\"': ]*v?[0-9]+\.[0-9]+" -- ':!CHANGELOG.md' ':!*.lock' ':!*lock.json'
+
+# Two-component versions (v1.13) are matched by design; a bare
+# `[0-9]+\.[0-9]+\.[0-9]+` would miss them.
 ```
 
 Search **all** file types, not just `*.md`. Version strings live in `package.json`, `pyproject.toml`, `Cargo.toml`, `setup.py`, `__init__.py`, `docs/conf.py`, and CI configs — the manifests Step 5 has to update. Restricting the search to Markdown is the most common way a release ships with a manifest still on the old version.
 
 Two things this check cannot do, which you must cover by reading:
 
-- It finds only references already at the *current* version. A file stuck at an *older* version, or one that should carry a version but doesn't, will not appear. Compare against the file list from the previous release if there is one.
-- It cannot distinguish a stale reference from a legitimate historical citation ("the vX.Y.Z precedent"). Judge each hit; don't bulk-replace.
+- The first grep finds only references already at the *current* version, which is why the version-agnostic greps follow it. **Templates and scaffolding files are the usual victims:** nobody edits them during a normal release, so they never show up in a current-version grep and never get touched. A file that should carry a version but doesn't will not appear in any of these greps; compare against the file list from the previous release if there is one.
+- Neither grep can distinguish a stale reference from a legitimate historical citation ("the vX.Y.Z precedent") or a deliberately dated snapshot (a published essay, an archived doc). Judge each hit; don't bulk-replace. **The version-agnostic greps are expected to return hits you leave alone** — that is not a failure condition, and unlike the other Step 3 checks they have no pass/fail state to stop on.
+- Neither grep sees untracked files. A freshly scaffolded file that has never been `git add`ed is invisible to both. Run `git status --porcelain` alongside them and check any new file by eye.
 
 ## Step 4 — Write the changelog entry
 
@@ -133,13 +149,14 @@ Write for someone deciding whether to upgrade. "Updated templates" is useless; "
 
 ## Step 5 — Sync version references
 
-Update every file found in Step 3, check 5, to the new version. Typically:
+Update the files found in Step 3, check 5, **that are meant to track the current version** — not every hit. Check 5's second grep deliberately surfaces hits you leave alone (historical citations, dated snapshots, dependency pins); rewriting those is the failure mode Step 3 warned about. Typically in scope:
 
 - The project file's version line
 - Any README or docs version badge
 - Package or manifest version fields
+- **Any template or scaffolding file that stamps the framework version.** These are the ones releases habitually miss: nobody edits them during a normal release, so they never appear in a current-version grep, and they ship stamped at whatever release last happened to touch them. A new adopter then scaffolds from them and inherits a stamp that misdescribes the files they just got.
 
-Re-run the same `git grep` from Step 3 afterward and confirm no stale references remain outside the changelog (the changelog keeps history — it should still contain old versions).
+Afterward, re-run the **current-version** grep from Step 3 and confirm the only hits are files you intended to update. Do not try to drive the version-agnostic greps to zero output — they never reach zero in a real repo, and an agent chasing that exit criterion will either loop or start rewriting historical references to make it quiet.
 
 ## Step 6 — Commit, then stop
 

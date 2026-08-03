@@ -35,7 +35,7 @@ Each template provides copy-paste pytest scaffolding plus a worked example. The 
 
 ## Provenance
 
-- **Triggering case study:** Driven Pendulum project, 2026-04-06 / 2026-05-04. Bare-pendulum simulation passed all the tests its author thought to write but had no test for "does this match Hodzelmans 2017 measured data" or "does an independent second integrator give the same answer." See [driven-pendulum's archive README](https://github.com/ducroq/driven-pendulum/blob/master/sim/archive_v2_bare_pendulum/README.md).
+- **Triggering case study:** an oscillator simulation, 2026-04-06 / 2026-05-04. It passed every test its author thought to write, but had no test for "does this match the measured experimental data" or "does an independent second integrator give the same answer." Its findings reached a stakeholder-facing recommendation before either question was asked; the simulation was later archived once the scope mismatch surfaced.
 - **Investigation:** Survey of mainstream V&V practice (ASME V&V 10/20/40, Roache's MMS, SciML.jl ecosystem testing patterns, Geant4 physics validation, climate model intercomparison). The single highest-leverage finding: **independent-implementation cross-check** — by definition, a verifier run on your own code cannot find a misconception you also embedded in your tests.
 
 ## Relationship to the rest of the framework

@@ -163,9 +163,9 @@ def integrator_with_external_forcing(initial, params, t_end, dt, f):
     )
 ```
 
-## Worked example: applied to driven-pendulum's RK4
+## Worked example: applied to a fixed-step RK4 pendulum integrator
 
-The archived `pendulum.py` uses a fixed-step RK4 integrator. An MMS test would:
+Consider a `pendulum.py` using a fixed-step RK4 integrator. An MMS test would:
 
 - Choose $\theta_{\text{manuf}}(t) = 0.05 \sin(7 t)$ rad (small enough for the linearised EoM, frequency away from $\omega_0 \approx 6.28$ rad/s to avoid resonance).
 - Symbolically derive the forcing $f(t) = -49 \cdot 0.05 \sin(7t) + 2\beta \cdot 7 \cdot 0.05 \cos(7t) + \omega_0^2 \cdot 0.05 \sin(7t)$.

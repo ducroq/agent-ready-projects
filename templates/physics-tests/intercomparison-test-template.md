@@ -178,15 +178,15 @@ A disagreement is a finding, not a tolerance problem. Procedure:
 4. **Run a Tier 1 test** on each implementation in isolation (energy conservation, period). If one fails Tier 1 and the other passes, the failure points to the buggy implementation.
 5. **Fix the bug, then re-run the test.** It should now pass at the original tolerance.
 
-## Worked example: applied to driven-pendulum
+## Worked example: a bare-pendulum simulation
 
-If the archived `sim/pendulum.py` had been intercompared against `scipy.integrate.solve_ivp(method='Radau')` on the same EoM:
+If an archived `pendulum.py` — a bare pendulum driven by EM pulses — had been intercompared against `scipy.integrate.solve_ivp(method='Radau')` on the same EoM:
 
 - **Free pendulum tests** would pass — the EoM and RK4 are correct.
 - **Driven (open-loop pulsed) tests** would also pass — both implementations would compute the same trajectory and both would show amplitude decay over 300s. *Tier 5 cannot detect a modelling error.*
 - **What Tier 5 would NOT catch in this case:** the absence of an escapement. Both implementations are bare-pendulum + EM; both agree; both are within scope of the same wrong-for-the-application model.
 
-This illustrates the boundary between tiers: Tier 5 catches *implementation* errors with high power but does not catch *modelling* errors. For modelling errors, you need Tier 6 (experimental data — Hodzelmans Table 2 in this case) or Tier 0 cross-document consistency (which would have flagged the v2 doc against Ch 03's injection-locking framing).
+This illustrates the boundary between tiers: Tier 5 catches *implementation* errors with high power but does not catch *modelling* errors. For modelling errors, you need Tier 6 (the measured experimental data the model is answerable to) or Tier 0 cross-document consistency, which would have caught the simulation contradicting the project's own theory chapter.
 
 The lesson: **adopt all the tiers you can afford.** None is sufficient on its own.
 

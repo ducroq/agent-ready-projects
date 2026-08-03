@@ -55,4 +55,4 @@ Not just the abstract — the actual section with the claim.
 - Sources 2-3, 5-8 are web resources / standards, not academic papers. Steps 2-3 (author/venue) simplify to "does the organization exist and publish this?"
 - Source 1 (Gloaguen et al.) is the only academic citation — full 6-step treatment required.
 - Source 4 (VS Magazine) is trade press — verify article exists, date, and specific claims about VS2026 features.
-- RenkumSpot evidence is OWN WORK — verify against repo artifacts (PR #5, constitution-robert.md, ADR-015), not external sources.
+- The multi-contributor case-study evidence is OWN WORK — verify against that project's own artifacts (the field-mismatch PR, the contributor constitution file, the negotiated ADR), not external sources.

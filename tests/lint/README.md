@@ -20,7 +20,7 @@ Exits `0` on pass, non-zero on any failure. Each failure prints what drifted and
 ## What this lint deliberately does *not* check
 
 - **Semantic pairing between Hard Constraints and Before You Start.** The two sections serve different functions (rules vs. trigger-action routing); forcing 1:1 would impose editorial structure that does not match how the sections actually work.
-- **Version pin coherence.** Templates' `framework: agent-ready-projects vX.Y.Z` frontmatter is allowed to lag the current repo version intentionally — bumping every template on every release would be noise.
+- **Version pin coherence.** Templates' `framework: agent-ready-projects vX.Y.Z` frontmatter is not checked here, because deciding whether a given version string should track the current release or is a deliberately dated snapshot needs judgment a deterministic rule can't supply. That does *not* mean the stamps may drift freely — the position changed in v1.14.0, after `templates/project-file.md` and `templates/coordination.md` sat at v1.10.0 for three minors. `project-file.md` ships a "Before You Start" row telling the agent to compare its own stamp against the changelog and report drift, so a stale stamp there makes a new adopter's first session report drift against content that is in fact current. Keeping the stamps honest is now `templates/release.md` Step 5's job, not lint's.
 - **Content correctness.** Whether a template's *content* is good, accurate, or up-to-date is the job of `/audit-context` and review, not lint.
 - **LLM-driven behavioral testing.** That is Phase C (multi-vendor reviewer battery + per-trick behavioral fixtures). The single existing behavioral test is `templates/test-verify-memory.md`.
 

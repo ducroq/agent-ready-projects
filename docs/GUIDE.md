@@ -24,6 +24,7 @@ This is the full reference for the agent-ready projects method. For a quick over
 - [How Agents Self-Navigate](#how-agents-self-navigate)
 - [Decision Records (ADRs)](#decision-records-adrs)
 - [Session Hooks](#session-hooks)
+- [Verification Hooks](#verification-hooks)
 - [The Documentation Rhythm](#the-documentation-rhythm)
 - [The Self-Learning Loop](#the-self-learning-loop)
   - [Why this isn't "keep a log"](#why-this-isnt-keep-a-log)
@@ -409,6 +410,45 @@ This gives immediate orientation without reading files. It's the difference betw
 
 The same principle applies to research and exploration. Offload search, grep, and codebase exploration to subagents or separate sessions so your main working context stays focused on the task. Every search result and file read that isn't directly relevant dilutes the context the agent is working in. Keep the building session clean; do the research elsewhere.
 
+## Verification Hooks
+
+A session hook orients the agent at the start. A **verification hook** closes the loop at the other end: it runs your checks after an edit and puts the result back in front of the agent.
+
+The difference this makes is who carries the error message. Without a hook, the agent edits, stops, and waits; you run the tests, read the failure, and paste it back. With one, the agent edits, sees the failure, and fixes it — the cheapest possible correction, made while the reasoning that produced the bug is still in context. This is the same division of labour as the rest of the method: deterministic checks catch what a rule can decide, and the agent's judgment is reserved for what a rule can't.
+
+Point the hook at the commands already documented in your project file's "How to Work Here" block. If the hook runs one command and the docs name another, you have two sources of truth for "how do I test this," and the agent will believe whichever it read most recently.
+
+**What's worth wiring.** Not every check earns a slot. The test is whether its output is *fast, diagnostic, and actionable*:
+
+| Good candidate | Poor candidate |
+|----------------|----------------|
+| Formatter, linter, type checker | Full integration suite (minutes per edit) |
+| The unit tests covering the touched module | Anything requiring credentials or a live environment |
+| A structural check over your own docs | Anything whose failure output is a bare exit code |
+
+A slow check doesn't just waste wall-clock — it burns context on output the agent can't act on, and it trains you to disable the hook.
+
+**Three failure modes to guard against:**
+
+- **The silent hook.** If the check's output doesn't reach the agent's context, it teaches nothing and costs time. This is not a hypothetical — it is what you get by *default* on at least one major tool, where a hook that merely runs a linter and exits normally sends its output to a debug log the agent never reads. Getting feedback into context is a deliberate configuration choice, not a property of having wired a hook at all. Before trusting one, break something on purpose and confirm the agent reacts.
+- **The green-at-any-cost loop.** An agent told to make the check pass will sometimes weaken the check: loosen an assertion, add a skip marker, widen a type to `Any`. The hook creates the pressure; a Hard Constraint relieves it. `Tests are not modified to make them pass — if a test is wrong, say so and stop` belongs in your project file the day you add the hook, not after you find the first neutered assertion.
+- **The tightened leash.** A hook that fires on every write turns exploratory work into a stop-start crawl. Scope it to the file types where the check is meaningful, or to the end of a change rather than each edit within it.
+
+**What to do with what it catches.** A hook failure the agent fixes in ten seconds is not knowledge — it's a typo, and it should leave no trace. A hook failure that *surprised* you, or that you've now seen twice, is a gotcha-log entry, and it enters the self-learning loop like any other. The hook produces the raw signal; curation decides what's worth keeping.
+
+**Tool support** (verify against your tool's current docs — this area moves fast, and the details below are the part most likely to be out of date):
+
+| Tool | Mechanism |
+|------|-----------|
+| Claude Code | `PostToolUse` hook matched on the edit tools, in `.claude/settings.json` (committed), `.claude/settings.local.json` (local), or `~/.claude/settings.json` (all projects). **The exit code is the whole mechanism:** on exit 0, the command's stdout goes to a debug log the agent never sees. Exit 2 writes stderr back to the agent as feedback it can act on. A `type: "prompt"` hook with `continueOnBlock: true` achieves the same where the pass/fail call needs judgment rather than an exit code. For "don't stop until the suite is green," a `Stop` hook is the better fit than a per-edit one. |
+| Aider | `auto-lint` / `lint-cmd` and `auto-test` / `test-cmd` in `.aider.conf.yml`. Errors are fed back to the model. Note the asymmetric defaults: linting is on, testing is not. |
+| Cursor | Has an edit-time hook mechanism; check current docs for the event name and config location before relying on it. |
+| Others | Check before assuming there's nothing — several tools have added hooks recently. If yours genuinely hasn't, put the command in the project file as an explicit instruction ("after editing any file under `src/`, run `<command>` before reporting done") and accept that compliance is probabilistic. |
+
+That last row is the honest position: an instruction is a request, a hook is a guarantee. Where your tool gives you the guarantee, take it. Where it doesn't, the instruction is still worth writing — it just isn't the same thing.
+
+The Claude Code row is the cautionary one. The obvious configuration — run the linter, let it exit however it exits — is precisely the silent hook described above. It looks wired up, it runs on every edit, and it feeds the agent nothing.
+
 ## The Documentation Rhythm
 
 The biggest shift in practice: **capture during work, curate at end-of-session.**
@@ -538,7 +578,7 @@ Most teams only document what worked. But for agents, knowing what *didn't* work
 
 When an experiment fails, document it in the gotcha log or a topic file with three things: **what you tried**, **quantified results**, and **why it failed**. This turns a dead end into a guardrail.
 
-> *Example: [vmodel.eu](https://github.com/ducroq/vmodel.eu) tried using LLM findings counts to adjust deterministic scores. A 3-hour calibration run across 64 held-out reports showed the adjustment hurt more than it helped (within-1 accuracy dropped from 96% to 92%). Root cause: reports with few LLM findings aren't necessarily good — short text gives the LLM less to criticize, mimicking a "clean bill of health." Documented in `memory/calibration-history.md` with full data. No future agent will retry this approach.*
+> *Example: a report-scoring project tried using LLM findings counts to adjust deterministic scores. A 3-hour calibration run across 64 held-out reports showed the adjustment hurt more than it helped (within-1 accuracy dropped from 96% to 92%). Root cause: reports with few LLM findings aren't necessarily good — short text gives the LLM less to criticize, mimicking a "clean bill of health." Documented in `memory/calibration-history.md` with full data. No future agent will retry this approach.*
 
 The self-learning loop already handles this — negative results enter through Capture (gotcha log), get promoted when they prove durable (topic file), and prevent wasted effort in future sessions. The key habit is treating "this doesn't work" as a first-class finding, not a failed experiment to forget.
 
@@ -653,7 +693,8 @@ This guide's concepts map to every major AI coding agent. The file names and mec
 | "Memory" (Layer 3) | `MEMORY.md` + topic files | — | — | — | — | — |
 | "Curate command" | `.claude/skills/curate/SKILL.md` (`/curate`) | End-of-session prompt | End-of-session prompt | End-of-session prompt | End-of-session prompt | End-of-session prompt |
 | "Audit command" | `.claude/skills/audit-context/SKILL.md` (`/audit-context`) | Ad-hoc prompt | Ad-hoc prompt | Ad-hoc prompt | Ad-hoc prompt | Ad-hoc prompt |
-| "Session hooks" | `.claude/hooks/` | — | — | — | — | — |
+| "Session hooks" | `SessionStart` hook in `.claude/settings.json` | — | — | — | — | — |
+| "Verification hooks" | `PostToolUse` hook in `.claude/settings.json` (see [Verification Hooks](#verification-hooks) — exit code matters) | — | edit-time hooks | — | — | `auto-lint` / `auto-test` in `.aider.conf.yml` |
 | Nested/directory rules | `CLAUDE.md` in subdirs | `AGENTS.md` in subdirs | `.mdc` files with globs | — | — | — |
 
 ### What this means in practice
@@ -712,7 +753,7 @@ If you're working alone, skip this section entirely.
 
 #### What breaks when contributor #2 joins
 
-Three friction points emerge that Layers 1–4 don't address. These were observed in a real project ([RenkumSpot](https://github.com/ducroq/RenkumSpot)) where a second contributor joined an agent-ready codebase:
+Three friction points emerge that Layers 1–4 don't address. These were observed in a real community-platform project where a second contributor joined an agent-ready codebase:
 
 1. **Constraint visibility.** A contributor's agent submitted a PR that broke a documented constraint. The constraint existed in the project file — but the contributor's agent treated it as the project owner's context, not a shared contract. There was no mechanism to distinguish "what the owner learned" from "what the team agreed to."
 

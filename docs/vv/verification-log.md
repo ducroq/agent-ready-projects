@@ -193,22 +193,22 @@
 
 ## Own Work Verification
 
-### RenkumSpot Repository
+### Multi-Contributor Case-Study Repository
 
 | Claim | Article Says | Verified Value | Status |
 |-------|-------------|----------------|--------|
 | S5-9 | "17 ADRs" | 17 ADR files in docs/decisions/ | VERIFIED |
 | S5-9 | "828 schema validation tests" | **820 tests** (vitest run: "820 passed") | NEEDS CORRECTION |
-| S5-5 | PR #5 broke rendering | Robert's commit d50746c exists; gotcha-log documents the cascading fix | VERIFIED |
-| S5-6 | Convention divergence / constitution-robert.md | File exists at .specify/memory/constitution-robert.md | VERIFIED |
-| S5-6 | "DDD, full TDD, contract testing, observability" | constitution-robert.md content confirms enterprise proposals | VERIFIED |
+| S5-5 | The field-mismatch PR broke rendering | The contributor's commit exists; gotcha-log documents the cascading fix | VERIFIED |
+| S5-6 | Convention divergence / contributor constitution file | File exists in that project's memory directory | VERIFIED |
+| S5-6 | "DDD, full TDD, contract testing, observability" | The contributor constitution file confirms enterprise proposals | VERIFIED |
 
 ### agent-ready-projects Framework
 
 | Claim | Article Says | Verified Value | Status |
 |-------|-------------|----------------|--------|
 | S6-1 | "28+ active projects" | ADR-001 text: "After applying across 28 active projects for several months" | VERIFIED |
-| S6-2 | "Coordination layer designed from RenkumSpot" | ADR-002 documents this explicitly | VERIFIED |
+| S6-2 | "Coordination layer designed from the multi-contributor case study" | ADR-002 documents this explicitly | VERIFIED |
 
 ---
 

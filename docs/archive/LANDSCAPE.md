@@ -148,7 +148,7 @@ The guide continues to evolve through the feedback loop it describes: insights f
 
 ### Ahead
 
-- **Multiplayer coordination** (Layer 5, v1.8.0) — the only practical pattern for multi-user-multi-agent coordination. No competing framework, standard, or guide addresses this. Validated through the RenkumSpot case study.
+- **Multiplayer coordination** (Layer 5, v1.8.0) — the only practical pattern for multi-user-multi-agent coordination. No competing framework, standard, or guide addresses this. Validated through a multi-contributor case study.
 - **The self-learning loop** — Capture/Surface/Promote/Retire with `/curate` and `/audit-context` skills. More sophisticated than static context file approaches. The ETH Zurich finding (static files can hurt) implicitly validates dynamic, curated context.
 - **The auto-loading cliff** — named and formalized as an architectural concept. No other framework identifies this boundary or its consequences for documentation design.
 - **Verification infrastructure** — the companion [agent-ready-papers](https://github.com/ducroq/agent-ready-papers) framework provides typed claim verification (CLAIM/ARGUMENT/PROPOSITION with Toulmin/Whetten checklists) that catches real errors in AI-assisted writing.

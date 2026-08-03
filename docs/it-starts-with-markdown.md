@@ -108,15 +108,15 @@ Real projects have teams. And when a second contributor's agent enters a codebas
 
 ### What actually broke
 
-We hit this on [RenkumSpot](https://github.com/ducroq/RenkumSpot), a community platform for the gemeente Renkum in the Netherlands. The project was thoroughly agent-ready: layered memory, 17 architecture decision records, 820 schema validation tests, a gotcha log with a working promotion lifecycle. By any measure, a well-documented codebase.
+We hit this on a community-platform project — a volunteer-maintained static site. It was thoroughly agent-ready: layered memory, 17 architecture decision records, 820 schema validation tests, a gotcha log with a working promotion lifecycle. By any measure, a well-documented codebase.
 
-Then Robert joined. His agent read the project file, loaded the memory, and got to work.
+Then a second contributor joined. Their agent read the project file, loaded the memory, and got to work.
 
-**Problem 1: Constraint visibility.** Robert's agent submitted [PR #5](https://github.com/ducroq/RenkumSpot/pull/5), which changed the `mogelijkheden` data structure from objects to strings and removed `slug` fields from event files. Both changes broke the rendering code. The project file had a hard constraint — "never modify content structure without updating both the Keystatic schema and the rendering code" — but Robert's agent treated it as the project owner's note. There was no distinction between "what I learned through experience" and "what the team has agreed to."
+**Problem 1: Constraint visibility.** The contributor's agent submitted a PR that changed a content data structure from objects to strings and removed identifier fields from the content files. Both changes broke the rendering code. The project file had a hard constraint — "never modify content structure without updating both the CMS schema and the rendering code" — but the contributor's agent treated it as the project owner's note. There was no distinction between "what I learned through experience" and "what the team has agreed to."
 
-**Problem 2: Convention divergence.** Robert proposed a `constitution-robert.md` with enterprise-grade coding standards: Domain-Driven Design, full test-driven development, contract testing, observability. Professionally sound practices — for a volunteer-maintained static site with no server runtime. The mismatch required negotiation that produced ADR-015 in the project. Without a staging area for convention proposals, the first signal of misalignment was a fully-formed document that didn't fit.
+**Problem 2: Convention divergence.** The contributor proposed a personal constitution file with enterprise-grade coding standards: Domain-Driven Design, full test-driven development, contract testing, observability. Professionally sound practices — for a volunteer-maintained static site with no server runtime. The mismatch required negotiation that produced a dedicated ADR. Without a staging area for convention proposals, the first signal of misalignment was a fully-formed document that didn't fit.
 
-**Problem 3: Work overlap.** 102 commits from the project owner, 2 from Robert. The memory, gotcha log, and project file were shaped entirely by one person's workflow. Robert's agent inherited context without knowing which parts were project truth and which were personal preference. No visibility into who was working on what, or what areas to avoid.
+**Problem 3: Work overlap.** 102 commits from the project owner, 2 from the new contributor. The memory, gotcha log, and project file were shaped entirely by one person's workflow. The contributor's agent inherited context without knowing which parts were project truth and which were personal preference. No visibility into who was working on what, or what areas to avoid.
 
 These aren't documentation problems — the documentation was excellent. They're **coordination problems**, and the project file, memory index, and gotcha log aren't designed to solve them.
 
@@ -145,7 +145,7 @@ A COORDINATION.md with five sections:
 
 - **Contributors** — who's active, their focus areas, how they work. Not permissions — a "who to ask about what" index.
 - **Shared Constraints** — constraints the team has explicitly agreed to. Distinct from project file constraints, which are "how this project works." Shared constraints are "what we all committed to."
-- **Convention Proposals** — a staging area. Robert's DDD proposal would have gone here first, been discussed, and either adopted (via ADR) or rejected (with a record of why) — instead of surfacing as a surprise document.
+- **Convention Proposals** — a staging area. The DDD proposal would have gone here first, been discussed, and either adopted (via ADR) or rejected (with a record of why) — instead of surfacing as a surprise document.
 - **Work in Progress** — collision-avoidance signals. Before starting work in an area, check if someone else is already there.
 - **Memory Conventions** — shared vs personal memory, how gotcha log entries are tagged with contributor names, how deduplication works when two agents log the same lesson.
 
@@ -177,7 +177,7 @@ It all starts with markdown. But it doesn't end there.
 
 The layered model, self-learning loop, and auto-loading cliff were developed and tested across 28+ active projects using Claude Code, Cursor, and other agents over several months. They are documented in the open-source [agent-ready-projects](https://github.com/ducroq/agent-ready-projects) framework (v1.8.0).
 
-The coordination layer (Layer 5) was designed from the friction observed in RenkumSpot — the specific incidents described above, not theoretical concerns. The landscape survey was conducted in April 2026 across the major multi-agent frameworks, memory systems, and published guides.
+The coordination layer (Layer 5) was designed from the friction observed in that project — the specific incidents described above, not theoretical concerns. The landscape survey was conducted in April 2026 across the major multi-agent frameworks, memory systems, and published guides.
 
 ## Honest limitations
 

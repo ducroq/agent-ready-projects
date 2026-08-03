@@ -13,11 +13,11 @@
 
      ORIGIN: Created May 2026 from the agent-ready-projects
      physics-tests family. Tier structure follows
-     verification-tier-hierarchy.md. The driven-pendulum project's
-     archived bare-pendulum simulation is the worked example: it
-     would have passed Tier 2 (EM force math is correct) but failed
-     Tier 3 in its application context (no escapement model). The
-     skeleton makes that gap visible.
+     verification-tier-hierarchy.md. The worked example throughout
+     is an archived bare-pendulum simulation: it would have passed
+     Tier 2 (EM force math is correct) but failed Tier 3 in its
+     application context (no escapement model). The skeleton makes
+     that gap visible.
 
      KEY INSIGHT: Physics invariants — energy conservation, time
      reversibility, integrator convergence order — are exact, not
@@ -434,15 +434,15 @@ def test_work_done_equals_energy_change(integrator, energy, standard_params):
     )
 ```
 
-## Worked example: applied to driven-pendulum's bare-pendulum simulation
+## Worked example: applied to a bare-pendulum simulation
 
-The archived `sim/archive_v2_bare_pendulum/pendulum.py` would pass:
+Consider an archived `pendulum.py` modelling a bare pendulum driven by EM pulses. It would pass:
 
 - All Tier 1 tests (the EoM and integrator are correct)
 - All Tier 2 tests (the EM force math is correct)
 - The first two Tier 3 tests (pulse machinery and work-energy balance work)
 
-It would *not have a test* for the limit-cycle behaviour with an escapement (because no escapement is modelled). That gap is exactly the scope-mismatch that drove the v2 doc error: the simulation didn't model the application scenario, and there was no test that would have made the gap visible.
+It would *not have a test* for the limit-cycle behaviour with an escapement (because no escapement is modelled). That gap is exactly the kind of scope mismatch that drives a wrong recommendation: the simulation didn't model the application scenario, and there was no test that would have made the gap visible.
 
 The lesson: **a passing test suite is necessary but not sufficient.** The framework's value comes from the tests *and* the tier hierarchy that exposes which tiers are not yet exercised. A project with full Tier 1–3 coverage but no Tier 5 (intercomparison) and no Tier 6 (experimental) should carry that gap on its label.
 
@@ -464,5 +464,5 @@ The lesson: **a passing test suite is necessary but not sufficient.** The framew
 - Hairer, E., Lubich, C., Wanner, G. (2006). *Geometric Numerical Integration*. Springer. The reference for symplectic methods and energy-conservation tests.
 - SciML.jl ecosystem (https://sciml.ai). Test patterns for differential-equation solvers.
 - Roache, P.J. (2002). "Code Verification by the Method of Manufactured Solutions." *J. Fluids Eng.*, 124(1), 4–10. Tier 4 reference.
-- Hodzelmans, B. (2017). "Slingers dwingen — Circular error of gedwongen trilling?" Driven-pendulum project's primary experimental reference; Tier 6 validation target for that project.
+- Your project's primary experimental reference — the measured dataset your simulation is ultimately answerable to. This is the Tier 6 validation target, and every physics project should be able to name one.
 - `agent-ready-papers/templates/physics-verification/verification-tier-hierarchy.md`. The organising framework that places each test in its tier.

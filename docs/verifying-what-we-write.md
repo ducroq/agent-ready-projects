@@ -70,7 +70,7 @@ Every verifiable statement gets a row:
 |----|-----------|------|----------|------------|--------|--------|
 | S2-3 | LLM-generated context files reduced success rates by 3% | CLAIM | P0 | ESTABLISHED | Gloaguen et al. 2026, arXiv:2602.11988 | [x] |
 | S5-1 | No surveyed multi-agent framework addresses multi-user coordination | ARGUMENT | P0 | SUPPORTED | Web research April 2026 | [x] |
-| S5-9 | RenkumSpot had 17 ADRs and 820 tests | CLAIM | P2 | ESTABLISHED | Repo inspection | [x] |
+| S5-9 | The case-study project had 17 ADRs and 820 tests | CLAIM | P2 | ESTABLISHED | Repo inspection | [x] |
 
 The "Type" column matters. S5-1 is an ARGUMENT, not a CLAIM — it synthesizes evidence from multiple framework reviews into a conclusion. That means it needs Toulmin verification: is the warrant valid? Are the grounds verified? What's the strongest counter-argument?
 

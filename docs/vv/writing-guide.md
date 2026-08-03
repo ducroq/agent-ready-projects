@@ -31,10 +31,10 @@
 
 ### Section 5: The Problem Nobody's Talking About
 **Registry entries:** S5-1 through S5-10
-**Dominant type:** Mixed — CLAIMs (facts about frameworks), ARGUMENTs (landscape gap), CLAIMs (RenkumSpot events)
+**Dominant type:** Mixed — CLAIMs (facts about frameworks), ARGUMENTs (landscape gap), CLAIMs (case-study events)
 **Language:**
 - Framework gap claims: Use "as of April 2026" qualifier (S5-1, S5-2)
-- RenkumSpot case: Factual, specific, ESTABLISHED
+- Multi-contributor case: Factual, specific, ESTABLISHED
 - Landscape arguments: SUPPORTED — qualify with "surveyed" or "major"
 **Watch for:** Overclaiming the gap. "No framework" is strong. "No surveyed framework" is defensible.
 

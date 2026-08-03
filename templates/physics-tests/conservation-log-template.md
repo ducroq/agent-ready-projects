@@ -58,7 +58,7 @@ The diagnostic is the *character* of the drift, not its magnitude:
 | Yoshida 4th-order | 4 | Yes | Long-time accuracy + symplectic; standard for celestial mechanics |
 | Forest-Ruth | 4 | Yes | Like Yoshida 4 with smaller error coefficient |
 
-For a driven-pendulum-like system (slowly decaying oscillator with periodic forcing), Velocity Verlet on the conservative part + a small explicit treatment of the dissipation gives good long-time behaviour. For purely undamped systems, Yoshida 4th-order is the standard.
+For a slowly decaying oscillator with periodic forcing, Velocity Verlet on the conservative part + a small explicit treatment of the dissipation gives good long-time behaviour. For purely undamped systems, Yoshida 4th-order is the standard.
 
 ## Suggested layout
 
@@ -149,7 +149,7 @@ def test_undamped_long_run_energy_bounded(integrator, energy, standard_params):
 
 
 def test_driven_steady_state_energy_balance(integrator, energy, standard_params):
-    """Driven pendulum at steady state: energy in per cycle must equal energy out.
+    """Driven oscillator at steady state: energy in per cycle must equal energy out.
     
     Tier 3. Catches: pulse machinery bugs that create or destroy energy
     inconsistently with what the work integral predicts."""
@@ -157,12 +157,12 @@ def test_driven_steady_state_energy_balance(integrator, energy, standard_params)
 
 
 def test_escapement_limit_cycle_energy_balance(integrator, energy, standard_params):
-    """Escapement-driven pendulum at limit cycle: escapement input balances damping loss.
+    """Escapement-driven oscillator at limit cycle: escapement input balances damping loss.
     
     Tier 3. The defining test of a correctly-implemented escapement model.
     A limit cycle that is not energy-balanced is not a limit cycle —
     it is either decaying or growing."""
-    pytest.skip("Adapt when escapement model exists in the new pendulum_clock.py")
+    pytest.skip("Adapt once an escapement model exists")
 ```
 
 ## Reading the diagnostic plot
@@ -186,7 +186,7 @@ The plot of $(E(t) - E_0)/E_0$ over time tells you which class of behaviour you 
 
 ## Limitations
 
-- **Symplectic integrators don't compose with arbitrary external forces.** For periodic external forcing with discrete events (like the EM pulses in driven-pendulum), the symplecticity argument needs care. Consult Hairer-Lubich-Wanner Ch. IX for the right operator-splitting approach.
+- **Symplectic integrators don't compose with arbitrary external forces.** For periodic external forcing with discrete events (EM pulses, escapement impulses), the symplecticity argument needs care. Consult Hairer-Lubich-Wanner Ch. IX for the right operator-splitting approach.
 - **Damping breaks symplecticity.** If your system has any dissipation, no integrator is symplectic. The diagnostic then becomes "does the energy decay match the analytical $\exp(-2\beta t)$?" rather than "is the drift bounded?"
 - **Plot inspection is required.** The bounded-vs-monotonic distinction is qualitative and best read from the plot. Automated assertion on slope can flag obvious cases but misses subtle ones. Treat the plot as the primary artefact.
 - **Cost.** Long-run integration is expensive. Run this test less often than the standard suite — perhaps weekly CI, not every commit.
