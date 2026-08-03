@@ -12,9 +12,42 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.13.0 (2026-08-03)
+
+New **release** skill for cutting versioned releases, completing the skill set's cadence coverage. Plus the guide's Documentation Rhythm table gains the two cadences it was missing. New template = MINOR bump. Closes #22.
+
+### Templates
+- **`templates/release.md`** (new) — Release skill. Classifies the semver bump, verifies preconditions (clean tree, correct branch, tag free locally *and* on the remote, tests actually run, version references located), drafts the changelog entry, syncs version strings, commits — then **stops before tagging or pushing**. Ships `disable-model-invocation: true`: the first template deliberately user-invoked only, since an agent deciding on its own that it's time to cut a release is a failure the stop-gate cannot catch. For Claude Code, install as `/release`; for other tools, run as a deliberate release-time prompt.
+- **`templates/curate.md`** — **Step 0.2 fix.** The staleness check told the agent to read memory-file dates with `git log -1 --format=%ci -- <file>`. When the memory directory is gitignored — the setup the v1.10.2 Hard Constraint recommends — that returns empty with exit 0 for every file, so the check reported nothing stale having examined nothing. Now reads filesystem mtime by default, names the empty-output failure mode explicitly, and keeps `git log` for the tracked case behind a `git check-ignore` probe.
+- **`templates/README.md`** — Added `release.md` to the naming map and file descriptions.
+
+### Docs
+- **`docs/GUIDE.md`** — Documentation Rhythm table gained two rows: **Before committing** (never added when `review-changes` shipped in v1.12.0) and **Cutting a release**. Added "Pre-commit review" and "Releases" paragraphs matching the existing `curate` / `audit-context` ones, plus a **"Why these four and not more"** note stating the cadence rule — skills attach to recurring moments with a real decision in them; single writes with no branching don't earn a slot, because skill names and descriptions occupy context every session.
+- **`README.md`** — `release.md` added to the progressive-adoption list and the template catalogue.
+- **`CLAUDE.md`** — `release.md` in the architecture diagram and Key Paths; the "Cutting a release" row now routes to `/release`. Also listed the previously-missing `templates/adr.md` in the diagram.
+- **`CHANGELOG.md`** — Corrected three false issue references: v1.12.0 claimed "Closes #22" (which did not exist at the time) and both v1.11.0 and v1.11.1 claimed "Closes #21" (open, and about unrelated ovr.news memory-audit patterns). Restored the missing `## v1.11.0` and `## v1.11.1` version headings — both were tagged but appeared only as untitled blocks after a `---`.
+
+### Adopter notes
+
+New adopters: `release.md` is available in `templates/`. Install as `/release` (Claude Code) or use as a release-time prompt.
+
+Existing adopters: **re-install your `curate` skill** from the updated template if your memory directory is gitignored — the old Step 0.2 staleness check silently passed without checking anything. `release.md` itself is additive and optional.
+
+### Versioning rationale
+
+MINOR. Rule 1 does not fire — nothing existing breaks and no adopter must act to stay working. Rule 2 does: `release.md` is a new artifact adopters install. The `curate` fix would have been PATCH on its own (refinement of an existing template) and rides along here.
+
+### Provenance
+
+The stage framework that prompted this session's guide work came from evaluating [raoulg/codestyle](https://github.com/raoulg/codestyle), which has zero content overlap with this repo but supplies a project-maturity axis the guide lacks. That change is **not** in this release — it is drafted at `docs/work-items/guide-stage-depth.md` pending review.
+
+A 3-lens `/review-changes` battery found 6 blockers in the first `release.md` draft, two of them self-contradictions between steps: the Step 3 discovery grep was restricted to `*.md` and so could not find the manifests Step 5 tells you to update, and its `| grep -v CHANGELOG` filtered on line *content* rather than filename — silently dropping `README.md:3` and `docs/GUIDE.md:3`, both version badges written as `**Version X** | [Changelog](CHANGELOG.md)`. Recorded in the gotcha log as a recurrence of the 2026-07-09 "author green-lights own artifact, battery finds it holed" entry.
+
+---
+
 ## v1.12.0 (2026-07-28)
 
-New **review-changes** skill for diff-driven pre-commit review. Picks review lenses based on what changed — templates touched → full 3-4 lens battery, docs-only → two lenses, CHANGELOG-only → single adversarial pass. New template = MINOR bump. Closes #22.
+New **review-changes** skill for diff-driven pre-commit review. Picks review lenses based on what changed — templates touched → full 3-4 lens battery, docs-only → two lenses, CHANGELOG-only → single adversarial pass. New template = MINOR bump.
 
 ### Templates
 - **`templates/review-changes.md`** (new) — Diff-driven pre-commit review skill. Four lenses (guarantee-preservation, adversarial, doc-accuracy, shell-correctness), risk-based scoping (HIGH/MEDIUM/LOW), concurrent subagent execution. For Claude Code, install as `/review-changes`; for other tools, run as a pre-commit prompt.
@@ -35,7 +68,9 @@ MINOR per the v1.10.1 precedent. New template (`review-changes.md`) is a reusabl
 
 ---
 
-Template refinement: **curate** and **audit-context** skills updated to cover the work-item pattern introduced in v1.11.0. PATCH — no new template, existing templates refined. Closes #21.
+## v1.11.1 (2026-07-28)
+
+Template refinement: **curate** and **audit-context** skills updated to cover the work-item pattern introduced in v1.11.0. PATCH — no new template, existing templates refined.
 
 ### Templates
 - **`templates/curate.md`** — Two updates:
@@ -53,7 +88,9 @@ PATCH per the v1.10.1 precedent. Template refinement only — no new template, p
 
 ---
 
-New **work-item template** for tracking multi-session work, adopted from patterns observed in [Plastic](https://github.com/zalom/plastic) (zalom/plastic, MIT). Plus two new principles in the guide: "memory as residue" framing and "index wins" canonical-source rule. New template = MINOR bump. Closes #21.
+## v1.11.0 (2026-07-28)
+
+New **work-item template** for tracking multi-session work, adopted from patterns observed in [Plastic](https://github.com/zalom/plastic) (zalom/plastic, MIT). Plus two new principles in the guide: "memory as residue" framing and "index wins" canonical-source rule. New template = MINOR bump.
 
 ### Templates
 - **`templates/work-item.md`** (new) — Lightweight savepoint for multi-session work (features, migrations, refactors, investigations). Five sections: What & Why, Current Status (the savepoint), Decisions, Open Questions, and Outcome. Not a lifecycle state machine — just enough structure to resume after a context reset. Save as `docs/work-items/[slug].md` and add a one-line pointer in the memory index's Current State section.
