@@ -12,6 +12,43 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.15.1 (2026-08-06)
+
+PATCH — `audit-context` Step 4, plus the first committed test fixture for it. Adopter action: re-install the global skill (`scripts/install-global-skills.sh`). No template or memory-layout changes.
+
+### The failure this fixes
+
+Step 4 put **139 items** in front of a human on one adopter repo — 47 reports plus 92 references labelled "written stale" — and **none of the 47 was real**. It was the second consecutive audit of that repo to find nothing, which is the signal that the check, not the repo, is broken. After this release the same documents yield **12 findings**, with 129 references enumerated as resolved-below-rung-1 and 1 asserted-absent.
+
+Both numbers come from `tests/fixtures/reference-integrity/refcheck.py`, which implements the old rules under `--legacy`, so the "before" is re-derivable rather than remembered. That matters here: the first attempt at this fix quoted a before-number that no committed instrument could reproduce.
+
+### The central defect was a sentence, not a mechanism
+
+*"A path that resolved at rung 2 is still written stale and worth correcting."* Two populations resolve at rung 2 — a file that **moved** (decay), and prose naming a file by its meaningful suffix under an established base (**house style**). Nothing about a single reference separates them.
+
+A first attempt classified each *document* by the share of its references resolving at rung 1 and suppressed fragments below a cut-off. **That was withdrawn before release**, because an adversarial fixture showed it was worse than the problem: on the repo it was calibrated against no document crossed the cut-off, so the "list the outliers" branch was dead code and the rule was 100% suppression; it created a blind band where a 4-reference document with one stale fragment can never cross; and it hid **deletions**, because where a same-suffix twin survives in another package, deleting one file *reduced* the report by downgrading a collision to a silent resolution.
+
+The shipped fix suppresses nothing. Output splits into **findings** (unresolved and collisions), **resolved below rung 1** (every weak resolution, enumerated with what it matched, so a wrong-twin match is visible), and **skipped as asserted-absent**. No constant, no blind band, nothing hidden.
+
+### Six mechanical defects
+
+- **Rung 3 joined exactly instead of suffix-matching inside the sibling** — "NexusMind's `deploy_filters.sh`" is `NexusMind/scripts/deploy_filters.sh`.
+- **Rung 3 did not carry rung 2's collision rule** across with its matching, so two sibling files matching one fragment came back as a clean hit.
+- **Rung 3 outranked rung 4**, letting a neighbour claim a file the audited repo's own runtime writes — a provenance that is simply false.
+- **The cross-repo marker was a substring, and a path could mark itself** — "infrastructure" marked a repo called `infra`, and `docs/DEPLOY.md` marked a sibling repo named `docs`, after which any broken `docs/X.md` resolved next door.
+- **No extension whitelist** — every dotted identifier (`re.sub`, `json.dumps`), bare domain (`storm.mg`) and version number (`3.1`) became a phantom reference. 20 of them on the measured repo.
+- **Sibling discovery globbed one nesting depth**, missing repos at `~/repos/<repo>` when the audited repo sits at `~/repos/<org>/<repo>`.
+
+Deletion markers (`> **Deleted**:`, `~~struck~~`) now join `! test -f` as assertions of absence — but **scoped to the marked span, not the line**. Line-scoping was itself a regression: it silently dropped 4 references on 2 lines of the measured repo, 3 of them load-bearing files, because session logs use `~~done~~` as their completion convention and so carry strikethrough on their densest reference lines.
+
+### Guardrails
+
+Because this makes the step **more permissive**, and the evidence for that is a run that found nothing — which measures specificity and cannot measure sensitivity — the release ships a fixture instead of a claim:
+
+- `tests/fixtures/reference-integrity/run.sh` seeds **11 genuine breaks** and **5 cases that must stay silent**, and asserts all 16. Crucially it seeds the failures the change newly *permits* (a deletion with a surviving twin, a path that supplies its own marker, an unlisted extension, an ambiguous cross-repo match), not just the ones it was designed to preserve. The first attempt's fixture tested only the latter and passed 7/7 while carrying six defects.
+- Step 4 now requires reporting **what the extractor dropped** — extensions present in the tree but absent from the whitelist — because a skip is the one outcome with no rung to name.
+- **Zero is not the target.** Instructional placeholders and files a runbook tells you to create are meant not to resolve; a change driving the count to zero has disabled the check.
+
 ## v1.15.0 (2026-08-06)
 
 Skill **scope** becomes a framework decision rather than an adopter guess: `curate` and `audit-context` install user-globally, `review-changes` and `release` stay project-local, and the reference installs in `.claude/skills/` become tracked so a global install can be derived from something versioned. Plus the `audit-context` step that closes the loop `adopt.md` §3 opened. MINOR — new artifact (`scripts/install-global-skills.sh`), new lint rule, new skill step; nothing existing breaks, but adopters have real work to do.
