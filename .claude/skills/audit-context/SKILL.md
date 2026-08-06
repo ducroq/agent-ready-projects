@@ -42,7 +42,6 @@ Check for content that's in the wrong layer:
 ## Step 4 — Reference integrity
 
 For every file path mentioned in the project file, memory index, and gotcha log:
-
 - Verify the file exists
 - Flag any broken references
 
@@ -51,20 +50,19 @@ For every file path mentioned in the project file, memory index, and gotcha log:
 **For every other path, try to resolve it before reporting it broken** — in this order:
 
 1. **As written**, relative to the repo root.
-2. **As a path suffix of a file in this repo.** Most prose names a file by fragment, not full path: `models/temporal.py` resolves to `src/models/temporal.py`. Match the whole fragment, not the bare basename — a lone `utils.py` landing on some unrelated `utils.py` is a collision, not a resolution.
-3. **In a sibling repo**, for prose that names another project's file. These are usually written bare, with no repo prefix to key on.
-4. **As runtime state.** A file the running system writes (`source_states.json`, `circuit_breakers.json`) is *correctly* absent from a development checkout, and its absence says nothing about the reference. Gitignored **and** generated at runtime is sufficient to resolve it; reaching the deployment host is confirmation if you can, not a requirement.
+2. **As a path suffix of a file in the working tree.** Most prose names a file by fragment, not full path: `models/temporal.py` resolves to `src/models/temporal.py`. Two constraints, both load-bearing. Match the **whole fragment**, not the bare basename — a lone `utils.py` landing on some unrelated `utils.py` is a collision, not a resolution, and a collision gets **reported**. And search the **working tree, not the git index** — `git ls-files` omits every gitignored-but-present file, which under this framework's own recommended setup means all of `memory/`.
+3. **In a sibling repo — only when the reference is *marked* as cross-repo**, by carrying a sibling repo's name in the path or in the sentence around it. A bare path that happens to also exist next door is a coincidence, not a resolution; without the marker this rung will quietly absorb any common path (`.claude/README.md`, `docs/ARCHITECTURE.md`) that every repo happens to have.
+4. **As runtime state.** A file the running system writes (`data/source_states.json`, `circuit_breakers.json`) is *correctly* absent from a development checkout. **Gitignored is necessary but not sufficient** — it means "not committed", which is not the same as "written by the running system". Require a positive signal too: the path sits in a state directory (`data/`, `state/`, `cache/`, `logs/`, `run/`, `var/`, `artifacts/`) or carries a state-file shape (`*_state.json`, `*_health.json`, `.pid`, `.sock`). And runtime state is **data** — a *source file* whose name merely contains "cache" or "state" is still source, and its absence is still a real break. Reaching the deployment host is confirmation if you can, not a requirement.
 
 **A rung you cannot run is not a pass.** Report the reference as broken only when a rung you actually executed rules it out. If you have no sibling repos, no filesystem access above the repo root, or no way to reach a deployment host, report it as *unresolved* and name which rungs you could not run — never silently suppress it, and never upgrade it to a confirmed break.
 
 Carry two things into the report that a bare "resolved" would hide: a path that resolved at rung 2 is still **written stale** and worth correcting, and any resolution weaker than rung 1 should say which rung it came from.
 
-This matters more than it sounds: on one real audit, 9 flagged references resolved under rungs 2–4 and **none** was a genuine break. A check keyed to fully-qualified paths reports almost every prose reference as missing, because almost no prose reference is fully qualified. Note the direction of the trade, though — this is a strictly *more permissive* check, buying specificity with sensitivity. That is the right trade for a check nobody trusts, not a free improvement.
+A check keyed to fully-qualified paths reports almost every prose reference as missing, because almost no prose reference is fully qualified. **Measured**, across 1877 real references in 26 repos: 54% resolve as written, 25% resolve only as a fragment (real references, previously all reported broken), and 21% are reported — while 311 of 311 seeded genuine breaks were still caught, including every basename-collision trap. The three constraints above are not stylistic; each was added because dropping it cost real detections in that run. Gitignored-is-sufficient alone silently resolved *every* fabricated path under a gitignored `.claude/`, and an unmarked rung 3 absorbed bare paths that existed only by coincidence in a neighbouring repo.
 
 If a check re-derives the same non-finding on consecutive runs, fix the check. A probe that cries wolf is the failure mode this framework exists to catch.
 
 For every "Before You Start" pointer:
-
 - Verify the target file exists
 - Check that the trigger language is task-based ("when doing X, read Y") not passive ("see Y")
 
