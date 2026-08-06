@@ -12,6 +12,55 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.15.0 (candidate, unreleased)
+
+Skill **scope** becomes a framework decision rather than an adopter guess: `curate` and `audit-context` install user-globally, `review-changes` and `release` stay project-local, and the reference installs in `.claude/skills/` become tracked so a global install can be derived from something versioned. Plus the `audit-context` step that closes the loop `adopt.md` §3 opened. MINOR — new artifact (`scripts/install-global-skills.sh`), new lint rule, new skill step; nothing existing breaks, but adopters have real work to do.
+
+### The failure this fixes
+
+A user-global skill **shadows** a project-local one of the same name — it wins, silently, with no merge and no warning. That fact appeared nowhere in this framework, while `docs/GUIDE.md`, `adopt.md`, and `templates/README.md` all instructed adopters to install every skill *project-locally*. The result across one adopter estate: **45 shadowed local copies in 23 repos**, each reading as the authoritative version while never being loaded, and each free to drift from the copy actually in use. Three of them had diverged in three different directions before anyone noticed. Separately, the only frontmatter-correct copies of these skills lived in this repo's **gitignored** `.claude/`, so the canonical artifact was invisible to git since the initial commit, and had drifted from `templates/` without anything able to detect it.
+
+### Docs
+- **`docs/GUIDE.md`** — New `### Where a skill lives: user-global or project-local` under The Documentation Rhythm. States the shadowing rule and the consequence that follows from it: installing globally *forecloses* per-repo variants, so the question is not "is this generic today?" but "will any repo ever need its own version?" Ships the per-skill scope table, the two safety rules (derive globals from a tracked source; never leave an inert local copy), and a measurable generic-vs-specific test — count references to paths that exist in only one repo. The four install paragraphs above it were rescoped to match; they had all said project-local. TOC updated.
+- **`adopt.md`** — STEP 6 rewritten. Installs `curate`/`audit-context` to `~/.claude/skills/`, and explicitly forbids copying `templates/*.md` into a `SKILL.md` path: those carry their frontmatter *inside* a `<!-- SAVE AS: -->` comment, so a verbatim copy has no frontmatter and never registers. One adopter shipped three skills that way and none had ever loaded. Also: if a global install already exists, do not create a local copy.
+- **`templates/README.md`** — Naming map and descriptions carry the scope for each skill, including "project-local, never global" for `review-changes`.
+- **`CLAUDE.md`** — New Hard Constraint stating the shadowing rule and the two normative consequences; new Before You Start row routing skill moves through the new script.
+
+### Templates
+- **`templates/audit-context.md`** — Two additions. **Step 4** gains the false-positive exclusions (cross-repo paths; negated `! test -f` assertions inside `<!-- verify: -->` comments), which existed only in this repo's live skill and had never been promoted upstream — so every adopter installing from `templates/` got the version that cries wolf. **New Step 6, Framework version drift**, closing the loop `adopt.md` §3 opens: it compares the project's stamp against this changelog. It explicitly refuses to assume one stamp format — at least four are in use in the wild (`agent-ready-projects: v…`, `framework: agent-ready-projects v…`, a bullet, and prose; two further shapes were found after that count was written) and a matcher keyed to one reports an *unstamped* project when the stamp is merely written differently. It also treats "reviewed and declined" as current rather than stale. Steps renumbered 6→7, 7→8; `review-changes`' guarantee lens updated to match.
+
+### Tooling
+- **`scripts/install-global-skills.sh`** (new) — Installs the global skills *from* the tracked `.claude/skills/`, verifies they match, asserts no project-local-only skill has been installed globally, and with a root argument scans an estate for inert local copies. Hostile-repo tested against 20+ repos including ones with lockfiles and vendored trees: found 45 real issues, now returns clean. `_archive/` is excluded by design and is **not** scanned; copies there are left alone deliberately.
+- **`tests/lint/run.sh`** — New rule `[4/5] installed skills are loadable`: every `.claude/skills/*/` has a `SKILL.md`, opens with frontmatter, and its `name:` matches the directory. Rule 3 checks that a *template* carries installable frontmatter; nothing checked that an *install* converted it. Verified against all three real defect shapes (missing `SKILL.md`, template copied verbatim, `name:` mismatch) rather than only against a passing tree.
+- **`.gitignore`** — `.claude/` → `.claude/*` + `!.claude/skills/`. The reference installs are the framework's own dogfooding and the copy adopters install from, not maintainer-local state; `memory/` and `settings.local.json` stay ignored.
+
+### Adopter notes
+
+**Existing adopters, act on this:** if you installed `curate` or `audit-context` project-locally *and* have a global copy, the local one is inert — delete it, don't reconcile it. Verify with `scripts/install-global-skills.sh --check <your repo root>`. If you have no global copy, install one from `.claude/skills/` rather than converting the template by hand. If you customized a local `curate`, that customization has not been in effect; move the content to your project file instead.
+
+**`review-changes` must not be installed globally.** Its risk tiers and guarantee lens name files in a specific tree; one global copy would silently disable every repo's own.
+
+### Versioning rationale
+
+MINOR. Rule 1 does not fire — nothing breaks and no adopter *must* act to keep working, though many should. Rule 2 fires three times over: a new shipped script, a new lint rule, and a new step in a shipped skill are each new artifacts or new behavior under the v1.10.1 precedent. The `.gitignore` change is packaging, not content, and would not have justified a bump alone.
+
+### Review notes
+
+A full 4-lens `/review-changes` battery **was** run on the first draft of this change, and found the change shipping the very failures it describes. All fixed here; the numbers are recorded because the pattern is the point.
+
+- **The commit re-introduced private repo names into a public repo.** `.claude/skills/audit-context/SKILL.md` named three sibling projects; the *template* version of the same passage had been correctly de-identified in v1.14.0. Tracking a previously-gitignored file published content that had never been reviewed as public. Fixed by de-identifying the tracked skill and amending rather than following up — a later commit does not remove names from history.
+- **The tracked `release` skill was committed already stale** — pre-v1.14.0 content, missing the version-agnostic sweep. The premise of the change is that tracking makes drift visible; it committed a drifted artifact and no check could see it. Resynced.
+- **`adopt.md` STEP 6 was unexecutable as written**: it named a bare relative path with no URL while forbidding the only previously-available route. The adopt prompt reaches agents over GitHub URLs with no clone step, so an agent following it literally could install nothing. Raw URLs added.
+- **Three surfaces still stated the old policy**: `docs/GUIDE.md`'s tool-specific concept map, both skill templates' `SAVE AS:` headers, and `CLAUDE.md`'s "what is intentionally not shipped" table — the last actively contradicting the Hard Constraint two sections above it. A policy change lands in more places than the paragraph that states it.
+- **`install-global-skills.sh` reproduced its own target failure**: `--check` exited 0 on a scan root that did not exist, was a symlink, or was relative (the script `cd`s first) — a clean estate and an unscanned one were byte-identical output. A symlinked global install compared byte-identical to itself, making drift structurally undetectable, which is the exact configuration the script exists to replace. Both fixed, plus `pwd -P` (a symlinked invocation flagged the framework's own tracked skills as inert and told you to delete them).
+- **Lint rule 4 passed unclosed frontmatter** — the fields were harvested from the body, so a file that cannot register scored green — and false-failed on `name: "quoted"`, a trailing space, and CRLF checkouts. A Windows adopter would have seen every skill fail with a message naming the wrong cause.
+
+The lens findings that produced this list were each verified by reproduction before being accepted, and each fix was re-tested against the reproduction rather than against a clean tree. Two lens claims were **not** accepted: that the `${hit%…}` expansion and the process-substitution `ISSUES` counter were buggy — both were traced and found correct.
+
+Also corrected in this pass: GUIDE.md now records that directory-scoped skills are *namespaced* (`apps/web:curate`), not shadowed, so the blanket "a local copy is inert" claim does not hold in monorepos.
+
+---
+
 ## v1.14.0 (2026-08-03)
 
 New **Verification Hooks** section in `docs/GUIDE.md` — the deterministic counterpart to session hooks, closing the edit → check → fix loop without a human relaying the error. Plus a release-skill fix for the class of staleness that let two templates sit three minors behind, and a full de-identification pass over this public repo. MINOR — new concept and new skill behavior, nothing breaks.

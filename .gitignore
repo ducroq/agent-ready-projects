@@ -1,4 +1,9 @@
-.claude/
+.claude/*
+# Track the reference skill installs: they are the framework's own dogfooding and
+# the copy every adopter installs from, not maintainer-local state. Kept untracked,
+# the canonical frontmatter-correct SKILL.md files were invisible to git and drifted
+# from templates/ without anything noticing.
+!.claude/skills/
 memory/
 .pytest_cache/
 .DS_Store

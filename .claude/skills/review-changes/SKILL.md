@@ -1,19 +1,8 @@
-# Review Changes
-
-<!-- SAVE AS: .claude/skills/review-changes/SKILL.md (Claude Code)
-     For other tools, run this as a pre-commit prompt manually.
-
-     This is a skill (/review-changes) that reviews staged or unstaged
-     changes against the previous commit. It picks review lenses based on
-     what changed — not every change needs the full multi-model battery.
-
-     Claude Code skills require SKILL.md as the entry point inside a
-     named directory under .claude/skills/. Add frontmatter:
-     ---
-     name: review-changes
-     description: Diff-driven review — picks review lenses based on what changed, from single-pass adversarial to full multi-model battery
-     disable-model-invocation: false
-     --- -->
+---
+name: review-changes
+description: Diff-driven pre-commit review — picks review lenses based on what changed, from single-pass adversarial to full multi-model battery
+disable-model-invocation: false
+---
 
 Pre-commit review of pending changes. Scope and depth are driven by what changed, not a fixed checklist.
 

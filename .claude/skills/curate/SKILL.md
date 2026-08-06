@@ -1,22 +1,8 @@
-# Curate
-
-<!-- SAVE AS: ~/.claude/skills/curate/SKILL.md (Claude Code, USER-GLOBAL — see docs/GUIDE.md
-     "Where a skill lives"; do not copy this file verbatim, its frontmatter is
-     inside this comment. Prefer .claude/skills/curate/SKILL.md from this repo.)
-     For other tools, run this as an end-of-session prompt manually.
-
-     This is a skill (/curate) that automates the end-of-session
-     curation step of the self-learning loop. Instead of manually reviewing
-     the gotcha log and memory index, the agent does the heavy lifting
-     and you review its proposals.
-
-     Claude Code skills require SKILL.md as the entry point inside a
-     named directory under .claude/skills/. Add frontmatter:
-     ---
-     name: curate
-     description: End-of-session curation — review gotcha log, promote patterns, update memory index
-     disable-model-invocation: false
-     --- -->
+---
+name: curate
+description: End-of-session curation — review gotcha log, promote patterns, update memory index, update work-item savepoints
+disable-model-invocation: false
+---
 
 End-of-session curation for the agent-ready-projects framework.
 

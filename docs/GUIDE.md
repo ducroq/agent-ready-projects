@@ -26,6 +26,7 @@ This is the full reference for the agent-ready projects method. For a quick over
 - [Session Hooks](#session-hooks)
 - [Verification Hooks](#verification-hooks)
 - [The Documentation Rhythm](#the-documentation-rhythm)
+  - [Where a skill lives: user-global or project-local](#where-a-skill-lives-user-global-or-project-local)
 - [The Self-Learning Loop](#the-self-learning-loop)
   - [Why this isn't "keep a log"](#why-this-isnt-keep-a-log)
   - [Why a hierarchy works](#why-a-hierarchy-works)
@@ -468,15 +469,39 @@ The biggest shift in practice: **capture during work, curate at end-of-session.*
 
 The key shift: end-of-session time becomes **1-2 minutes of review**, not 20 minutes of writing from recall. The agent does the heavy lifting — reading across files, spotting patterns, drafting consolidations — and you approve or adjust.
 
-**Automating the rhythm.** For Claude Code, install the [`curate.md`](../templates/curate.md) template as `.claude/skills/curate/SKILL.md` (with frontmatter — see template comments) — this gives you a `/curate` skill that automates the end-of-session curation (gotcha review, pattern promotion, memory index update). For other tools, paste the curate template as an end-of-session prompt. Either way, the agent does the heavy lifting and you review its proposals.
+**Automating the rhythm.** For Claude Code, install `curate` **user-globally** as `~/.claude/skills/curate/SKILL.md` (copy the ready-to-use file from this repo's `.claude/skills/curate/SKILL.md` — it already carries valid frontmatter; see [Where a skill lives](#where-a-skill-lives-user-global-or-project-local)) — this gives you a `/curate` skill that automates the end-of-session curation (gotcha review, pattern promotion, memory index update). For other tools, paste the curate template as an end-of-session prompt. Either way, the agent does the heavy lifting and you review its proposals.
 
-**Structural audits.** Install [`audit-context.md`](../templates/audit-context.md) as `.claude/skills/audit-context/SKILL.md` for a `/audit-context` skill that checks framework-level health: document size, cross-layer duplication, wrong-layer placement, reference integrity, topic file reachability, and gitignore correctness. Run monthly or after major restructuring — it catches structural decay that session-level curation misses.
+**Structural audits.** Install `audit-context` **user-globally** as `~/.claude/skills/audit-context/SKILL.md` (from `.claude/skills/audit-context/SKILL.md`) for a `/audit-context` skill that checks framework-level health: document size, cross-layer duplication, wrong-layer placement, reference integrity, topic file reachability, and gitignore correctness. Run monthly or after major restructuring — it catches structural decay that session-level curation misses.
 
-**Pre-commit review.** Install [`review-changes.md`](../templates/review-changes.md) as `.claude/skills/review-changes/SKILL.md` for a `/review-changes` skill that reads the pending diff and picks its review depth from what changed — a changelog edit gets one adversarial pass, a change to a normative surface gets the full lens battery. It complements deterministic checks (linters, structural tests) with the judgment-based kind: whether a change is broader than its stated intent, whether a document now contradicts itself.
+**Pre-commit review.** Install [`review-changes.md`](../templates/review-changes.md) **project-locally** as `<repo>/.claude/skills/review-changes/SKILL.md` for a `/review-changes` skill that reads the pending diff and picks its review depth from what changed — a changelog edit gets one adversarial pass, a change to a normative surface gets the full lens battery. Never install it user-globally: its risk tiers name files in one tree, so a single global copy would shadow every repo's own. It complements deterministic checks (linters, structural tests) with the judgment-based kind: whether a change is broader than its stated intent, whether a document now contradicts itself.
 
-**Releases.** Install [`release.md`](../templates/release.md) as `.claude/skills/release/SKILL.md` for a `/release` skill that classifies the semver bump, verifies preconditions, drafts the changelog entry, and syncs version strings across the repo — then stops before tagging. Note this one ships `disable-model-invocation: true`: it is user-invoked only, never something the agent starts on its own. The judgment worth automating here is the bump decision, which otherwise lives in a prose header and drifts.
+**Releases.** Install [`release.md`](../templates/release.md) **project-locally** as `<repo>/.claude/skills/release/SKILL.md` for a `/release` skill that classifies the semver bump, verifies preconditions, drafts the changelog entry, and syncs version strings across the repo — then stops before tagging. Note this one ships `disable-model-invocation: true`: it is user-invoked only, never something the agent starts on its own. The judgment worth automating here is the bump decision, which otherwise lives in a prose header and drifts.
 
 **Why these four and not more.** Each attaches to a recurring moment with a real decision in it — end of session, monthly, pre-commit, per release. The other rows in the rhythm table are single writes with no branching: logging a gotcha is a two-line append, and wrapping it in a skill adds ceremony without adding judgment. Skills are worth their slot when they encode a *procedure you'd otherwise get wrong*, not when they merely save typing. Their names and descriptions occupy context in every session, so a small, well-chosen set outperforms a large one — the auto-loading cliff applies to tooling, not just documents.
+
+### Where a skill lives: user-global or project-local
+
+This decision is not cosmetic, and getting it wrong fails silently.
+
+**A user-global skill shadows a project-local one of the same name.** In Claude Code, `~/.claude/skills/<name>/` wins over `<repo>/.claude/skills/<name>/`. The local copy is not merged, not preferred, and not warned about — it is simply never loaded. So a project-local copy of a skill you also installed globally is not a customization. It is dead weight that reads to every future session as the authoritative version.
+
+One documented exception: **directory-scoped skills are namespaced, not shadowed.** A skill under a subdirectory of the project (e.g. `apps/web/.claude/skills/curate/`) loads as `apps/web:curate` *alongside* the global one rather than being suppressed by it — so in a monorepo a scoped copy can be live, not inert. Everywhere else, the shadowing rule holds.
+
+The consequence that follows: **installing a skill globally forecloses per-repo variants of that name.** The question to ask is therefore not "is this skill generic today?" but "will any repo ever need its own version?"
+
+| Skill | Scope | Why |
+|-------|-------|-----|
+| `curate` | **global** | Framework method. References only convention paths (`memory/gotcha-log.md`, `docs/work-items/`) that every adopter has by definition. |
+| `audit-context` | **global** | Same. Audits the layer structure itself, which is identical across repos. |
+| `release` | project-local | Generic in content, but only meaningful in repos that cut versioned releases. A global install charges every other repo's context for a skill it can never use. |
+| `review-changes` | **project-local, never global** | Its value *is* the repo-specific part — the risk-tier table and the guarantee lens name real files in the real tree. Two adopters' copies are different artifacts that happen to share a name. Installing it globally would silently disable both. |
+
+Two rules make this safe:
+
+1. **Global installs must be derived from a tracked source, never authored in place.** `~/.claude/` is not a repository: nothing there is versioned, reviewed, or restored on a new machine. Install global skills *from* the tracked copies in `.claude/skills/` and treat that directory as the master. `scripts/install-global-skills.sh` does this and verifies it.
+2. **Never leave an inert local copy behind.** When a skill moves to global scope, delete the project-local copies in the same change. A shadowed copy will drift from the one actually in use, and the drift is invisible precisely because the drifted file is never loaded.
+
+The generic-vs-specific test is measurable, so measure it rather than judging: count the references in a skill to paths that exist only in one repo. Zero means it is framework method and belongs global; more than zero means it is project knowledge and belongs local.
 
 These practices form a single cycle — the **self-learning loop**.
 
@@ -691,8 +716,8 @@ This guide's concepts map to every major AI coding agent. The file names and mec
 |----------------|------------|----------------|--------|----------|----------------|-------|
 | "Project file" (Layer 1) | `CLAUDE.md` | `AGENTS.md` | `.cursor/rules/*.mdc` | `.windsurfrules` | `.github/copilot-instructions.md` | `.aider.conf.yml` + convention files |
 | "Memory" (Layer 3) | `MEMORY.md` + topic files | — | — | — | — | — |
-| "Curate command" | `.claude/skills/curate/SKILL.md` (`/curate`) | End-of-session prompt | End-of-session prompt | End-of-session prompt | End-of-session prompt | End-of-session prompt |
-| "Audit command" | `.claude/skills/audit-context/SKILL.md` (`/audit-context`) | Ad-hoc prompt | Ad-hoc prompt | Ad-hoc prompt | Ad-hoc prompt | Ad-hoc prompt |
+| "Curate command" | `~/.claude/skills/curate/SKILL.md` (`/curate`, user-global) | End-of-session prompt | End-of-session prompt | End-of-session prompt | End-of-session prompt | End-of-session prompt |
+| "Audit command" | `~/.claude/skills/audit-context/SKILL.md` (`/audit-context`, user-global) | Ad-hoc prompt | Ad-hoc prompt | Ad-hoc prompt | Ad-hoc prompt | Ad-hoc prompt |
 | "Session hooks" | `SessionStart` hook in `.claude/settings.json` | — | — | — | — | — |
 | "Verification hooks" | `PostToolUse` hook in `.claude/settings.json` (see [Verification Hooks](#verification-hooks) — exit code matters) | — | edit-time hooks | — | — | `auto-lint` / `auto-test` in `.aider.conf.yml` |
 | Nested/directory rules | `CLAUDE.md` in subdirs | `AGENTS.md` in subdirs | `.mdc` files with globs | — | — | — |
