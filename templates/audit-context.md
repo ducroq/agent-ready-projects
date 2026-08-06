@@ -54,10 +54,11 @@ For every file path mentioned in the project file, memory index, and gotcha log:
 - Verify the file exists
 - Flag any broken references
 
-**Exclude two known false-positive classes before reporting.** Both recurred across consecutive audits, costing the same minutes twice:
+**Exclude three known false-positive classes before reporting.** Both recurred across consecutive audits, costing the same minutes twice:
 
 1. **Cross-repo paths.** A path like `SiblingRepo/docs/ARCHITECTURE.md` is correctly qualified in prose; a check that captures only the tail (`docs/ARCHITECTURE.md`) will report it missing. Check whether the match is preceded by a sibling-repo name.
 2. **Negated existence assertions.** A path inside `! test -f <path>` in a `<!-- verify: -->` comment asserts the file is GONE — its absence is the passing condition. Do not report those as broken.
+3. **Runtime state absent from a development checkout.** A path like `data/source_states.json` or `data/circuit_breakers.json` is written by the running system on the host that runs it. In a dev checkout — or any repo whose production host is elsewhere — it is *correctly* absent, and its absence says nothing about the reference. Before reporting one, ask whether the path is generated at runtime rather than committed; check `.gitignore`, and check the deployment host if there is one.
 
 If a check re-derives the same non-finding on consecutive runs, fix the check. A probe that cries wolf is the failure mode this framework exists to catch.
 
