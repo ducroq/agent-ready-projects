@@ -471,7 +471,7 @@ The key shift: end-of-session time becomes **1-2 minutes of review**, not 20 min
 
 **Automating the rhythm.** For Claude Code, install `curate` **user-globally** as `~/.claude/skills/curate/SKILL.md` (copy the ready-to-use file from this repo's `.claude/skills/curate/SKILL.md` — it already carries valid frontmatter; see [Where a skill lives](#where-a-skill-lives-user-global-or-project-local)) — this gives you a `/curate` skill that automates the end-of-session curation (gotcha review, pattern promotion, memory index update). For other tools, paste the curate template as an end-of-session prompt. Either way, the agent does the heavy lifting and you review its proposals.
 
-**Structural audits.** Install `audit-context` **user-globally** as `~/.claude/skills/audit-context/SKILL.md` (from `.claude/skills/audit-context/SKILL.md`) for a `/audit-context` skill that checks framework-level health: document size, cross-layer duplication, wrong-layer placement, reference integrity, topic file reachability, and gitignore correctness. Run monthly or after major restructuring — it catches structural decay that session-level curation misses.
+**Structural audits.** Install `audit-context` **user-globally** as `~/.claude/skills/audit-context/SKILL.md` (from `.claude/skills/audit-context/SKILL.md`) for a `/audit-context` skill that checks framework-level health: document size, cross-layer duplication, wrong-layer placement, reference integrity, topic-file and work-item reachability, framework version drift, and gitignore correctness. Run monthly or after major restructuring — it catches structural decay that session-level curation misses.
 
 **Pre-commit review.** Install [`review-changes.md`](../templates/review-changes.md) **project-locally** as `<repo>/.claude/skills/review-changes/SKILL.md` for a `/review-changes` skill that reads the pending diff and picks its review depth from what changed — a changelog edit gets one adversarial pass, a change to a normative surface gets the full lens battery. Never install it user-globally: its risk tiers name files in one tree, so a single global copy would shadow every repo's own. It complements deterministic checks (linters, structural tests) with the judgment-based kind: whether a change is broader than its stated intent, whether a document now contradicts itself.
 
@@ -495,6 +495,7 @@ The consequence that follows: **installing a skill globally forecloses per-repo 
 | `audit-context` | **global** | Same. Audits the layer structure itself, which is identical across repos. |
 | `release` | project-local | Generic in content, but only meaningful in repos that cut versioned releases. A global install charges every other repo's context for a skill it can never use. |
 | `review-changes` | **project-local, never global** | Its value *is* the repo-specific part — the risk-tier table and the guarantee lens name real files in the real tree. Two adopters' copies are different artifacts that happen to share a name. Installing it globally would silently disable both. |
+| `test-verify-memory` | project-local | Names fixture files in one tree. Only meaningful in a repo that carries the fixtures. |
 
 Two rules make this safe:
 

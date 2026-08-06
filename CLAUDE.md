@@ -41,7 +41,8 @@ The source framework that teaches the layered memory method for AI coding agents
 
 ```
 agent-ready-projects/
-├── .claude/                   <- Maintainer Claude Code config (gitignored — not shipped)
+├── .claude/                   <- All gitignored EXCEPT skills/ (`.claude/*` + `!.claude/skills/`)
+│   └── skills/                <- Reference installs — the source a global install derives from
 ├── README.md                  <- The guide (public-facing on-ramp)
 ├── adopt.md                   <- Three agent-facing prompts: assess / adopt / update
 ├── CHANGELOG.md               <- Versioned release notes; maintainer release process at top
@@ -73,6 +74,9 @@ agent-ready-projects/
 │   ├── checklists/            <- Per-stage validation checklists
 │   ├── physics-tests/         <- Specialized scaffolding (physics simulation)
 │   └── README.md              <- Tool-agnostic naming map
+├── scripts/                   <- Shipped maintainer/adopter tooling
+│   └── install-global-skills.sh
+│                              <- Install + verify user-global skills; scan an estate for inert copies
 ├── tests/                     <- Self-tests for this repo (Phase A: structural lint)
 │   └── lint/                  <- Deterministic structural checks (no LLM)
 └── memory/                    <- Session memory (gitignored — maintainer-local)
@@ -109,6 +113,8 @@ Listed here so the architecture diagram above is honest about what an adopter se
 | `templates/release.md` | Release skill — bump classification, preconditions, changelog entry; stops before tagging |
 | `templates/curate.md` | End-of-session curation skill |
 | `templates/audit-context.md` | Periodic structural audit skill |
+| `scripts/install-global-skills.sh` | Installs the user-global skills from tracked `.claude/skills/`, verifies they match, and with a root argument scans an estate for inert project-local copies |
+| `.claude/skills/` | Reference installs (tracked) — the frontmatter-correct source a global install is derived from |
 | `memory/MEMORY.md` | This repo's in-repo memory index (maintainer-local) |
 
 ## How to Work Here

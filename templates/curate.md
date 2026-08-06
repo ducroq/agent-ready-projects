@@ -14,7 +14,7 @@
      named directory under .claude/skills/. Add frontmatter:
      ---
      name: curate
-     description: End-of-session curation — review gotcha log, promote patterns, update memory index
+     description: End-of-session curation — review gotcha log, promote patterns, update memory index, update work-item savepoints
      disable-model-invocation: false
      --- -->
 

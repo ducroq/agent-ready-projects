@@ -46,11 +46,20 @@ For every file path mentioned in the project file, memory index, and gotcha log:
 - Verify the file exists
 - Flag any broken references
 
-**Exclude three known false-positive classes before reporting** — both recurred across consecutive audits, costing the same minutes twice:
+**First, skip negated existence assertions entirely.** A path inside `! test -f <path>` in a `<!-- verify: -->` comment asserts the file is GONE — its absence is the passing condition. This is about the reference's *intent*, not about whether the path resolves, so it has to be decided before the resolution order below and not inside it.
 
-1. **Cross-repo paths.** A path like `SiblingRepo/docs/ARCHITECTURE.md` is correctly qualified in prose; a check that captures only the tail (`docs/ARCHITECTURE.md`) will report it missing. Check whether the match is preceded by a sibling-repo name.
-2. **Negated existence assertions.** A path inside `! test -f <path>` in a `<!-- verify: -->` comment asserts the file is GONE — its absence is the passing condition. Do not report those as broken.
-3. **Runtime state absent from a development checkout.** A path like `data/source_states.json` or `data/circuit_breakers.json` is written by the running system on the host that runs it. In a dev checkout — or any repo whose production host is elsewhere — it is *correctly* absent, and its absence says nothing about the reference. Before reporting one, ask whether the path is generated at runtime rather than committed; check `.gitignore`, and check the deployment host if there is one.
+**For every other path, try to resolve it before reporting it broken** — in this order:
+
+1. **As written**, relative to the repo root.
+2. **As a path suffix of a file in this repo.** Most prose names a file by fragment, not full path: `models/temporal.py` resolves to `src/models/temporal.py`. Match the whole fragment, not the bare basename — a lone `utils.py` landing on some unrelated `utils.py` is a collision, not a resolution.
+3. **In a sibling repo**, for prose that names another project's file. These are usually written bare, with no repo prefix to key on.
+4. **As runtime state.** A file the running system writes (`source_states.json`, `circuit_breakers.json`) is *correctly* absent from a development checkout, and its absence says nothing about the reference. Gitignored **and** generated at runtime is sufficient to resolve it; reaching the deployment host is confirmation if you can, not a requirement.
+
+**A rung you cannot run is not a pass.** Report the reference as broken only when a rung you actually executed rules it out. If you have no sibling repos, no filesystem access above the repo root, or no way to reach a deployment host, report it as *unresolved* and name which rungs you could not run — never silently suppress it, and never upgrade it to a confirmed break.
+
+Carry two things into the report that a bare "resolved" would hide: a path that resolved at rung 2 is still **written stale** and worth correcting, and any resolution weaker than rung 1 should say which rung it came from.
+
+This matters more than it sounds: on one real audit, 9 flagged references resolved under rungs 2–4 and **none** was a genuine break. A check keyed to fully-qualified paths reports almost every prose reference as missing, because almost no prose reference is fully qualified. Note the direction of the trade, though — this is a strictly *more permissive* check, buying specificity with sensitivity. That is the right trade for a check nobody trusts, not a free improvement.
 
 If a check re-derives the same non-finding on consecutive runs, fix the check. A probe that cries wolf is the failure mode this framework exists to catch.
 

@@ -11,7 +11,7 @@
      named directory under .claude/skills/. Add frontmatter:
      ---
      name: review-changes
-     description: Diff-driven review — picks review lenses based on what changed, from single-pass adversarial to full multi-model battery
+     description: Diff-driven pre-commit review — picks review lenses based on what changed, from single-pass adversarial to full multi-model battery
      disable-model-invocation: false
      --- -->
 
@@ -23,11 +23,17 @@ Run `git diff --stat` and `git diff --cached --stat` to see pending changes. Cla
 
 | Tier | File patterns | Depth |
 |------|-------------|-------|
-| **HIGH** | `templates/*`, `docs/GUIDE.md`, `tests/lint/*`, `templates/test-verify-memory.md`, `docs/verification-rationale.md` | Full battery (3-4 lenses) |
-| **MEDIUM** | `CLAUDE.md`, `*.md` in `docs/`, `templates/checklists/*`, `templates/physics-tests/*`, `test-fixtures/*` | Two lenses (adversarial + doc-accuracy) |
-| **LOW** | `CHANGELOG.md`, `memory/*`, `docs/work-items/*` | One lens (adversarial) |
+| **HIGH** | `templates/**`, `adopt.md`, `/README.md`, `docs/GUIDE.md`, `docs/verification-rationale.md`, `tests/**`, `scripts/**`, `.claude/skills/**`, `.gitignore` | Full battery (3-4 lenses) |
+| **MEDIUM** | `CLAUDE.md`, `docs/**`, `templates/checklists/**`, `templates/physics-tests/**`, `templates/test-fixtures/**` | Two lenses (adversarial + doc-accuracy) |
+| **LOW** | `CHANGELOG.md`, `memory/**`, `docs/work-items/**` | One lens (adversarial) |
 
-Pick the highest tier that applies. If only LOW files changed, do a single adversarial pass and skip to Step 3.
+`**` crosses directory levels; a leading `/` anchors to the repo root. **The most specific matching pattern wins** — `templates/checklists/foo.md` is MEDIUM, not HIGH, even though `templates/**` also matches it. Where no pattern is more specific than another, take the highest tier.
+
+The HIGH row is the normative surface — everything an adopter consumes or executes. Four entries are easy to miss, and each is here because it burned someone: `scripts/**` is shell that runs on another machine; `.claude/skills/**` holds the reference installs adopters copy, so a defect there ships to every install derived from it; `/README.md` is anchored so it means *the repo's own* README, not every nested one; and `.gitignore` decides what is published at all — a one-line change there has exposed private content in a public repo.
+
+If only LOW files changed, do a single adversarial pass and skip to Step 3.
+
+**If a changed file matches no pattern, treat it as MEDIUM, and name it in the report under "Unclassified" even when a HIGH file in the same diff makes the tier moot.** The naming is the point: an unrecognized path is usually new shipped content whose tier nobody has decided yet, and it will keep arriving un-triaged until someone adds a row. Do not silently drop it, and do not default it to LOW. **If it is executable or is copied into an adopter's tree, escalate it to HIGH rather than leaving it at MEDIUM** — MEDIUM omits both the guarantee-preservation and shell-correctness lenses, which are exactly the two that shipped content needs.
 
 If no files changed, report "nothing to review" and stop.
 
@@ -46,8 +52,13 @@ For each changed file, identify what it guarantees:
 - templates/curate.md: Steps 0-6 in order, work-item savepoint updates in Step 3
 - templates/audit-context.md: Steps 1-8 in order, work-item reachability in Step 5, framework-version drift in Step 6
 - docs/GUIDE.md: all claimed paths resolve, no broken anchors, version badge matches CHANGELOG
+- adopt.md: every step is executable by an agent that has only URLs and no clone; no step
+  instructs a copy that would strip frontmatter; assess/adopt/update stay three separate prompts
 - tests/lint/run.sh: deterministic checks, no network calls, explicit allowlists not blanket skips
-- templates/README.md: naming map covers all templates, tool-specific paths correct
+- scripts/*.sh: verifying and mutating modes stay distinct; a no-op run and a clean run are
+  distinguishable in the output; exits non-zero on the failure it exists to detect
+- templates/README.md: naming map covers all templates, tool-specific paths correct,
+  every skill carries its scope (user-global or project-local)
 
 For each guarantee: does the change preserve it? Flag any weakening.
 
