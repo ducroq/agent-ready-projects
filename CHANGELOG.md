@@ -12,7 +12,7 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.18.0 (candidate, unreleased)
+## v1.18.0 (2026-08-08)
 
 MINOR — new **`update-drift`** skill: the framework-drift check, promoted from a copy-paste prompt to an installable skill. **Adopter action: install it** (`scripts/install-global-skills.sh`) — user-global, like `curate` and `audit-context`. Nothing breaks if you don't; `adopt.md` §3 still works as a prompt.
 
@@ -37,6 +37,7 @@ MINOR — new **`update-drift`** skill: the framework-drift check, promoted from
 
 ### Tooling
 
+- **`templates/update-drift.md`, `.claude/skills/update-drift/SKILL.md`** — Step 0's six stamp-shape examples now use `<framework>` / `vX.Y.Z` placeholders instead of real versions. Found by this release's own version sweep, which returned them as six hits to re-triage: what the examples illustrate is the **separator** — emphasis before or after the colon, a parenthetical, the word `framework` — not the number, so real versions there buy nothing and cost a triage pass every release. Same defect class as the hardcoded version the v1.14.0 `release.md` fix removed.
 - **`scripts/install-global-skills.sh`** — `update-drift` added to `GLOBAL_SKILLS`. Worth stating plainly: that list is a **hardcoded discovery surface**, and a new global skill absent from it is invisible to both the installer and the inert-copy estate scan — the script would have reported a clean estate while ignoring the skill entirely. Verified by running `--check` before the change (correctly FAILs: specified but not installed) and after installing (clean).
 
 ### Verification

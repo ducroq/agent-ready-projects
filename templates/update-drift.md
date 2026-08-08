@@ -29,13 +29,15 @@ A project may pin **more than one** framework. Find them all before comparing an
 Read the project file (`CLAUDE.md`, `AGENTS.md`, or the tool's equivalent) and search for stamps **without keying on one format**. At least six shapes are in the wild:
 
 ```
-agent-ready-projects: v1.17.0
-- **agent-ready-projects**: v1.17.0
-- **agent-ready-papers** (this repo): v2.5.0
-- **agent-ready-papers:** v2.5.0
-framework: agent-ready-projects v1.17.0
-Framework version 1.17.0 (prose)
+<framework>: vX.Y.Z
+- **<framework>**: vX.Y.Z
+- **<framework>** (this repo): vX.Y.Z
+- **<framework>:** vX.Y.Z
+framework: <framework> vX.Y.Z
+Framework version X.Y.Z (prose)
 ```
+
+The versions above are placeholders on purpose. What varies between the shapes is the **separator** — emphasis before or after the colon, a parenthetical, the word `framework`, or no colon at all — not the number. Real versions here would go stale and would be returned by every future release sweep as hits to re-triage.
 
 A matcher keyed to one of these reports an **unstamped project** when the stamp is merely written differently — which reads identically to "no framework adopted here" and is the wrong conclusion. Use a wide separator class:
 
