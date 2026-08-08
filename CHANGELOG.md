@@ -12,6 +12,29 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.16.2 (2026-08-08)
+
+PATCH — three of the maintainer's private repositories were named in shipped files. Removed and replaced with neutral placeholders. **No action required**: nothing changed except example text, and an adopter who never re-installs keeps working behaviour identical.
+
+### Normative surfaces
+
+- `templates/audit-context.md` and the tracked reference install at `.claude/skills/audit-context/SKILL.md` — Step 4's rung-4 worked example used a real private repository name. Renamed to the placeholder `SiblingRepo`. The rule, the rungs and the matching behaviour are unchanged; only the name in the example differs.
+
+### Documentation
+
+- `docs/decisions/ADR-001-in-repo-memory-over-auto-memory.md` — the auto-memory path example now reads `C--local-dev-<project>/memory/`.
+- `CHANGELOG.md` — the v1.11.0 origin note no longer gives a private repository path.
+
+Public siblings (`agent-ready-papers`, `augur`, `podcast-generator`) are deliberately retained; that decision is recorded under v1.14.0.
+
+### Why a release for an example rename
+
+The names entered *after* the v1.14.0 de-identification pass, while writing the v1.15.x Step 4 examples — real repositories are the examples nearest to hand. A one-off sweep cleans; it does not prevent. No check currently guards this boundary, so the same thing can happen again on the next release that adds an example.
+
+### Versioning rationale
+
+Rule 1 does not fire — no consumer must act. Rule 2 gives PATCH: no new artifact, changes confined to existing ones. Follows the v1.10.1 doc-only precedent and v1.16.1, also a PATCH for edits inside shipped skill prompts.
+
 ## v1.16.1 (2026-08-08)
 
 PATCH — two skill-prompt defects fixed, both found by running the framework's own review battery on itself. **Existing adopters: re-install `curate` and `review-changes` to pick these up.** Nothing breaks if you don't; you keep the old behavior.
