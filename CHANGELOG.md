@@ -12,6 +12,42 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.16.1 (2026-08-08)
+
+PATCH — two skill-prompt defects fixed, both found by running the framework's own review battery on itself. **Existing adopters: re-install `curate` and `review-changes` to pick these up.** Nothing breaks if you don't; you keep the old behavior.
+
+### `review-changes` — the adversarial lens contradicted itself (#30)
+
+The lens prompt said `Default stance: refuted=true` and, in the same breath, `Only mark as REFUTED if you find a concrete problem`. Those set opposite defaults. A capable model resolves the ambiguity sensibly; a weaker one may not, and this framework is tool-agnostic by constraint — ambiguity in a shipped procedure is a portability defect, not a style issue.
+
+Now one stance, stated once: go in assuming the change is refutable, report REFUTED with a concrete failure, report NOT REFUTED only after a thorough attempt fails to produce one.
+
+**The wording matters more than it looks, and two attempts got it wrong.** The first removed the contradiction by deleting *both* halves — which dropped the only concreteness gate on REFUTED and left the surrounding text pushing hard toward refuting. That is a loosening in the false-positive direction: the same failure v1.15.1 had just finished removing from `audit-context` Step 4. The second added a gate phrased as *"name the input that triggers it"* — unachievable for a static contradiction between two prose files, which is the dominant defect class in a framework that ships prose. It would have suppressed every finding the review battery actually produces. The shipped text names contradictions explicitly and says not to withhold one for lacking a repro.
+
+### `curate` — Step 0.6 scanned a path this framework does not use (#31)
+
+Step 0.6 read only `docs/hypothesis-log.md`. Step 1 of the same skill already handled the dual path correctly for the gotcha log; Step 0.6 never got the same treatment. Under this framework's own in-repo-`memory/` Hard Constraint, `memory/hypothesis-log.md` is where the file belongs — so the step looked in the one place it would not be.
+
+Observed here: this repo's hypothesis log has an open entry whose `Review by:` condition fired on 2026-08-08, and `/curate` would never have surfaced it. It was found by hand. That is precisely the failure the step exists to prevent.
+
+Step 0.6 now checks **both** paths unconditionally, which is correct wherever a project actually keeps the file.
+
+### Attempted and reverted: a wider sweep
+
+Issue #31 also asked for a sweep for the same single-path defect elsewhere. The obvious candidate — `audit-context` Step 5's `every topic file in memory/` — was changed to name a `docs/` alternative, and then **reverted**, because `docs/*.md` as the topic-file location is not a thing this framework defines: the naming map has no topic-file row, and `docs/GUIDE.md` states that for a tool without auto-memory everything goes into the project file. Applied to this repo it would have reported all 12 files in `docs/*.md` — the guide, the rationale doc, ten essays — as orphaned topic files.
+
+The real question is now **issue #32**: what should Step 5 do when the project's tool has no Layer 3 at all? Three candidate answers are recorded there; none is obviously right, and guessing produced something worse than the bug.
+
+### Consumer notes
+
+- **New adopters**: nothing to do — the templates carry the fixes.
+- **Existing adopters**: re-install `curate` (user-global) and `review-changes` (project-local). No action required to keep working; the old copies behave as before.
+- No memory-layout, step-numbering, or naming-map changes. `curate` Steps 0-6 and `audit-context` Steps 1-8 are unchanged in structure.
+
+### Versioning rationale
+
+Rule 1 does not fire — no existing consumer must act to stay working. Rule 2: no new artifact; both changes are refinements confined to existing templates → PATCH. Direct precedent: the v1.13.0 entry records the structurally identical `curate` Step 0.2 fix as *"would have been PATCH on its own (refinement of an existing template)"*.
+
 ## v1.16.0 (2026-08-08)
 
 MINOR — a magnitude gate for `review-changes`, so a small diff no longer spawns the full lens battery. **Adopter action: none.** Existing installs keep working; re-install the project-local skill to pick up the gate. No memory-layout or template-structure changes.

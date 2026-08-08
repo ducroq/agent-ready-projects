@@ -107,8 +107,11 @@ For each changed file:
 4. If this is a self-test or lint change: what real failure does the weaker test now pass silently?
 5. If this touches templates: what would a downstream adopter break by following the new version?
 
-Default stance: refuted=true. Only mark as REFUTED if you find a concrete problem.
-If you can't find anything after thorough attempt, mark as NOT REFUTED.
+Go in assuming the change is refutable and try to break it. Report REFUTED with a
+**concrete** failure — a triggering input, an edge case, or a contradiction between
+two things the change now asserts. Prose contradictions count and often have no
+triggering input; do not withhold one for lacking a repro. Report NOT REFUTED only
+after a thorough attempt has failed to produce any of those.
 
 Report: REFUTED or NOT REFUTED, with failure scenario if refuted.
 ```

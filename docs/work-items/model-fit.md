@@ -22,10 +22,11 @@ Diagnosis, four-lens review battery, and the discarded alternatives are in this 
   - Full patch of the attempt is not in the repo; the design record is this file's Decisions section, which is sufficient to redo it.
 - [ ] **Next action**: baseline token cost. Grep `~/.claude/projects/*/*.jsonl` for `usage` on past `/audit-context` and `/review-changes` runs. Deferred once already — do it before the next skill edit or the before-number is gone for good.
 - [ ] Extend `tests/fixtures/reference-integrity/run.sh` — `build.sh` always creates siblings, so the new rung-4-coverage, unread-document, and exit-contract paths are all untested. This is now the prerequisite for re-attempting the promotion.
-- [ ] Fix the `refuted=true` contradiction in the adversarial lens (strict stance) — issue #30
-- [ ] Fix `curate` Step 0.6's hypothesis-log path — issue #31
+- [x] Fixed the `refuted=true` contradiction in the adversarial lens — issue #30. **Took two attempts:** the first removed the contradiction by deleting *both* halves, which dropped the only concreteness gate on REFUTED and loosened the lens toward false positives — the 139-items failure mode. Caught by the adversarial lens itself; the guarantee and doc-accuracy lenses both passed it.
+- [x] Fixed `curate` Step 0.6's hypothesis-log path — issue #31. **Also took two attempts:** the first mirrored Step 1's dual-path *phrasing* without checking the convention behind it. The naming map does not split this file by tool, so the Claude Code branch skipped adopters who followed the map — the same bug, inverted population. Now checks both paths unconditionally, and `templates/README.md` + `templates/hypothesis-log.md` are aligned so the framework stops saying two different things about where its own hypothesis log lives.
+- [ ] #31's second ask (sweep for the same defect elsewhere) — **attempted and reverted.** Naming `docs/*.md` as the topic-file location for non-Claude-Code tools was invented: the naming map has no topic-file row, and `docs/GUIDE.md` says Layer 3 does not exist for tools without auto-memory. It would have reported all 12 files in this repo's own `docs/*.md` as orphaned topic files. The real question — what `audit-context` Step 5 should do on a tool with no Layer 3 — is now issue #32.
 - [ ] Add counts-not-adjectives to every skill's Report step
-- [x] Global install needs no refresh — `review-changes` is project-local-never-global and `audit-context` is now unmodified.
+- [ ] Refresh the global install after committing — `curate` is user-global and changed. Verify with `scripts/install-global-skills.sh --check ~/repos`.
 - [x] `/review-changes` full battery run — **5 blockers, 6 warnings, 2 notes**. All fixed; see Decisions.
 - [ ] Not blocked. What remains uncommitted is the gate plus the script bug fixes; both passed two review batteries, and the parts that did not are shelved.
 
