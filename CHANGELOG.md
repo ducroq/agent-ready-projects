@@ -119,7 +119,7 @@ The shipped fix suppresses nothing. Output splits into **findings** (unresolved 
 
 ### Six mechanical defects
 
-- **Rung 3 joined exactly instead of suffix-matching inside the sibling** — "NexusMind's `deploy_filters.sh`" is `NexusMind/scripts/deploy_filters.sh`.
+- **Rung 3 joined exactly instead of suffix-matching inside the sibling** — "SiblingRepo's `deploy_filters.sh`" is `SiblingRepo/scripts/deploy_filters.sh`.
 - **Rung 3 did not carry rung 2's collision rule** across with its matching, so two sibling files matching one fragment came back as a clean hit.
 - **Rung 3 outranked rung 4**, letting a neighbour claim a file the audited repo's own runtime writes — a provenance that is simply false.
 - **The cross-repo marker was a substring, and a path could mark itself** — "infrastructure" marked a repo called `infra`, and `docs/DEPLOY.md` marked a sibling repo named `docs`, after which any broken `docs/X.md` resolved next door.
@@ -392,7 +392,7 @@ No action required. Templates and `adopt.md` are unchanged. Pinned consumers do 
 
 ### Origin
 
-Filed as #19 (2026-07-08) from a learn-from-BDS pass (`veen-systems/brainstorm/.../LEARN-FROM-BDS.md`, capability #1). BDS's `ai-wiki` proposed two transferable rules; **only the content-write boundary was adopted.** The other — quantified note decay (`confidence × exp(−days/τ)` frontmatter) — was **declined on principle**: it reintroduces the frontmatter schema this guide deliberately rejected ("lightweight by design. No frontmatter schema, no mandatory fields") and its `confidence` score is unsourced precision of the kind removed in v1.10.5/#18; the framework's existing `<!-- verify: -->` comment checks ground truth (PASS/FAIL) rather than time-since-touch, a stronger staleness signal. A third folded-in note (esm.sh single-file demo shape) was declined as out of scope for a tool-agnostic layered-memory methodology.
+Filed as #19 (2026-07-08) from a learn-from-BDS pass (a private sibling repo's `LEARN-FROM-BDS.md`, capability #1). BDS's `ai-wiki` proposed two transferable rules; **only the content-write boundary was adopted.** The other — quantified note decay (`confidence × exp(−days/τ)` frontmatter) — was **declined on principle**: it reintroduces the frontmatter schema this guide deliberately rejected ("lightweight by design. No frontmatter schema, no mandatory fields") and its `confidence` score is unsourced precision of the kind removed in v1.10.5/#18; the framework's existing `<!-- verify: -->` comment checks ground truth (PASS/FAIL) rather than time-since-touch, a stronger staleness signal. A third folded-in note (esm.sh single-file demo shape) was declined as out of scope for a tool-agnostic layered-memory methodology.
 
 ### Versioning rationale
 

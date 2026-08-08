@@ -11,7 +11,7 @@ After applying this recommendation across 28 active projects for several months,
 
 ### 1. Hidden memory is invisible memory
 
-Auto-memory files live in path-mangled directories like `C--local-dev-ovr-news/memory/`. They don't appear in the editor's file tree. They aren't searchable alongside project code. They can't be opened for quick review without navigating to an obscure path. In practice, this means they don't get reviewed. Stale entries persist. Wrong assumptions survive. The self-learning loop's "promote and retire" phases depend on the engineer seeing what's there — and if it's hidden, it doesn't get curated.
+Auto-memory files live in path-mangled directories like `C--local-dev-<project>/memory/`. They don't appear in the editor's file tree. They aren't searchable alongside project code. They can't be opened for quick review without navigating to an obscure path. In practice, this means they don't get reviewed. Stale entries persist. Wrong assumptions survive. The self-learning loop's "promote and retire" phases depend on the engineer seeing what's there — and if it's hidden, it doesn't get curated.
 
 Across 28 projects, approximately 75 memory files had accumulated in auto-memory. The project owner was unaware of what most of them contained.
 
