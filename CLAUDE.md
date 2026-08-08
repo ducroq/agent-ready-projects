@@ -4,7 +4,7 @@ The source framework that teaches the layered memory method for AI coding agents
 
 - **Type**: Public methodology repo (guide + templates + skills)
 - **License**: MIT
-- **agent-ready-projects** (this repo): v1.16.2 (three private repository names removed from shipped files — a worked example in `templates/audit-context.md`, an ADR path example, a CHANGELOG origin note; recontamination after the v1.14.0 sweep, and nothing checks the boundary — 2026-08-08)
+- **agent-ready-projects** (this repo): v1.17.0 (gotcha entries capped at 2-3 lines — the lesson, not the session narrative; a longer first draft contradicted the coordination and guide docs and was reverted after the review battery — 2026-08-08)
 
 > Live project state (current threads, deferred items, surfaced patterns) lives in `memory/MEMORY.md` (maintainer-local — see *What is intentionally not shipped* below). Release notes live in `CHANGELOG.md`.
 

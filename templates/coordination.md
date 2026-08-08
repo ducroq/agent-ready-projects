@@ -1,7 +1,7 @@
 ---
 contributors: [names or handles]
 updated: YYYY-MM-DD
-framework: agent-ready-projects v1.16.2
+framework: agent-ready-projects v1.17.0
 ---
 
 # Coordination

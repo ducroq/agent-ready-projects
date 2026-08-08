@@ -12,6 +12,34 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.17.0 (2026-08-08)
+
+MINOR — gotcha log entries get a length rule: **2-3 lines, the lesson and the action, not the narrative of the session that found it.** If an entry needs a page, that is the signal it belongs in a topic file or an ADR. **Existing adopters: re-install `curate` to pick this up.** Nothing breaks if you don't; entries just keep growing.
+
+### Normative surfaces
+
+- `templates/gotcha-log.md` — the rule added to the entry template comment. Worked examples unchanged.
+- `templates/curate.md` Step 1, and the tracked reference install at `.claude/skills/curate/SKILL.md` — the same rule where entries are actually written, plus an explicit "new entries only; retrofitting the existing log is a separate, engineer-approved decision."
+
+### Why this exists
+
+An agent writing a gotcha log defaults to far more detail than is useful. Measured on this repo: median 255 words per entry against the 104- and 185-word worked examples the template ships — so entries drift longer than the template's own examples teach. The cost recurs, because a log is re-read in full on every load, and the surplus detail is disproportionately the specifics that don't generalise.
+
+### Attempted and reverted: a longer version of the same rule
+
+The first draft added a cut-list — "cut how you found it, **what you ruled out**, **who noticed**" — and shortened both worked examples. A three-lens review battery refuted it and it was reverted rather than patched. Four separate defects, each worth recording because each is a way this kind of edit fails:
+
+- **"who noticed" contradicted `templates/coordination.md`**, which *mandates* tagging entries with a contributor handle, and `docs/GUIDE.md`, which uses those handles for a promotion rule ("a gotcha in two contributors' sessions is as strong a signal as three recurrences"). Stripping the handle would have silently disabled that rule.
+- **"what you ruled out" contradicted `docs/GUIDE.md`'s dead-ends guidance** — "the gotcha log captures what you *tried and walked away from*" — which is the same content under a different name.
+- **The shortened examples lost their only concrete commands** (`ProtectHome=read-only`, `systemctl start` / `docker run` / CI trigger) and replaced a working verify command with an empty `<!-- verify: -->`, which `curate` Step 0.5 runs and reports as **ERROR**. The template would have shipped a permanent false positive.
+- **It ran 329 words to enforce a 100-word cap**, on surfaces loaded every session.
+
+The shipped rule is three lines and adds no cut-list. Its line budget is 2-3 lines to match `docs/GUIDE.md`, which already said so in two places — the first draft said "three or four" and contradicted it.
+
+### Versioning rationale
+
+Rule 1 does not fire — no consumer must act. Rule 2 gives MINOR: a new documented convention that changes agent behaviour, which the bump table lists under MINOR. Follows v1.11.0, also MINOR for new documented principles. Not the v1.16.1 PATCH precedent — that covered *defect fixes* inside shipped skill prompts, not a new rule.
+
 ## v1.16.2 (2026-08-08)
 
 PATCH — three of the maintainer's private repositories were named in shipped files. Removed and replaced with neutral placeholders. **No action required**: nothing changed except example text, and an adopter who never re-installs keeps working behaviour identical.
