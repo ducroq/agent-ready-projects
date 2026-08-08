@@ -8,7 +8,7 @@ Pre-commit review of pending changes. Scope and depth are driven by what changed
 
 ## Step 1 — Diff and classify
 
-Run `git diff --stat` and `git diff --cached --stat` to see pending changes. Classify each changed file into a risk tier:
+Run `git diff --stat` and `git diff --cached --stat` to see pending changes, and `git diff --summary` alongside them. **`--stat` alone cannot see a mode change, a rename, a submodule, or a binary** — all four render as zero or near-zero lines, and three of them are carve-outs below. A carve-out you cannot observe is not in force. Classify each changed file into a risk tier:
 
 | Tier | File patterns | Depth |
 |------|-------------|-------|
@@ -20,7 +20,44 @@ Run `git diff --stat` and `git diff --cached --stat` to see pending changes. Cla
 
 The HIGH row is the normative surface — everything an adopter consumes or executes. Four entries are easy to miss, and each is here because it burned someone: `scripts/**` is shell that runs on another machine; `.claude/skills/**` holds the reference installs adopters copy, so a defect there ships to every install derived from it; `/README.md` is anchored so it means *the repo's own* README, not every nested one; and `.gitignore` decides what is published at all — a one-line change there has exposed private content in a public repo.
 
-If only LOW files changed, do a single adversarial pass and skip to Step 3.
+### Magnitude gate
+
+The tier above is set by *path*. Depth is also set by *size* — but size is the weaker signal, so the exceptions are stated first and override everything below them.
+
+**Always full depth, regardless of size.** Each of these is dangerous *because* it is small, and each would otherwise slip through on line count alone:
+
+- **`.gitignore`** — see the paragraph above; one line has exposed private content in a public repo.
+- **Renames and moves** — `git diff --stat` reports `0 insertions(+), 0 deletions(-)` under `-M`, while every reference to the old path breaks.
+- **Permission changes** — also zero insertions and deletions, and invisible without `--summary`. A `chmod -x` on a shipped script makes it unrunnable for everyone downstream.
+- **Binary files and submodule pointers** — the other two members of the zero-line class. A submodule bump changes one line and can move an arbitrary amount of code.
+- **Any change to a shell script or an executable, wherever it lives** — `scripts/**` and `tests/**` are both HIGH because they are code that runs on someone else's machine, and shell breaks in one character. A small edit would otherwise lose the shell-correctness lens, which is the reason those paths are HIGH at all.
+- **Any non-frontmatter edit under `.claude/skills/**`** — HIGH because a defect there ships to every install derived from it; that is as true of a three-line body edit as of a frontmatter one.
+- **Frontmatter edits under `.claude/skills/**`** — removing one `---` silently unregisters a skill.
+- **A new executable, or any new file in a HIGH path** — the tier for new content has not been decided yet.
+- **Any diff that removes or loosens a check** — a deleted guard, a weakened assertion, a broadened exclusion. Loosenings are characteristically a handful of lines, and this is the class the seeded-true-positives rule exists for.
+
+**Otherwise size sets the depth.** Size means the whole change that will land, not the slice in front of you — 10 lines committed locally plus 15 staged is a 25-line change, and reviewing each half on its own means nothing ever sees the whole. Sum staged, unstaged, and any local commits not yet pushed:
+
+```bash
+git diff --shortstat; git diff --cached --shortstat
+git log @{u}.. --shortstat 2>/dev/null || echo 'no upstream — count all commits on this branch'
+```
+
+On a branch with no upstream the third command has nothing to compare against; fall back to the whole branch rather than silently dropping the term.
+
+Line count is a proxy, and in these templates a weak one — they are written one sentence per line, so replacing two dense normative paragraphs is four changed lines while a whitespace reflow is a hundred. **When the line count and your read of the change disagree, the line count is wrong.** Escalate.
+
+| Changed lines | Depth |
+|---------------|-------|
+| **< 20** | One adversarial pass |
+| **20–200** | Path tier as above |
+| **> 200** | Full battery, whichever tier the paths fall in |
+
+Run that single pass in a **fresh context** — a subagent if your tool provides them, otherwise a separate pass that re-reads the diff from scratch. Reviewing your own edit in the context that produced it is the self-certification failure this skill exists to prevent; the saving comes from running *one* independent reviewer instead of four, not from dropping independence.
+
+The gate changes how many lenses run. It never changes *whether* a change is reviewed — every diff still gets at least one adversarial pass.
+
+If only LOW files changed **and the gate above does not escalate**, do a single adversarial pass and skip to Step 3. The gate wins where the two disagree: a 400-line change to `memory/**` is still a large change, and tier is about blast radius, not size.
 
 **If a changed file matches no pattern, treat it as MEDIUM, and name it in the report under "Unclassified" even when a HIGH file in the same diff makes the tier moot.** The naming is the point: an unrecognized path is usually new shipped content whose tier nobody has decided yet, and it will keep arriving un-triaged until someone adds a row. Do not silently drop it, and do not default it to LOW. **If it is executable or is copied into an adopter's tree, escalate it to HIGH rather than leaving it at MEDIUM** — MEDIUM omits both the guarantee-preservation and shell-correctness lenses, which are exactly the two that shipped content needs.
 

@@ -1,12 +1,31 @@
 #!/usr/bin/env python3
 """Reference implementation of audit-context Step 4 (reference integrity).
 
+    python3 refcheck.py [--legacy] <repo-root> <doc> [<doc> ...]
+
 This exists so that a change to Step 4 can be *tested* rather than asserted.
-Run tests/fixtures/reference-integrity/run.sh to exercise it against a fixture
-that seeds the failures Step 4 must catch.
+Run run.sh in this directory to exercise it against a fixture that seeds the
+failures Step 4 must catch.
 
 The skill text is normative; this is one faithful reading of it. If they
 disagree, the skill is right and this file is the bug.
+
+Promoting this file to the *runtime* for Step 4 was attempted and shelved
+(see docs/work-items/model-fit.md). Two blockers, both unresolved: the installer
+ships only SKILL.md, so the script never reaches an adopter repo; and the manual
+fallback written for that case omitted the report-shape split, so it silently
+reproduced the v1.15.0 defect it was meant to replace. The idea is sound; the
+packaging is not. Do not re-attempt without solving distribution first.
+
+Output sections: FINDINGS (broken or ambiguous — the defects), RESOLVED BELOW
+RUNG 1 (enumerated, not defects), SKIPPED as asserted-absent, extensions in the
+tree the extractor misses, and — only when they apply — DOCUMENTS NOT READ and
+a RUNG 4 COVERAGE line.
+
+**Only backticked paths are extracted.** A markdown link or a bare prose path is
+invisible here, so an all-empty report is not by itself proof of a clean
+document — check the document's style, and check that DOCUMENTS NOT READ is
+absent, before reading empty as passing.
 """
 
 import re
@@ -26,7 +45,11 @@ PATH_RE = re.compile(r'`([A-Za-z0-9_.][A-Za-z0-9_./*-]*\.(?:' + EXT + r'))`')
 
 STATE_DIRS = ('data/', 'state/', 'cache/', 'logs/', 'run/', 'var/', 'artifacts/')
 STATE_SHAPE = re.compile(r'(_state\.json|_health\.json|\.pid|\.sock)$')
-BARE_STATE = re.compile(r'^[a-z0-9_.-]+\.(json|jsonl)$')
+# NB: there is deliberately no 'bare lowercase .json' rule. One existed and was
+# removed — it classified package.json, tsconfig.json and package-lock.json as
+# runtime state, i.e. as correctly-absent. A committed lockfile is not runtime
+# state. The documented test is a state DIRECTORY or a state-file SHAPE; keep it
+# that way, and see docs/reference-integrity.md before widening either.
 PRUNE = {'.git', 'venv', '.venv', 'node_modules', '__pycache__', 'target', 'dist'}
 
 # Span-scoped, NOT line-scoped. A line may retire one path and name its live
@@ -67,6 +90,15 @@ def _marked_siblings(paragraph, siblings):
     return out
 
 
+def _read(root, src):
+    """Return file text, or None if it cannot be read. Callers must report None
+    loudly — a document that was never read is not a document that is clean."""
+    try:
+        return (pathlib.Path(root) / src).read_text()
+    except (OSError, UnicodeDecodeError):
+        return None
+
+
 def check_legacy(root, sources):
     """v1.15.0's Step 4, faithfully: permissive extraction, exact-join rung 3
     with substring markers, single-depth siblings, no prose-deletion skip, and
@@ -84,7 +116,10 @@ def check_legacy(root, sources):
     loose = re.compile(r'`([A-Za-z0-9_.][A-Za-z0-9_./*-]*\.[A-Za-z0-9]{1,6})`')
     reports, stale = [], []
     for src in sources:
-        for line in (root / src).read_text().split('\n'):
+        text = _read(root, src)
+        if text is None:
+            continue          # unreadable doc; the non-legacy path reports these
+        for line in text.split('\n'):
             if '! test -f' in line:
                 continue
             for frag in loose.findall(line):
@@ -117,12 +152,19 @@ def check(root, sources, sibling_roots=None):
                          if p.is_dir() and (p / '.git').exists()
                          and p.resolve() != root]
     siblings = sorted(set(siblings), key=lambda p: p.name)
+    # If no sibling repo is reachable, rung 4 cannot run. Findings are then
+    # annotated to say so, rather than presented as confirmed breaks.
+    rung4_runnable = bool(siblings)
 
     rel = [str(p.relative_to(root)) for p in _tree(root)]
     findings, resolved_weak, skipped = [], [], []
 
+    missing = []
     for src in sources:
-        text = (root / src).read_text()
+        text = _read(root, src)
+        if text is None:
+            missing.append(src)   # e.g. an optional Layer-4 gotcha log
+            continue
         lines = text.split('\n')
         for i, line in enumerate(lines):
             # Span-scoped skips: collect only the paths the markers cover.
@@ -156,15 +198,14 @@ def check(root, sources, sibling_roots=None):
                     resolved_weak.append((src, frag, f'fragment -> {hits[0]}'))
                     continue
 
-                # rung 4 BEFORE rung 3 — a file this repo's own runtime writes is
-                # explained here; letting a sibling claim it first produces a
-                # provenance that is simply false.
-                if frag.startswith(STATE_DIRS) or STATE_SHAPE.search(frag) \
-                        or BARE_STATE.match(frag):
+                # rung 3 (runtime state) BEFORE rung 4 (sibling) — a file this
+                # repo's own runtime writes is explained here; letting a sibling
+                # claim it first produces a provenance that is simply false.
+                if frag.startswith(STATE_DIRS) or STATE_SHAPE.search(frag):
                     resolved_weak.append((src, frag, 'runtime state'))
                     continue
 
-                # rung 3 — marked cross-repo, suffix-matched inside the sibling,
+                # rung 4 — marked cross-repo, suffix-matched inside the sibling,
                 # carrying rung 2's collision rule with it.
                 named = _marked_siblings(para, siblings)
                 claim = None
@@ -185,12 +226,18 @@ def check(root, sources, sibling_roots=None):
                     (findings if claim[1] else resolved_weak).append((src, frag, claim[0]))
                     continue
 
+                # "A rung you cannot run is not a pass." Do not guess which
+                # references rung 4 might have rescued — a bare filename is rung-4
+                # traffic too (see fixture T9), and an unmarked path never was. Report
+                # every unresolved reference, and when rung 4 could not run say so on
+                # each one, so no finding is presented as a confirmed break on the
+                # strength of a check that never executed.
                 findings.append((src, frag, 'UNRESOLVED'))
 
     tree_ext = {p.suffix.lstrip('.').lower() for p in _tree(root) if p.suffix}
     known = set(EXT.split('|'))
     unknown = sorted(e for e in tree_ext - known if e and len(e) <= 12)
-    return findings, resolved_weak, skipped, unknown
+    return findings, resolved_weak, skipped, unknown, missing, len(siblings)
 
 
 def main():
@@ -198,6 +245,9 @@ def main():
     legacy = '--legacy' in argv
     if legacy:
         argv.remove('--legacy')
+    if len(argv) < 2:
+        sys.exit('usage: refcheck.py [--legacy] <repo-root> <doc> [<doc> ...]\n'
+                 '  e.g. refcheck.py . CLAUDE.md memory/MEMORY.md')
     root, sources = argv[0], argv[1:]
 
     if legacy:
@@ -210,7 +260,27 @@ def main():
         print(f"  TOTAL ITEMS PUT TO A HUMAN: {len(reports) + len(stale)}")
         return 0
 
-    findings, weak, skipped, unknown = check(root, sources)
+    findings, weak, skipped, unknown, missing, n_siblings = check(root, sources)
+
+    # State rung 4's coverage as a fact rather than inferring a verdict per
+    # reference. We cannot tell which unresolved paths a sibling would have
+    # rescued without knowing the repo names, so disclose the scope instead:
+    # a reader seeing "0 sibling repositories" knows no finding here is confirmed.
+    print(f"== RUNG 4 COVERAGE: scanned {n_siblings} sibling repositor"
+          f"{'y' if n_siblings == 1 else 'ies'} ==")
+    if n_siblings == 0:
+        print("   No sibling repo was reachable, so rung 4 did not run. A reference\n"
+              "   that lives in another repo cannot be distinguished from a broken one\n"
+              "   here — treat every finding below as unconfirmed.")
+    print()
+
+    if missing:
+        # A document that was never read cannot be audited. Say so loudly:
+        # silence here would read as "these docs are clean".
+        print("== DOCUMENTS NOT READ (not audited) ==")
+        for m in missing:
+            print(f"  {m}")
+        print(f"  total: {len(missing)}\n")
 
     print("== FINDINGS (broken or ambiguous) ==")
     for s, p, v in findings:
@@ -228,7 +298,8 @@ def main():
     print(f"  total: {len(skipped)}")
 
     print(f"\n== EXTENSIONS IN TREE NOT EXTRACTED: {', '.join(unknown) if unknown else '(none)'} ==")
-    return 1 if findings else 0
+    # Unread documents are a failure of the run, not a clean result.
+    return 1 if (findings or missing) else 0
 
 
 if __name__ == '__main__':

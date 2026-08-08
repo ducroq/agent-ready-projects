@@ -12,6 +12,57 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.16.0 (2026-08-08)
+
+MINOR — a magnitude gate for `review-changes`, so a small diff no longer spawns the full lens battery. **Adopter action: none.** Existing installs keep working; re-install the project-local skill to pick up the gate. No memory-layout or template-structure changes.
+
+### The problem
+
+`review-changes` picked depth from **path** alone. Any diff touching `templates/**` or `.claude/skills/**` got 3–4 concurrent review subagents, each re-establishing context from zero — whether the change was a full template rewrite or a two-line typo fix. Measured against this repo's last 40 commits, **12 were under 20 lines and touched no dangerous path**, and every one of them paid for four reviewers.
+
+### The gate, and why the exceptions come first
+
+Step 1 gains a magnitude gate: under 20 changed lines gets one adversarial pass, 20–200 keeps the path tier, over 200 gets the full battery regardless of tier.
+
+The exceptions are stated **before** the size rule and override it, because the changes most likely to cause harm are the ones smallest by line count:
+
+- `.gitignore` — one line here has exposed private content in a public repo
+- Renames, moves, and permission changes — `git diff --stat` reports these as **zero insertions and zero deletions**
+- Binary files and submodule pointers — the other two members of the zero-line class
+- Any shell script or executable, in `scripts/**` or `tests/**` — code that runs on someone else's machine, and shell breaks in one character
+- Any non-frontmatter edit under `.claude/skills/**` — a defect there ships to every install derived from it
+- **Any diff that removes or loosens a check** — loosenings are characteristically a handful of lines, and this is the class the seeded-true-positives rule exists for
+
+Step 1 now also runs `git diff --summary`. `--stat` alone cannot see a mode change, a rename, a submodule, or a binary — three of those are carve-outs, and a carve-out you cannot observe is not in force.
+
+Size means the whole change that will land: staged, unstaged, **and local commits not yet pushed**, with a stated fallback for a branch with no upstream. Line count is a weak proxy in these one-sentence-per-line templates, so the gate says plainly that when the count and your read of the change disagree, the count is wrong.
+
+The trimmed pass still runs in a **fresh context**. Reviewing your own edit in the context that produced it is the self-certification failure the skill exists to prevent; the saving comes from one independent reviewer instead of four, not from dropping independence.
+
+### Measured
+
+Against this repo's last 40 commits: **12 trimmed** from four lenses to one, **6 small commits correctly held at full depth** by a carve-out, 7 at or over 200 lines unaffected. The carve-outs catch a third of all small commits, so they are load-bearing rather than decorative. That ratio reflects this repo's commit pattern; a project that works in larger chunks will see less.
+
+### Also in this release
+
+- `templates/README.md`, `CLAUDE.md`, and `docs/GUIDE.md` each described review depth as path-driven only. All three now mention the gate — they were describing behavior that no longer matched the skill.
+- `tests/fixtures/reference-integrity/refcheck.py` (maintainer-only, not templatized) — four defects fixed in the Step 4 test oracle: a rule classifying any lowercase top-level `.json` as runtime state, so `package.json`, `tsconfig.json` and `package-lock.json` read as correctly-absent; unhandled `PermissionError` / `UnicodeDecodeError` / `NotADirectoryError` killing a run mid-audit; exit 0 when zero documents were read, indistinguishable from a clean audit; and rung-4 coverage now disclosed as a fact (`scanned N sibling repositories`) rather than left implicit. A wrong oracle certifies wrong prose, so these harden the sensitivity harness that gates Step 4 changes.
+
+### Attempted and shelved: `refcheck.py` as the Step 4 runtime
+
+Promoting the reference-integrity script from test oracle to the actual runtime for `audit-context` Step 4 was built, reviewed twice, and unwound. Recorded here so it is not rediscovered cold.
+
+The idea holds — the model walking ~70 references through four resolution rungs, including a traversal of every sibling repository, is the most expensive step in the framework, and a script gives every model the same answer. It failed on **distribution**, not design:
+
+- `scripts/install-global-skills.sh` copies only `SKILL.md`. A user-global skill cannot depend on a repo-relative script, so Step 4 would have been un-runnable in every adopter repo while the prose that made it portable was deleted.
+- The manual fallback written to cover that case carried the resolution rungs but omitted the report-shape split — silently reproducing the v1.15.0 defect that v1.15.1 had just fixed.
+
+The general lesson: **determinism is a portability win only for code that travels.** Nothing deterministic currently ships to adopters at all — `scripts/` holds one Claude-Code-specific installer and `adopt.md` scaffolds nothing executable. That gap is the prerequisite for any future attempt. Design record in `docs/work-items/model-fit.md`; a note in the script's own docstring points there.
+
+### Versioning rationale
+
+Rule 1 does not fire — no existing consumer must act. Rule 2 does: the magnitude gate is a new documented behavior in a normative template. MINOR, following the `v1.12.0` precedent that shipped `review-changes.md` itself, and above the `v1.10.1` doc-only-is-PATCH line.
+
 ## v1.15.1 (2026-08-06)
 
 PATCH — `audit-context` Step 4, plus the first committed test fixture for it. Adopter action: re-install the global skill (`scripts/install-global-skills.sh`). No template or memory-layout changes.
