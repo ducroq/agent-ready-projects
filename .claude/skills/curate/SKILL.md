@@ -55,6 +55,8 @@ Then check: did anything go wrong or surprise you during this session? For each 
 **Fix**: What solved it.
 ```
 
+**Keep each entry to 2-3 lines** — the lesson and the action, not the narrative of the session that found it. Having just lived through it, you will overweight the detail. If an entry needs a page, that is a signal it belongs in a topic file or an ADR. Apply this to new entries only; retrofitting the existing log is a separate, engineer-approved decision.
+
 ## Step 2 — Pattern detection and promotion
 
 Scan the gotcha log for entries that have recurred 2-3 times. For each:

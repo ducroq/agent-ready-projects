@@ -20,6 +20,9 @@
 **Root cause**: Why it happened.
 **Fix**: What solved it.
 
+     Keep it to 2-3 lines. Write the lesson, not the narrative of the
+     session that found it. If it needs a page, it belongs in a topic
+     file or an ADR, not here.
 -->
 
 <!-- WORKED EXAMPLE — delete or keep as a reference for entry style -->
