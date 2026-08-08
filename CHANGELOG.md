@@ -12,6 +12,47 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.18.0 (candidate, unreleased)
+
+MINOR — new **`update-drift`** skill: the framework-drift check, promoted from a copy-paste prompt to an installable skill. **Adopter action: install it** (`scripts/install-global-skills.sh`) — user-global, like `curate` and `audit-context`. Nothing breaks if you don't; `adopt.md` §3 still works as a prompt.
+
+### Templates
+
+- **`templates/update-drift.md`** (new) — Promotes `adopt.md` §3 *"Update — am I behind?"* into a skill. Of adopt.md's three prompts, §3 is the only one that fires **repeatedly** — assess and adopt fire once per project — which is what earns it a slot under the cadence rule in `docs/GUIDE.md`.
+
+  Four things the prompt left out, each drawn from a real failure observed while running the workflow by hand across nine releases:
+
+  - **Stamp-shape tolerance.** The prompt says "check the project file for the version line." Six shapes are in the wild, and a matcher keyed to one reports an *unstamped project* when the stamp is merely written differently — indistinguishable from "no framework adopted here." Step 0 ships a wide separator class and requires reporting stamps by file and line. It also handles projects pinning **more than one** framework, which the prompt assumed away.
+  - **A four-way triage that forces a recorded reason.** *Adopt / decline-with-reason / not-applicable / already-in-force.* The prompt asked only "does this apply?", which invites a yes/no and loses the reasoning — and a decline without a recorded reason is re-derived next session, possibly differently. **"Already in force" is the outcome people forget**: a user-global skill updated outside the repo is current without anything in the repo changing, while the project file may still describe it wrongly. That case produced a real documentation correction in an adopter this week.
+  - **The surfaces `git diff` cannot see.** `.claude/skills/`, `memory/`, `docs/work-items/` are gitignored in adopter repos, so a drift check driven by `git status` reports them unchanged because they are *invisible*, not because they are current.
+  - **Verify by execution, not by reading.** A release's claims about behaviour are claims, and adopting one is adopting whatever is wrong with it. Prose describing a check is routinely wrong in ways that survive several readings by its own author.
+
+  Stops before editing normative surfaces, and refuses to bump a stamp until the changes it describes have landed — a stamp running ahead of its content silences the check that would have caught the gap.
+
+- **`templates/README.md`** — Naming map row and description, both carrying **user-global, never project-local**.
+
+### Docs
+
+- **`adopt.md`** — §3 now points at the skill and states why it exists, keeping the prompt as the portable fallback for tools with no skill mechanism.
+
+### Tooling
+
+- **`scripts/install-global-skills.sh`** — `update-drift` added to `GLOBAL_SKILLS`. Worth stating plainly: that list is a **hardcoded discovery surface**, and a new global skill absent from it is invisible to both the installer and the inert-copy estate scan — the script would have reported a clean estate while ignoring the skill entirely. Verified by running `--check` before the change (correctly FAILs: specified but not installed) and after installing (clean).
+
+### Verification
+
+Written per the skill's own Step 4 — claims executed, not read. Lint suite passes including rule 4 (installed skills loadable). Step 0's grep was run against a real two-stamp project file and returns both stamps by line number. Every path the skill names resolves on disk.
+
+### Versioning rationale
+
+MINOR. Rule 1 does not fire — nothing breaks and no adopter must act to keep working. Rule 2 fires: a new template adopters install. Direct precedent: v1.13.0 (`release.md`) and v1.12.0 (`review-changes.md`), both MINOR for the same reason.
+
+### Provenance
+
+Prompted by external feedback (Raoul Grouls, [raoulg/codestyle](https://github.com/raoulg/codestyle)) asking whether the framework could be delivered as a skill with planning state in a `.yml`. Two parts of that were checked and declined. codestyle delivers via an **MCP server** plus markdown, not skills, and its only YAML is `.lefthook.yml` (pre-commit hooks), not planning state — so there was no planning-yml pattern to copy. The MCP delivery model had already been evaluated and declined in v1.13.1 (content is per-project by definition; file-based memory in git is what makes it reviewable), and that still holds. The **skill** half was the good idea, and it had a spec sitting unbuilt in `adopt.md` §3.
+
+---
+
 ## v1.17.0 (2026-08-08)
 
 MINOR — gotcha log entries get a length rule: **2-3 lines, the lesson and the action, not the narrative of the session that found it.** If an entry needs a page, that is the signal it belongs in a topic file or an ADR. **Existing adopters: re-install `curate` to pick this up.** Nothing breaks if you don't; entries just keep growing.

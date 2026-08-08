@@ -19,7 +19,7 @@ SELF=$(readlink -f "$0" 2>/dev/null || echo "$0")
 cd "$(dirname "$SELF")/.." || { echo "cannot reach repo root" >&2; exit 2; }
 [ -d .claude/skills ] || { echo "not in the agent-ready-projects repo root: $(pwd)" >&2; exit 2; }
 
-GLOBAL_SKILLS="curate audit-context"     # generic method, relevant in every repo
+GLOBAL_SKILLS="curate audit-context update-drift"     # generic method, relevant in every repo
 LOCAL_ONLY="review-changes release test-verify-memory"      # repo-specific, or only meaningful in some repos
 
 DEST="${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}"

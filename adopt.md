@@ -103,6 +103,8 @@ Important:
 
 Use this when the framework has been updated and you want to bring an adopted project up to date.
 
+**Prefer the skill.** This prompt is the portable fallback; `templates/update-drift.md` is the same workflow as an installable skill (`~/.claude/skills/update-drift/SKILL.md`, user-global) and carries what the prompt below leaves out: stamp-shape tolerance, a four-way triage that forces a *recorded reason* for every decline, the gitignored surfaces `git diff` cannot see, and a rule to verify a release's claims by running them rather than reading them. Of adopt.md's three prompts this is the only one that fires repeatedly, which is what earns it a skill slot. Use the prompt below if your tool has no skill mechanism.
+
 ### Prompt
 
 ```
