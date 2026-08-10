@@ -57,15 +57,91 @@ Run that single pass in a **fresh context** — a subagent if your tool provides
 
 The gate changes how many lenses run. It never changes *whether* a change is reviewed — every diff still gets at least one adversarial pass.
 
-If only LOW files changed **and the gate above does not escalate**, do a single adversarial pass and skip to Step 3. The gate wins where the two disagree: a 400-line change to `memory/**` is still a large change, and tier is about blast radius, not size.
+If only LOW files changed **and the gate above does not escalate**, run Step 1.5, then do a single adversarial pass and skip to Step 3. Step 1.5 is never skipped — it is deterministic and costs nothing, and LOW is where the memory files that motivated it live. The gate wins where the two disagree: a 400-line change to `memory/**` is still a large change, and tier is about blast radius, not size.
 
 **If a changed file matches no pattern, treat it as MEDIUM, and name it in the report under "Unclassified" even when a HIGH file in the same diff makes the tier moot.** The naming is the point: an unrecognized path is usually new shipped content whose tier nobody has decided yet, and it will keep arriving un-triaged until someone adds a row. Do not silently drop it, and do not default it to LOW. **If it is executable or is copied into an adopter's tree, escalate it to HIGH rather than leaving it at MEDIUM** — MEDIUM omits both the guarantee-preservation and shell-correctness lenses, which are exactly the two that shipped content needs.
 
 If no files changed, report "nothing to review" and stop.
 
+## Step 1.5 — Structural pre-check
+
+Runs at **every tier and every magnitude**, before any lens, on every changed markdown file — the single-adversarial-pass gate above trims lenses, not this. It is deterministic, so it costs nothing to run and does not need a model to evaluate, which is the reason it is a step rather than a lens.
+
+The lenses below all read *content*: does this path exist, is this flag right, what would a future session do wrong. None of them asks whether the file is still **valid markdown** after the edit. That gap matters disproportionately here, because the memory layer is predominantly wide tables — inventories, index files, machine lists — where a row is one very long line. A `|` added inside a cell (a regex like `'recordfail|initrdfail'`, an `||` in a shell fragment, an alternation in a note) pushes cells past the end of the table, and **GFM drops the excess silently**. It reads fine as prose in the diff and is wrong only when rendered, so a human reviewer and an adversarial lens both pass it.
+
+```bash
+{ git -c core.quotePath=false diff --name-only
+  git -c core.quotePath=false diff --cached --name-only
+  git -c core.quotePath=false diff --name-only @{u} 2>/dev/null
+  git -c core.quotePath=false ls-files --others --exclude-standard; } |
+  sort -u | grep '\.md$' | while IFS= read -r f; do
+  [ -f "$f" ] || continue
+  awk -v F="$f" '
+    function cells(s,   t, n) {
+      t = s; gsub(/\\\|/, "", t)
+      sub(/^[ \t]+/, "", t); sub(/[ \t]+$/, "", t)
+      sub(/^\|/, "", t); sub(/\|$/, "", t)
+      n = gsub(/\|/, "|", t); return n + 1
+    }
+    function isdelim(s,   t) {
+      t = s; gsub(/\\\|/, "", t); gsub(/[ \t]/, "", t)
+      return (t ~ /-/ && t ~ /^[|:-]+$/)
+    }
+    {
+      bare = $0; sub(/^ ? ? ?/, "", bare)
+      if (bare ~ /^```/ || bare ~ /^~~~/) {
+        c = substr(bare, 1, 1); n = 0
+        while (substr(bare, n + 1, 1) == c) n++
+        if (fch == "") { if (n >= 3) { fch = c; flen = n } }
+        else if (c == fch && n >= flen) fch = ""
+        intbl = 0; prev = ""; next
+      }
+      if (fch != "") next
+      if (isdelim($0) && prev != "" && (index($0, "|") || index(prev, "|"))) {
+        base = cells($0); intbl = 1
+        if (cells(prev) != base)
+          printf "%s:%d: header has %d cells, delimiter row defines %d — not a valid table\n", F, NR-1, cells(prev), base
+        prev = $0; next
+      }
+      if (intbl) {
+        if ($0 ~ /^[ \t]*$/) intbl = 0
+        else if (index($0, "|") && cells($0) > base)
+          printf "%s:%d: row has %d cells, table defines %d — the excess is dropped when rendered\n", F, NR, cells($0), base
+      }
+      prev = $0
+    }
+    END { if (fch != "") printf "%s: unclosed %s code fence\n", F, fch }
+  ' "$f"
+done
+```
+
+The file list is the union of unstaged, staged, unpushed, and **untracked** — `git diff` in any form never lists a file git has not seen, and a brand-new document is where fresh corruption is most likely. `core.quotePath=false` is load-bearing: git otherwise renders a non-ASCII path as `"caf\303\251.md"`, which does not end in `.md`, so the file is dropped from both the check and the count with no error.
+
+**The delimiter row defines the table, and only *excess* cells are reported.** GFM inserts empty cells when a row is short and discards them when a row is long, so a short row renders exactly as intended and is not a defect — a section-divider row like `| **PART ONE** |` inside a wide table is idiomatic, not corruption. A long row loses data. Reporting both was measured at a **39% false-positive rate**; anchoring on the delimiter and reporting only the lossy direction took the estate from 168 hits to 68 across 4381 files, with the removed hits all in legal-but-short or not-a-table-at-all classes.
+
+Every reported hit is a real loss, in one of three shapes: a row whose excess cells are discarded, a header that disagrees with its own delimiter row (which means GFM renders no table at all), and an unbalanced code fence. This includes pipes inside backticks — GFM splits a row into cells *before* it parses inline content, and its spec says so explicitly, so a `|` in an inline-code span breaks the row exactly like a bare one. Fix each (escape as `\|`, or move the command out of the table) before running the lenses.
+
+**Known blind spots, so a clean result is not read as more than it is**: tables inside blockquotes are not examined, nor is a table whose delimiter row is itself missing. The check finds lossy rows in well-formed tables; it is not a markdown validator.
+
+The command prints nothing on a clean run — which is also what it prints when the file list was empty. **Report the count alongside the result** so the two are distinguishable:
+
+```bash
+{ git -c core.quotePath=false diff --name-only
+  git -c core.quotePath=false diff --cached --name-only
+  git -c core.quotePath=false diff --name-only @{u} 2>/dev/null
+  git -c core.quotePath=false ls-files --others --exclude-standard; } |
+  sort -u | grep -c '\.md$'
+```
+
+That count is files *in scope*, not files you edited: `@{u}` includes anything changed upstream, and `ls-files --others` includes every untracked markdown in the tree. If it is zero while the Step 1 diff listed markdown files, the pipeline is broken — not the changes clean.
+
 ## Step 2 — Execute review lenses
 
 For each lens, spawn a subagent with the specific prompt below. Run lenses concurrently.
+
+**Invariant: every file named in the guarantee lens must sit in the HIGH row of Step 1.** The lens is HIGH-gated. A file it defines a guarantee for but that tiers below HIGH has a guarantee that can *never* be checked — and the report renders "no HIGH files changed" as a clean pass, so the failure is silent and looks like success. Whenever you add an entry to the guarantee lens, add its path to the HIGH row in the same edit; if a path does not deserve HIGH, it does not deserve a guarantee entry. Check the invariant in the direction that catches it: read each guarantee entry and find its tier, not the other way round.
+
+This matters most when you first adopt this skill. Both the tier table and the guarantee lens name files in *this* repo's tree, so you will rewrite both — and the two rewrites are easy to do independently. In the version shipped here the invariant happens to hold, so the template never demonstrates the constraint it depends on.
 
 ### Lens: guarantee-preservation (HIGH only)
 
@@ -149,7 +225,9 @@ Report: SHELL OK or SHELL ISSUE, with specific bug if found.
 
 ## Step 3 — Synthesize
 
-Combine all lens reports. For each finding:
+Combine all lens reports. Structural hits from Step 1.5 do not enter this table — they were fixed before the lenses ran; carry their count into the Step 4 summary instead. A hit you deliberately left unfixed enters here as a BLOCKER with the lens recorded as `structural`, and the summary count still includes it.
+
+For each finding:
 - **Severity**: BLOCKER (must fix before commit) / WARNING (should fix) / NOTE (consider)
 - **Lens**: which lens found it
 - **File**: where
@@ -170,11 +248,20 @@ If only WARNING/NOTE: recommend the user review and decide.
 |---|----------|------|------|---------|
 | 1 | BLOCKER | adversarial | ... | ... |
 
+### Unclassified
+
+[Every changed file matching no tier row in Step 1, one per line — or "none".
+Never omit this section. An empty one is evidence the check ran; a missing one
+is indistinguishable from a check that was skipped.]
+
 ### Summary
 
+- **Structural pre-check**: [N] markdown files checked, [N] problems
 - **Lenses run**: [list]
 - **Blockers**: [N] (must fix before commit)
 - **Warnings**: [N]
 - **Notes**: [N]
 - **Verdict**: [READY TO COMMIT | FIX BLOCKERS FIRST | REVIEW WARNINGS]
 ```
+
+The Unclassified list is not cosmetic and is not made moot by a HIGH file elsewhere in the same diff. An unrecognized path is usually new shipped content whose tier nobody has decided yet; naming it is what gets a row added, and until someone adds one it will keep arriving un-triaged.

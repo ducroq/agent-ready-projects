@@ -44,6 +44,7 @@ For each `.md` file in the fixture directory, run the curate verification logic 
 | `verified-fail.md` | State ("shipped," "running") | **FAIL** — verify command runs, outputs FAIL |
 | `verified-error.md` | State ("deployed") | **ERROR** — verify command exits non-zero with no PASS/FAIL output |
 | `verified-manual.md` | State ("deployed") | **MANUAL CHECK NEEDED** — has `<!-- verify: manual — ... -->` |
+| `verified-cannot-verify.md` | State ("running") | **CANNOT VERIFY** — guarded command, target unreachable, output begins `CANNOT VERIFY:` |
 | `unverified-state.md` | State ("deployed," "running") | **UNVERIFIED** — state claim without verify comment |
 | `unverified-live.md` | State ("live") | **UNVERIFIED** — exercises the "live" trigger word |
 | `unverified-working-in-production.md` | State ("working in production") | **UNVERIFIED** — exercises the multi-word trigger phrase |
@@ -60,6 +61,7 @@ PASS  verified-pass.md       — expected: PASS, got: ___
 PASS  verified-fail.md       — expected: FAIL, got: ___
 PASS  verified-error.md      — expected: ERROR, got: ___
 PASS  verified-manual.md     — expected: MANUAL CHECK NEEDED, got: ___
+PASS  verified-cannot-verify.md — expected: CANNOT VERIFY, got: ___
 PASS  unverified-state.md    — expected: UNVERIFIED, got: ___
 PASS  unverified-live.md     — expected: UNVERIFIED, got: ___
 PASS  unverified-working-in-production.md — expected: UNVERIFIED, got: ___
@@ -73,16 +75,17 @@ Replace `PASS` with `FAIL` if the actual outcome doesn't match expected.
 ## Report
 
 Summarize:
-- **Total fixtures**: 10
-- **Passed**: N/10
-- **Failed**: N/10 (list each with expected vs actual)
+- **Total fixtures**: 11
+- **Passed**: N/11
+- **Failed**: N/11 (list each with expected vs actual)
 
-If all 10 pass, the curate verification protocol is working correctly for these cases.
+If all 11 pass, the curate verification protocol is working correctly for these cases.
 
 If any fail, diagnose:
 - **False positive** (flagged a non-state claim as state): the trigger-word detection is too broad
 - **False negative** (missed a state claim): the trigger-word detection is too narrow
 - **Wrong outcome** (detected the claim but misclassified the verify status): the verify-command parsing needs attention
+- **CANNOT VERIFY scored as PASS**: the guarded command exits 0 and its output contains no `FAIL`, so anything keying on the exit code alone reads it as a pass. That is the failure this fixture exists to catch — an unreachable check reported as a satisfied one. The disposition must come from the `CANNOT VERIFY:` prefix, not from the exit status
 
 ## Cleanup
 

@@ -2,6 +2,8 @@
 
 A family of test-scaffolding templates for physics simulation code. Sibling to the LLM-based theory-verification family in [`agent-ready-papers/templates/physics-verification/`](https://github.com/ducroq/agent-ready-papers/tree/master/templates/physics-verification).
 
+> **Status: unproven scaffolding.** Unlike the rest of `templates/`, this family has never been run against a live simulator — not by this repo, not by any downstream consumer. The structure is derived from known physics-code failure modes, not from catching one. Validate every tolerance, convergence threshold, and pass/fail criterion against your own code before trusting a green result; a test that passes because its threshold is too loose is worse than no test. Tracking: [issue #25](https://github.com/ducroq/agent-ready-projects/issues/25) — running it and reporting back is what closes it.
+
 ## Why this family exists
 
 Physics simulation code has failure modes ordinary unit tests don't catch:

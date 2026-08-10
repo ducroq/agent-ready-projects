@@ -4,7 +4,12 @@
 # the canonical frontmatter-correct SKILL.md files were invisible to git and drifted
 # from templates/ without anything noticing.
 !.claude/skills/
-memory/
+# Anchored: this is the maintainer's own memory dir at the repo root, not every
+# directory named memory/ anywhere. Unanchored it also swallowed
+# templates/test-fixtures/memory/ — so any NEW fixture added there was silently
+# unaddable and showed nothing in git status. The ten fixtures already tracked
+# predate the rule and were unaffected, which is why it went unnoticed.
+/memory/
 .pytest_cache/
 .DS_Store
 Thumbs.db

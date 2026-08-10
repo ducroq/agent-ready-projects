@@ -35,9 +35,24 @@ Check for context rot from *previous* sessions. This catches what the session-fo
 3. **Lingering gotchas**: Read the gotcha log. Flag any unresolved entries older than 14 days — they're either fixed (mark `[RESOLVED]`) or stuck (surface to the user).
 4. **Ground truth drift**: If the project file has a "Ground Truth Designations" table, verify each listed file exists and has been modified more recently than the artifacts that defer to it. Flag any where a downstream artifact is newer than its source of truth.
 5. **Unverified state claims**: Scan memory files for state claims ("shipped," "deployed," "live," "running," "working in production"). For each claim found:
+   Take these in order — the first match wins, and the order matters because the same command can satisfy more than one:
+   - **Has `<!-- verify: manual — ... -->` comment**: Flag as **MANUAL CHECK NEEDED** with the noted reason. Surface to the engineer. No command is run.
+   - **Output begins with `CANNOT VERIFY:`**: Flag as **CANNOT VERIFY** with the reason given. The check could not reach what it needed — a powered-off machine, an absent credential. This is neither a pass nor a failure and must not be reported as either. **This test comes before the exit-status tests below**, and a guard must therefore exit 0; a guard that also exits non-zero would otherwise be scored ERROR, and the two dispositions mean different things.
    - **Has `<!-- verify: ... -->` comment**: Run the command. Report **PASS** or **FAIL**. If FAIL, flag the entry for correction or removal — the claimed state is no longer true. If the command errors (non-zero exit, command not found, no output), report **ERROR** and flag for investigation — the verify command itself may be stale.
-   - **Has `<!-- verify: manual — ... -->` comment**: Flag as **MANUAL CHECK NEEDED** with the noted reason. Surface to the engineer.
    - **No verification comment**: Flag as **UNVERIFIED**. These claims decay immediately after the session that wrote them. Suggest adding a `<!-- verify: -->` comment or requalifying the claim as a session observation.
+
+   **Writing a verify command — it has to survive two syntaxes it is not written in.** The body sits inside an HTML comment, inside markdown, and shell is hostile to both. Check each command against the three rules below, then **run it once, at the moment you write it**. A verify command that fails on day one is worthless; one that cannot be *extracted* is worse than none, because it reports nothing while looking like it ran.
+
+   - **Avoid `--`, and never let `-->` appear.** The hard rule is narrow: an HTML comment ends at the first `-->`, so a command containing that sequence truncates the comment and spills the remainder onto the page. Bare `--` is conforming HTML and renders fine — but it breaks two things that matter here. XML and XHTML pipelines reject it outright, and, the failure actually observed, a naive extraction regex over comment bodies stops early and returns **zero** commands, so the step examines nothing and completes cleanly. Long flags are the commonest construct in shell, so this is near-certain rather than an edge case: `--user`, `--no-pager`, `--json`, `--quiet`. In order of preference: **check the artifact instead of asking the tool** (`test -L ~/.config/systemd/user/UNIT` rather than `systemctl --user is-enabled`); **set an environment variable instead of passing a flag** (`SYSTEMD_PAGER=cat systemctl list-timers`); **use the short flag**.
+   - **No unescaped `|` if the claim lives in a table cell.** GFM splits a row into cells before it parses inline content, so the idiomatic `&& echo PASS || echo FAIL` adds two cells; GFM then discards everything past the table's width, taking the rest of the row with it. Escape as `\|`, or keep verified claims out of tables.
+   - **Guard anything host-dependent** so an unreachable target yields CANNOT VERIFY rather than a false PASS or a misleading FAIL. Without a guard, a machine that is merely powered off reports FAIL every run, and the noise trains the reader to ignore the step. Write the guard as an explicit `if`, not as `guard && check || echo ...`:
+
+     ```
+     if ping -c1 -W1 hostname >/dev/null 2>&1; then <real check>; else echo "CANNOT VERIFY: host unreachable"; fi
+     ```
+
+     **`A && B || C` is the wrong shape here and it fails in the direction that hides bugs**: `C` runs when *either* `A` or `B` is false, so a reachable host whose check genuinely FAILS is reported as un-checkable. That converts a real defect into a shrug. Emit the reason too — "CANNOT VERIFY" with no cause is indistinguishable from a broken guard.
+
 
 6. **Hypothesis log surface**: If a hypothesis log exists, scan its `## Open` section. **Check both `memory/hypothesis-log.md` and `docs/hypothesis-log.md`** — projects put it in either, so a single-path check silently scans nothing. For each entry:
    - **Past `Review by:`**: Flag as **DUE FOR REVIEW** — the deadline has arrived. Surface to the engineer with the entry's Position and Method so they can resolve (move to `## Resolved`) or extend the deadline.
@@ -111,7 +126,7 @@ Skip if Step 0 already ran a full freshness check. Otherwise, spot-check that pa
 
 Summarize what you changed:
 - **Freshness**: Dead references, stale memory files, lingering gotchas, ground truth drift (from Step 0)
-- **Verification**: State claims checked — N passed, N failed, N unverified, N manual check needed (from Step 0)
+- **Verification**: State claims checked — N passed, N failed, N unverified, N errored, N manual check needed, N cannot verify (from Step 0). Report all six numbers even when they are zero; a disposition omitted because it was empty is indistinguishable from one that was never checked
 - **Gotchas**: New entries added, entries resolved or promoted
 - **Memory index**: Updates made
 - **Doc sync**: Project file, runbook, backlog updates made or flagged (from Step 4)

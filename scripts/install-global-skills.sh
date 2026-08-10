@@ -16,6 +16,8 @@
 
 set -u
 SELF=$(readlink -f "$0" 2>/dev/null || echo "$0")
+INVOKED_FROM=$PWD          # captured BEFORE the cd: a relative scan root means
+                           # relative to where the user ran this, not to the repo
 cd "$(dirname "$SELF")/.." || { echo "cannot reach repo root" >&2; exit 2; }
 [ -d .claude/skills ] || { echo "not in the agent-ready-projects repo root: $(pwd)" >&2; exit 2; }
 
@@ -29,8 +31,10 @@ for arg in "$@"; do
   case "$arg" in
     --check) CHECK_ONLY=1 ;;
     -*) echo "unknown flag: $arg" >&2; exit 2 ;;
+    "") echo "empty scan root: pass a directory or omit the argument" >&2; exit 2 ;;
     *) [ -n "$SCAN_ROOT" ] && { echo "only one scan root is supported (got '$SCAN_ROOT' and '$arg')" >&2; exit 2; }
-       SCAN_ROOT=$(readlink -f "$arg" 2>/dev/null || echo "$arg") ;;
+       case "$arg" in /*) SCAN_ROOT=$arg ;; *) SCAN_ROOT=$INVOKED_FROM/$arg ;; esac
+       SCAN_ROOT=$(readlink -f "$SCAN_ROOT" 2>/dev/null || echo "$SCAN_ROOT") ;;
   esac
 done
 
