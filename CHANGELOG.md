@@ -12,7 +12,7 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.19.0 (candidate, unreleased)
+## v1.19.0 (2026-08-10)
 
 MINOR — issue sweep of the oldest open items, closing #24–#29 (#23, older still, is triaged and deliberately left open — see *Not done*). One new deterministic step in `review-changes`, one new verification disposition in `curate`, and three corrections. **Adopter action: reinstall the global skills** (`scripts/install-global-skills.sh`) if you use `curate`; re-copy `review-changes` into your repo. Nothing breaks if you don't.
 

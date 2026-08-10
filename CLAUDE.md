@@ -4,7 +4,7 @@ The source framework that teaches the layered memory method for AI coding agents
 
 - **Type**: Public methodology repo (guide + templates + skills)
 - **License**: MIT
-- **agent-ready-projects** (this repo): v1.18.0 (new `update-drift` skill — the framework-drift check promoted from `adopt.md` §3 to a user-global skill. New template = MINOR.)
+- **agent-ready-projects** (this repo): v1.19.0 (issue sweep #24–#29: new deterministic Step 1.5 structural pre-check in `review-changes`, new CANNOT VERIFY disposition in `curate`. New behaviours = MINOR.)
 
 > Live project state (current threads, deferred items, surfaced patterns) lives in `memory/MEMORY.md` (maintainer-local — see *What is intentionally not shipped* below). Release notes live in `CHANGELOG.md`.
 
