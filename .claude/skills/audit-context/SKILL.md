@@ -111,6 +111,8 @@ Check that every topic file in memory/ has a task-triggered pointer in the "Befo
 
 Check that every work-item file in `docs/work-items/` (other than `README.md`) has a corresponding pointer in the memory index's Current State section. Flag orphaned work-item files — they exist but no pointer tracks them. Also flag pointers in MEMORY.md whose target files no longer exist (stale pointer cleanup).
 
+
+**Then check the index's own reachability, which is the one orphan the rest of this step cannot see.** Every check above walks *outward from* the memory index — so if the project file has no pointer to the index, the index is unreachable, and every check that runs through it silently examines nothing. Verify that the project file contains a row whose trigger fires at session start and whose target is the memory index. If it does not, report it as the finding of this step: a single missing row takes all of Layer 3 out of reach, and nothing else in this audit reports it.
 ## Step 6 — Framework version drift
 
 Find this project's adopted framework version and compare it against the latest in `agent-ready-projects/CHANGELOG.md`.

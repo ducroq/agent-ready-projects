@@ -10,7 +10,7 @@ block-beta
 
     L1["Layer 1: Project File<br/>Identity, constraints, pointers"]:1 auto1["✅ Yes"]:1 g1["Bounded ~100 lines"]:1
     L2["Layer 2: Runbook<br/>Operational detail, procedures"]:1 auto2["❌ Triggered"]:1 g2["Grows with operations"]:1
-    L3["Layer 3: Memory<br/>Index + topic files"]:1 auto3["📋 Index only"]:1 g3["Grows with complexity"]:1
+    L3["Layer 3: Memory<br/>Index + topic files"]:1 auto3["❌ Triggered"]:1 g3["Grows with complexity"]:1
     L4["Layer 4: Gotcha Log<br/>Problem → Root Cause → Fix"]:1 auto4["❌ Triggered"]:1 g4["Append-only"]:1
 
     style L1 fill:#f0fdf4,stroke:#16803c
@@ -57,11 +57,11 @@ graph LR
 
 ## Layer 3: Memory — when complexity grows
 
-**What it is:** An index pointing to on-demand topic files. It is not auto-loaded — it sits below the cliff and is reached by a task-triggered pointer from Layer 1, which is the only thing that loads it.
+**What it is:** An index pointing to on-demand topic files. It is not auto-loaded — it sits below the cliff and is reached by a task-triggered pointer from Layer 1.
 
 ```mermaid
 graph TD
-    MI["Memory Index<br/>(pointer-loaded, ~60-80 lines)"]
+    MI["Memory Index<br/>(reached by pointer, ~60-80 lines)"]
     MI --> TF1["api-quirks.md<br/>(loaded when API errors)"]
     MI --> TF2["infrastructure.md<br/>(loaded when deploying)"]
     MI --> TF3["auth-patterns.md<br/>(loaded when touching auth)"]

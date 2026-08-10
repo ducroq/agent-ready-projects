@@ -4,7 +4,7 @@
 
 Your AI agent starts every session cold. It doesn't remember yesterday's bugs, your architectural decisions, or what it tried and failed last week. You end up repeating yourself, undoing its mistakes, and wondering why it's not getting better.
 
-**This guide fixes that.** It gives your project a layered memory system — a project file, a memory index, a gotcha log — that agents auto-load and self-navigate. Lessons get captured during work, promoted as they prove their value, and retired when they're stale. Your agent gets smarter with every session, not just every prompt.
+**This guide fixes that.** It gives your project a layered memory system — a project file, a memory index, a gotcha log — that agents load and self-navigate. Lessons get captured during work, promoted as they prove their value, and retired when they're stale. Your agent gets smarter with every session, not just every prompt.
 
 Works with any AI coding agent: Claude Code, Codex, Cursor, Windsurf, GitHub Copilot, Aider, and others.
 
@@ -77,7 +77,7 @@ Documentation scales with project complexity across four layers:
 |-------|------|-------------|-------------|
 | **1. Project file** | Identity, constraints, "Before You Start" table | Yes | Always (start here) |
 | **2. Runbook** | Operational how-to, principles | No | When the project file gets crowded |
-| **3. Memory** | Index + topic files of learned knowledge | Index: yes | When complexity grows |
+| **3. Memory** | Index + topic files of learned knowledge | No — index reached by a pointer | When complexity grows |
 | **4. Gotcha log** | Problem → Root cause → Fix journal | No | When you hit your first weird bug |
 | **5. Coordination** | Contributors, shared constraints, WIP, conventions | No | When the project has multiple contributors |
 

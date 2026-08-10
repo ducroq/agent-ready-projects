@@ -88,7 +88,11 @@ Content that should never be committed to a repository — personal notes about 
 - Sensitive operational notes (if any) need conscious routing to auto-memory or a gitignored location.
 - Tools that auto-load from a specific path (Claude Code auto-loads `~/.claude/projects/*/memory/MEMORY.md`) may need configuration to also load from in-repo `memory/MEMORY.md`. In Claude Code, the project file (`CLAUDE.md`) already handles this through task-triggered pointers — the in-repo memory index is referenced there, not auto-loaded by path convention.
 
-- **The same-basename collision is the trap this decision creates, and it deserves naming.** After this ADR a Claude Code project has *two* files called `MEMORY.md`: the untracked user-level one, which the tool loads on its own, and the in-repo one, which it does not. They look identical in any sentence that says "MEMORY.md". The consequence is that Layer 3 crossed the auto-loading cliff — the concept this framework named — and the word "auto-loaded" stayed attached to it in eight places for months afterwards, including in the audit step that would have had to question its own premise to catch it. Measured cost in one adopter: a session handoff that only ever arrived when pasted by hand, and a context-budget series running ~50% high because it weighed a file that was never loaded. When writing about either file, say which one.
+- **[Amended 2026-08-10, five months after this decision was accepted — see issue #40]** **The same-basename collision is the trap this decision creates, and it deserves naming.** After this ADR a Claude Code project has *two* files called `MEMORY.md`: the untracked user-level one, which the tool loads on its own, and the in-repo one, which it does not. They look identical in any sentence that says "MEMORY.md".
+
+  The consequence went unnoticed for those five months: Layer 3 crossed the auto-loading cliff — the concept this framework named — and the word "auto-loaded" stayed attached to it across the guide, the templates and the visual walkthrough, including in the audit step that would have had to question its own premise to catch it. It surfaced only when an adopter measured a context budget and found it counting a file that never arrived. Details and the adopter's figures are in issue #40; they are not restated here, because they are unreproducible from this repo.
+
+  **When writing about either file, say which one.**
 
 ### Migration
 

@@ -14,13 +14,13 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 ## v1.20.0 (candidate, unreleased)
 
-MINOR — closes #40. **The Layer 3 memory index is not auto-loaded, and had not been since ADR-001.** Twelve places said it was. **Adopter action: add the new "Starting any session (project state)" row to your project file** — without it your memory index is never read, and nothing tells you.
+MINOR — closes #40. **The Layer 3 memory index is not auto-loaded, and had not been since ADR-001.** The claim survived across the guide, the templates, the four-page visual walkthrough, the public README and the adopt prompt — 16 files corrected here; an exact site count was published twice with two different numbers before being dropped in favour of one that can be checked. **Adopter action: add the "Picking up where the last session left off" row to your project file** — without it your memory index is never read, and nothing tells you.
 
 ### The defect
 
 ADR-001 moved Layer 3 from the tool's own memory path into the repo. At the old path it genuinely was auto-loaded; at the new one it is reached by a task-triggered pointer, like any other in-repo file. The files moved and the word did not. So the framework's own Layer 3 sat on the wrong side of the auto-loading cliff — the concept this framework named — for months.
 
-**ADR-001 already stated the correct position** (its last consequence bullet: "referenced there, not auto-loaded by path convention"). Nothing propagated it. That makes this unpropagated language rather than a design disagreement, and it is why the fix is a sweep rather than a decision.
+**ADR-001 already stated the correct position** (in its consequences: "referenced there, not auto-loaded by path convention"). Nothing propagated it. That makes this unpropagated language rather than a design disagreement, and it is why the fix is a sweep rather than a decision.
 
 Two things kept it alive. `docs/GUIDE.md` hedged it as "auto-loaded **if your tool supports it**", which reads as a statement about *tools* when the real variable is *which path the file sits at*. And `audit-context` Step 1 opened with "Check the auto-loaded files (project file and memory index)" — the audit that would have caught it re-asserted the premise it needed to question, on every run.
 
@@ -45,6 +45,21 @@ Two things kept it alive. `docs/GUIDE.md` hedged it as "auto-loaded **if your to
 - **`docs/guide/02-the-layers.md`** — prose and the mermaid node (`auto-loaded` → `pointer-loaded`).
 - **`docs/decisions/ADR-001-...`** — the **same-basename collision** is now named as a consequence of the decision, with the cost above. Worth its own bullet: the adopter who found this wrote the correction and still got it wrong on the first pass, omitting the auto-memory file from an enumeration of what loads.
 - **`docs/EXAMPLE.md`** — the same header comment.
+
+### Found by the review battery, after the first draft
+
+The first draft of this change was committed and then refuted by a three-lens battery on six counts. Recording them because the pattern is the point — and because two of them are this repo's own freshly-filed issues, committed against.
+
+- **The sweep was incomplete.** Six live sites still asserted it, including 's layer table under a literal "Auto-loaded?" column, the  diagram that is the framework's own picture of its own concept, and — worst — , which told adopters that the memory index *does not need a trigger* because it is always present. A release whose load-bearing fix is adding that trigger shipped a public page instructing readers to skip it. All swept.
+- **Four shipped absolutes were false, which is [#39](https://github.com/ducroq/agent-ready-projects/issues/39) committed one day after filing it.** "This row is the only thing that loads it" / "Layer 1 is the only auto-loaded layer" are refuted by CLAUDE.md's documented  import syntax, by , and by session hooks — one of which this framework's own guide recommends.  is a one-line, tool-native way to make the in-repo index genuinely auto-loaded; the first draft steered adopters away from a better fix than the one it was shipping. Absolutes removed, and the import named in  as the deliberate trade it is.
+- **The new row loaded all of Layer 3 on every session.** It read "the index, plus whatever it routes you to" — which instructs the agent to follow the on-demand topic pointers at session start, collapsing Layer 3 into always-loaded context and restoring the ~23k the entry cites as the cost of the bug. It now says *the index itself, not the topic files it lists*.
+- **The two rows collided as triggers.** Both began "Starting any session", disambiguated by a parenthetical *category* — the exact weak-trigger shape  condemns. Renamed to a situation.
+- ** was untouched, so new adoptions reproduced the defect.** The "Adopter action" reached existing adopters only. STEP 4 now creates the index and the row that reaches it in the same breath.
+- ** Step 5 could not see the orphan this change makes possible.** Every check in that step walks *outward from* the memory index, so a missing pointer *to* the index takes all of Layer 3 out of reach and disables the checks that would report it. Step 5 now verifies the inbound pointer first.
+
+Also from the battery: the ~200-line truncation figure is **unsourced anywhere in this repo** and was being restated with more confidence than before, in two directions. It is now stated as Claude Code's documented cap on the *user-level* file (200 lines or 25KB, whichever comes first), with the in-repo case explicitly marked as unmeasured rather than asserted either way.  had retained the contradicting claim the same commit removed from the guide; dropped. The  coinage appeared once, defined nowhere, and is gone. ADR-001's amendment is now date-stamped and no longer carries an adopter's unreproducible figures into a permanent record — they stay in #40, where they are attributable.
+
+And this repo now applies its own adopter action: 's "Picking up project state" row was the category-shaped version the release argues against.
 
 ### Still open
 

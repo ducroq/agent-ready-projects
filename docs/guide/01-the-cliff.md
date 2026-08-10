@@ -6,10 +6,10 @@ The single most important concept: **there is a hard line between what your agen
 graph TB
     subgraph above["🟢 Auto-loaded (always visible)"]
         PF["Project file<br/><code>CLAUDE.md / AGENTS.md</code>"]
-        MI["Memory index<br/><code>MEMORY.md</code>"]
     end
 
     subgraph below["🔴 Below the cliff (invisible until triggered)"]
+        MI["Memory index<br/><code>memory/MEMORY.md</code>"]
         RB["Runbook<br/><code>docs/RUNBOOK.md</code>"]
         TF["Topic files<br/><code>memory/*.md</code>"]
         GL["Gotcha log<br/><code>memory/gotcha-log.md</code>"]

@@ -1,17 +1,18 @@
 # Memory
 
-<!-- NOT loaded automatically. This file sits below the auto-loading cliff:
-     the task-triggered pointer in your project file is the only thing that
-     brings it into a session. If that pointer is missing or vague, nothing
-     here is ever read — and the failure is silent, because an index that
-     was never loaded looks exactly like one with nothing to say.
+<!-- NOT loaded automatically. This file sits below the auto-loading cliff.
+     A task-triggered pointer in your project file is what brings it into a
+     session; if that pointer is missing or vague, nothing here is ever read,
+     and the failure is silent, because an index that was never loaded looks
+     exactly like one with nothing to say.
 
-     (Claude Code note: the auto-loaded MEMORY.md is the USER-LEVEL one at
-     ~/.claude/projects/<slug>/memory/. This in-repo file shares its name and
-     does not share its behaviour.)
+     (Claude Code notes: the MEMORY.md the tool auto-loads is the USER-LEVEL
+     one at ~/.claude/projects/<slug>/memory/ — same name, different file,
+     different behaviour. A CLAUDE.md `@memory/MEMORY.md` import will load
+     this file at launch if you want it genuinely auto-loaded; that is a
+     deliberate trade of context budget for reliability, not the default.)
 
-     Keep it lean anyway — it is read in full whenever it is reached, and
-     some tools truncate after ~200 lines.
+     Keep it lean — it is read in full whenever it is reached.
      Use this as an index — deep knowledge goes in topic files.
 
      END-OF-SESSION CURATION:

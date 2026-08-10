@@ -58,6 +58,6 @@ Weak triggers describe content. Strong triggers describe moments. The agent does
 
 ## When to skip them
 
-Not every file needs a task-triggered pointer. Files that are auto-loaded (your project file, your memory index) don't need triggers — they're always present. Files that are only relevant during periodic curation don't need triggers in the project file — the curate skill handles that.
+Not every file needs a task-triggered pointer. Your project file is auto-loaded and needs no trigger — it is always present. **The memory index does need one**, and it is the most important trigger in the table: since ADR-001 put Layer 3 in the repo, nothing loads the index on its own, and an index nothing reaches is indistinguishable from an empty one. Files that are only relevant during periodic curation don't need triggers in the project file — the curate skill handles that.
 
 Task-triggered pointers are for the gap: files that live below the auto-loading cliff and contain context the agent needs for specific tasks. If you're not sure whether a file needs a pointer, wait until an agent misses it. Then add the trigger.

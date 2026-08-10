@@ -75,7 +75,7 @@ The agent does four things:
 graph LR
     GL["Gotcha log<br/>(loaded when stuck)"]
     TF["Topic file<br/>(loaded by situation)"]
-    MI["Memory index<br/>(loaded every session)"]
+    MI["Memory index<br/>(loaded by pointer at session start)"]
     PF["Project file<br/>(loaded every session)"]
 
     GL -- "recurs 2-3x" --> TF

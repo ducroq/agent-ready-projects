@@ -198,11 +198,11 @@ Why combine principles and how-to? Because principles without a runbook are too 
 **Purpose**: "What have we learned working on this?"
 **Voice**: Declarative — "X works like Y", "if you see A, it's because B"
 **Location**: In-repo `memory/` directory (see [ADR-001](decisions/ADR-001-in-repo-memory-over-auto-memory.md) for rationale)
-**Auto-loaded**: No — and this is the most-missed point in the whole framework. Since [ADR-001](decisions/ADR-001-in-repo-memory-over-auto-memory.md) put Layer 3 in the repo, the memory index sits *below* the auto-loading cliff along with the topic files. Both are reached by task-triggered pointers from Layer 1. Layer 1 is the only auto-loaded layer.
+**Auto-loaded**: No — and this is the most-missed point in the whole framework. Since [ADR-001](decisions/ADR-001-in-repo-memory-over-auto-memory.md) put Layer 3 in the repo, the memory index sits *below* the auto-loading cliff along with the topic files. Both are reached by task-triggered pointers from Layer 1, which is the only layer of this framework that a tool loads on its own.
 
 This is worth stating flatly because the earlier design *was* auto-loaded — Layer 3 used to live at the tool's own memory path — and the word outlived the move. **Claude Code makes it especially easy to get wrong**: it auto-loads `~/.claude/projects/<slug>/memory/MEMORY.md`, so a Claude Code project has two files called `MEMORY.md`, and only the untracked user-level one arrives on its own. Verify which files your tool actually loads before you budget for them; a context measurement that includes a file which never arrives is wrong by however large that file is.
 
-**Important**: Some tools enforce hard limits on the files they auto-load (e.g., Claude Code truncates the *user-level* `MEMORY.md` after ~200 lines — content past the limit silently vanishes). That limit does not apply to the in-repo index, which is read as an ordinary file; the reason to keep it lean is context economics, not truncation. Check your tool's limits, and check *which file* each limit applies to. Regardless of the specific threshold, the index-not-dump pattern isn't just good practice — keeping auto-loaded files lean is forced by context economics. Beyond a certain project size, topic files are non-optional.
+**Important**: Some tools cap the files they auto-load — Claude Code's documented limit on the *user-level* `MEMORY.md` is the first 200 lines or 25KB, whichever comes first, and content past it silently vanishes. Whether that cap reaches an in-repo file read through a pointer is not something this guide has measured, so do not plan around either answer: check your tool's current limits yourself, and check *which file* each limit names. The reason to keep the index lean does not depend on the answer — it is read in full whenever a pointer reaches it. Regardless of the specific threshold, the index-not-dump pattern isn't just good practice — keeping auto-loaded files lean is forced by context economics. Beyond a certain project size, topic files are non-optional.
 
 This is institutional memory — the hard-won operational knowledge that isn't obvious from reading the code.
 
@@ -624,7 +624,7 @@ The layered model isn't an accident — it mirrors how processor memory hierarch
 Processor              Agent context             Shared property
 ─────────              ─────────────             ───────────────
 Registers              Project file              Always loaded, tiny, highest cost per bit
-L1 cache               Memory index              Auto-loaded, small, fast access
+L1 cache               Memory index              One pointer away, small, fast access
 L2/L3 cache            Topic files               Loaded on demand, one read away
 RAM                    Gotcha log, ADRs          Searched when needed, larger
 Disk                   Git history               Archive, rarely accessed, complete
