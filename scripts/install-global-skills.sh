@@ -76,17 +76,74 @@ done
 if [ -n "$SCAN_ROOT" ]; then
   echo
   if [ ! -d "$SCAN_ROOT" ]; then fail "scan root does not exist: $SCAN_ROOT"; SCAN_ROOT=""; fi
-  [ -n "$SCAN_ROOT" ] && echo "Scanning $SCAN_ROOT for inert project-local copies"
+fi
+# Guarded separately: the check above can blank SCAN_ROOT, and the loop below
+# must not then run `find -L ""` — which reports a phantom unreadable path and
+# double-counts an error already reported.
+if [ -n "$SCAN_ROOT" ]; then
+  echo "Scanning $SCAN_ROOT for inert project-local copies"
   scanned=0
+  unreadable=0
+  benign=0
+  # An unwritable or full TMPDIR must not silently disable the scan. Without
+  # this branch `finderr` is empty, `2>>""` fails to open, find never runs at
+  # all, and the script prints `scanned 0` and `OK` — the #36 defect with a
+  # wider blast radius, since it loses every real hit rather than one subtree.
+  if ! finderr=$(mktemp 2>/dev/null); then
+    fail "could not create a temp file for the scan (TMPDIR unwritable or full) — the estate scan did NOT run"
+    SCAN_ROOT=""
+  else
+    trap 'rm -f "$finderr"' EXIT
+  fi
+fi
+if [ -n "$SCAN_ROOT" ]; then
   for s in $GLOBAL_SKILLS; do
-    while IFS= read -r hit; do
+    # -print0: a path containing a newline is otherwise consumed as two records,
+    # which reports two bogus inert copies for one real file, inflates `scanned`,
+    # and — because neither fragment strips the suffix — defeats the
+    # this-repo-is-the-source exclusion below, so the tracked skills could be
+    # reported as inert and the user told to delete them (#37).
+    while IFS= read -r -d '' hit; do
       scanned=$((scanned + 1))
       repo=${hit%/.claude/skills/$s/SKILL.md}
       [ "$(cd "$repo" 2>/dev/null && pwd -P)" = "$(pwd -P)" ] && continue   # this repo is the source
       fail "inert local copy: $hit (shadowed by $DEST/$s)"
-    done < <(find -L "$SCAN_ROOT" -path "*/.claude/skills/$s/SKILL.md" -not -path '*/_archive/*' 2>/dev/null)
+    done < <(LC_ALL=C find -L "$SCAN_ROOT" -path "*/.claude/skills/$s/SKILL.md" -not -path '*/_archive/*' -print0 2>>"$finderr")
   done
-  echo "  scanned $scanned candidate path(s); _archive/ is excluded by design and is not checked"
+  # A subtree find cannot read contributes zero hits and, with stderr discarded,
+  # zero warnings — so an unscannable estate and a clean one printed the same
+  # `scanned 0` and the same exit 0 (#36).
+  #
+  # But "find wrote to stderr" is NOT the same predicate as "coverage was lost",
+  # and treating them as one makes the check red on ordinary estates. Under -L,
+  # a filesystem loop is *handled*: find skips the cycle, keeps walking, and
+  # misses nothing — yet it warns, and a virtualenv's `bin/local -> .` or a
+  # `docs/current -> ..` is enough to trigger it. A path that vanishes mid-walk
+  # (a build, a git clean, an npm install running in a scanned repo) likewise
+  # warns without losing ground. Only a permission error means real lost
+  # coverage. Unrecognized messages count as lost, because assuming otherwise
+  # is how a silent miss gets built. LC_ALL=C above keeps these strings stable.
+  #
+  # find runs once per global skill, so one bad directory produces one identical
+  # error per skill; deduplicate, or the count reads as N times the real ground.
+  if [ -s "$finderr" ]; then
+    while IFS= read -r line; do
+      case "$line" in
+        *"Permission denied"*)
+          unreadable=$((unreadable + 1))
+          [ "$unreadable" -le 10 ] && fail "scan could not read: $line" ;;
+        *"File system loop detected"*|*"No such file or directory"*)
+          benign=$((benign + 1)) ;;
+        *)
+          unreadable=$((unreadable + 1))
+          [ "$unreadable" -le 10 ] && fail "scan reported an unrecognized error, treating as lost coverage: $line" ;;
+      esac
+    done < <(sed 's/^find: //' "$finderr" | sort -u)
+    # Uncapped, a mid-scan `git clean` over thousands of directories buries every
+    # other finding. The count still reflects all of them.
+    [ "$unreadable" -gt 10 ] && fail "...and $((unreadable - 10)) further unreadable path(s), not listed"
+  fi
+  echo "  scanned $scanned candidate path(s), $unreadable unreadable, $benign skipped (loops/transient); _archive/ is excluded by design and is not checked"
 fi
 
 echo

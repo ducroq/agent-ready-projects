@@ -79,6 +79,12 @@ Scan the gotcha log for entries that have recurred 2-3 times. For each:
 - Suggest where it belongs: the memory index (if broadly relevant) or a topic file (if subsystem-specific)
 - If approved, add it to the destination and update the Promoted table in the gotcha log
 
+**Then check the promoted patterns against this session, and increment the Occurrences count for any that recurred.** Do this every session, not only when something is newly promoted.
+
+**Which step owns the count.** Step 1 notes a recurrence on the entry itself; this step is what carries it into the Promoted table. The two are not redundant and must not disagree — the entry records *that* it happened again, the table is the running total, and the table is the number anything else cites. When they conflict, reconcile to the entries and say so in the report. Date each recurrence in the cell rather than only bumping the number, so a rate is readable and not just a total.
+
+A promoted pattern that recurs means the promotion did not take: the lesson is written down somewhere the agent reads, and is being missed anyway. Say that plainly in the report rather than letting a quietly growing number carry it.
+
 ## Step 3 — Memory index update
 
 Read the memory index (`MEMORY.md` for Claude Code, or the project file for other tools). Update:
@@ -113,7 +119,7 @@ Skip if Step 0 already ran a full freshness check. Otherwise, spot-check that pa
 Summarize what you changed:
 - **Freshness**: Dead references, stale memory files, lingering gotchas, ground truth drift (from Step 0)
 - **Verification**: State claims checked — N passed, N failed, N unverified, N errored, N manual check needed, N cannot verify (from Step 0). Report all six numbers even when they are zero; a disposition omitted because it was empty is indistinguishable from one that was never checked
-- **Gotchas**: New entries added, entries resolved or promoted
+- **Gotchas**: New entries added, entries resolved or promoted, and **N promoted patterns re-checked, N recurred** (from Step 2). Report both numbers even when the second is zero — "checked, nothing recurred" and "never checked" are otherwise indistinguishable, which is the failure the Occurrences column exists to prevent. Name any pattern that recurred *after* promotion; that is the signal the promotion did not take
 - **Memory index**: Updates made
 - **Doc sync**: Project file, runbook, backlog updates made or flagged (from Step 4)
 - **Action needed**: Anything flagged that requires engineer decision

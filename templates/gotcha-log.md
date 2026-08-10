@@ -46,8 +46,24 @@
      - [PROMOTED] — lesson was moved up the stack (to a topic file, memory index, or project file)
      - [RESOLVED] — root cause was fixed; entry stays as history
 
-| Entry | Promoted to | Date |
-|-------|------------|------|
-| [short description] | `topic-file.md` | YYYY-MM-DD |
+     OCCURRENCES is the column that survives compression, and it is why this
+     table has four columns rather than three. Two mechanisms above compress
+     the record, both correctly: the 2-3 line cap folds each recurrence into
+     one lesson, and promotion folds N recurrences into one row. Together they
+     drop the rate — after promotion, "five times this week" and "twice since
+     April" render identically. An agent reading a promoted pattern learns
+     *what* to avoid; the count is what tells it how often this has actually
+     been missed here, which is the part a general lesson cannot supply.
+
+     Keep incrementing AFTER promotion. A promoted pattern that recurs means
+     the promotion did not take — the lesson is already written somewhere the
+     agent reads, and is being missed anyway — which is exactly what a bare
+     [PROMOTED] tag hides. Date each recurrence briefly, so a rising rate is
+     visible and not just a bigger number.
+
+| Date | Gotcha | Occurrences | Promoted to |
+|------|--------|-------------|-------------|
+| YYYY-MM-DD | [short description] | 1 | `topic-file.md` |
+| YYYY-MM-DD | [a pattern that kept recurring] | **3** — YYYY-MM-DD first; YYYY-MM-DD again; YYYY-MM-DD after promotion | project file, [rule name] |
 
 -->

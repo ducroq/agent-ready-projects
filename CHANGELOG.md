@@ -14,7 +14,7 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 ## v1.20.0 (candidate, unreleased)
 
-MINOR — closes #40 and #23. **The Layer 3 memory index is not auto-loaded, and had not been since ADR-001.** The claim survived across the guide, the templates, the four-page visual walkthrough, the public README and the adopt prompt — 16 files corrected here; an exact site count was published twice with two different numbers before being dropped in favour of one that can be checked. **Adopter action: add the "Picking up where the last session left off" row to your project file** — without it your memory index is never read, and nothing tells you.
+MINOR — closes #40, #23, #38, #36 and #37. **The Layer 3 memory index is not auto-loaded, and had not been since ADR-001.** The claim survived across the guide, the templates, the four-page visual walkthrough, the public README and the adopt prompt — 16 files corrected here; an exact site count was published twice with two different numbers before being dropped in favour of one that can be checked. **Adopter action: add the "Picking up where the last session left off" row to your project file** — without it your memory index is never read, and nothing tells you.
 
 ### The defect
 
@@ -64,6 +64,29 @@ And this repo now applies its own adopter action: `CLAUDE.md`'s "Picking up proj
 ### Still open
 
 The adoption gate — `templates/README.md` "If your tool has auto-memory (currently Claude Code), also grab `memory-index.md`", and `docs/GUIDE.md`'s "tools without auto-memory fold Layer 3 into the project file" — was **derived from** the auto-loading premise this release removes. Since Layer 3 is now pointer-loaded, the derivation no longer holds and Layer 3 may be available to every tool. That is a design decision, not a correction, so it is left as it stands and noted on #40 rather than settled here.
+
+### Promotion erases the rate (closes #38)
+
+**`templates/gotcha-log.md`** — the Promoted table gains an **Occurrences** column, and grows from three columns to four. Two mechanisms in this framework compress the gotcha record, both correctly: v1.17.0's 2-3 line cap folds each recurrence into one lesson, and promotion folds N recurrences into one row. Together they destroy the rate — after promotion, "five times this week" and "twice since April" render identically, and the rate is the number that changes behaviour. This repo's own self-certification constraint is argued by its count, which survived only because someone wrote it into prose by hand; the table it points at could not express it.
+
+**`templates/curate.md` Step 2** — the column would otherwise sit unmaintained. Step 2 now checks promoted patterns against the session and increments the count **every** session, not only when something is newly promoted: a pattern already in the table is the one most likely to have bitten again, and the one nothing else reports. Recurrences are dated in the cell rather than only bumping a number, so a rate is readable and not just a total. A promoted pattern that keeps recurring means the promotion did not take — the step says to state that plainly, because a quietly growing number persuades nobody.
+
+**Adopter action, two parts.** The Promoted table's other three columns changed too — `| Entry | Promoted to | Date |` becomes `| Date | Gotcha | Occurrences | Promoted to |`, so `Entry` is renamed and every column moves. Appending a fourth column to an existing table produces a fourth distinct shape; pasting the new header over existing rows files descriptions under `Date` and renders cleanly with no error anywhere. Reorder your existing rows to match. Separately, **re-run `scripts/install-global-skills.sh`** — `curate` is user-global, so without a reinstall you never receive the new Step 2 and the column stays empty. (A first draft of this entry described the change as "gains a column", inheriting a misquote of the old header from issue #38 itself.)
+
+**Not done, and deliberately.** #38 also proposed a self-correction tally in Step 1 and a "corrections this session" line in the Step 6 report. Only the report line shipped, folded into the Gotchas bullet. The Step 1 tally is a second counter over the same events as the Occurrences column and would need a reconciliation rule before it earns its place; noted on the issue rather than settled here.
+
+Dogfooded in this repo's own log before being written into the template.
+
+### Installer: an unreadable subtree reported a clean estate (closes #36, #37)
+
+**`scripts/install-global-skills.sh`** — two pre-existing defects in the estate scan, both found by the shell-correctness lens of an earlier battery and filed rather than fixed there.
+
+- **#36** — `find`'s stderr was discarded, so a subtree the scanner cannot read contributed zero hits and zero warnings. `scanned 0 candidate path(s)` printed identically for "nothing there" and "couldn't look", and the script exited 0 with `OK`. That is the **fifth** instance of this defect class in this one script — a non-existent scan root and a symlinked one (v1.15.0), a relative one (#24), an empty argument (v1.19.0, introduced by the #24 fix itself), and now an unreadable subtree. A first draft of this entry said "third" by dropping two of them, in the same release whose other half argues that occurrence counts are the load-bearing number. Errors are now captured, deduplicated (`find` runs once per global skill, so one unreadable directory produced one error per skill), classified, and counted on the evidence line: `scanned N candidate path(s), M unreadable, K skipped (loops/transient)`.
+
+  **The first fix for this was worse than the defect, on three counts, and the battery caught all three.** Treating any `find` stderr as lost coverage is wrong: under `-L` a filesystem loop is *handled* — find skips the cycle, keeps walking, and misses nothing — so an ordinary virtualenv `bin/local -> .` or a `docs/current -> ..` turned the check permanently red on any real estate, and a permanently-red check gets ignored. A path vanishing mid-walk (a build, a `git clean`, an `npm install` in a scanned repo) did the same, uncapped, thousands of lines at a time. And when `mktemp` failed — full disk, read-only `TMPDIR`, restricted container — `2>>""` failed to open, **find never executed**, and the script printed `scanned 0` and `OK` and exited 0: #36 again with a wider blast radius, losing every real hit instead of one subtree. Only a permission error now counts as lost coverage; loops and transient disappearances are counted separately as skipped; an unrecognized message counts as lost, because assuming otherwise is how a silent miss gets built; `mktemp` failure is an explicit loud failure; the listing is capped at ten with the true total still reported; and `LC_ALL=C` keeps the matched strings stable. The maintainer's own `~/repos` happens to be loop-free, which is exactly the sample-of-one the hostile-repo rule warns about.
+- **#37** — the scan read `find`'s newline-delimited output, so a path containing a newline was consumed as two records: two bogus `FAIL` lines for one real file, an inflated `scanned` count, and — because neither fragment stripped the path suffix — the "this repo is the source" self-exclusion could never match, so the framework's own tracked skills could be reported as inert with the user told to delete them. Now `-print0` / `read -r -d ''`.
+
+Both reproduced exactly as filed before and after the fix; the self-exclusion and a normal estate scan were re-checked as regressions.
 
 ### Maintainer infrastructure — nothing detects template↔install drift (closes #23)
 
