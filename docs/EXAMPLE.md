@@ -79,7 +79,7 @@ Conventional commits: `feat:`, `fix:`, `chore:`, `docs:`
 ## Memory index (MEMORY.md) — for tools with auto-memory
 
 ```markdown
-<!-- Loaded every session. Topic files loaded on demand. -->
+<!-- Reached by a pointer from the project file. Topic files loaded on demand. -->
 
 ## Topic Files
 

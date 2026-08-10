@@ -45,7 +45,7 @@ project/
 ├── docs/
 │   └── RUNBOOK.md     # Layer 2: operational runbook
 ├── memory/
-│   ├── MEMORY.md      # Layer 3: memory index (auto-loaded if tool supports it)
+│   ├── MEMORY.md      # Layer 3: memory index (NOT auto-loaded — see below)
 │   ├── gotcha-log.md  # Layer 4: problem-fix archive
 │   └── [topic files]  # Layer 3: topic files loaded on demand
 └── ...
@@ -87,6 +87,8 @@ Content that should never be committed to a repository — personal notes about 
 - Memory files appear in git status and diffs. Teams need to decide whether to commit them (recommended) or gitignore them.
 - Sensitive operational notes (if any) need conscious routing to auto-memory or a gitignored location.
 - Tools that auto-load from a specific path (Claude Code auto-loads `~/.claude/projects/*/memory/MEMORY.md`) may need configuration to also load from in-repo `memory/MEMORY.md`. In Claude Code, the project file (`CLAUDE.md`) already handles this through task-triggered pointers — the in-repo memory index is referenced there, not auto-loaded by path convention.
+
+- **The same-basename collision is the trap this decision creates, and it deserves naming.** After this ADR a Claude Code project has *two* files called `MEMORY.md`: the untracked user-level one, which the tool loads on its own, and the in-repo one, which it does not. They look identical in any sentence that says "MEMORY.md". The consequence is that Layer 3 crossed the auto-loading cliff — the concept this framework named — and the word "auto-loaded" stayed attached to it in eight places for months afterwards, including in the audit step that would have had to question its own premise to catch it. Measured cost in one adopter: a session handoff that only ever arrived when pasted by hand, and a context-budget series running ~50% high because it weighed a file that was never loaded. When writing about either file, say which one.
 
 ### Migration
 

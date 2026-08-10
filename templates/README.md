@@ -39,7 +39,7 @@ If your tool has auto-memory (currently Claude Code), also grab `memory-index.md
 ## The files
 
 - **[`project-file.md`](project-file.md)** — Project identity, constraints, architecture, and "Before You Start" table
-- **[`memory-index.md`](memory-index.md)** — Auto-loaded index + current state (for tools with auto-memory)
+- **[`memory-index.md`](memory-index.md)** — Topic index + current state. **Not auto-loaded** — it is reached through a task-triggered pointer in the project file, which is the only thing that loads it. (For Claude Code specifically: the file the tool auto-loads is the *user-level* `~/.claude/projects/<slug>/memory/MEMORY.md`, a different file that happens to share the name.)
 - **[`gotcha-log.md`](gotcha-log.md)** — Structured problem/solution journal with promotion tracking
 - **[`hypothesis-log.md`](hypothesis-log.md)** — Provisional positions under observation. Each entry pins the falsification criterion (Method) and revisit deadline (Review by) *before* the data lands. Lifecycle: open → resolved (close or promote to ADR). Complements gotcha log (problems already solved) and ADRs (decisions accepted) by giving a home to bets whose evidence is still in the future
 - **[`RUNBOOK.md`](RUNBOOK.md)** — Operational principles and how-to

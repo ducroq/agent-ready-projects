@@ -8,7 +8,9 @@ Structural audit of the agent-ready-projects layered memory system. Run monthly 
 
 ## Step 1 — Document size
 
-Check the auto-loaded files (project file and memory index). For each:
+**First establish what your tool actually auto-loads, rather than assuming.** Only the project file is auto-loaded in most setups; since ADR-001 put Layer 3 in the repo, the memory index is reached by a pointer, not by the tool. In Claude Code the auto-loaded `MEMORY.md` is the *user-level* one at `~/.claude/projects/<slug>/memory/`, which shares a name with the in-repo file and is not it. Record what you measured — a size budget that includes a file which never arrives is wrong by the size of that file, and the error is invisible because the number still looks reasonable. If a budget series exists from earlier audits, say plainly whether it measured the same set; a trajectory across a change in what is being measured is not a trajectory.
+
+Then check the project file and the memory index. For each:
 
 - Count lines
 - Flag if over ~100 lines (project file) or ~60 lines (memory index) — these are heuristics, not hard limits
@@ -79,7 +81,7 @@ Nothing about a single reference distinguishes the two, and **no threshold relia
 **So do not suppress. Re-label.** Split the output into three sections instead of one list:
 
 - **Findings** — unresolved references and collisions. These are the defects.
-- **Resolved below rung 1** — every rung-2, rung-3 and rung-4 resolution, *enumerated with what it resolved to* (`config/settings.py → packages/worker/config/settings.py`). Not defects, and not presented as "worth correcting" — but visible, so a reader who knows the file was deleted from `packages/api` can see it matched the wrong twin.
+- **Resolved below rung 1** — every rung-2, rung-3 and rung-4 resolution, *enumerated with what it resolved to* (`config/settings.py -> packages/worker/config/settings.py`). Not defects, and not presented as "worth correcting" — but visible, so a reader who knows the file was deleted from `packages/api` can see it matched the wrong twin.
 - **Skipped as asserted-absent** — paths the document states are gone.
 
 That removes the noise from the findings list without inventing a constant, without a blind band, and without hiding anything. A document whose house style is fragments produces a long "resolved below rung 1" section and an empty findings list, which reads correctly at a glance.

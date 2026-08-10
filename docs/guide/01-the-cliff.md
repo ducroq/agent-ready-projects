@@ -59,7 +59,7 @@ The first column uses **categories** the agent has to interpret. The second uses
 
 ## Where to put pointers
 
-Two places, both auto-loaded:
+Two places. Only the first is auto-loaded — the second is itself reached by a pointer from the first, which is exactly why the pointer *to* it has to exist:
 
 1. **Project file** — "Before You Start" table:
    ```markdown

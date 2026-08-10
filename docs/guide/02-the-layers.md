@@ -57,11 +57,11 @@ graph LR
 
 ## Layer 3: Memory — when complexity grows
 
-**What it is:** An auto-loaded index pointing to on-demand topic files.
+**What it is:** An index pointing to on-demand topic files. It is not auto-loaded — it sits below the cliff and is reached by a task-triggered pointer from Layer 1, which is the only thing that loads it.
 
 ```mermaid
 graph TD
-    MI["Memory Index<br/>(auto-loaded, ~60-80 lines)"]
+    MI["Memory Index<br/>(pointer-loaded, ~60-80 lines)"]
     MI --> TF1["api-quirks.md<br/>(loaded when API errors)"]
     MI --> TF2["infrastructure.md<br/>(loaded when deploying)"]
     MI --> TF3["auth-patterns.md<br/>(loaded when touching auth)"]

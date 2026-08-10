@@ -87,7 +87,7 @@ A different class of tool handles the ephemeral layer: **mechanical context comp
 Two cautions before reaching for one:
 
 1. **Profile your bloat first.** Compression tools advertise large savings (one such tool pitched 60–95%), but those numbers assume your bloat is the kind they compress — usually structured tool output and repeated reads. In one informal evaluation, a maintainer estimated near-zero savings on their largest sessions: those transcripts were dominated by inline images and PDFs, which a shell-output compressor doesn't touch (one data point, that maintainer's workload — not a benchmark). Conversely, if your sessions *are* dominated by build logs, test output, or repeated large reads, such a tool may deliver close to the advertised savings. Measure where your tokens actually go before adopting a tool that compresses a category you don't have.
-2. **Keep compression off your auto-loaded files.** Compression that rewrites or summarizes the agent's input fights this method's premise: the agent acts faithfully on a curated project file and memory index. If a tool compresses those, the agent is acting on a lossy copy of your constraints. Scope mechanical compression to high-volume *ephemeral* content; leave the auto-loaded project file and memory index untouched.
+2. **Keep compression off your auto-loaded files.** Compression that rewrites or summarizes the agent's input fights this method's premise: the agent acts faithfully on a curated project file and memory index. If a tool compresses those, the agent is acting on a lossy copy of your constraints. Scope mechanical compression to high-volume *ephemeral* content; leave the project file and the memory index untouched. (The memory index is not auto-loaded — see Layer 3 — but it is read in full whenever a pointer reaches it, so compressing it costs the same fidelity.)
 
 ## The Layered Model
 
@@ -198,9 +198,11 @@ Why combine principles and how-to? Because principles without a runbook are too 
 **Purpose**: "What have we learned working on this?"
 **Voice**: Declarative — "X works like Y", "if you see A, it's because B"
 **Location**: In-repo `memory/` directory (see [ADR-001](decisions/ADR-001-in-repo-memory-over-auto-memory.md) for rationale)
-**Auto-loaded**: The memory index is auto-loaded if your tool supports it. Topic files are not — they're loaded on demand via task-triggered pointers.
+**Auto-loaded**: No — and this is the most-missed point in the whole framework. Since [ADR-001](decisions/ADR-001-in-repo-memory-over-auto-memory.md) put Layer 3 in the repo, the memory index sits *below* the auto-loading cliff along with the topic files. Both are reached by task-triggered pointers from Layer 1. Layer 1 is the only auto-loaded layer.
 
-**Important**: Some tools enforce hard limits on auto-loaded files (e.g., Claude Code truncates MEMORY.md after ~200 lines — content past the limit silently vanishes). Check your tool's limits. Regardless of the specific threshold, the index-not-dump pattern isn't just good practice — keeping auto-loaded files lean is forced by context economics. Beyond a certain project size, topic files are non-optional.
+This is worth stating flatly because the earlier design *was* auto-loaded — Layer 3 used to live at the tool's own memory path — and the word outlived the move. **Claude Code makes it especially easy to get wrong**: it auto-loads `~/.claude/projects/<slug>/memory/MEMORY.md`, so a Claude Code project has two files called `MEMORY.md`, and only the untracked user-level one arrives on its own. Verify which files your tool actually loads before you budget for them; a context measurement that includes a file which never arrives is wrong by however large that file is.
+
+**Important**: Some tools enforce hard limits on the files they auto-load (e.g., Claude Code truncates the *user-level* `MEMORY.md` after ~200 lines — content past the limit silently vanishes). That limit does not apply to the in-repo index, which is read as an ordinary file; the reason to keep it lean is context economics, not truncation. Check your tool's limits, and check *which file* each limit applies to. Regardless of the specific threshold, the index-not-dump pattern isn't just good practice — keeping auto-loaded files lean is forced by context economics. Beyond a certain project size, topic files are non-optional.
 
 This is institutional memory — the hard-won operational knowledge that isn't obvious from reading the code.
 
@@ -218,7 +220,7 @@ memory/
 ```
 
 **The memory index** contains:
-- A brief orientation ("Loaded every session. Topic files loaded on demand.")
+- A brief orientation ("Reached by a pointer from the project file. Topic files loaded on demand.")
 - A **topic index table** — the second bridge across the auto-loading cliff:
 
 ```markdown
@@ -367,7 +369,7 @@ Project file (auto-loaded)
 │   ├── docs/adr/README.md → individual ADRs
 │   └── other deep docs
 │
-Memory index (auto-loaded, if tool supports it)
+Memory index (NOT auto-loaded — reached by the pointer above)
 ├── Topic index table → task-triggered pointers to memory files
 │   ├── gotcha-log.md
 │   ├── investigation-log.md
@@ -375,7 +377,7 @@ Memory index (auto-loaded, if tool supports it)
 └── Current state, file paths, active decisions
 ```
 
-The agent reads both auto-loaded files at session start. When it begins a task, it matches the task against the trigger descriptions and loads the relevant on-demand files. No human intervention required.
+The agent reads the project file at session start — that one is auto-loaded. Everything else, the memory index included, arrives because a trigger in that file matched the task at hand. No human intervention required, but also no safety net: a layer with no pointer to it is a layer that does not exist.
 
 This is why the trigger descriptions matter so much. "Investigation log" is vague. "Debugging or investigating failures → dead ends, what worked and why" tells the agent exactly when this file is relevant and what it contains.
 
@@ -643,7 +645,7 @@ Four principles from processor design that sharpen how we manage agent context:
 ## What Doesn't Work
 
 ### Flat memory files
-A single memory index that grows to hundreds of lines of mixed concerns. An agent looking for "why is my API call failing" has to wade through unrelated subsystem details. Split into topic files and use the memory index as a lean pointer file. (Some tools enforce hard limits — e.g., Claude Code truncates after ~200 lines — but even without a hard limit, bloated auto-loaded files waste context budget every session.)
+A single memory index that grows to hundreds of lines of mixed concerns. An agent looking for "why is my API call failing" has to wade through unrelated subsystem details. Split into topic files and use the memory index as a lean pointer file. (Some tools enforce hard limits on the file they auto-load — e.g., Claude Code truncates the user-level `MEMORY.md` after ~200 lines — but the general reason holds without any hard limit: the index is read in full every time a pointer reaches it, so whatever is in it is paid for on every session that touches project state.)
 
 ### Duplicating content across docs
 The same fact stated identically in two places will drift — one gets updated, the other doesn't. This applies to code-to-doc copies (API specs pasted into markdown) and doc-to-doc overlap (README, CLAUDE.md, and RUNBOOK.md all describing the same architecture).

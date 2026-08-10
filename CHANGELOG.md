@@ -12,6 +12,44 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.20.0 (candidate, unreleased)
+
+MINOR — closes #40. **The Layer 3 memory index is not auto-loaded, and had not been since ADR-001.** Twelve places said it was. **Adopter action: add the new "Starting any session (project state)" row to your project file** — without it your memory index is never read, and nothing tells you.
+
+### The defect
+
+ADR-001 moved Layer 3 from the tool's own memory path into the repo. At the old path it genuinely was auto-loaded; at the new one it is reached by a task-triggered pointer, like any other in-repo file. The files moved and the word did not. So the framework's own Layer 3 sat on the wrong side of the auto-loading cliff — the concept this framework named — for months.
+
+**ADR-001 already stated the correct position** (its last consequence bullet: "referenced there, not auto-loaded by path convention"). Nothing propagated it. That makes this unpropagated language rather than a design disagreement, and it is why the fix is a sweep rather than a decision.
+
+Two things kept it alive. `docs/GUIDE.md` hedged it as "auto-loaded **if your tool supports it**", which reads as a statement about *tools* when the real variable is *which path the file sits at*. And `audit-context` Step 1 opened with "Check the auto-loaded files (project file and memory index)" — the audit that would have caught it re-asserted the premise it needed to question, on every run.
+
+**Claude Code makes it maximally easy to get wrong**: it auto-loads `~/.claude/projects/<slug>/memory/MEMORY.md`, so a project has *two* files named `MEMORY.md` and only the untracked user-level one arrives on its own. Verifiable from inside a session — the in-repo file is absent from context until something reads it.
+
+### Measured cost, from one adopter
+
+1. **A session handoff never arrived.** The index's `Open Handoff` section reached the next session only when pasted by hand — and once was pasted with a superseded version alongside the current one, which is precisely the drift a committed handoff exists to prevent.
+2. **A context-budget metric ran ~50% high.** Five audits tracked `wc -c` over project file *plus* memory index as "auto-loaded context": ~71k tracked against ~47.7k actually loaded. The whole trajectory measures a file that never arrives, so curation went into ~23k that cost nothing while the loaded surface went unmeasured.
+
+### Templates
+
+- **`templates/project-file.md`** — new **"Starting any session (project state)"** row, placed first. This is the load-bearing half and the only part that is new behaviour rather than corrected prose: the framework routes by task, and *starting a session* was a task with no row, so nothing pointed at the memory index at the moment it mattered. Tool-agnostic. The existing drift row is renamed "Starting any session (framework drift)" so the two triggers stay distinct.
+- **`templates/memory-index.md`** — the header comment said "Loaded every session." It now says the opposite and names the consequence: an index that was never loaded is indistinguishable from one with nothing to say.
+- **`templates/audit-context.md` Step 1** (and the tracked skill) — establish what the tool *actually* auto-loads before measuring, record what was measured, and state plainly whether an earlier budget series measured the same set. A trajectory across a change in what is being measured is not a trajectory.
+- **`templates/README.md`** — the `memory-index.md` description.
+
+### Docs
+
+- **`docs/GUIDE.md`** — Layer 3's **Auto-loaded** line now reads "No", with the reason and the same-basename trap; the navigation diagram, the session-start paragraph, the compression guidance, and both ~200-line truncation notes corrected. The truncation limit applies to the *user-level* file, not the in-repo index — the reason to keep the index lean is context economics, not truncation, and the two had been conflated.
+- **`docs/guide/01-the-cliff.md`** — "Two places, both auto-loaded" was false for the second; the pointer *to* the index is exactly why it must exist.
+- **`docs/guide/02-the-layers.md`** — prose and the mermaid node (`auto-loaded` → `pointer-loaded`).
+- **`docs/decisions/ADR-001-...`** — the **same-basename collision** is now named as a consequence of the decision, with the cost above. Worth its own bullet: the adopter who found this wrote the correction and still got it wrong on the first pass, omitting the auto-memory file from an enumeration of what loads.
+- **`docs/EXAMPLE.md`** — the same header comment.
+
+### Still open
+
+The adoption gate — `templates/README.md` "If your tool has auto-memory (currently Claude Code), also grab `memory-index.md`", and `docs/GUIDE.md`'s "tools without auto-memory fold Layer 3 into the project file" — was **derived from** the auto-loading premise this release removes. Since Layer 3 is now pointer-loaded, the derivation no longer holds and Layer 3 may be available to every tool. That is a design decision, not a correction, so it is left as it stands and noted on #40 rather than settled here.
+
 ## v1.19.0 (2026-08-10)
 
 MINOR — issue sweep of the oldest open items, closing #24–#29 (#23, older still, is triaged and deliberately left open — see *Not done*). One new deterministic step in `review-changes`, one new verification disposition in `curate`, and three corrections. **Adopter action: reinstall the global skills** (`scripts/install-global-skills.sh`) if you use `curate`; re-copy `review-changes` into your repo. Nothing breaks if you don't.

@@ -1,6 +1,17 @@
 # Memory
 
-<!-- Loaded every session. Keep this lean — some tools truncate after ~200 lines.
+<!-- NOT loaded automatically. This file sits below the auto-loading cliff:
+     the task-triggered pointer in your project file is the only thing that
+     brings it into a session. If that pointer is missing or vague, nothing
+     here is ever read — and the failure is silent, because an index that
+     was never loaded looks exactly like one with nothing to say.
+
+     (Claude Code note: the auto-loaded MEMORY.md is the USER-LEVEL one at
+     ~/.claude/projects/<slug>/memory/. This in-repo file shares its name and
+     does not share its behaviour.)
+
+     Keep it lean anyway — it is read in full whenever it is reached, and
+     some tools truncate after ~200 lines.
      Use this as an index — deep knowledge goes in topic files.
 
      END-OF-SESSION CURATION:

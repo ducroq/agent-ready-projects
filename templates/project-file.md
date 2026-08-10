@@ -21,7 +21,8 @@ framework: agent-ready-projects v1.19.0
 
 | When | Read |
 |------|------|
-| Starting any session | Compare the `framework: agent-ready-projects vX.Y.Z` line in this file's header against https://github.com/ducroq/agent-ready-projects/blob/master/CHANGELOG.md (or local clone if present). If the project is behind the latest released version, briefly surface the drift to the user before starting work. Don't auto-update — adopting changes is the engineer's call. |
+| Starting any session (project state) | `memory/MEMORY.md` — the index, plus whatever it routes you to. **This row is the only thing that loads it**; the memory index is not auto-loaded, so without a pointer here it is never read. Put this row first: an open handoff from the last session is worthless one session late. |
+| Starting any session (framework drift) | Compare the `framework: agent-ready-projects vX.Y.Z` line in this file's header against https://github.com/ducroq/agent-ready-projects/blob/master/CHANGELOG.md (or local clone if present). If the project is behind the latest released version, briefly surface the drift to the user before starting work. Don't auto-update — adopting changes is the engineer's call. |
 | Making architectural decisions | `docs/adr/README.md` — decision index |
 | Changing deployment or infra | `docs/RUNBOOK.md` — operational how-to |
 | Stuck or debugging something weird | `memory/gotcha-log.md` — problem-fix archive |
