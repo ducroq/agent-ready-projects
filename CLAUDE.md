@@ -4,7 +4,7 @@ The source framework that teaches the layered memory method for AI coding agents
 
 - **Type**: Public methodology repo (guide + templates + skills)
 - **License**: MIT
-- **agent-ready-projects** (this repo): v1.19.0 (issue sweep #24–#29: new deterministic Step 1.5 structural pre-check in `review-changes`, new CANNOT VERIFY disposition in `curate`. New behaviours = MINOR.)
+- **agent-ready-projects** (this repo): v1.20.0 (the Layer 3 memory index is not auto-loaded — #40; lint rule 6 detects template↔install drift — #23; Occurrences column in the gotcha log — #38; installer scan fixes — #36/#37. New behaviours = MINOR.)
 
 > Live project state (current threads, deferred items, surfaced patterns) lives in `memory/MEMORY.md` (maintainer-local — see *What is intentionally not shipped* below). Release notes live in `CHANGELOG.md`.
 

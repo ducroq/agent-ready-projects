@@ -12,7 +12,7 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.20.0 (candidate, unreleased)
+## v1.20.0 (2026-08-10)
 
 MINOR — closes #40, #23, #38, #36 and #37. **The Layer 3 memory index is not auto-loaded, and had not been since ADR-001.** The claim survived across the guide, the templates, the four-page visual walkthrough, the public README and the adopt prompt — 16 files corrected here; an exact site count was published twice with two different numbers before being dropped in favour of one that can be checked. **Adopter action: add the "Picking up where the last session left off" row to your project file** — without it your memory index is never read, and nothing tells you.
 
