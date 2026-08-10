@@ -27,19 +27,19 @@ Check whether the same fact appears in multiple places across the layers:
 
 For each duplicate found, recommend which layer should be the single source of truth based on:
 
-- Is it needed every session? -> project file
-- Is it navigational? -> memory index
-- Is it reference material loaded on demand? -> topic file
-- Is it user-specific (preferences, positions, local machine quirks)? -> tool auto-memory
+- Is it needed every session? → project file
+- Is it navigational? → memory index
+- Is it reference material loaded on demand? → topic file
+- Is it user-specific (preferences, positions, local machine quirks)? → tool auto-memory
 
 ## Step 3 — Wrong-layer placement
 
 Check for content that's in the wrong layer:
 
-- **User-specific data in project files**: personal preferences, positions, local machine limitations -> should be in tool auto-memory
-- **Session navigation in the project file**: "Current State", task progress -> should be in the memory index
-- **Always-needed constraints buried in topic files**: hard rules, thresholds, non-negotiables -> should be in the project file
-- **Derivable-from-code content in any memory file**: things `git log`, `grep`, or reading the source would tell you -> shouldn't be persisted at all
+- **User-specific data in project files**: personal preferences, positions, local machine limitations → should be in tool auto-memory
+- **Session navigation in the project file**: "Current State", task progress → should be in the memory index
+- **Always-needed constraints buried in topic files**: hard rules, thresholds, non-negotiables → should be in the project file
+- **Derivable-from-code content in any memory file**: things `git log`, `grep`, or reading the source would tell you → shouldn't be persisted at all
 
 ## Step 4 — Reference integrity
 
@@ -81,7 +81,7 @@ Nothing about a single reference distinguishes the two, and **no threshold relia
 **So do not suppress. Re-label.** Split the output into three sections instead of one list:
 
 - **Findings** — unresolved references and collisions. These are the defects.
-- **Resolved below rung 1** — every rung-2, rung-3 and rung-4 resolution, *enumerated with what it resolved to* (`config/settings.py -> packages/worker/config/settings.py`). Not defects, and not presented as "worth correcting" — but visible, so a reader who knows the file was deleted from `packages/api` can see it matched the wrong twin.
+- **Resolved below rung 1** — every rung-2, rung-3 and rung-4 resolution, *enumerated with what it resolved to* (`config/settings.py → packages/worker/config/settings.py`). Not defects, and not presented as "worth correcting" — but visible, so a reader who knows the file was deleted from `packages/api` can see it matched the wrong twin.
 - **Skipped as asserted-absent** — paths the document states are gone.
 
 That removes the noise from the findings list without inventing a constant, without a blind band, and without hiding anything. A document whose house style is fragments produces a long "resolved below rung 1" section and an empty findings list, which reads correctly at a glance.
