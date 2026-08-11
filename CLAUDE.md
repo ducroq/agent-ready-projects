@@ -124,6 +124,8 @@ Listed here so the architecture diagram above is honest about what an adopter se
 | `templates/audit-context.md` | Periodic structural audit skill |
 | `scripts/install-global-skills.sh` | Installs the user-global skills from tracked `.claude/skills/`, verifies they match, and with a root argument scans an estate for inert project-local copies. Refuses to install when the bytes it would copy are not what the highest release tag reachable from HEAD holds; fixture at `tests/fixtures/installer-release-guard/` |
 | `.claude/skills/` | Reference installs (tracked) — the frontmatter-correct source a global install is derived from |
+| `tests/lint/skill-sync.sh` | Lint rule 6 — template↔reference-install drift; fixture at `tests/fixtures/skill-template-sync/` |
+| `tests/fixtures/installer-release-guard/` | Seeded git states for the installer's release guard (#33). Its README carries the two rejected predicates and why — read before changing the comparison |
 | `memory/MEMORY.md` | This repo's in-repo memory index (maintainer-local) |
 
 ## How to Work Here
