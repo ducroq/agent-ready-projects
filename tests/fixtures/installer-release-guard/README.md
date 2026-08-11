@@ -18,7 +18,7 @@ byte-for-byte what a disabled guard looks like.
 
 ## The predicate, and the two that were refuted before it
 
-Four review batteries ran against this change. The first three each refuted the
+Four review batteries ran against this change before it was committed, and four further passes ran before release — every one of which refuted something; see `CHANGELOG.md` v1.21.0. The first three each refuted the
 comparison itself, and the shape of the error was the same every time: the
 predicate answered a question adjacent to the one the install actually poses.
 
@@ -54,11 +54,18 @@ The release itself is `git tag --sort=-v:refname --merged HEAD --list 'v[0-9]*'`
 with hyphenated names skipped. `templates/release.md` Step 1 forbids
 `git describe --abbrev=0` when picking a release baseline, on the grounds that it
 returns the *nearest* tag rather than the highest — which here would measure a
-correct tree against a superseded release (N11). The sort order is Step 1's; the
-three filters are not. Step 1's own form is `git tag --sort=-v:refname | head -1`,
-which would return `v1.2.3-rc1` (P10), a scratch tag (P5), or a tag on an
-unmerged branch (N14) — **worth hardening there too, and not done in this
-change** (#41), since that template is normative and adopter-facing.
+correct tree against a superseded release (N11). Step 1 **now carries the same
+three filters** (#41). It did not when the guard shipped: its form was
+`git tag --sort=-v:refname | head -1`, which returns `v1.2.3-rc1` (P10), a scratch
+tag (P5), or a tag on an unmerged branch (N14) — so between the guard being
+written and #41 landing, this repo carried a guard refusing three states its own
+release procedure would select. Both close in the same unreleased version, so no
+published release ever contained the divergence.
+
+The two are **not** shared code — this one runs under `set -u` in a script, Step 1
+is a command a human reads and checks — and no lint rule can see them drift apart.
+What holds them together is that each states the other at its own site. If you
+change the comparison here, change Step 1 too.
 
 ## What it seeds
 
@@ -86,6 +93,7 @@ ship the file and still read correctly in a transcript.
 | P14 | a `PATH` with everything except `git` | see the ablation note: this arm was inert until this case existed |
 | P15 | a `--force` install already in the destination, then a refusing run | #33 having already happened: the verify pass compares install against source and both are the draft, so the report read "0 issue(s)" while the destination carried it |
 | P16 | `*.md ident`, with text injected inside the `$Id: … $` expansion | a lossy `clean` filter: the injected text hashes to the released blob, so the comparison the guard is built on says "released" |
+| P18 | a real `git clone --depth 1` of a tree ahead of the tag, **then `git fetch --tags`** | the refusal message named "shallow or tagless" and advised `git fetch --tags`, which fixes only the tagless half: the tag refs arrive and `--merged HEAD` still reaches none of them, so the reader watches the printed advice fail and reaches for `--force` |
 | N1 | clean at the tag | the control — it must install |
 | N2 | a **project-local** skill mid-edit | the normal state of a working session; refusing here teaches the habit of passing `--force`, and then there is no guard |
 | N3 | an unrelated file mid-edit | same |
@@ -109,8 +117,10 @@ its own diagnosis rather than a path, because in that state there is no released
 tag to name a path against.
 
 **Seeds are asserted too.** N10, N11 and N14 check that the tree they built is
-what they claim, and P16 and P17 check that their seeded injection actually
-survives the clean filter — a case whose seed does not reproduce the hazard
+what they claim; P16 and P17 check that their seeded injection actually
+survives the clean filter; and P18 checks both halves of its own state — shallow,
+*and* carrying the tag ref — because a clone that is merely tagless makes it a
+duplicate of P4 wearing P18's id. A case whose seed does not reproduce the hazard
 proves nothing. N10 and N11 check it — clean, by `git diff` rather than `git status`, since under a checkout
 filter `status` reports ` M` from the stale stat cache while `diff` applies the
 filter and reports no content difference. Both assertions have already fired on
@@ -136,7 +146,7 @@ the shipped code, not reasoned from it:
 | Drop the lossy-filter arm entirely | P16, P17 |
 | Replace the tag loop with `git describe --abbrev=0 --match 'v[0-9]*'` (which also drops the hyphen filter) | P10, N11 |
 | Drop the `v[0-9]*` glob from the tag listing | P5 |
-| Drop `--merged HEAD` | N14 |
+| Drop `--merged HEAD` | N14, P18 — P18's shallow clone carries the tag ref, so without this filter the selector finds it and the unshallow message never prints |
 | Drop the hyphen filter | P10 |
 | Test only the leaf with `[ -L ]` | P12 |
 | Test only the canonicalised ancestor | P9 |
@@ -147,7 +157,7 @@ the shipped code, not reasoned from it:
 | Drop the "source does not exist" skip | N9 |
 | Drop the git-is-installed arm | P14 |
 | Drop the work-tree-root arm | P6, P7 |
-| Warn instead of setting `REFUSED` | all 16 positives, plus N8 — the destination gets the unreleased bytes |
+| Warn instead of setting `REFUSED` | all 17 positives, plus N8 — the destination gets the unreleased bytes |
 | Exit immediately on refusal | P15, N8 |
 | Drop the installed-copy-vs-release check | P15 |
 | Run that check on every path, not only a refusal | N4, N5 — a deliberate `--force` would exit non-zero, and `--check` would go red on every unreleased tree |
@@ -159,12 +169,18 @@ the shipped code, not reasoned from it:
 | Let `--check` refuse too | N5, N6 |
 | Restore the `printf '%s'` path-list bug | P1, P2, P3, P8, P9, P11, P12 |
 | Drop the unreleased-tree refresh hint | N6 |
+| Force the shallow branch on (every tagless state reads as shallow) | P4, P5, P10 — all three key on the tagless remedy since their needles were tightened |
+| Force the shallow branch off — this **is** the pre-fix message | P18 |
+| Drop the `shallow` marker-file fallback *alone*, keeping `--is-shallow-repository` | **none — inert on git ≥ 2.15, by construction.** Recorded rather than deleted: it is the *only* arm on older git, and P18 passes with the first arm disabled instead, which is the measurement that shows it works. No case can pin both arms at once on one machine |
 
 **One guarantee here is structural, not ablatable.** The findings are accumulated
 with builtins; there is no round-trip through an external command that could
 empty them. Re-introducing one and *not* breaking it measures nothing (that row
-came back inert), so the protection is P13: of the two externals that remain,
-losing one still refuses.
+came back inert), so the protection is P14: of the two externals that remain,
+losing one still refuses. (This cited **P13** until 2026-08-11, a case id that has
+never existed in `run.sh` — the ids run P1–P12, P14–P18. A dangling id in a table
+whose whole purpose is "re-run the row before citing it" is the same defect the
+paragraph below describes, so it is corrected here rather than quietly.)
 
 **Two arms measured inert before their case existed** — `--is-inside-work-tree`
 and `command -v git`. Both refused the states they were written for, but so did

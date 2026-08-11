@@ -101,9 +101,11 @@ else
   # returns the *nearest* tag, so after a hotfix tagged v1.0.1 merges in behind
   # v1.1.0 it answers v1.0.1, and the guard would then measure a correct tree
   # against a superseded release. The SORT ORDER is the release procedure's; the
-  # three filters are not — its own `git tag --sort=-v:refname | head -1` would
-  # return a prerelease, a scratch tag, or a tag on an unmerged branch. Worth
-  # hardening there too; not done here, because that template is normative (#41).
+  # three filters were not — its own `git tag --sort=-v:refname | head -1` would
+  # return a prerelease, a scratch tag, or a tag on an unmerged branch. Step 1
+  # now carries the same three filters, so the guard and the procedure answer
+  # the same question (#41). They are deliberately not shared code: this runs
+  # under `set -u` in a script, Step 1 is a command a human reads and checks.
   #
   # The `case` filter drops prereleases and scratch tags (v1.2.3-rc1, v2-spike)
   # in shell rather than through `grep`, per add_detail's note. It also drops
@@ -114,7 +116,26 @@ else
   done < <(git tag --sort=-v:refname --merged HEAD --list 'v[0-9]*' 2>/dev/null)
 
   if [ -z "$TAG" ]; then
-    unreleased="no release tag is reachable from HEAD (v[0-9]* without a hyphen). A shallow or tagless clone needs \`git fetch --tags\`, not --force"
+    # `--tags` and `--unshallow` are not interchangeable, and this line named
+    # both states while advising only the remedy for one. A shallow clone
+    # may carry tag refs it cannot reach, and a plain `--depth 1` clone starts
+    # with none at all. `git fetch --tags` adds refs, not history: `--merged HEAD`
+    # walks history, which is precisely what the truncation removed. Measured —
+    # 37 tags present after `git fetch --tags`, selector still empty, guard
+    # still refusing. That matters more than a wrong word: someone following
+    # printed advice that visibly fails reaches for --force next, which is the
+    # outcome this whole line exists to prevent.
+    # `--is-shallow-repository` is git >= 2.15; the marker file is the fallback,
+    # and it is the ONLY arm on older git. `--git-common-dir` (git >= 2.5, so
+    # older than the gap it covers), not `--git-dir`: in a linked worktree the
+    # latter answers `.git/worktrees/<name>`, where `shallow` does not live, and
+    # the branch would then print the tagless remedy — this defect exactly.
+    if [ "$(git rev-parse --is-shallow-repository 2>/dev/null)" = "true" ] \
+       || [ -f "$(git rev-parse --git-common-dir 2>/dev/null)/shallow" ]; then
+      unreleased="no release tag is reachable from HEAD: this clone is shallow, so the tags may be present while the history that would reach them is not. Run \`git fetch --unshallow\`, not --force"
+    else
+      unreleased="no release tag is reachable from HEAD (v[0-9]* without a hyphen). A tagless clone needs \`git fetch --tags\`, not --force"
+    fi
   else
     # Compare the BYTES `cp` would copy against the bytes the release holds, one
     # source at a time — via git's own object ids, so the comparison is filter

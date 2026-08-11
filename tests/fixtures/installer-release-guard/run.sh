@@ -164,14 +164,47 @@ run_case P3-untracked-source REFUSE ".claude/skills/update-drift/SKILL.md (no su
 UNTRACKED=""
 
 m_no_tag() { g "$1" tag -d v1.0.0 >/dev/null; }
-run_case P4-no-release-tag REFUSE "no release tag" m_no_tag
+# The needle is the REMEDY, not the "no release tag" headline: P18 below refuses
+# with the same headline and different advice, so a needle matching both would
+# pass whichever of the two the guard printed — the P9 shape (a needle that
+# cannot fail) re-created one branch further in.
+run_case P4-no-release-tag REFUSE 'A tagless clone needs `git fetch --tags`' m_no_tag
+
+# A real `git clone --depth 1`, not a hand-written graft file: this is the state
+# an adopter following docs/GUIDE.md actually arrives in, and only a real one
+# reproduces what this case exists to pin. The tag REF **is present** here — the
+# mutator fetches it, which is precisely the remedy the message used to advise —
+# and the guard still refuses, because `--merged HEAD` walks history and history
+# is what the truncation removed. Measured on this repo before it was seeded: 37
+# tags present after `git fetch --tags`, selector still empty. Advice that
+# visibly fails sends the reader to --force, which the line exists to prevent.
+id=P18-shallow-clone-tag-present; root="$WORK/$id"; src="$WORK/$id.src"
+mkdir -p "$src"; mkrepo "$src"
+printf 'A rule committed after the release.\n' >> "$src/.claude/skills/curate/SKILL.md"
+g "$src" commit -qam "post-release edit"
+# Cloned from a source that OUTLIVES the clone: cloning into the source's own
+# path leaves `origin` pointing at the shallow copy, whose tags are the ones the
+# fetch below was meant to supply, and the seed assertion then fires on a repo
+# that is merely tagless — i.e. a duplicate of P4 wearing P18's id.
+git -c core.hooksPath=/dev/null clone -q --depth 1 "file://$src" "$root"
+g "$root" fetch -q --tags
+# Both halves of the seed, asserted before the verdict is trusted: a clone that
+# is not shallow, or that carries no tag ref, degenerates this case into P4.
+seed_shallow=$(g "$root" rev-parse --is-shallow-repository)
+seed_tags=$(g "$root" tag --list 'v[0-9]*')
+out=$(CLAUDE_SKILLS_DIR="$root/dest" bash "$root/scripts/install-global-skills.sh" 2>&1); rc=$?
+if [ "$seed_shallow" != "true" ] || [ -z "$seed_tags" ]; then
+  bad "$id" "the seed is not 'shallow, with the tag ref present' (shallow=$seed_shallow tags=${seed_tags:-none}), so the case proves nothing"
+else
+  judge "$id" REFUSE 'git fetch --unshallow' "$root" "$rc" "$out"
+fi
 
 # A repo whose only tag is not a release. Measured: what refuses this is the
 # `--list 'v[0-9]*'` glob on the tag listing — not the hyphen filter (that is
 # P10) and not the selector (P11). An unfiltered listing would certify the tree
 # against a scratch tag.
 m_nonrelease_tag() { g "$1" tag -d v1.0.0 >/dev/null; g "$1" tag wip; }
-run_case P5-non-release-tag-only REFUSE "no release tag" m_nonrelease_tag
+run_case P5-non-release-tag-only REFUSE 'A tagless clone needs `git fetch --tags`' m_nonrelease_tag
 
 # Not a work tree: the released state cannot be determined, so it is refused
 # rather than assumed fine. This is the arm that decides the guard fails closed.
@@ -235,7 +268,7 @@ m_prerelease_tag() {
   printf 'A draft rule, tagged rc.\n' >> "$1/.claude/skills/curate/SKILL.md"
   g "$1" commit -qam "rc"; g "$1" tag v1.0.1-rc1
 }
-run_case P10-prerelease-tag-only REFUSE "no release tag" m_prerelease_tag
+run_case P10-prerelease-tag-only REFUSE 'A tagless clone needs `git fetch --tags`' m_prerelease_tag
 
 # git reporting clean BY REQUEST. `--assume-unchanged` (and `--skip-worktree`)
 # tell git to stop looking at a file — `git status` and `git diff` then report a

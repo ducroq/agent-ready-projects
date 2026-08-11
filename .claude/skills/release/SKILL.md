@@ -19,14 +19,30 @@ You will not know the version number until Step 2. Run Step 1 first, agree the v
 ## Step 1 — Establish what changed
 
 ```bash
-git tag --sort=-v:refname | head -1     # highest version tag
+# The highest RELEASE tag reachable from HEAD. Every diff below is computed
+# against it, so a wrong answer here mis-scopes the entire release silently.
+git tag --sort=-v:refname --merged HEAD --list 'v[0-9]*' | sed '/-/d' | head -1
 git log <last-tag>..HEAD --oneline      # commits since
 git diff <last-tag>..HEAD --stat        # files touched
 ```
 
-Use `git tag --sort=-v:refname`, **not** `git describe --abbrev=0`. `describe` returns the nearest tag reachable from HEAD, which is not the highest version — after a hotfix branch tagged `v1.0.1` merges in behind `v1.1.0`, `describe` answers `v1.0.1` and every diff below is computed against the wrong baseline.
+Each part of that selector rules out a tag that is not this release's baseline. All four failure states are real, not hypothetical — each is a seeded case in this framework's own installer fixture (`tests/fixtures/installer-release-guard/`): the scratch tag and the prerelease as states the guard **refuses**, the hotfix and unmerged-branch cases as states it must get right *without* refusing.
 
-**If there are no tags**, this is a first release. Skip the diff commands, review the full history (`git log --oneline`), and propose `v0.1.0` or `v1.0.0` per the project's own convention.
+| Part | What a bare `git tag --sort=-v:refname \| head -1` does without it |
+|---|---|
+| `--sort=-v:refname`, **not** `git describe --abbrev=0` | `describe` returns the *nearest* tag rather than the highest: after a hotfix tagged `v1.0.1` merges in behind `v1.1.0` it answers `v1.0.1` |
+| `--merged HEAD` | a tag on an unmerged branch — a co-maintainer's release-in-progress — becomes your baseline, and the diff is wrong in both directions at once |
+| `--list 'v[0-9]*'` | a scratch tag (`wip`, `zz-backup`) sorts in and wins — measured. A name sorting *below* `v`, like `before-refactor`, happens not to win, which is luck rather than protection. Note `v2-spike` is **not** an example here: it matches the glob and is dropped by the row below |
+| `sed '/-/d'` | a prerelease (`v1.1.0-rc1`) becomes the baseline, so the changelog covers only what changed since the rc — and omits everything an adopter pinned at the last stable release still needs to read |
+
+**Read the output before using it.** An empty answer has two causes, and they take opposite fixes. Check them in this order — **a bare `git tag` is not the test**, because a shallow clone can list no tags at all and so looks exactly like a first release:
+
+- **A shallow clone** — `git rev-parse --is-shallow-repository` answers `true`. `--merged HEAD` walks history and a `--depth` clone truncated it, so tags that are present may be unreachable, and a plain `--depth 1` clone usually has no tag refs at all. `git fetch --tags` is not a reliable fix: it adds refs, not the history that reaches them. Run **`git fetch --unshallow`**, which restores both. Expect this in CI, where a shallow checkout is usually the default. Shallow does not *always* mean empty — `--depth 1 --branch <tag>` resolves fine — so treat `true` as "unshallow before concluding anything", not as a verdict.
+- **A tag scheme these filters do not match** — most likely hyphenated CalVer (`v2026-08-11`), which the prerelease filter drops. Widen the filter for your project.
+
+Do not continue past an empty answer in either case. It is indistinguishable from a first release, and the next paragraph would then have you cut `v0.1.0` over a project with a hundred releases behind it.
+
+**If there are genuinely no tags** — `git rev-parse --is-shallow-repository` says `false` *and* `git tag` is empty — this is a first release. Skip the diff commands, review the full history (`git log --oneline`), and propose `v0.1.0` or `v1.0.0` per the project's own convention.
 
 Group the changed files by surface:
 
