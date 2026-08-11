@@ -67,6 +67,7 @@ agent-ready-projects/
 │   ├── audit-context.md       <- Periodic structural audit skill
 │   ├── review-changes.md      <- Diff-driven pre-commit review skill (v1.12.0)
 │   ├── release.md             <- Release skill: bump classification + preconditions, stops before publishing
+│   ├── update-drift.md        <- Drift skill: triage the releases a project is behind; user-global
 │   ├── adr.md                 <- Architecture Decision Record template
 │   ├── coordination.md        <- Layer 5 (multi-contributor)
 │   ├── review-agent.md        <- Reusable review-agent skeleton
