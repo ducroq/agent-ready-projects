@@ -33,16 +33,21 @@ For each `.md` file in the fixture directory, run the curate verification logic 
 1. Read the file
 2. Detect whether it contains a state claim (trigger words: "shipped," "deployed," "live," "running," "working in production")
 3. If it's a state claim, check for a `<!-- verify: ... -->` comment
-4. If a verify command exists, run it and record the result
-5. Classify the outcome
+4. If a verify command exists, run it **with the runner shipped in curate Step 0 sub-step 5** — not with an implementation written here, which is the defect that step exists to prevent
+5. Classify the outcome against that step's disposition table
+
+Steps 4 and 5 are deliberately not restated here. This test measures whether the
+protocol classifies these eleven fixtures correctly; if it also carried its own
+copy of the dispositions, a change to the step would leave the test asserting the
+old ones and reporting green.
 
 ## Expected results
 
 | Fixture file | Expected claim type | Expected outcome |
 |---|---|---|
 | `verified-pass.md` | State ("deployed") | **PASS** — verify command runs, outputs PASS |
-| `verified-fail.md` | State ("shipped," "running") | **FAIL** — verify command runs, outputs FAIL |
-| `verified-error.md` | State ("deployed") | **ERROR** — verify command exits non-zero with no PASS/FAIL output |
+| `verified-fail.md` | State ("shipped," "running") | **FAIL** — verify command runs, prints what it found, exits non-zero |
+| `verified-error.md` | State ("deployed") | **ERROR** — the verify command's tool is gone (exit 127); nothing was proved either way |
 | `verified-manual.md` | State ("deployed") | **MANUAL CHECK NEEDED** — has `<!-- verify: manual — ... -->` |
 | `verified-cannot-verify.md` | State ("running") | **CANNOT VERIFY** — guarded command, target unreachable, output begins `CANNOT VERIFY:` |
 | `unverified-state.md` | State ("deployed," "running") | **UNVERIFIED** — state claim without verify comment |
@@ -86,6 +91,7 @@ If any fail, diagnose:
 - **False negative** (missed a state claim): the trigger-word detection is too narrow
 - **Wrong outcome** (detected the claim but misclassified the verify status): the verify-command parsing needs attention
 - **CANNOT VERIFY scored as PASS**: the guarded command exits 0 and its output contains no `FAIL`, so anything keying on the exit code alone reads it as a pass. That is the failure this fixture exists to catch — an unreachable check reported as a satisfied one. The disposition must come from the `CANNOT VERIFY:` prefix, not from the exit status
+- **A fixture scored by a word in its output**: if `verified-fail.md` reports FAIL because the string `FAIL` appeared, the protocol is reading verdicts out of prose. Nothing parses the output for a verdict — the disposition comes from the exit status and the `CANNOT VERIFY` prefix, and these fixtures are written so the two cannot be confused
 
 ## Cleanup
 

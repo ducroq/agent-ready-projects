@@ -87,6 +87,9 @@ agent-ready-projects/
 │       ├── reference-integrity/  <- Seeded breaks for audit-context Step 4; refcheck.py is its oracle
 │       ├── skill-template-sync/  <- Seeded drift for lint rule 6 (17 positives, 7 negatives)
 │       ├── provisioning-quote/  <- Seeded drift for lint rule 7 (9 positives, 4 negatives)
+│       ├── verify-runner/       <- Seeded claims + prose for curate's verify runner
+│       │                           (32 positives, 10 negatives, 4 malformed, 7 structural,
+│       │                            4 timing, 29 ablations)
 │       └── installer-release-guard/
 │                              <- Seeded git states for the installer's release guard
 │                                 (17 positives, 15 negatives, 32 ablation rows)
@@ -129,6 +132,7 @@ Listed here so the architecture diagram above is honest about what an adopter se
 | `tests/lint/skill-sync.sh` | Lint rule 6 — template↔reference-install drift; fixture at `tests/fixtures/skill-template-sync/` |
 | `tests/lint/provision-quote.sh` | Lint rule 7 — the #42 class: a file that *provisions* a canonical row must quote it, not describe it by category. Rule 6 cannot see it, because the two `audit-context` copies agree with each other while contradicting `templates/project-file.md`. Fixture at `tests/fixtures/provisioning-quote/` |
 | `tests/fixtures/installer-release-guard/` | Seeded git states for the installer's release guard (#33). Its README carries the two rejected predicates and why — read before changing the comparison |
+| `tests/fixtures/verify-runner/` | Seeded claims and prose for `curate` Step 0 sub-step 5's runner (#34). It extracts the runner from `templates/curate.md` rather than copying it, so it cannot drift. ~90s — the slowest check here, and the only one with timing cases. Its README carries the rejected `\|` predicate and the three review rounds that produced the rest — read before touching the extraction |
 | `memory/MEMORY.md` | This repo's in-repo memory index (maintainer-local) |
 
 ## How to Work Here
@@ -146,6 +150,7 @@ bash tests/lint/run.sh                              # seven structural rules
 bash tests/fixtures/skill-template-sync/run.sh      # sensitivity of lint rule 6
 bash tests/fixtures/reference-integrity/run.sh      # sensitivity of audit-context Step 4
 bash tests/fixtures/installer-release-guard/run.sh  # sensitivity of the installer's release guard
+bash tests/fixtures/verify-runner/run.sh            # sensitivity of curate's verify runner
 bash tests/fixtures/provisioning-quote/run.sh       # sensitivity of lint rule 7
 
 # End a session

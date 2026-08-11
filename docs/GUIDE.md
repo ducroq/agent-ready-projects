@@ -283,10 +283,12 @@ The fix is **self-verifying memory** — verification commands that travel with 
 1. **On write**: When recording a state claim, embed a verification command as an HTML comment:
    ```markdown
    The ML classifier endpoint is deployed on gpu-server.
-   <!-- verify: curl -s https://api.example.com/classify/logo -d '{"url":"test"}' | grep -q '"label"' && echo PASS || echo FAIL -->
+   <!-- verify: if ! curl -s -m 5 https://api.example.com/health >/dev/null; then echo "CANNOT VERIFY: api.example.com unreachable"; elif curl -s -m 5 https://api.example.com/classify/logo -d '{"url":"test"}' | grep -q '"label"'; then echo CLASSIFIER-LIVE; else echo CLASSIFIER-SILENT; exit 1; fi -->
    ```
+
+   Three things make that longer than it looks like it should be, and each is a defect this example used to have. It **prints something when it passes** — silence is what a command that never ran also produces. It **exits non-zero when it fails**, because a failure branch that exits 0 (`… || echo FAIL`) reads as a pass with the word FAIL printed beside it; nothing parses the output for a verdict. And it **guards the host it depends on**, so an unreachable API yields CANNOT VERIFY rather than a FAIL every run — noise that trains the reader to ignore the step. The `-m 5` bounds it, since an unguarded network call can hang the whole check.
 2. **On read**: Before trusting a memory entry with a verify comment, run the command. If it fails, treat the entry as stale — flag it, don't build on it.
-3. **On curate**: The `/curate` skill scans for state claims, runs embedded verify commands, and reports pass/fail. Entries without a verify comment are flagged as unverified.
+3. **On curate**: The `/curate` skill scans for state claims, runs embedded verify commands, and reports pass/fail. Entries without a verify comment are flagged as unverified. It ships the runner rather than leaving it to be re-derived — running these commands looks trivial and is not, and every hand-written implementation observed so far reported nothing wrong having checked nothing. `templates/curate.md` Step 0 sub-step 5 carries the runner and the rules for writing a command it can execute.
 
 Not every memory entry needs this. Agents can infer the claim type from language:
 

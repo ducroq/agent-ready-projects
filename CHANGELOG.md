@@ -21,7 +21,53 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 ## v1.22.0 (candidate, unreleased)
 
-`templates/audit-context.md` Step 5 quotes the canonical row it provisions rather than describing it by category, and lint gains rule 7 for the class. Closes #42.
+`templates/curate.md` Step 0 sub-step 5 ships the verify runner instead of describing it, and Step 0 gains a sub-step that asks whether the memory index agrees with itself. The step executes the `<!-- verify: ... -->` annotations in the memory files, and every hand-written implementation of it observed so far reported *nothing wrong having checked nothing* — a silent, self-certifying pass. Closes #34, #42 and #43.
+
+**Adopter action: run the new runner over your memory files before anything else, and expect it to find things.** In one measured adopter repo every annotation reports ERROR. Read them against the new writing rules — more are affected than you would guess. A command that succeeds in silence is now reported ERROR rather than passing; `\|` is un-escaped only inside table cells, because outside one it is shell's or awk's escape and not GFM's; and `… && echo PASS || echo FAIL` — the shape this guide itself taught from v1.9.0 — exits 0 on its failure branch, so it was never a failure signal. That last one is caught by a deprecated compatibility rule rather than silently rescored, but the commands still want rewriting.
+
+### Versioning rationale
+
+**MINOR — decided 2026-08-11 on the v1.20.0 precedent, with the measurement that argues for MAJOR left on the record.**
+
+The first draft of this entry said "no adopter has to edit anything to keep working." That was written from this repo, whose two annotations both pass. Running the shipped runner against real adopter memory trees refutes it:
+
+| Repo | Result |
+|------|--------|
+| `disentangled-infrastructure` | **0 pass, 8 error** — every annotation it has. Its guards are silent on success, which the new rules score ERROR |
+| `llm-distillery` | 26 ran: 12 pass, 9 fail, 5 error, 3 malformed |
+
+Nothing breaks and no annotation stops working — but until they are rewritten, one measured adopter's Step 0 reports every claim as broken. That is real adopter action, and under `templates/release.md` rule 1 it is an argument for MAJOR.
+
+It ships MINOR on the v1.20.0 precedent, which carried a two-part adopter action including a required structural edit to an artifact adopters already held. Two things make this weaker than that, not stronger: the annotations still run and still report, and every ERROR the runner now emits is a claim that was **already** not proving what it said — a silent guard reported PASS before this release and proved nothing then either. Changing the report is not the same as changing the contract. If an adopter reports being blocked, this table is the argument to re-read.
+
+It is not PATCH because the step gains a shipped artifact and three rules that change what a run reports.
+
+### The defect
+
+Six causes, each sufficient on its own, each producing output indistinguishable from "there are no state claims to check":
+
+1. A verify command containing `exit` ends the runner's own loop mid-iteration. The command in the issue is *good practice* — it distinguishes "cannot verify" from "verify failed", which the step explicitly asks for. The runner is what had to change.
+2. `ssh` — or any stdin-reading command — swallows the rest of the command list when the loop reads from stdin.
+3. Prose that merely *mentions* the syntax is executed as shell. Of five `verify:` hits in this repo's memory files at the time of filing, **three were prose** — including the gotcha entry documenting a previous extraction bug — and they reported ERROR, the disposition meaning "the verify command may be stale", which invites someone to fix a line of prose.
+4. `[^>]*` extraction truncates at the first `>`, mangling every command with a redirect. This repo's `memory/gotcha-log.md` records that bug **three times**, twice in the same file on the same day.
+5. A table cell's `\|` escapes run as literal `echo` arguments, so the fallback branch is dead code. Found by measuring this repo's own two annotations; both were in this shape.
+6. A command that succeeds in silence has proved nothing, yet exits 0. Inbound from agent-ready-papers/pipeline-atlas, which shipped `ops/run_verifies.sh` for exactly this after finding checks that passed by not running.
+
+Sub-step 2 already warns that an empty `git log` means "the check did not run", not "nothing is stale". Sub-step 5 had the same trap one step over, with no warning.
+
+### What ships
+
+- **The runner itself**, as a four-backtick block in the step: extraction that ignores fenced blocks (indented, `~~~`, and nested inside a longer fence) and code spans (including CommonMark's multi-backtick form), requires a closing `-->`, and un-escapes `\|` inside GFM tables only, detected by their delimiter row; execution in a per-command subshell with stdin closed, its own output file and a timeout; and a summary line reconciling commands run against the annotations present.
+- **A disposition table**, plus MALFORMED in four shapes — no closing `-->`, a second opener before the first closes, an odd number of backticks on the line, and an empty command — each loud rather than skipped, because a dropped annotation is a claim nobody checked. The `CANNOT VERIFY` prefix now wins *regardless of exit status* — a guard is free to `exit 2`, which the previous text forbade because without isolation a non-zero guard scored ERROR. The runner also prints each command's first line of output: the rule asks for evidence, so the report has to show it.
+- **An exit status.** 2 means the run itself cannot be trusted — no files, an operand that is not a readable file, nothing extracted, or nothing that produced a verdict because every annotation was manual or unreachable. 1 means a claim failed, errored or was malformed. 0 means something was verified and nothing failed. The first draft always exited 0 — carrying its own disposition in words nothing parses, which is exactly what it forbids in the commands it runs.
+- **Three new writing rules**, joining the three that were already there, for six: print evidence on success and fail with a non-zero exit rather than a word; keep the annotation on one line; assume nothing about the working directory. The existing pipe rule gains its converse — escape `\|` in table cells and *only* there.
+- **"Zero commands extracted is a defect, never a pass"** — and so is a count the reader cannot account for, which is what the reconciliation line is for. Step 6 carries it into the report.
+
+### New fixture — `tests/fixtures/verify-runner/`
+
+Thirty-two positives, ten negatives, four malformed cases, seven structural cases, four timing cases and twenty-nine ablations — most of them added by three rounds of review that refuted the drafts before them. The negatives assert via canary files that the shell never happened, not merely that no row appeared; two of them are the exact strings this repo was executing out of its own gotcha log. The harness **extracts the runner from `templates/curate.md`** rather than copying it, so it cannot drift from what adopters run — the drift trap that cost this repo lint rule 6.
+
+Its README records the rejected predicate: un-escaping `\|` everywhere. That version was refuted by running against agent-ready-papers, whose `awk -F'|' '/^\| P[0-9]+ \|/…'` row-count check is correct, passing, and not in a table — un-escaping it produced an alternation with an empty operand and reported **FAIL on a healthy claim**. Two further defects were found the same way and are stated as writing rules, since no fixture over the runner can see them: a failure branch that exits 0 is a false PASS — `docs/GUIDE.md` has shipped one in its worked example since v1.9.0, four months, and this release fixes it — and `git ls-remote origin` passed from the project root while reporting ERROR one directory over.
 
 ### `audit-context` Step 5 names the row it provisions, and lint gains rule 7 (closes #42)
 
@@ -46,6 +92,37 @@ Three of its design decisions were forced by its own review, and each is a defec
 Fixture at `tests/fixtures/provisioning-quote/` — 9 positives, 4 negatives, committed and re-runnable, per `tests/lint/README.md`'s own checklist for adding a rule.
 
 **Adopter note:** if you added a standing caution that `/audit-context` will re-add a category-shaped row on its next run, it can go once you adopt this version.
+
+### `curate` Step 0 gains sub-step 6 — index self-consistency (closes #43)
+
+Every other check in Step 0 compares the index to something *outside* it: paths on disk, file mtimes, gotcha ages, ground truth, a verify probe. None asked whether the index agrees with itself, so two entries could assert opposite things indefinitely while each passed every check individually — both paths resolve, both files are fresh, neither is tagged as a state claim.
+
+The founding instance sat in an adopter's index for five days and several `/curate` runs: two entries 28 lines apart, one asserting that a feature renders to readers and one asserting it does not, the second citing the same issue id and instructing the reader not to re-derive it. A probe against the sibling repo settled it in seconds. **A stale entry is wrong; a self-contradicting index is wrong while also carrying its own correction**, so which version an agent acts on depends on read order rather than on evidence — and the `@memory/MEMORY.md` import that `templates/memory-index.md` offers puts both versions into every session's context.
+
+- **The cheap cluster first**: a `grep -on … | sort -u | cut | uniq -d` pipeline lists every identifier cited by more than one *entry*, and those entries get read *together* rather than in place. Three details are load-bearing and each was wrong in the first draft: counting per line rather than per mention (an entry repeating `#34` four times is not a cluster), keeping a qualified id distinct from a bare one (`llm-distillery#76` and a local `#76` are different trackers), and printing a warning when the index is not at the path given — an empty result from a missing file is otherwise indistinguishable from a clean index, the trap sub-step 2 already warns about for `git log`.
+- **Scope, measured honestly.** Across all 31 memory indexes on the author's machine the identifier pass returns 0–21 clusters, not the 3–12 of the four repos first sampled. And it is only the cheap half: clustering by *entity* is a pairwise read of the whole index with no bound but the index's size. The step now says which half to cut short, and at what size.
+- **Then by entity** — a repo, a path, a component, a host — asking "can all of these hold at once", not "is each plausible", which is what reading them in place amounts to.
+- **The contradicting pair is reported verbatim and left unresolved** unless a probe settles it. The more emphatic entry is not the more likely one: in the founding instance the false entry was the emphatic one *and* the one that told the reader not to check.
+
+Sub-step 5 gains the other half, because it is why the false entry had no probe: **a negative existence claim — or a count — is a state claim**. "There is no reader-facing count", "that endpoint doesn't exist", "nothing references the old path" read as settled fact rather than as claims about a world that moves, so nobody attaches a probe and the decay rule never reaches them — and they are disproportionately claims about *another* repository, where you cannot see the change that falsified them. **An instruction not to re-derive a claim is a reason to probe it, not a licence to skip it.**
+
+Dog-fooded on this repo's own index while writing it: **no contradicting pair**, and the identifier pass returned five clusters that all held. What the reading did surface was `Issue tracker: 4 open` — wrong by two at the moment it was read. That is a finding for sub-step *5*, not this one: a single entry, internally consistent, wrong only against an external tracker, and carrying no probe. It is offered as evidence for the negative-existence-and-count paragraph above, not as evidence that the contradiction check works — which remains untested against anything but the founding instance, and is stated here as such.
+
+The hypothesis-log and size-budget sub-steps renumber from 6 and 7 to 7 and 8.
+
+### What the review battery changed
+
+Four review lenses ran over the first draft and refuted it; the fixture above is roughly twice the size it was as a result, and every case below was added because a lens found the guard missing rather than merely unablated. Three were silent false PASSes — the failure this change exists to eliminate, in the artifact built to eliminate it:
+
+- **Backtick command substitution was deleted from the command.** Stripping code spans could not tell a code span from a command, so `` <!-- verify: [ "`printf x`" = x ] && echo OK --> `` ran as `` [ "" = x ] ``. Code spans are now *masked* at preserved offsets and the command is taken from the original line.
+- **Any stderr output defeated the `CANNOT VERIFY` prefix.** stderr was merged into stdout and arrives first, so an `ssh` guard's `Warning: Permanently added …` — the commonest line in exactly this situation — turned an unreachable host into a PASS. The two streams are now captured separately.
+- **One unclosed fence blanked every later file.** `fence` was a single toggle across the whole input list, and `memory/*.md` is alphabetical, so an unterminated ``` in an early file silently dropped every claim after it while the run reconciled as prose. Fence state now resets per file.
+
+Also: with no file arguments the runner read stdin and hung forever (the documented `memory/*.md` invocation produces none under `nullglob`); an unreadable file was invisible in the reconciliation line, which is the step's only defence; a forked child held the output pipe open indefinitely; `~~~` fences were executed; and `istable` missed GFM's legal pipe-less table form, leaving the dead-fallback-branch defect live for anyone who followed the escaping rule inside one.
+
+**One deprecated compatibility rule.** A command whose entire first line is `FAIL` and which exits 0 is scored FAIL. This framework's own guide taught `… && echo PASS || echo FAIL` from v1.9.0 until v1.21.0, and that idiom exits 0 on its failure branch; without the rule, every such annotation in every adopter's memory files would read as a pass on upgrade. The measured case: agent-ready-papers carries five annotations in that shape. They pass today — and on the day one of them stops passing, it would print the word FAIL and be scored a pass, which is precisely the failure that motivated self-verifying memory in the first place. It matches the bare word only, and it is documented as deprecated at the point of use.
+
+**`templates/test-verify-memory.md` and its fixtures are updated in the same release, and that is the finding worth keeping.** They are this repo's shipped behavioral test for this exact sub-step, and the first draft left them asserting the old dispositions: `echo FAIL` scored PASS, `echo ERROR && exit 1` scored FAIL, and one fixture modelled the `A && B || C` guard shape the same step forbids. An adopter running the shipped test against the shipped runner would have been invited to "fix" the runner. The cross-step contract in `CLAUDE.md` names this precisely — after editing step N, re-read what consumes its output — and it was not followed.
 
 ## v1.21.0 (2026-08-11)
 

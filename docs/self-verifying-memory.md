@@ -35,14 +35,14 @@ The idea is simple: when an agent writes a state claim in memory, it also writes
 ```markdown
 ### Article processing pipeline
 Status: deployed to production
-<!-- verify: curl -s https://example.com/api/health | jq '.pipeline_status' -->
+<!-- verify: if ! curl -s -m 5 https://example.com/ >/dev/null; then echo "CANNOT VERIFY: example.com unreachable"; else curl -s -m 5 https://example.com/api/health | jq -e '.pipeline_status == "deployed"'; fi -->
 
 Last checked: 2026-03-15
 ```
 
 Three components:
 
-1. **Write-time embedding.** When the agent records a state claim ("deployed," "migrated," "feature-flagged off"), it also records a verification command — a curl, a git check, a database query, whatever can prove the claim true or false.
+1. **Write-time embedding.** When the agent records a state claim ("deployed," "migrated," "feature-flagged off"), it also records a verification command — a curl, a git check, a database query, whatever can prove the claim true or false. It has to *fail* as well as pass, and it has to distinguish both from *cannot tell*: the `-e` above is what makes `jq` exit non-zero when the field is missing, and the guard around it is what stops an unreachable host reporting a failure it did not observe. The rules for writing one that can actually fail are in `templates/curate.md`, Step 0 sub-step 5.
 
 2. **Read-time execution.** When the agent loads a memory entry that contains a verification command, it runs it. If the result contradicts the claim, the agent flags the discrepancy instead of trusting the stale entry.
 
