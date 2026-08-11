@@ -197,11 +197,12 @@ Only once the engineer confirms the push:
    git ls-remote --exit-code --tags origin "refs/tags/vX.Y.Z"
    ```
 
-   Do not use a substring grep. `grep v1.2.3` matches a months-old `v1.2.3-rc1`, so a failed or forgotten push reads as success — and steps 2–4 below would then write a released-version claim into project memory for a release that does not exist.
+   Do not use a substring grep. `grep v1.2.3` matches a months-old `v1.2.3-rc1`, so a failed or forgotten push reads as success — and every step below would then act on a release that does not exist: step 2 installs unreleased content into a copy that shadows every repo, and steps 3–5 record the release as shipped in project memory, on the issue tracker, and in the work item.
 
-2. Update the memory index's current-state entry to the new version
-3. Close any issue the release resolves
-4. If the project tracks work items, fill in the Outcome section of any work item this release completed
+2. **Refresh any copy of a skill or command installed outside the repo** — a user-level install is not covered by the tag, and refreshing it *before* the tag would have put content no release contains into the copy that shadows every repo. This is the point at which that refresh is safe.
+3. Update the memory index's current-state entry to the new version
+4. Close any issue the release resolves
+5. If the project tracks work items, fill in the Outcome section of any work item this release completed
 
 ## Do not
 

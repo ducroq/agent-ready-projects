@@ -12,6 +12,67 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.21.0 (candidate, unreleased)
+
+`scripts/install-global-skills.sh` refuses to install when the bytes it would copy into `~/.claude/skills/` are not the bytes the highest release tag reachable from HEAD holds, and `templates/release.md` Step 7 now says when the refresh is safe. Closes #33.
+
+**Adopter action: if you use the script, refresh your global skills after the release tag is pushed and verified, not before.** `--force` installs from the working tree when you mean to run a draft knowingly.
+
+### Versioning rationale
+
+**Proposed MINOR, with the case for MAJOR on the record, because the bump is genuinely arguable and `templates/release.md` rule 1 says an existing consumer needing to act outranks everything below it.**
+
+For MAJOR: an invocation that succeeded before — running the installer mid-session, from a tree that is ahead of the last tag — now exits 2. Anyone with that in a script or a habit has to add `--force` or reorder their release.
+
+For MINOR: the behaviour that changed is a *refusal to perform an unsafe action*, not a change to an interface. The install still installs from a released tree with the same flags and the same output; the adopter-facing changes here are additive — a new Step 7 sub-step in `templates/release.md` (which renumbers the three below it) and a sentence in `docs/GUIDE.md`; and the reordering the guard forces is one that same step now states. v1.18.0 shipped `update-drift` as MINOR with "Adopter action: install it", and v1.20.0 shipped a changed table shape as MINOR with a two-part adopter action, so "adopter action exists" has not by itself meant MAJOR here.
+
+The engineer decides at release time; this section exists so the decision is made rather than inherited.
+
+### The defect
+
+The script copies from the **working tree** into `~/.claude/skills/`, where the copy shadows a project-local skill of the same name. Its header promised the install was derived from the tracked source, which was true of the *path* and said nothing about the *content*. On 2026-08-08 a global `curate` carried an uncommitted draft for ~42 minutes, and v1.17.0's release notes record that draft's rule as attempted and reverted — so during that window the skill sessions loaded instructed the opposite of the shipped one. `--check` reported agreement throughout, because it compares the install against the same working tree.
+
+v1.20.0 got this right by discipline: the refresh ran after the tag was pushed, and `git diff v1.20.0 -- .claude/skills/` was empty first. The script contained no `git` invocation at all, so it checked neither fact.
+
+### The guard
+
+- **The release** is `git tag --sort=-v:refname --merged HEAD --list 'v[0-9]*'` with hyphenated names skipped. The sort order is the one `templates/release.md` Step 1 uses; the three filters are not — Step 1's own `git tag --sort=-v:refname | head -1` would return a prerelease, a scratch tag, or a tag on an unmerged branch, which is **worth hardening there and is not done here** (that template is normative, and this change is already large) — filed as #41. What Step 1 does establish is the prohibition the guard follows: **not** `git describe --abbrev=0`, because it returns the *nearest* tag: after a hotfix tagged `v1.0.1` merges in behind `v1.1.0` it answers `v1.0.1`, and the guard would then measure a correct tree against a superseded release. The hyphen filter drops prereleases and hyphenated scratch tags such as `v2-spike` (a non-numeric one like `wip` is dropped by the glob); it also drops hyphenated CalVer (`v2026-08-11`), which a project tagging that way would have to widen.
+- **The comparison is on git's object ids**: `git rev-parse <tag>:<path>` against `git hash-object --path=<path>`, per source. Two predicates were tried and refuted first, each answering a question adjacent to the one the install poses — the fixture README records both, and each of their five demonstrated failure modes is now a seeded case. What the shipped comparison proves is that the worktree *cleans to* the released blob, which is weaker than byte equality: a lossy `clean` filter such as `ident` satisfies it with arbitrary injected text, so a path carrying one is refused rather than compared (P16).
+- Scoped to the three files the install copies. Widening it to `.claude/skills/` refuses whenever a project-local skill is mid-edit, which is most of a working session, and a guard that gets `--force`d as a matter of routine has stopped being one.
+- Nothing is written to the destination on a refusal, but the **verify pass and the estate scan still run** — neither writes to the destination or the estate, and a #33 guard that suppressed the #36/#37 scan would be a poor trade. On that path the verify loop also compares the *installed* copy against the release, which is the only check that can see #33 having already happened: install and source both carry the draft, so comparing them to each other reports nothing.
+- Undeterminable states refuse rather than pass: no `git` on `PATH`, a directory that is not a work-tree *root* (a checkout nested in an unrelated repo answers `--is-inside-work-tree` with "true"), no release tag, and a source that cannot be read.
+- `--check` warns instead of refusing and keeps its exit code. It answers whether the install matches the tracked source, which is a separate question, and it is run mid-session.
+- **Two limits worth stating.** It compares against a *local* tag, so a tag that was never pushed still passes — which is why the release procedure puts the refresh after a verified push. And it says nothing about whether the released content is correct; what it rules out is shipping bytes no release contains.
+
+### New fixture — `tests/fixtures/installer-release-guard/`
+
+Sixteen positives and fifteen negatives, each building a throwaway git repo in a known state. Twenty-nine ablation rows are recorded in its README, each measured against the shipped code by disabling an arm and re-running the whole fixture — three of them were wrong at some point, in three different ways, and the README names all three. Three of the negatives assert the state they seeded before trusting the result, and two positives assert that their seeded injection survives the clean filter; two of those assertions have fired on bad seeds.
+
+### Found by running it, not by reading it
+
+Four review batteries refuted this change. Recording the defects because the pattern is the argument, not the list.
+
+- **The predicate was wrong twice.** A name-based comparison (`git diff` + `ls-files`) misses `--assume-unchanged`, `--skip-worktree`, untracked paths, and both symlink shapes. A raw-blob comparison (`git show` + `cmp`) then refused *pristine* release checkouts under any checkout filter — `core.autocrlf=true` is the Git-for-Windows default, and this framework is explicitly tool-agnostic. A Windows maintainer would have passed `--force` from day one, which is the failure mode the design section above names.
+- **The tag selector was the one this repo's own release procedure forbids**, in the same change that adds a step to that procedure.
+- **The guard failed open on any git error**, found independently by all four lenses of the first battery: unreleased bytes installed, exit 0, `OK — global skills match the tracked source`. Later, the accumulation of findings was funnelled through `printf | grep .`, which made a *missing `grep`* empty them and let the install proceed — the same defect class, re-created two rounds after it was fixed. The findings are now accumulated with builtins.
+- **A refusal cancelled the read-only checks**; **`--check`'s own advice contradicted the guard** ("run without `--check` to refresh" is the install the guard refuses); and the **path list under a refusal printed nothing**, because `printf '%s'` leaves the last line unterminated so `read` never runs the loop body on it. The headline still read correctly and three cases passed while naming no file.
+- **Two arms measured inert** at different times: `--is-inside-work-tree`, replaced with a work-tree-*root* comparison, and `command -v git`, kept for its message and given the case that isolates it.
+- **A fixture needle could never fail**: P9 matched `symlink`, which appears in its own case id inside the destination path every refusal prints. **A fixture case could not distinguish what it claimed**: N11's first topology answered `v1.1.0` under both tag selectors. **An ablation row was published without being measured**, with an explanation that is false.
+- **The fixture wrote to this repository.** `git -C` loses to an inherited `GIT_DIR`/`GIT_WORK_TREE`, which a git hook or `git rebase --exec` exports — so a throwaway repo's commits, `tag` and `tag -d` landed on `master` during review. Fully restored (all 37 local tags verified byte-identical to origin, `master` back at `da767c4`); the harness now unsets those variables and pins `core.hooksPath`.
+
+### Pre-existing bugs, found by the new cases
+
+- **A CRLF checkout read as "no frontmatter".** The check compared `head -1` against `---`, and `head -1` yields `---\r`. Lint rules 4 and 6 strip `\r` deliberately; this script never did. Now a builtin-only `first_line` helper (N10).
+- **`cp` and `mkdir` statuses were discarded**, so an unwritable destination printed `installed` for every skill while nothing was copied — the verify pass contradicted it four lines later (N12, N13).
+- **`$HOME` unset aborted with bash's own message and exit 1**, this script's "N issue(s) found" code. Now an explicit error and exit 2.
+
+### Also
+
+- **`templates/release.md` and `.claude/skills/release/SKILL.md`** — Step 7 gains "refresh any copy installed outside the repo", after the tag-is-live check. The ordering the guard enforces was in no procedure in this repo (`git grep` over the docs finds one prior statement, and it states the *wrong* ordering — fixed below); v1.20.0 got it right from memory. The Step 7 warning about an unpushed tag named "steps 2–4" and was left stale by the insertion — three lenses flagged it, and it matters because the newly inserted step is the one whose failure mode *is* #33: refreshing after a tag that never pushed installs content no published release contains, and a local tag satisfies the guard.
+- **`CLAUDE.md`** — the skill-installation row states the refusal and the `--force` escape; the `tests/fixtures/` subtree and Key Paths entry cover the new fixture; "How to Work Here" lists all four self-test commands, which were nowhere written down together; and the self-certification Hard Constraint is re-counted against `memory/gotcha-log.md`, which had moved ahead of it, with `scripts/install-global-skills.sh` added to the list of shipping procedural artifacts it governs.
+- **`docs/GUIDE.md`** — the "global installs must be derived from a tracked source" rule now says *released*, with the reason.
+- **`docs/work-items/model-fit.md`** — an open checklist item said to refresh the global install "after committing", which the guard now refuses. Corrected.
+
 ## v1.20.0 (2026-08-10)
 
 MINOR — closes #40, #23, #38, #36 and #37. **The Layer 3 memory index is not auto-loaded, and had not been since ADR-001.** The claim survived across the guide, the templates, the four-page visual walkthrough, the public README and the adopt prompt — 16 files corrected here; an exact site count was published twice with two different numbers before being dropped in favour of one that can be checked. **Adopter action: add the "Picking up where the last session left off" row to your project file** — without it your memory index is never read, and nothing tells you.

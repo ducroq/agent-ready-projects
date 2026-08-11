@@ -501,7 +501,7 @@ The consequence that follows: **installing a skill globally forecloses per-repo 
 
 Two rules make this safe:
 
-1. **Global installs must be derived from a tracked source, never authored in place.** `~/.claude/` is not a repository: nothing there is versioned, reviewed, or restored on a new machine. Install global skills *from* the tracked copies in `.claude/skills/` and treat that directory as the master. `scripts/install-global-skills.sh` does this and verifies it.
+1. **Global installs must be derived from a tracked source, never authored in place.** `~/.claude/` is not a repository: nothing there is versioned, reviewed, or restored on a new machine. Install global skills *from* the tracked copies in `.claude/skills/` and treat that directory as the master. `scripts/install-global-skills.sh` does this and verifies it. Install from a **released** state, not from whatever the working tree holds: the copy you install is the one every repo loads, so a draft installed mid-edit is the version sessions load, and no release contains it. The script refuses to install when the bytes it would copy are not what the highest release tag reachable from HEAD holds.
 2. **Never leave an inert local copy behind.** When a skill moves to global scope, delete the project-local copies in the same change. A shadowed copy will drift from the one actually in use, and the drift is invisible precisely because the drifted file is never loaded.
 
 The generic-vs-specific test is measurable, so measure it rather than judging: count the references in a skill to paths that exist only in one repo. Zero means it is framework method and belongs global; more than zero means it is project knowledge and belongs local.
