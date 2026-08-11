@@ -19,6 +19,34 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.22.0 (candidate, unreleased)
+
+`templates/audit-context.md` Step 5 quotes the canonical row it provisions rather than describing it by category, and lint gains rule 7 for the class. Closes #42.
+
+### `audit-context` Step 5 names the row it provisions, and lint gains rule 7 (closes #42)
+
+Step 5 reports a missing memory-index pointer as its finding. An agent then adds a row to satisfy that finding, and the only wording available is the one the finding used — so when Step 5 described the row by *category* ("a row whose trigger fires at session start") it reliably manufactured category-shaped triggers. In a real adopter it produced `| Starting any session (project state) |` directly above that project's existing `| Starting any session (framework drift) |`: two rows with the same trigger prefix separated by a parenthetical, which is the exact collision v1.20.0 identified, argued against, and removed from this framework's own `CLAUDE.md` — **one day earlier**: v1.20.0 was tagged 2026-08-10 and the adopter incident is 2026-08-11. (The issue body says three weeks; `git log` says otherwise, and this entry originally repeated the figure without checking.)
+
+Both halves shipped in **v1.20.0**, in the same range: `templates/project-file.md` renamed the row *to* a situation, and `templates/audit-context.md` added the check that described it as a category. The release whose review battery found the weak-trigger shape simultaneously shipped the checker specifying it.
+
+- Step 5 now **quotes** the canonical row from `templates/project-file.md` and says why a category is not an acceptable substitute.
+- **Two rows sharing a trigger prefix are a finding on their own** — the observable form of the collision, and cheap to detect.
+- `docs/task-triggered-pointers.md` gains the generalisable rule the issue offers: **presence is not adoption; for a row whose function is to fire on a situation, the wording is the artifact.** It bites hardest where a skill provisions the row, because the skill's description of what it wants is what an agent writes.
+
+**New lint rule 7** covers the class, not just the instance — with a stated boundary. Rule 6 (#23) compares `templates/<name>.md` against `.claude/skills/<name>/SKILL.md`; here those two agreed with each other and contradicted a *third* file. Rule 7 asserts that a section provisioning a canonical row quotes it verbatim, and fails loudly if the row is renamed, deleted, or duplicated rather than silently comparing nothing.
+
+Three of its design decisions were forced by its own review, and each is a defect the first draft shipped:
+
+- **The canonical trigger is derived, not hardcoded** — it is the trigger cell of the row whose target is the memory index. A hardcoded prefix quoted a *decoy* the moment a second situation-shaped row started the same way, which is a shape Step 5's own prose recommends.
+- **The check is scoped to the provisioning section, not the file.** A file-wide grep passed while the instruction reverted to a category, because the canonical string survived in an appendix.
+- **Sections declare themselves** with `<!-- provisions: memory-index-row -->` rather than being inferred from wording. Inference was tried and refuted by the fixture: a cue of "names the index and mentions a row" fired on four sections that merely discuss reachability. Dropping the marker fails the same way dropping the section does.
+
+**`adopt.md` is covered too** — it is the *primary* provisioning site, since it creates the project file, and the first draft omitted it while claiming to close the class. Three sites are checked; the boundary is that rule 7 knows about the memory-index row only, not every canonical row the framework might grow.
+
+Fixture at `tests/fixtures/provisioning-quote/` — 9 positives, 4 negatives, committed and re-runnable, per `tests/lint/README.md`'s own checklist for adding a rule.
+
+**Adopter note:** if you added a standing caution that `/audit-context` will re-add a category-shaped row on its next run, it can go once you adopt this version.
+
 ## v1.21.0 (2026-08-11)
 
 `scripts/install-global-skills.sh` refuses to install when the bytes it would copy into `~/.claude/skills/` are not the bytes the highest release tag reachable from HEAD holds; `templates/release.md` Step 7 now says when the refresh is safe, and Step 1's tag selector answers the same question the guard does instead of contradicting it. Closes #33 and #41.

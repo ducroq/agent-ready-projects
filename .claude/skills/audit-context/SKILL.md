@@ -112,7 +112,20 @@ Check that every topic file in memory/ has a task-triggered pointer in the "Befo
 Check that every work-item file in `docs/work-items/` (other than `README.md`) has a corresponding pointer in the memory index's Current State section. Flag orphaned work-item files — they exist but no pointer tracks them. Also flag pointers in MEMORY.md whose target files no longer exist (stale pointer cleanup).
 
 
-**Then check the index's own reachability, which is the one orphan the rest of this step cannot see.** Every check above walks *outward from* the memory index — so if the project file has no pointer to the index, the index is unreachable, and every check that runs through it silently examines nothing. Verify that the project file contains a row whose trigger fires at session start and whose target is the memory index. If it does not, report it as the finding of this step: a single missing row takes all of Layer 3 out of reach, and nothing else in this audit reports it.
+**Then check the index's own reachability, which is the one orphan the rest of this step cannot see.** Every check above walks *outward from* the memory index — so if the project file has no pointer to the index, the index is unreachable, and every check that runs through it silently examines nothing. If it is missing, report it as the finding of this step: a single missing row takes all of Layer 3 out of reach, and nothing else in this audit reports it.
+
+<!-- provisions: memory-index-row -->
+
+**Check the row's wording, not just its presence, and quote the canonical one when proposing it.** `templates/project-file.md` ships it as:
+
+> `| Picking up where the last session left off | memory/MEMORY.md …`
+
+That is a **situation the agent recognises**. Describing it instead by *when it fires* — "a row whose trigger fires at session start" — is a category, and an agent satisfying the finding will write what the finding described. This step used to say exactly that, and the row it produced in a real adopter was `| Starting any session (project state) |`, sitting directly above that project's existing `| Starting any session (framework drift) |`: two rows with the same trigger prefix, separated by a parenthetical, which is the collision `docs/task-triggered-pointers.md` argues against and which v1.20.0 removed from this framework's own `CLAUDE.md`. Note the defect is the *collision*, not the parenthesis: one row reading `Starting any session (framework drift)` is fine, and `templates/project-file.md` ships one. Two rows whose triggers are identical up to a parenthetical are not, because the parenthetical becomes the only discriminator. Propose the canonical wording, or an equivalent situation — "resuming an interrupted migration", "returning after a week away" — never a category.
+
+**Two rows whose triggers are identical up to a parenthetical are a finding on their own.** It is the observable form of the collision and it is cheap: take each row's **first cell** — the text between the first and second `|` — strip any trailing ` (…)` or ` — …`, and flag any two rows whose remainders are then *equal*. Equal, not merely sharing a leading substring: `Editing a skill` and `Editing templates` share a prefix and are two perfectly good triggers, and a substring rule reports four such pairs on this framework's own project file. An agent choosing between `Starting any session (project state)` and `Starting any session (framework drift)` is choosing by parenthetical, which is the thing a trigger exists to make unnecessary.
+
+**For a row whose whole function is to fire on a situation, presence is not adoption — the wording is the artifact.** Report the row's actual text, so a reader can judge the shape rather than trusting a tick.
+
 ## Step 6 — Framework version drift
 
 Find this project's adopted framework version and compare it against the latest in `agent-ready-projects/CHANGELOG.md`.

@@ -48,6 +48,8 @@ This works because the agent reads the project file at session start, scans the 
 
 Good triggers are **situations the agent recognizes**, not topics it might find interesting.
 
+**Presence is not adoption — for a row whose whole function is to fire on a situation, the wording *is* the artifact.** A drift check that asks "does a pointer to the memory index exist" is satisfied by a row nobody will ever recognise, and a review that ticks it off has verified the wrong thing. Report the row's actual text so a reader can judge its shape. This bites hardest where a *skill* provisions the row: the skill's description of what it wants is the wording an agent will write, so a check phrased as a category manufactures category-shaped triggers at scale. `templates/audit-context.md` Step 5 did exactly that for one release — it asked for "a row whose trigger fires at session start", and got `| Starting any session (project state) |` directly above an existing `| Starting any session (framework drift) |` in a real adopter.
+
 | Weak trigger | Strong trigger |
 |---|---|
 | "API documentation" | "When debugging 422 errors" |

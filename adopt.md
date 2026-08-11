@@ -70,6 +70,7 @@ STEP 3 — Create a gotcha log.
 Save as gotcha-log.md in the appropriate location (memory/ for Claude Code, docs/ for others). Use the template structure. Leave it empty but ready — the first real entry will come from the next session.
 
 STEP 4 — If the tool supports auto-memory (currently Claude Code): create the memory index.
+<!-- provisions: memory-index-row -->
 Save as `memory/MEMORY.md`. **Then add the pointer row that reaches it** to the project file's "Before You Start" table — `| Picking up where the last session left off | memory/MEMORY.md — the index itself, not the topic files it lists |`. This is not optional bookkeeping: the in-repo index is not auto-loaded by any tool, so without that row every step below produces a file nothing ever reads.
 Fill in:
 - Topic file index (even if there's only the gotcha log to start)
