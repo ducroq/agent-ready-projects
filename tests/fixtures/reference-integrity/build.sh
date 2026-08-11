@@ -79,6 +79,42 @@ twin. Written as a fragment here: `config/settings.py` — must not be presented
 as clean; the enumeration must show which file it actually matched.
 EOF
 
+cat > docs/PLACEHOLDERS.md <<'EOF'
+# T12/N8/N9 — paths that were never meant to resolve (#45)
+
+Adding an aggregator: copy the template to `src/aggregators/my_new_aggregator.py` <!-- placeholder -->
+and register it.
+
+T14: a marker on a line carrying no path at all is an ineffective marker, and
+silently doing nothing is the failure mode. <!-- placeholder -->
+
+A work item lives at `docs/work-items/<slug>.md`, and a filter's config at
+`filters/<name>/<version>/config.yaml`. Both announce themselves; neither needs
+a marker, and neither is a defect.
+
+T12 is the failure this skip newly permits: a marker on a path that DOES
+resolve, which is how a real break gets hidden by mislabelling it.
+`src/models/temporal.py` <!-- placeholder -->
+
+T13: an angle-bracket path that resolves is the same defect by the other marker.
+`src/<real>/exists.py`
+
+T15 — the hiding vector. The marker is span-scoped, so it covers only the path
+before it; a genuine break sharing the line must stay a finding:
+copy `src/aggregators/another_template.py` <!-- placeholder --> and register it in `src/registry/wire_up.py`.
+
+N11 — and a live reference after a marker must not become a stale-marker
+finding: `src/utils/gone_placeholder.py` <!-- placeholder --> superseded by `src/utils/redaction.py`.
+
+N12 — a path whose FIRST character is the angle bracket is the commonest real
+form and must be extracted, not invisible: `<slug>.md` and `<root>/memory/MEMORY.md`.
+
+N13 — a document explaining the convention mentions the marker inside backticks:
+write `<!-- placeholder -->` on the line. That is a mention, not a use.
+EOF
+mkdir -p "src/<real>"
+printf 'x\n' > "src/<real>/exists.py"
+
 cat > docs/EXOTIC.md <<'EOF'
 # T11 — extensions outside the whitelist must not be silently invisible
 `infra/nonexistent.tf` and `notebooks/missing.ipynb` are broken references.

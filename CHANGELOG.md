@@ -19,6 +19,38 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.23.0 (candidate, unreleased)
+
+`audit-context` Step 4 gains a skip for paths that were never meant to resolve, so instructional placeholders stop being re-triaged on every audit. Closes #45.
+
+**Adopter action: mark your placeholders.** A path in a "how to add one" recipe, or one a runbook tells the reader to create, can carry `<!-- placeholder -->` immediately after it. Angle-bracket paths (`docs/work-items/<slug>.md`) need no action — they announce themselves and are skipped automatically, so that population changes without you doing anything. Everything else stays in the findings list exactly as before.
+
+### The asymmetry
+
+Step 4 already solved this once, for deletions: `! test -f`, `> **Deleted**:` and `~~strikethrough~~` are skipped, *"or the audit will keep proposing you 'fix' a line whose whole purpose is to record a removal."* It had no equivalent for paths that were never real, and it named that population two paragraphs later while telling the reader to tolerate it.
+
+Both instructions were right, and together they guaranteed a permanent list a human re-reads and re-dismisses forever. Measured on one adopter repo: two audits three hours apart, four commits between them, byte-identical three-line findings — one entry being this step's own worked example. That collided with the step's own alarm (*"if a check re-derives the same non-finding on consecutive runs, fix the check"*), which would have sent an adopter to loosen the extractor — the one edit the step calls most dangerous.
+
+### What ships
+
+- **Two markers.** `<!-- placeholder -->` on the line, mirroring the `<!-- verify: -->` idiom; and an angle-bracket segment (`filters/<name>/<version>/config.yaml`), which announces itself and costs the author nothing.
+- **A counted section**, `Skipped as declared-placeholder`, separate from asserted-absent. Skips stay visible: the step's own rule is that a skip is the one outcome with no rung to name.
+- **A marker on a path that resolves is a finding**, not a skip — mislabelling is how this change could hide a real break.
+- **The marker is span-scoped**, covering the nearest eligible path before it — the way the strikethrough and deletion markers already are. The first draft was line-scoped, and a review lens showed it relabelling a co-located genuine break as intentional: `copy \`template.py\` <!-- placeholder --> and register it in \`wire_up.py\`` silenced `wire_up.py` too. That is the defect this step had already measured once for strikethrough, reintroduced by the new skip and specified in its prose.
+- **An ineffective marker is a finding too** — a marker with no extractable path before it. Its message names the possible causes rather than asserting one, because a directory, a glob, a URL and a non-whitelisted extension all reach it and only the last is a whitelist gap.
+- **A mentioned marker is not a used one.** Code spans are masked before the marker is searched for, so any document explaining the convention — including this step, and the adopter's own copy of it — does not report itself.
+- **The two contradicting paragraphs are reconciled**: prove the check is alive by seeding a break first; a repeat that survives a caught seed is residue, and residue gets *marked*, not loosened away.
+
+### The extractor had to widen, and that is the interesting part
+
+`<slug>` paths were never captured at all — `PATH_RE` did not admit `<` or `>`. So the first fixture run showed the angle-bracket negatives passing, and they were **vacuous**: "not reported" meant "never extracted", which is indistinguishable from a working skip and is counted nowhere.
+
+Widening it once was not enough either. The *leading* character class was still `[A-Za-z0-9_.]`, so the commonest real form — a path that begins with the bracket, `` `<root>/memory/MEMORY.md` `` — remained invisible; across the author's ~30 repos that is 36 of 114 backticked angle-bracket paths. The fixture could not see the gap, because its negatives only asserted "not in findings". It now asserts that each declared placeholder appears in the **counted** section, which is the only form of the assertion that distinguishes skipped from never-seen.
+
+**Measured, no new phantoms**: across every `*.md` in ~30 repos the widened pattern admits zero tokens that are not angle-bracket placeholders.
+
+`tests/fixtures/reference-integrity/` gains T12, T13, T14 (the failures this loosening newly permits) and N8, N9, N10 (the skip working) — 22 seeded cases, all behaving correctly. Per the seeded-true-positives rule, a loosening is licensed by the breaks it still catches, not by a quiet run.
+
 ## v1.22.0 (2026-08-11)
 
 `templates/curate.md` Step 0 sub-step 5 ships the verify runner instead of describing it, and Step 0 gains a sub-step that asks whether the memory index agrees with itself. The step executes the `<!-- verify: ... -->` annotations in the memory files, and every hand-written implementation of it observed so far reported *nothing wrong having checked nothing* — a silent, self-certifying pass. Closes #32, #34, #35, #42, #43 and #44.

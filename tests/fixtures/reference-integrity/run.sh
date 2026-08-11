@@ -10,7 +10,7 @@ WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 bash build.sh "$WORK" >/dev/null
 
-DOCS="CLAUDE.md docs/ADVERSARIAL.md docs/MONOREPO.md docs/EXOTIC.md memory/MEMORY.md memory/gotcha-log.md"
+DOCS="CLAUDE.md docs/ADVERSARIAL.md docs/MONOREPO.md docs/EXOTIC.md docs/PLACEHOLDERS.md memory/MEMORY.md memory/gotcha-log.md"
 OUT="$(python3 refcheck.py "$WORK/repo" $DOCS || true)"
 FINDINGS="$(printf '%s' "$OUT" | sed -n '/== FINDINGS/,/^  total:/p')"
 
@@ -27,6 +27,15 @@ declare -a CASES=(
   "T10 deletion with surviving twin|packages/api/config/settings.py"
   "T11 unlisted extension .tf|infra/nonexistent.tf"
   "T11 unlisted extension .ipynb|notebooks/missing.ipynb"
+  # #45 — the failure the placeholder skip newly permits: a marker on a path
+  # that resolves. Mislabelling must not become a way to hide a real break.
+  "T12 stale placeholder marker on a resolving path|src/models/temporal.py"
+  "T13 stale angle-bracket marker on a resolving path|src/<real>/exists.py"
+  "T14 placeholder marker covering no path|COVERS NO PATH"
+  # The hiding vector the issue demanded be seeded: line-scoping relabelled a
+  # co-located genuine break as intentional. The marker is span-scoped, so this
+  # must stay a finding.
+  "T15 unmarked break sharing a marked line|src/registry/wire_up.py"
 )
 # Must NOT appear in findings.
 declare -a NEG=(
@@ -34,6 +43,11 @@ declare -a NEG=(
   "N3 prose deletion marker|src/utils/gone.py"
   "N6 negated existence assertion|src/utils/removed.py"
   "N7 struck path on a live line|src/utils/old_thing.py"
+  "N8 marked instructional placeholder|src/aggregators/my_new_aggregator.py"
+  "N9 self-announcing angle-bracket path|docs/work-items/<slug>.md"
+  "N10 angle-bracket path, second form|filters/<name>/<version>/config.yaml"
+  "N11 live path after a marker is not a stale marker|src/utils/redaction.py"
+  "N12 leading angle bracket is extracted, not invisible|<root>/memory/MEMORY.md"
 )
 
 FAIL=0
@@ -54,6 +68,30 @@ done
 if printf '%s' "$OUT" | grep -q "old_thing.py.*asserted-absent"; then
   printf '  PASS  N7 struck path skipped, successor kept\n'
 else printf '  FAIL  N7 strikethrough handling\n'; FAIL=1; fi
+
+# N13 cannot be a needle test: T14 legitimately emits the same string, so
+# "absent" is unassertable. Count instead — exactly one ineffective marker is
+# seeded, and a marker MENTIONED inside backticks (any doc explaining the
+# convention, including the shipped step itself) must not add a second.
+N_INEFFECTIVE="$(printf '%s' "$FINDINGS" | grep -c 'COVERS NO PATH' || true)"
+if [ "$N_INEFFECTIVE" -eq 1 ]; then
+  printf '  PASS  N13 a mentioned marker is not a used one (1 ineffective marker, not 2)\n'
+else
+  printf '  FAIL  N13 expected exactly 1 COVERS NO PATH finding, got %s — a marker inside backticks is being read as a marker in use\n' "$N_INEFFECTIVE"; FAIL=1
+fi
+
+# The negatives above only prove a path is not a FINDING. A path that was never
+# extracted also is not a finding — which is the silent-skip failure this whole
+# step is built against. Assert the counted section names them.
+PLACEHELD="$(printf '%s' "$OUT" | sed -n '/== SKIPPED as declared-placeholder/,/^  total:/p')"
+for want in "src/aggregators/my_new_aggregator.py" "docs/work-items/<slug>.md" \
+            "filters/<name>/<version>/config.yaml" "<slug>.md" "<root>/memory/MEMORY.md"; do
+  if printf '%s' "$PLACEHELD" | grep -qF -- "$want"; then
+    printf '  PASS  counted as declared-placeholder: %s\n' "$want"
+  else
+    printf '  FAIL  %s is not in the counted skip section — skipped and never-extracted are indistinguishable\n' "$want"; FAIL=1
+  fi
+done
 
 echo
 [ "$FAIL" -eq 0 ] && echo "All seeded cases behaved correctly." || echo "SENSITIVITY REGRESSION — do not ship."

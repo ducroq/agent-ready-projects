@@ -41,7 +41,11 @@ EXT = (
     '|lock|env|example|service|timer|socket|gitignore|dockerfile|tf|ipynb|proto'
     '|vue|svelte|rst|log|tag|svg|png'
 )
-PATH_RE = re.compile(r'`([A-Za-z0-9_.][A-Za-z0-9_./*-]*\.(?:' + EXT + r'))`')
+# `<` and `>` are in the class so that `docs/work-items/<slug>.md` is EXTRACTED.
+# Leaving them out looked like the skip working — the path simply never
+# reached the checker, so it could be neither reported nor counted, which is
+# the silent-skip failure this file exists to prevent (#45).
+PATH_RE = re.compile(r'`([A-Za-z0-9_.<][A-Za-z0-9_./*<>-]*\.(?:' + EXT + r'))`')
 
 STATE_DIRS = ('data/', 'state/', 'cache/', 'logs/', 'run/', 'var/', 'artifacts/')
 STATE_SHAPE = re.compile(r'(_state\.json|_health\.json|\.pid|\.sock)$')
@@ -56,6 +60,19 @@ PRUNE = {'.git', 'venv', '.venv', 'node_modules', '__pycache__', 'target', 'dist
 # replacement in the same sentence; skipping the line loses the replacement.
 STRIKE_RE = re.compile(r'~~(.+?)~~')
 DELETED_RE = re.compile(r'\*\*Deleted\*\*:?\s*(`[^`]+`)')
+# `<!-- placeholder -->` mirrors the file's existing `<!-- verify: -->` idiom:
+# invisible when rendered, greppable, machine-readable.
+PLACEHOLDER_RE = re.compile(r'<!--\s*placeholder\s*-->')
+SPAN_RE = re.compile(r'`[^`]*`')
+
+
+def _mask_spans(line):
+    """Blank code spans, preserving offsets, so a marker that is *mentioned*
+    inside backticks (any doc explaining the convention, including this file)
+    is not read as a marker in use."""
+    return SPAN_RE.sub(lambda m: ' ' * len(m.group(0)), line)
+# A `<...>` segment announces itself; `docs/work-items/<slug>.md` needs no marker.
+ANGLE_SEG_RE = re.compile(r'<[^<>/]+>')
 NEGATED_RE = re.compile(r'!\s*test\s+-f\s+`?([A-Za-z0-9_./-]+)`?')
 
 
@@ -157,7 +174,7 @@ def check(root, sources, sibling_roots=None):
     rung4_runnable = bool(siblings)
 
     rel = [str(p.relative_to(root)) for p in _tree(root)]
-    findings, resolved_weak, skipped = [], [], []
+    findings, resolved_weak, skipped, placeheld = [], [], [], []
 
     missing = []
     for src in sources:
@@ -176,6 +193,30 @@ def check(root, sources, sibling_roots=None):
             for m in NEGATED_RE.finditer(line):
                 covered.add(m.group(1))
 
+            # #45 — paths that were never meant to resolve. Two markers: an
+            # explicit `<!-- placeholder -->`, and an angle-bracket segment,
+            # which is self-announcing and costs the author nothing.
+            #
+            # The marker is SPAN-scoped, not line-scoped: it covers the nearest
+            # eligible path before it, the way STRIKE_RE and DELETED_RE are
+            # scoped. Line-scoping was the first draft and it relabelled a
+            # co-located genuine break as intentional — the defect this step
+            # already measured once for strikethrough.
+            placeheld_frags = set()
+            eligible = [m for m in PATH_RE.finditer(line)
+                        if '*' not in m.group(1) and not URLISH.match(m.group(1))]
+            for pm in PLACEHOLDER_RE.finditer(_mask_spans(line)):
+                before = [m for m in eligible if m.end() <= pm.start()]
+                if before:
+                    placeheld_frags.add(before[-1].group(1))
+                else:
+                    findings.append((src, '(line %d)' % (i + 1),
+                                     'PLACEHOLDER MARKER COVERS NO PATH — it is span-scoped and '
+                                     'takes the nearest backticked path before it. Either none is '
+                                     'there, or the token is not extractable: a directory, a glob, '
+                                     'a URL, or an extension outside the whitelist (that last one '
+                                     'is a whitelist gap, not a marker problem)'))
+
             para = ' '.join(lines[max(0, i - 1):i + 2])
 
             for frag in PATH_RE.findall(line):
@@ -183,6 +224,19 @@ def check(root, sources, sibling_roots=None):
                     continue  # a hostname is not a path
                 if frag in covered:
                     skipped.append((src, frag, 'asserted-absent'))
+                    continue
+
+                is_placeheld = frag in placeheld_frags or ANGLE_SEG_RE.search(frag)
+                if is_placeheld:
+                    # A marker on a path that DOES resolve is the failure this
+                    # skip newly permits: mislabelling is how a real break gets
+                    # hidden. Report it instead of skipping it.
+                    if (root / frag).exists() or _suffix_matches(rel, frag):
+                        findings.append((src, frag, 'STALE PLACEHOLDER MARKER (the path resolves)'))
+                    else:
+                        placeheld.append((src, frag,
+                                          'declared-placeholder'
+                                          if frag in placeheld_frags else 'angle-bracket segment'))
                     continue
 
                 # rung 1 — as written
@@ -237,7 +291,7 @@ def check(root, sources, sibling_roots=None):
     tree_ext = {p.suffix.lstrip('.').lower() for p in _tree(root) if p.suffix}
     known = set(EXT.split('|'))
     unknown = sorted(e for e in tree_ext - known if e and len(e) <= 12)
-    return findings, resolved_weak, skipped, unknown, missing, len(siblings)
+    return findings, resolved_weak, skipped, placeheld, unknown, missing, len(siblings)
 
 
 def main():
@@ -260,7 +314,7 @@ def main():
         print(f"  TOTAL ITEMS PUT TO A HUMAN: {len(reports) + len(stale)}")
         return 0
 
-    findings, weak, skipped, unknown, missing, n_siblings = check(root, sources)
+    findings, weak, skipped, placeheld, unknown, missing, n_siblings = check(root, sources)
 
     # State rung 4's coverage as a fact rather than inferring a verdict per
     # reference. We cannot tell which unresolved paths a sibling would have
@@ -291,6 +345,11 @@ def main():
     for s, p, v in weak:
         print(f"  {s:24s} {p:44s} {v}")
     print(f"  total: {len(weak)}")
+
+    print("\n== SKIPPED as declared-placeholder ==")
+    for s, p, v in placeheld:
+        print(f"  {s:24s} {p:44s} {v}")
+    print(f"  total: {len(placeheld)}")
 
     print("\n== SKIPPED as asserted-absent ==")
     for s, p, v in skipped:
