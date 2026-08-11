@@ -255,15 +255,17 @@ The fix is a lightweight work-item file (see [`templates/work-item.md`](../templ
 
 The work-item file is not a lifecycle state machine. There's no "draft to in-progress to review to done" progression. The sections are structure for a savepoint — enough context to resume after a context reset.
 
+**Work items are not Layer 3, even though they are described here.** `docs/work-items/` is an ordinary directory and the pattern works on every tool. Only the *pointer list* differs: the memory index's Current State section where your tool has auto-memory, the project file's "Active work" section where it does not. Read this subsection whichever tool you use.
+
 **The savepoint convention.** At the end of a working session, the agent updates the Current Status section with concrete progress, open questions, and anything the next session needs to know. At the start of a session, the agent reads the work-item file first to pick up where it left off. This is the same rhythm as the rest of the framework — capture during work, curate at end-of-session — applied at the work-item level.
 
 **Memory as residue.** When multi-session work is done, what persists beyond the code? Three things: (1) ADRs and gotchas — the durable decisions and problems encountered, (2) the work-item Outcome section — what happened that isn't captured anywhere else: approaches tried and abandoned, trade-offs that don't rise to ADR level, context the next person working in this area needs, and (3) the memory index — no longer pointing to an active work item. The work-item file itself is temporary. Create it when you start multi-session work. Fill the Outcome when the work lands or is abandoned. The Outcome is the residue — the knowledge that survives the work item. Delete the file or leave it as implementation history once its residue has been promoted to more permanent homes.
 
-Reference active work items in the memory index's Current State section as one-line pointers:
+Reference active work items as one-line pointers, in the memory index's Current State section where your tool has auto-memory, or in the project file's "Active work" section where it does not — the same list, in whichever artifact is always loaded:
 ```
 - Refactoring auth middleware → docs/work-items/auth-refactor.md [in progress]
 ```
-When work completes, update the pointer to `[done]` or remove it. If the index pointer and the work-item file disagree about status, the index wins — it's curated at end-of-session; the file is written during work. Update the file to match.
+When work completes, update the pointer to `[done]` or remove it. If the pointer and the work-item file disagree about status, the pointer wins — it's curated at end-of-session; the file is written during work. Update the file to match. Keep only in-progress items in the list: it is the one section that would otherwise grow every session, and in the project file it is charged against the size budget.
 
 Not every task needs a work-item file. Create one when work spans more than two sessions and you find yourself re-explaining context. Single-session work doesn't need it.
 
@@ -731,7 +733,7 @@ This guide's concepts map to every major AI coding agent. The file names and mec
 
 **If your tool has auto-memory** (currently only Claude Code): Use the full layered model. MEMORY.md as index, topic files for depth, gotcha log for history.
 
-**If your tool doesn't have auto-memory**: Everything goes into the project file. There is no Layer 3 for you and no `docs/` substitute for one, so `audit-context` Step 5 reports itself *not applicable, with the reason*, rather than passing silently — a step that does nothing and a step that finds nothing look identical otherwise. This makes the "keep it lean" advice even more critical — you have one auto-loaded file, not two. Use it as an index with task-triggered pointers to on-demand docs. The runbook, ADRs, and gotcha log still live in the repo and still get loaded on demand — the agent just needs to be pointed there from the project file.
+**If your tool doesn't have auto-memory**: Everything goes into the project file. There is no Layer 3 for you and no `docs/` substitute for one, so `audit-context` Step 5 reports its *topic-file* half not applicable, with the reason, rather than passing silently — a step that does nothing and a step that finds nothing look identical otherwise. Its work-item half still runs: work items are not a Layer 3 feature, and their pointers live in your project file's "Active work" section. This makes the "keep it lean" advice even more critical — you have one auto-loaded file, not two. Use it as an index with task-triggered pointers to on-demand docs. The runbook, ADRs, and gotcha log still live in the repo and still get loaded on demand — the agent just needs to be pointed there from the project file.
 
 **If your tool supports directory-level rules** (Claude Code, Codex, Cursor): Use them for subsystem-specific constraints. A `src/api/CLAUDE.md` (or `src/api/AGENTS.md`) can carry API-specific rules without cluttering the root project file. This is progressive disclosure at the file system level.
 

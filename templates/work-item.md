@@ -5,8 +5,10 @@
      One file per work item. Create at the start of multi-session work.
      Complete the Outcome section when the work lands or is abandoned.
 
-     When creating: add a one-line pointer in the memory index's
-     "Current State" section:
+     When creating: add a one-line pointer where your tool keeps them —
+     the memory index's "Current State" section if it has auto-memory,
+     the project file's "Active work" section if it does not. Both are
+     the same list in the only always-loaded artifact you have:
        - [Short description] → docs/work-items/slug.md [in progress]
      On completion: update the pointer to "[done]" or remove it.
 
@@ -49,10 +51,11 @@
      added, API stubbed, DB migration still failing with constraint
      violation on user_id" IS a savepoint.
 
-     The memory index's "Current State" section tracks active work items
-     as one-line pointers. If the index and this file disagree about
-     status, the index wins — it is curated at end-of-session; this file
-     is written during work. Update this file to match the index. -->
+     That pointer list — the memory index's "Current State" section, or
+     the project file's "Active work" section — tracks active work items.
+     If it and this file disagree about status, the pointer wins: it is
+     curated at end-of-session, this file is written during work. Update
+     this file to match. -->
 
 - [ ] Next steps
 - [x] Completed items

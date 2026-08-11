@@ -237,7 +237,7 @@ Check for context rot from *previous* sessions. This catches what the session-fo
    - If padding is a material share, the fix is **two** changes and needs both: de-pad the file, **and** exempt it from the formatter (e.g. add it to `.prettierignore`) — otherwise the pre-commit hook re-pads it on the very next commit and the work silently reverts. Verify the exemption is load-bearing rather than assuming it (`prettier --check --ignore-path /dev/null <file>` should report the file as needing changes, while the normal `--check` passes). Losing format-normalization on one markdown file is a smaller cost than a third of the budget; note the trade in the ignore file so the next reader knows it was deliberate.
    - Then the most common *content* cause: **session-narrative footers** (blocks like `_Last updated: ..._` / `_Earlier ..._`) accreting from prior sessions. These duplicate content that already lives in `memory/project_session_*.md` and is indexed in `MEMORY.md`.
    - Rule: keep at most **one** session footer block (the most recent), and only if it adds at-a-glance value the index can't carry. Drop older `_Earlier ..._` blocks — their content is preserved in session-memory files.
-   - Don't trim structural sections (Hard Constraints, Before You Start, Architecture, Key Paths). Those are what the project file is *for*.
+   - Don't trim structural sections (Hard Constraints, Before You Start, Architecture, Key Paths). Those are what the project file is *for*. **"Active work" is not on that list and is not protected** — it is a pointer list, and a pointer to finished work is exactly what should go. Trim it to the items actually in progress before proposing any structural cut.
    - If trimming wouldn't get under budget, surface to the engineer — structural restructuring is their call, not the agent's.
 
 Report findings before proceeding. Don't fix anything in this step — just surface what's stale so the engineer can decide.
@@ -276,7 +276,7 @@ A promoted pattern that recurs means the promotion did not take: the lesson is w
 
 Read the memory index (`MEMORY.md` for Claude Code, or the project file for other tools). Update:
 - **Current State** — reflect what shipped or changed this session
-- **Active work items** — for each active work-item file in `docs/work-items/`, update its Current Status section (the savepoint): mark completed items, update "Last action" and "Next action," note blockers. If a work item completed this session, fill its Outcome section and update the MEMORY.md pointer to `[done]`. If a new multi-session initiative started, create the work-item file from `templates/work-item.md` and add a pointer
+- **Active work items** — for each active work-item file in `docs/work-items/`, update its Current Status section (the savepoint): mark completed items, update "Last action" and "Next action," note blockers. If a work item completed this session, fill its Outcome section and update the pointer to `[done]` — in the memory index's Current State section, or the project file's "Active work" section where the tool has no auto-memory. If a new multi-session initiative started, create the work-item file from `templates/work-item.md` and add a pointer
 - **Key File Paths** — add any important files discovered during work
 - **Active Decisions** — add any architectural choices made, with ADR pointers if created
 - Remove or correct anything that is now stale
@@ -291,9 +291,9 @@ Check whether key docs reflect the current repo state. Code changes during a ses
 2. **Project file Key Commands / How to Work Here**: Verify commands still match actual CLI flags and defaults. Flag any mismatches (e.g., a renamed flag, a changed default).
 3. **Runbook** (if it exists): Check that operational details (environment setup, deployment steps, common problems) match reality. Flag anything that looks stale.
 4. **Work-item check**: Scan `docs/work-items/` for files with an incomplete Outcome section. For each:
-   - If the work completed this session, fill the Outcome and suggest updating the MEMORY.md pointer to `[done]`
+   - If the work completed this session, fill the Outcome and suggest updating the pointer to `[done]` — wherever this project keeps them (memory index, or the project file's "Active work" section)
    - If the Current Status shows no activity for 14+ days, flag as potentially abandoned — surface to the engineer
-   - If the file has no corresponding pointer in MEMORY.md, add one (or flag if unclear)
+   - If the file has no corresponding pointer in either list, add one to whichever this project uses (or flag if unclear)
 
 Fix what you can. Flag anything that needs engineer input.
 

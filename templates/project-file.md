@@ -37,6 +37,26 @@ framework: agent-ready-projects v1.21.0
 | Starting work as a contributor | `COORDINATION.md` — team agreements, WIP, conventions |
 -->
 
+## Active work
+
+<!-- One line per work item that is IN PROGRESS. This is the same list the memory
+     index's "Current State" section carries — it lives here instead when your
+     tool has no auto-memory, because then the project file is the only
+     always-loaded artifact you have. If your tool DOES have auto-memory
+     (currently Claude Code), delete this section: keeping both is how the two
+     copies start disagreeing.
+
+     Bounded on purpose. A completed item loses its pointer — its Outcome
+     section in the work-item file is the durable residue, and that file is
+     reached from the pointer while the work is live. Only in-progress items
+     belong here, so this section stays two or three lines and does not become
+     the session narrative that blows the project file's size budget.
+
+     Format — keep the example in here, not below, or every fresh adoption
+     ships a pointer to a file that does not exist and the audit's
+     reference check reports it, correctly, as broken:
+       - [Short description] → docs/work-items/slug.md [in progress] -->
+
 ## Hard Constraints
 
 <!-- The non-negotiables. Things that must always be true. -->

@@ -69,6 +69,9 @@ Save as the tool-appropriate filename. Fill in:
 STEP 3 — Create a gotcha log.
 Save as gotcha-log.md in the appropriate location (memory/ for Claude Code, docs/ for others). Use the template structure. Leave it empty but ready — the first real entry will come from the next session.
 
+STEP 3.5 — Decide where work-item pointers will live.
+The project file template ships an "Active work" section. If this tool has auto-memory, DELETE that section — the memory index's Current State section is the list, and keeping both guarantees they disagree. If it does not, KEEP it: the project file is the only always-loaded artifact, so it is the only place a pointer can be seen. Either way, leave the list empty until there is real multi-session work; the example belongs inside the comment.
+
 STEP 4 — If the tool supports auto-memory (currently Claude Code): create the memory index.
 <!-- provisions: memory-index-row -->
 Save as `memory/MEMORY.md`. **Then add the pointer row that reaches it** to the project file's "Before You Start" table — `| Picking up where the last session left off | memory/MEMORY.md — the index itself, not the topic files it lists |`. This is not optional bookkeeping: the in-repo index is not auto-loaded by any tool, so without that row every step below produces a file nothing ever reads.
