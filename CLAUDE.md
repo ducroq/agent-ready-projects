@@ -4,7 +4,7 @@ The source framework that teaches the layered memory method for AI coding agents
 
 - **Type**: Public methodology repo (guide + templates + skills)
 - **License**: MIT
-- **agent-ready-projects** (this repo): v1.22.0 (`curate` Step 0 ships the verify runner and gains an index self-consistency check — #34, #43; `audit-context` quotes the row it provisions and lint gains rule 7 — #42; both stop assuming Layer 3 exists — #32; the project file gains `## Active work` — #44; the adversarial lens requires a negative to carry its check — #35. New behaviour = MINOR; the measurement arguing for MAJOR is on the record in `CHANGELOG.md`.)
+- **agent-ready-projects** (this repo): v1.23.0 (`audit-context` Step 4 skips paths that were never meant to resolve — #45: `<!-- placeholder -->` span-scoped to the path before it, plus self-announcing `<...>` segments, both counted in their own section. New convention = MINOR; the marker cannot detect a *wrong* assertion of intent, which the step now states.)
 
 > Live project state (current threads, deferred items, surfaced patterns) lives in `memory/MEMORY.md` (maintainer-local — see *What is intentionally not shipped* below). Release notes live in `CHANGELOG.md`.
 

@@ -19,7 +19,7 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.23.0 (candidate, unreleased)
+## v1.23.0 (2026-08-11)
 
 `audit-context` Step 4 gains a skip for paths that were never meant to resolve, so instructional placeholders stop being re-triaged on every audit. Closes #45.
 

@@ -2,7 +2,7 @@
 stack: [e.g., Python 3.12, FastAPI, PostgreSQL]
 status: [Production | MVP | Prototype]
 repo: [e.g., github.com/org/project]
-framework: agent-ready-projects v1.22.0
+framework: agent-ready-projects v1.23.0
 ---
 
 # [Project Name]
