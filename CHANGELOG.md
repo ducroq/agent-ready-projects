@@ -19,7 +19,7 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.22.0 (candidate, unreleased)
+## v1.22.0 (2026-08-11)
 
 `templates/curate.md` Step 0 sub-step 5 ships the verify runner instead of describing it, and Step 0 gains a sub-step that asks whether the memory index agrees with itself. The step executes the `<!-- verify: ... -->` annotations in the memory files, and every hand-written implementation of it observed so far reported *nothing wrong having checked nothing* — a silent, self-certifying pass. Closes #32, #34, #35, #42, #43 and #44.
 

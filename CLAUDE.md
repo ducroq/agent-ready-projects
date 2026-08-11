@@ -4,7 +4,7 @@ The source framework that teaches the layered memory method for AI coding agents
 
 - **Type**: Public methodology repo (guide + templates + skills)
 - **License**: MIT
-- **agent-ready-projects** (this repo): v1.21.0 (the global-skill installer refuses to install content no release contains — #33; `templates/release.md` Step 1 selects its baseline with the same three filters the guard uses — #41. New behaviour = MINOR; the case for MAJOR is on the record in `CHANGELOG.md`.)
+- **agent-ready-projects** (this repo): v1.22.0 (`curate` Step 0 ships the verify runner and gains an index self-consistency check — #34, #43; `audit-context` quotes the row it provisions and lint gains rule 7 — #42; both stop assuming Layer 3 exists — #32; the project file gains `## Active work` — #44; the adversarial lens requires a negative to carry its check — #35. New behaviour = MINOR; the measurement arguing for MAJOR is on the record in `CHANGELOG.md`.)
 
 > Live project state (current threads, deferred items, surfaced patterns) lives in `memory/MEMORY.md` (maintainer-local — see *What is intentionally not shipped* below). Release notes live in `CHANGELOG.md`.
 
