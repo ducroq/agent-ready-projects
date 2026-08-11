@@ -6,13 +6,20 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      When promoting a `vX.Y.Z (candidate, unreleased)` block to a dated release,
      also tag the release commit:
 
-         git tag vX.Y.Z <commit>
-         git push --tags
+         git tag -a vX.Y.Z <commit> -m "vX.Y.Z"
+         git push origin vX.Y.Z
+
+     `-a` because a lightweight tag carries no tagger, date or message, and
+     `git describe` and release tooling treat the two differently. Push the
+     SINGLE ref, never `git push --tags`: that publishes every local tag,
+     including wip-* and private scratch tags, permanently. (This block said
+     `git push --tags` until v1.21.0, contradicting `templates/release.md`
+     Step 6 — which is the copy adopters follow.)
 
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.21.0 (candidate, unreleased)
+## v1.21.0 (2026-08-11)
 
 `scripts/install-global-skills.sh` refuses to install when the bytes it would copy into `~/.claude/skills/` are not the bytes the highest release tag reachable from HEAD holds; `templates/release.md` Step 7 now says when the refresh is safe, and Step 1's tag selector answers the same question the guard does instead of contradicting it. Closes #33 and #41.
 
@@ -20,13 +27,13 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 ### Versioning rationale
 
-**Proposed MINOR, with the case for MAJOR on the record, because the bump is genuinely arguable and `templates/release.md` rule 1 says an existing consumer needing to act outranks everything below it.**
+**MINOR — decided 2026-08-11, with the case for MAJOR left on the record because the bump is genuinely arguable and `templates/release.md` rule 1 says an existing consumer needing to act outranks everything below it.**
 
 For MAJOR: an invocation that succeeded before — running the installer mid-session, from a tree that is ahead of the last tag — now exits 2. Anyone with that in a script or a habit has to add `--force` or reorder their release.
 
 For MINOR: the behaviour that changed is a *refusal to perform an unsafe action*, not a change to an interface. The install still installs from a released tree with the same flags and the same output; the adopter-facing changes here are additive — a new Step 7 sub-step in `templates/release.md` (which renumbers the three below it) and a sentence in `docs/GUIDE.md`; and the reordering the guard forces is one that same step now states. v1.18.0 shipped `update-drift` as MINOR with "Adopter action: install it", and v1.20.0 shipped a changed table shape as MINOR with a two-part adopter action, so "adopter action exists" has not by itself meant MAJOR here.
 
-The engineer decides at release time; this section exists so the decision is made rather than inherited.
+**Decided on precedent, not on re-deriving the rule** — which is what Step 2 prescribes when the two disagree. v1.20.0 shipped MINOR carrying a two-part adopter action, one part of which was *reorder your existing rows to match* a changed table shape: a required structural edit to an artifact adopters already held. That is more disruptive than anything here, and it set the line. The affected population is also narrower than the MAJOR case implies: the script binds to this repo (`cd "$(dirname "$SELF")/.."`, then refuses if the result is not this tree), `scripts/` is not in `CLAUDE.md`'s list of normative surfaces, and `templates/update-drift.md`'s own worked example records a downstream repo declining to adopt it as "belongs upstream, where the globals live". The discrepancy with rule 1 is flagged here rather than buried, per Step 2's last line.
 
 ### The defect
 
