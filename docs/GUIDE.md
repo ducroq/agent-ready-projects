@@ -731,7 +731,7 @@ This guide's concepts map to every major AI coding agent. The file names and mec
 
 **If your tool has auto-memory** (currently only Claude Code): Use the full layered model. MEMORY.md as index, topic files for depth, gotcha log for history.
 
-**If your tool doesn't have auto-memory**: Everything goes into the project file. This makes the "keep it lean" advice even more critical — you have one auto-loaded file, not two. Use it as an index with task-triggered pointers to on-demand docs. The runbook, ADRs, and gotcha log still live in the repo and still get loaded on demand — the agent just needs to be pointed there from the project file.
+**If your tool doesn't have auto-memory**: Everything goes into the project file. There is no Layer 3 for you and no `docs/` substitute for one, so `audit-context` Step 5 reports itself *not applicable, with the reason*, rather than passing silently — a step that does nothing and a step that finds nothing look identical otherwise. This makes the "keep it lean" advice even more critical — you have one auto-loaded file, not two. Use it as an index with task-triggered pointers to on-demand docs. The runbook, ADRs, and gotcha log still live in the repo and still get loaded on demand — the agent just needs to be pointed there from the project file.
 
 **If your tool supports directory-level rules** (Claude Code, Codex, Cursor): Use them for subsystem-specific constraints. A `src/api/CLAUDE.md` (or `src/api/AGENTS.md`) can carry API-specific rules without cluttering the root project file. This is progressive disclosure at the file system level.
 

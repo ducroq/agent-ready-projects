@@ -200,7 +200,19 @@ two things the change now asserts. Prose contradictions count and often have no
 triggering input; do not withhold one for lacking a repro. Report NOT REFUTED only
 after a thorough attempt has failed to produce any of those.
 
-Report: REFUTED or NOT REFUTED, with failure scenario if refuted.
+**State the check before the claim, on any negative.** "0 rows", "not called
+anywhere", "nothing reads it", "all clean", "no other callers" — a negative
+cannot distinguish a real absence from a broken instrument, an empty sample, or
+a mismatched population. Report each one as three things: the claim, the command
+that produced it, and **what a non-empty result would have looked like**. If you
+cannot state the shape of a positive, the claim is not ready to make.
+
+This is not a step to perform; it is the sentence to write. A separate
+"verify your negatives" step is skippable in exactly the cases where it matters.
+Making the check travel with the claim is what makes omitting it visible.
+
+Report: REFUTED or NOT REFUTED, with failure scenario if refuted. Every negative
+in your report carries its command and the shape of a positive.
 ```
 
 ### Lens: doc-accuracy (MEDIUM and HIGH)
