@@ -35,7 +35,11 @@ An adopter porting the magnitude gate added a second glob to the bolded bullet �
 
 Two things follow. The boundary is **inside the 3 series**, not between 2 and 3. And the protection is **a later code span on the same line** — which is why this repo's bullet survived when tested in the full file and broke when tested alone, and why `templates/review-changes.md` at `ea9ecb3` did in fact ship a line that prettier ≤3.8.1 corrupts. The parenthetical added in `d674dbe` protected it *by accident*, not by design.
 
-The bullet now states the measured matrix, names the mechanism, and says not to rely on it — put extra paths in a parenthetical, and check a rendered view.
+**The fix shipped is the shape, not the warning.** Both bullets now put the glob in a parenthetical rather than inside the bold, so the vulnerable construct is gone from this repo rather than annotated. Verified stable under prettier 2, 3.8.1 and 3.9.6.
+
+A second refinement from the same adopter closes the loop: the protection is **exactly one** later code span — *two* reintroduce the failure in the other form, with the spaces between them eaten. So "add a code span to protect it" is the natural reading and is wrong, which is why the durable answer is a shape rule: **never end a bolded phrase with a `**`-suffixed glob.** That survives in a reader's head; a version boundary inside the 3 series and a span-count do not.
+
+Worth recording why this one was hard to see. The previous bullet pair was protected only by a trailing `` `---` `` code span — punctuation that reads as deletable while tidying. A future editor removing it would have silently corrupted the line, with nothing anywhere explaining why it mattered.
 
 Step 1.5 does not catch this: it checks tables and fences, not emphasis spans. Filed separately.
 
