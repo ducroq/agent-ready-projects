@@ -4,7 +4,7 @@ The source framework that teaches the layered memory method for AI coding agents
 
 - **Type**: Public methodology repo (guide + templates + skills)
 - **License**: MIT
-- **agent-ready-projects** (this repo): v1.24.0 (`curate` Step 0 reads metadata rather than documents — #46: an ordinary session reads a median of 3 memory files, measured across 2,264 transcripts, and Step 0 was the only thing reading the whole corpus. 64/60/92% less read surface. Heading status and recurrence counts now live in the heading.)
+- **agent-ready-projects** (this repo): v1.25.0 (the adversarial lens carries one rule for claims that need measuring — #35 and #39 merged, #39 promoted after its gate was met by this repo violating it; the gotcha-log entry-size rule is removed rather than enforced; `audit-context` Step 4 skips declared placeholders. New behaviour = MINOR.)
 
 > Live project state (current threads, deferred items, surfaced patterns) lives in `memory/MEMORY.md` (maintainer-local — see *What is intentionally not shipped* below). Release notes live in `CHANGELOG.md`.
 

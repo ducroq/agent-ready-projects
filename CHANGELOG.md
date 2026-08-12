@@ -19,7 +19,7 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.25.0 (candidate, unreleased)
+## v1.25.0 (2026-08-12)
 
 ### The adversarial lens gets one rule for claims that need measuring, and a place for hypotheses to be born (closes #39)
 
