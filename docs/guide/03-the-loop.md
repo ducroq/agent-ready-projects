@@ -107,7 +107,7 @@ Total effort: ~2 minutes across 6 sessions. The lesson was visible at the right 
 **When:** The root cause is fixed, the code is refactored, or the lesson is encoded in the codebase itself.
 
 **What to do:**
-- Mark gotcha log entries `[RESOLVED]` (don't delete — it's history)
+- Mark gotcha log entries `[RESOLVED]` **in the heading** (don't delete — it's history). Curation reads headings; a status in the body cannot be seen without opening every entry, which is the cost the heading exists to avoid
 - Remove topic file entries for refactored-away behavior
 - Remove memory index entries that are now in the project file or code
 

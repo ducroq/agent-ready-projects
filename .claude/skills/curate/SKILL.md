@@ -12,15 +12,27 @@ Review the session's work and update the layered memory system:
 
 Check for context rot from *previous* sessions. This catches what the session-focused steps below miss.
 
+**Read metadata, not documents.** Measured across 2,264 real sessions, an ordinary session reads a **median of 3** memory files — the layer works as designed. This step is the exception that reads everything, and it does not need to. A gotcha log's headers are ~6–7% of the file and carry most of what Step 0.3, Step 1 and Step 2 use; a verify probe is *run*, not read; staleness is `stat`, not content. Where a large artifact is involved, take its index first and fetch a body only when you are going to act on it. In one measured repo this is the difference between ~1,000,000 characters and ~35,000.
+
 1. **Dead references**: Read the memory index and project file. For every file path mentioned, verify it still exists. List any broken paths.
 2. **Stale memory**: Check modification dates of memory files. Flag any not modified in 30+ days — they may be outdated. Read dates from the **filesystem**, e.g. `ls -l --time-style=+%Y-%m-%d memory/` or `stat -c '%y %n' memory/*.md`. **Look for the files before reading their dates, and say which set you read.** Where there is no `memory/` there is no Layer 3, and this project's equivalents are the ones the naming map gives for a tool without auto-memory — `docs/gotcha-log.md`, `docs/hypothesis-log.md`, `docs/work-items/` — plus the project file itself. Both example commands fail the same silent way on a directory that is not there: `stat` and `ls` each write to stderr and print nothing to stdout, which reads exactly like "nothing is stale".
 
    Do not use `git log -1 --format=%ci -- <file>` as the primary check. When the memory directory is gitignored — the recommended setup, and this framework's own — `git log` returns **empty with exit 0** for every file, so the check reports nothing stale while having examined nothing. Empty `git log` output here means "the check did not run", not "no files are stale".
 
    If your memory files *are* tracked in git, `git log -1 --format=%ci -- <file>` is the better signal, since it reflects real edits rather than incidental touches (checkouts, formatters, syncs). Verify which case you're in first — and test that the directory exists before asking git about it, or a project with no `memory/` at all takes the "tracked" branch and is told `git log` is fine: `if [ ! -d memory ]; then echo "no memory/ — read the docs/ equivalents and the project file"; elif ! git rev-parse --git-dir >/dev/null 2>&1; then echo "not a git repo — use filesystem mtime"; elif git check-ignore -q memory/; then echo "gitignored — use filesystem mtime"; else echo "tracked — git log is fine"; fi`.
-3. **Lingering gotchas**: Read the gotcha log. Flag any unresolved entries older than 14 days — they're either fixed (mark `[RESOLVED]`) or stuck (surface to the user).
+3. **Lingering gotchas**: Read the gotcha log's **headers plus its Promoted table**, not the log.
+
+   ```
+   grep -nE '^#{2,3} ' <log>                 # entries: date, title, status, line number
+   awk '/^#+ Promoted/,0' <log> | grep '^|'  # the table: what has already been resolved or promoted
+   grep -c '^\*\*Problem\*\*' <log>          # ground truth: entry count, obtained a different way
+   ```
+
+   **Match both heading levels, and reconcile the count.** Adopters use `##` and `###` for entries — one measured log uses `##` for 106 of its 200 entries and says so in its own file comment, and a `^### `-only read returned 94, a plausible number that silently omitted half the file including every entry from the last two weeks. If the header count and the `**Problem**` count disagree by more than the section headings, the extractor is wrong; a short answer here is a defect, not a small log. Ignore headings inside `<!-- -->` — a fresh adopter's log still contains the template's own example entry there.
+
+   Flag any unresolved entry older than 14 days: it is either fixed (mark `[RESOLVED]`) or stuck (surface to the user). **The Promoted table is why this needs reading too** — in one measured log 11 entries are recorded resolved in the table and carry no marker in their header, so a header-only pass reports every one of them as lingering on every run, forever. Open a body only for an entry you are about to change.
 4. **Ground truth drift**: If the project file has a "Ground Truth Designations" table, verify each listed file exists and has been modified more recently than the artifacts that defer to it. Flag any where a downstream artifact is newer than its source of truth.
-5. **Unverified state claims**: Scan memory files for state claims ("shipped," "deployed," "live," "running," "working in production"). Claims carrying a `<!-- verify: ... -->` annotation are run by the runner below. A claim with no annotation is **UNVERIFIED** — those decay immediately after the session that wrote them, so suggest adding an annotation or requalifying the claim as a session observation.
+5. **Unverified state claims**: Scan memory files for state claims ("shipped," "deployed," "live," "running," "working in production"). Claims carrying a `<!-- verify: ... -->` annotation are run by the runner below. **Do not read the memory files to do this** — the runner extracts and executes the annotations itself, and its report is what you read. Pulling the files into context to find annotations costs the whole corpus to obtain what a grep already returned. A claim with no annotation is **UNVERIFIED** — those decay immediately after the session that wrote them, so suggest adding an annotation or requalifying the claim as a session observation.
 
    **Use this runner. Do not write one on the spot.** Every hand-written implementation observed so far reported *nothing wrong having checked nothing* — a silent, self-certifying pass, reached by six independent routes: a command containing `exit` ends the loop mid-iteration; an `ssh` (or any other stdin-reading command) swallows the rest of the command list; prose that merely *mentions* the syntax is executed as shell; `[^>]*` extraction truncates at the first `>`, mangling every command with a redirect; a `\|`-escaped command from a table cell runs with its pipes as literal `echo` arguments, so its fallback branch is dead code; and a command that succeeds in silence is indistinguishable from one that never ran. Each of the six is sufficient on its own. Save the block to a scratch file and give it **absolute paths** — `bash /tmp/verify-runner.sh /repo/memory/*.md /repo/docs/hypothesis-log.md`.
 
@@ -230,9 +242,11 @@ Report findings before proceeding. Don't fix anything in this step — just surf
 
 ## Step 1 — Gotcha log review
 
-Read `memory/gotcha-log.md` (or `docs/gotcha-log.md` if not using Claude Code). For each existing entry:
-- If the root cause was fixed during this session, mark it `[RESOLVED]`
-- If the same issue came up again, note the recurrence
+Read the gotcha log's **headers** (`grep -n '^### ' <log>`), not the whole log. For each existing entry:
+- If the root cause was fixed during this session, mark it `[RESOLVED]` **in the header**, not in the body: `### Title (2026-08-12) [RESOLVED]`. A status buried in a body cannot be seen by a header read, which makes every later run open the whole file to find out what is still open. Headers written before this convention have no marker and read as open; move one up when you touch its entry.
+- If the same issue came up again, note the recurrence **in the header as well as the body** — `### Title (2026-08-12) [x3]`. Step 2 counts recurrences and reads headers; a recurrence recorded only in a body is invisible to the step that exists to promote it.
+
+   **Recurrence is the one check headers cannot serve, and this is a limit rather than a solution.** Recognising that today's problem is last month's problem is a match on *mechanism*, which lives in the body — a header reading "extraction returned near-zero and looked like a clean run" does not tell you it was a `[^>]*` character class. Grep the log for a distinguishing term, read the entries that match, and accept that the term is a guess. Note the counter-evidence honestly: this framework's own log records that same bug being re-implemented **three times**, twice by sessions that had the whole log open. A full read did not prevent it, so header-first is not obviously worse — but do not claim it is better, and when a new entry feels familiar, spend the read.
 
 Then check: did anything go wrong or surprise you during this session? For each one, append a new entry:
 
@@ -247,7 +261,7 @@ Then check: did anything go wrong or surprise you during this session? For each 
 
 ## Step 2 — Pattern detection and promotion
 
-Scan the gotcha log for entries that have recurred 2-3 times. For each:
+Scan the gotcha log's headers and its Promoted table for entries that have recurred 2-3 times — the counts live in the table and the titles in the headers, so neither needs a body read. For each:
 - Propose promoting it as an "if [situation], then [what to do]" pattern
 - Suggest where it belongs: the memory index (if broadly relevant) or a topic file (if subsystem-specific)
 - If approved, add it to the destination and update the Promoted table in the gotcha log

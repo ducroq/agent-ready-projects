@@ -19,6 +19,41 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.24.0 (candidate, unreleased)
+
+`curate` Step 0 stops reading the corpus it maintains. Closes part of #46.
+
+**Adopter action: two, both small.** `[RESOLVED]` and a recurrence count now go in an entry's *heading*, not its body, so curation can see them without opening every entry — `templates/gotcha-log.md`, `docs/EXAMPLE.md` and `docs/guide/03-the-loop.md` all say so now. Existing entries are unaffected and read as open until touched. And if your gotcha log uses `##` headings rather than `###`, nothing breaks: the reader matches both.
+
+### Measured
+
+An ordinary session reads a **median of 3** memory files — from 2,264 real session transcripts, p90 of 6, max 15, against corpora of up to 86 files. The layered design works as designed. `curate` Step 0 was the sole exception, reading everything.
+
+| repo | before | after | saving |
+|---|---|---|---|
+| agent-ready-projects | 118,141 chars | 41,888 | 64% |
+| agent-ready-papers | 244,753 | 95,651 | 60% |
+| llm-distillery | 1,035,845 | 77,375 | **92%** |
+
+Method: *before* is the project file plus every `memory/*.md`; *after* is the project file plus the index, both-level headings, and the Promoted table. The project file is on both sides because four sub-steps read it — it is 24–36KB and dominates the "after". The runner's report and the mtime listing are output rather than reads and are excluded from both.
+
+### What changed
+
+- **Headings are ~6–7% of a gotcha log** and carry date, title, status and a line number. Steps 0.3, 1 and 2 read those; a body is opened only for an entry about to change.
+- **Both heading levels, and a reconciled count.** `grep -c '^\*\*Problem\*\*'` is the ground truth the heading count is checked against.
+- **Step 0.3 reads the Promoted table too**, because resolution is recorded there as well as in headings.
+- **Sub-step 5 does not read memory files at all.** The runner extracts and executes the annotations; the agent reads its report.
+
+### The first draft was refuted on ten points; three are worth recording
+
+- **The heading grep was level-blind and missed 105 of 200 entries** in the repo the headline number came from. `llm-distillery` uses `##` for entries and says so in its own file comment. `^### ` returned 94 — a plausible number omitting half the file, including every entry from the preceding two weeks. That is the failure this very sub-step enumerates six times over, committed by the instrument built to avoid it. It also invalidated the evidence: 200 entries not 94, mean entry **1,488** chars not 3,119 (≈7× over spec, not 15×), and 5 headings already carried `[RESOLVED]` where the draft reported none.
+- **Step 0.3 without the Promoted table is a bulk false-positive generator** — 11 entries in one measured log are recorded resolved in the table with no marker in their heading, so every run would report them lingering, forever. The v1.15.1 failure class.
+- **The convention was written into the skill and none of the artifacts that define it.** An adopter following `templates/gotcha-log.md` or `docs/EXAMPLE.md` would have written body status and been told about it every session.
+
+### Rule 8 earned its place twice in one day
+
+The ratchet, added hours earlier, refused both this change and the propagation that followed it. That is the intended workflow: body size and run cost are different currencies, and it forces the trade to be stated rather than assumed. ~2KB of template text, paid once per invocation and prompt-cached, buys 60–92% of a read surface paid in fresh tokens every run.
+
 ## v1.23.0 (2026-08-11)
 
 `audit-context` Step 4 gains a skip for paths that were never meant to resolve, so instructional placeholders stop being re-triaged on every audit. Closes #45.

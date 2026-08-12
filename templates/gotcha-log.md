@@ -8,7 +8,10 @@
      - At end-of-session, review for patterns (Surface phase)
      - When an entry recurs 2-3 times, promote it to the relevant topic file
        as an "if X, then Y" pattern (Promote phase)
-     - When a gotcha's root cause is fixed, mark it [RESOLVED] (Retire phase)
+     - When a gotcha's root cause is fixed, mark it [RESOLVED] IN THE HEADING
+       (Retire phase) — `### Title (2026-08-12) [RESOLVED]`. Curation reads
+       headings, not bodies; a status in a body is invisible to it and the
+       entry is reported as lingering on every future run.
      - Track what you've promoted in the "Promoted" section below
 
      When the root cause is fixed, mark it resolved here (don't delete). -->
@@ -44,7 +47,9 @@
 
      STATUS TAGS:
      - [PROMOTED] — lesson was moved up the stack (to a topic file, memory index, or project file)
-     - [RESOLVED] — root cause was fixed; entry stays as history
+     - [RESOLVED] — root cause was fixed; entry stays as history. Put it in
+       the heading. Same for a recurrence count: `[x3]` in the heading, so the
+       promotion step can see it without opening the entry.
 
      OCCURRENCES is the column that survives compression, and it is why this
      table has four columns rather than three. Two mechanisms above compress

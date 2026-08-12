@@ -133,7 +133,8 @@ Conventional commits: `feat:`, `fix:`, `chore:`, `docs:`
 **Problem**: API returned 503s under load. Bull jobs backed up.
 **Root cause**: Default connection pool size (5) was too small for concurrent job processing.
 **Fix**: Increased pool to 20, added connection pool monitoring to health endpoint.
-**Status**: [RESOLVED] — pool size is now in environment config with sensible defaults.
+*(status lives in the heading — `### … (2026-03-02) [RESOLVED]` — so curation can see it without reading the entry)*
+**Fix**: pool size is now in environment config with sensible defaults.
 ```
 
 ## What to notice
