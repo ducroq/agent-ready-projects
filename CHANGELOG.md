@@ -25,7 +25,17 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 An adopter porting the magnitude gate added a second glob to the bolded bullet — `` **… under `.claude/skills/**` or `.claude/agents/**`** `` — and their husky/prettier hook rewrote it to `` `…skills/**`or`…agents/**` ``, eating the spaces, because a glob's trailing `**` is parsed as a bold delimiter. Correct in the diff, wrong only when rendered, on the line that tells adopters skills are HIGH risk.
 
-**Measured rather than assumed**, since the reporter flagged the single-glob form as untested: two globs break on **prettier 2** and survive **prettier 3**; the single-glob form this repo ships survives both. So nothing was broken here — the bullet now carries the warning so the extension that broke it elsewhere does not get made again, and points at the parenthetical form that sidesteps it.
+**That claim was wrong, and the correction is the more useful entry.** The first version of this note said two globs break on prettier 2 and survive prettier 3, and that the single-glob form survives both. It was generalised from two isolated one-line tests on 3.9.6. The reporter re-measured on **3.8.1** and refuted it; re-measured here, the full matrix is:
+
+| shape | prettier 2 | 3.8.1 | 3.9.6 |
+|---|---|---|---|
+| single glob, no later code span | **breaks** — closing `**` becomes literal | **breaks** | survives |
+| single glob, a later code span on the line | survives | survives | survives |
+| two globs in one bolded phrase | **breaks** — spaces eaten | **breaks** | survives |
+
+Two things follow. The boundary is **inside the 3 series**, not between 2 and 3. And the protection is **a later code span on the same line** — which is why this repo's bullet survived when tested in the full file and broke when tested alone, and why `templates/review-changes.md` at `ea9ecb3` did in fact ship a line that prettier ≤3.8.1 corrupts. The parenthetical added in `d674dbe` protected it *by accident*, not by design.
+
+The bullet now states the measured matrix, names the mechanism, and says not to rely on it — put extra paths in a parenthetical, and check a rendered view.
 
 Step 1.5 does not catch this: it checks tables and fences, not emphasis spans. Filed separately.
 
