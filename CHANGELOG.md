@@ -19,6 +19,50 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.25.1 (candidate, unreleased)
+
+### Step 1.5 examined no tables on a CRLF checkout, and said so in the same words as a clean run (closes the CRLF half of #52)
+
+`isdelim()` strips spaces and tabs but not `\r`, so under CRLF the delimiter row never matched `^[|:-]+$`, `intbl` was never set, and no table in the file was examined. The step then printed nothing for any table defect — byte-identical to a clean run. The count block could not catch it: the file is in scope and is counted, so the reconciliation line reads healthy while no table was checked. That is the failure this step's own prose warns about fifteen lines later (*"prints nothing on a clean run — which is also what it prints when the file list was empty"*), reached by a route the warning does not cover.
+
+`core.autocrlf=true`, which the Git-for-Windows installer pre-selects, is what puts CRLF in the working tree — and the working tree is what Step 1.5 reads.
+
+The fix is one rule, placed before anything reads the line so `cells()`, `isdelim()` and the fence detector all benefit:
+
+```awk
+{ sub(/\r$/, "") }
+```
+
+**The evidence is structural, and no raw count is quoted here on purpose.** Instrument a counter on the `intbl = 1` branch and run over any markdown corpus and a `sed 's/$/\r/'` copy of it. The LF figure is unchanged by the fix; the CRLF figure goes from **0 to the LF figure**; hits stay 0 throughout. That contrast is the seeded positive the claim needed — a run that finds nothing cannot distinguish a fixed checker from a disabled one, and 0-vs-0 on an LF-only corpus proves nothing at all here, because on LF content the new rule provably cannot match. Absolute file and table counts are deliberately omitted: two reviewers measuring the corpora available here an hour apart got different totals, because those corpora include gitignored files and one of them gained a table mid-measurement. Commands, corpus definitions and per-run numbers belong on #52, where they can carry them.
+
+Regression set: a CRLF header/delimiter mismatch now reports, while a clean CRLF table, a short row, an escaped `\|` and a fenced table stay correctly silent.
+
+**Two fixes ride along** that were not designed for, each of which *removes* a phantom hit rather than adding one: `cells()` over-counted by one under CRLF (a trailing `\r` blocks `sub(/\|$/, "")`), producing hits on clean rows in mixed-ending files; and a blank CRLF line did not match `^[ \t]*$`, so tables never terminated and the cell base bled onto following prose.
+
+**The same defect is unfixed one file over.** `templates/curate.md`'s canonical verify runner carries the same `isdelim()`, copied, with the same missing strip, and `.claude/skills/curate/SKILL.md` with it. There the annotation is still extracted, counted and executed — the reconciliation line reads `ran 1 of 1` and catches nothing — but the `\|` un-escape is skipped, so the mangled command's result is whatever it happens to be: a genuine FAIL becoming PASS, a genuine PASS becoming FAIL, and this framework's own `&& echo PASS || echo FAIL` idiom becoming a bash syntax error. **Filed as #58**, not fixed here, because it is a behaviour change to a different shipped skill with its own fixture.
+
+Three claims in earlier drafts of this entry were wrong and are withdrawn rather than quietly dropped: that the whole *file* went unexamined (only tables did — the fence check anchors at line start, where a trailing `\r` cannot reach, and reported under CRLF all along); that an unclosed CRLF fence was newly fixed by this change (it was not); and that a stray `\r\n` inside an otherwise-LF table now ends the table (it does not — that was the blank-line fix described a second time, and the CommonMark §2.1 citation attached to it argued the opposite of the claim).
+
+### The "every reported hit is a real loss" absolute is withdrawn
+
+It was stated unhedged, in a description, and it is refutable twice over. `isdelim()` accepts a bare `---` and its guard is satisfied by a pipe in the *previous* line, so YAML frontmatter whose closing `---` follows a piped `description:`, a setext heading, and a spaced `- - -` break each report. And even in a well-formed table a hit is a loss only when the excess cells carry content: `| 1 | 2 | |` against a two-column delimiter reports, and discards nothing. The first replacement drafted for this sentence asserted the opposite as true "by construction" — an unhedged absolute written into the release that withdraws one.
+
+An earlier draft also called the frontmatter shape "the shape every `SKILL.md` here carries". Measured over all 7 `SKILL.md` files in this repo and `agent-ready-papers` — `grep -rn '^description:.*|'` across both trees, where a positive would be a `path:LINE:description: … | …` row — **0** close their frontmatter on `description:`; all 7 close on `disable-model-invocation:`. The class is real; the quantifier was invented, and was self-refuting against the same entry's own "0 hits after", which would have had to be at least 5.
+
+**The guard is deliberately not tightened.** Requiring a pipe in the delimiter row itself kills all three false positives, at a cost to pipe-less delimiter rows. How large that cost is has not been established — the GFM spec carries no example of one, and the tightened guard cost zero tables on the corpus measured here, so the trade is currently unsupported on both sides. Worth settling when #52 is decided, and worth noting there that `templates/curate.md`'s runner already uses the tightened form: one shipped copy has made the choice. #52 stays open for it.
+
+### Rule 8
+
+`templates/review-changes.md` 22,072 → 23,540 bytes, baseline updated. The trade: skill body is paid once per invocation and prompt-cached, and buys the removal of a silent total failure on every CRLF checkout.
+
+The number moved four times: **+1,399 → +914 → +1,254 → +1,468.** Only the first move was a reduction, and it came from deleting a false-positive enumeration into the issue. Every move after it was a correction, and **every correction cost bytes** — the +340 for three false claims, then +214 more when a second review found the corrections had themselves introduced two new false absolutes and a duplicated fix. Replacing a wrong absolute with a true bounded statement is reliably longer than the wrong absolute was, because the bound has to be stated.
+
+The lesson is not "keep it small". It is that **enumeration is the only thing here that was ever safely deletable.** Accuracy has a floor, and this entry has now paid it four times.
+
+**Adopters: re-copy `templates/review-changes.md` into your project's skill directory.** `review-changes` is project-local by Hard Constraint, so `scripts/install-global-skills.sh` does not carry it and will not tell you it is stale. Until you re-copy, a checkout with CRLF in the working tree keeps a Step 1.5 that examines no tables and prints what a passing run prints.
+
+**PATCH** — a shipped checker made to honour a contract it already documented. No interface change, no new capability. Precedent: `v1.15.1` was PATCH and changed a shipped checker far more drastically (`audit-context` Step 4, 139 findings → 12), and `v1.16.1` was PATCH for skill-prompt defects in `review-changes` itself.
+
 ## v1.25.0 (2026-08-12)
 
 ### The adversarial lens gets one rule for claims that need measuring, and a place for hypotheses to be born (closes #39)

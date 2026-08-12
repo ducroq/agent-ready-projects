@@ -89,6 +89,9 @@ The lenses below all read *content*: does this path exist, is this flag right, w
       t = s; gsub(/\\\|/, "", t); gsub(/[ \t]/, "", t)
       return (t ~ /-/ && t ~ /^[|:-]+$/)
     }
+    { sub(/\r$/, "") }               # CRLF: strip before anything reads the line,
+                                     # or isdelim() never matches and no table in
+                                     # the file is examined. See #52.
     {
       bare = $0; sub(/^ ? ? ?/, "", bare)
       if (bare ~ /^```/ || bare ~ /^~~~/) {
@@ -121,9 +124,11 @@ The file list is the union of unstaged, staged, unpushed, and **untracked** — 
 
 **The delimiter row defines the table, and only *excess* cells are reported.** GFM inserts empty cells when a row is short and discards them when a row is long, so a short row renders exactly as intended and is not a defect — a section-divider row like `| **PART ONE** |` inside a wide table is idiomatic, not corruption. A long row loses data. Reporting both was measured at a **39% false-positive rate**; anchoring on the delimiter and reporting only the lossy direction took the estate from 168 hits to 68 across 4381 files, with the removed hits all in legal-but-short or not-a-table-at-all classes.
 
-Every reported hit is a real loss, in one of three shapes: a row whose excess cells are discarded, a header that disagrees with its own delimiter row (which means GFM renders no table at all), and an unbalanced code fence. This includes pipes inside backticks — GFM splits a row into cells *before* it parses inline content, and its spec says so explicitly, so a `|` in an inline-code span breaks the row exactly like a bare one. Fix each (escape as `\|`, or move the command out of the table) before running the lenses.
+Hits come in three shapes: a row whose excess cells are discarded, a header that disagrees with its own delimiter row (which means GFM renders no table at all), and an unbalanced code fence. This includes pipes inside backticks — GFM splits a row into cells *before* it parses inline content, and its spec says so explicitly, so a `|` in an inline-code span breaks the row exactly like a bare one. Fix each (escape as `\|`, or move the command out of the table) before running the lenses.
 
-**Known blind spots, so a clean result is not read as more than it is**: tables inside blockquotes are not examined, nor is a table whose delimiter row is itself missing. The check finds lossy rows in well-formed tables; it is not a markdown validator.
+**Treat a hit as real until you have looked at it, not as proven.** A hit says the row supplies more cells than the delimiter row defines, and GFM discards the excess. That is a loss only when the discarded cells carry content — `| 1 | 2 | |` against a two-column delimiter reports, and loses nothing. And it says nothing about whether you are looking at a table at all: `isdelim()` accepts a bare `---` and its guard is satisfied by a pipe in the *previous* line, so YAML frontmatter, a setext heading and a spaced `- - -` break can each report. Classes and repros in #52.
+
+**Known blind spots, so a clean result is not read as more than it is**: tables inside blockquotes are not examined, nor is a table whose delimiter row is itself missing. The check finds lossy rows in well-formed tables; it is not a markdown validator. **CRLF was one of these until v1.25.1** — `isdelim()` strips spaces and tabs but not `\r`, so on a CRLF checkout tables went unentered and a file whose defect was in a table printed what a clean file prints. Only the fence check survived, anchored at line start where a trailing `\r` cannot reach. Fixed by the `sub(/\r$/, "")` rule above; `core.autocrlf=true`, which the Git-for-Windows installer pre-selects, is what puts CRLF in the working tree. **Lone CR is still a blind spot** and a worse-behaved one: awk sees the whole file as a single record, so no table is examined and the fence check misreports — a lone-CR file whose fence is correctly *closed* is reported as unclosed.
 
 The command prints nothing on a clean run — which is also what it prints when the file list was empty. **Report the count alongside the result** so the two are distinguishable:
 
