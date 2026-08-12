@@ -50,6 +50,10 @@ Method: *before* is the project file plus every `memory/*.md`; *after* is the pr
 - **Step 0.3 without the Promoted table is a bulk false-positive generator** — 11 entries in one measured log are recorded resolved in the table with no marker in their heading, so every run would report them lingering, forever. The v1.15.1 failure class.
 - **The convention was written into the skill and none of the artifacts that define it.** An adopter following `templates/gotcha-log.md` or `docs/EXAMPLE.md` would have written body status and been told about it every session.
 
+### An eleventh finding, from running the skill rather than reviewing it
+
+Sub-step 3's reader was fixed to match both heading levels; **Step 1 kept the level-blind `^### `**. A review lens, a targeted repo-wide sweep for that exact string, and the author all missed it. Invoking `/curate` surfaced it in the first minute, because execution reads the whole artifact in order while review reads the diff — and Step 1 was not in the diff that broke it. That is a distinct instrument, and it now precedes release for procedural skills. (+66 bytes, ratcheted deliberately.)
+
 ### Rule 8 earned its place twice in one day
 
 The ratchet, added hours earlier, refused both this change and the propagation that followed it. That is the intended workflow: body size and run cost are different currencies, and it forces the trade to be stated rather than assumed. ~2KB of template text, paid once per invocation and prompt-cached, buys 60–92% of a read surface paid in fresh tokens every run.

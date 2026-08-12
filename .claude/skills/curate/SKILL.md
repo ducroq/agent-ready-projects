@@ -242,7 +242,7 @@ Report findings before proceeding. Don't fix anything in this step — just surf
 
 ## Step 1 — Gotcha log review
 
-Read the gotcha log's **headers** (`grep -n '^### ' <log>`), not the whole log. For each existing entry:
+Read the gotcha log's **headers** — the same `grep -nE '^#{2,3} '` as sub-step 3, both levels, not `^### ` alone — rather than the whole log. For each existing entry:
 - If the root cause was fixed during this session, mark it `[RESOLVED]` **in the header**, not in the body: `### Title (2026-08-12) [RESOLVED]`. A status buried in a body cannot be seen by a header read, which makes every later run open the whole file to find out what is still open. Headers written before this convention have no marker and read as open; move one up when you touch its entry.
 - If the same issue came up again, note the recurrence **in the header as well as the body** — `### Title (2026-08-12) [x3]`. Step 2 counts recurrences and reads headers; a recurrence recorded only in a body is invisible to the step that exists to promote it.
 
