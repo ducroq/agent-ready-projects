@@ -202,19 +202,37 @@ two things the change now asserts. Prose contradictions count and often have no
 triggering input; do not withhold one for lacking a repro. Report NOT REFUTED only
 after a thorough attempt has failed to produce any of those.
 
-**State the check before the claim, on any negative.** "0 rows", "not called
-anywhere", "nothing reads it", "all clean", "no other callers" — a negative
-cannot distinguish a real absence from a broken instrument, an empty sample, or
-a mismatched population. Report each one as three things: the claim, the command
-that produced it, and **what a non-empty result would have looked like**. If you
-cannot state the shape of a positive, the claim is not ready to make.
+**A claim that needs a measurement gets one, gets hedged, or is not ready.**
+Two shapes need one, and they are the same failure from two sides:
+
+- **Negatives.** "0 rows", "not called anywhere", "nothing reads it", "all
+  clean" — a negative cannot distinguish a real absence from a broken
+  instrument, an empty sample, or a mismatched population. Report the claim,
+  the command that produced it, and **what a non-empty result would have looked
+  like**. If you cannot state the shape of a positive, you have not measured
+  anything. A run that finds nothing cannot distinguish a fixed check from a
+  disabled one, so **seed a positive before believing a zero**.
+- **Absolutes in descriptions.** *every*, *all*, *none*, *zero*, *cannot*, *not
+  permitted*, *guaranteed*, in a claim about how a tool, spec or codebase
+  **behaves**. An absolute in an *instruction* is a decision and is fine —
+  `never edit in place` is a prescription. An absolute in a *description* is a
+  measurement, and it ships unmeasured by default. Each needs a measurement with
+  its scope, a spec citation, or a hedge ("in the cases measured", "for
+  well-formed tables").
+
+**Where the measurement cannot be taken yet, the claim becomes a hypothesis
+with a review date** — not a hedge and not a silence. That is the only cheap
+moment to write one: the alternatives and the refutation criteria are live while
+the claim is being made, and reconstructing them later loses exactly the part
+worth keeping.
 
 This is not a step to perform; it is the sentence to write. A separate
-"verify your negatives" step is skippable in exactly the cases where it matters.
+"verify your claims" step is skippable in exactly the cases where it matters.
 Making the check travel with the claim is what makes omitting it visible.
 
 Report: REFUTED or NOT REFUTED, with failure scenario if refuted. Every negative
-in your report carries its command and the shape of a positive.
+in your report carries its command and the shape of a positive; every absolute
+about behaviour carries its measurement, its citation, or its hedge.
 ```
 
 ### Lens: doc-accuracy (MEDIUM and HIGH)

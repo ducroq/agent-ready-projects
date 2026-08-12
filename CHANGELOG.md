@@ -21,6 +21,16 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 ## v1.25.0 (candidate, unreleased)
 
+### The adversarial lens gets one rule for claims that need measuring, and a place for hypotheses to be born (closes #39)
+
+`#35`'s negatives rule and `#39`'s absolutes rule were the same failure from two sides — #39's own issue says so — and they now ship as one instruction rather than two adjacent paragraphs: **a claim that needs a measurement gets one, gets hedged, or is not ready.** Merging cost less than adding #39 alone.
+
+**#39's gate was met by this repo violating it.** The constraint said the rule stays maintainer-local until it catches something in a repo other than this one. On 2026-08-12 — eighteen hours after that sentence was written — this repo shipped *"breaks on prettier 2 and survives prettier 3"* into `templates/review-changes.md`, generalised from two isolated one-line tests on 3.9.6. An adopter refuted it on 3.8.1, a version never tested here. An absolute in a description, unmeasured, on the surface the rule governs, caught from outside. That is as close to a natural experiment as this gets, and it is a better argument than the convergent-runner evidence offered earlier and correctly declined as off-subject.
+
+**And it closes the cheapest half of a separate gap.** The framework *reads* the hypothesis log — `curate` sub-step 7 surfaces entries due for review — and nothing anywhere says when to write one. Creation was manual and unprompted, which is why four hypotheses covering this session's load-bearing claims were written retrospectively at the end of it, reconstructing refutation criteria that were live hours earlier. The merged rule now ends: **where the measurement cannot be taken yet, the claim becomes a hypothesis with a review date.** That fires at the moment the claim is made, which is the only cheap moment to write one.
+
+The ADR half of that gap is deliberately not addressed: ADRs record decisions rather than claims, so this detector does not reach them, and the evidence is one session, all internal — the same standard #39 was held to before today.
+
 ### `review-changes` warns about a prettier-2 rewrite that corrupts its own risk table (adopter report)
 
 An adopter porting the magnitude gate added a second glob to the bolded bullet — `` **… under `.claude/skills/**` or `.claude/agents/**`** `` — and their husky/prettier hook rewrote it to `` `…skills/**`or`…agents/**` ``, eating the spaces, because a glob's trailing `**` is parsed as a bold delimiter. Correct in the diff, wrong only when rendered, on the line that tells adopters skills are HIGH risk.
