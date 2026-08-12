@@ -257,7 +257,7 @@ Then check: did anything go wrong or surprise you during this session? For each 
 **Fix**: What solved it.
 ```
 
-**Keep each entry to 2-3 lines** — the lesson and the action, not the narrative of the session that found it. Having just lived through it, you will overweight the detail. If an entry needs a page, that is a signal it belongs in a topic file or an ADR. Apply this to new entries only; retrofitting the existing log is a separate, engineer-approved decision.
+**Write the lesson and the action, not the narrative of the session that found it.** Having just lived through it, you will overweight the detail. Measured across three logs and 277 entries, a real entry runs ~700–1,200 characters and that is fine: since Step 0.3 reads headings, a body costs nothing until someone opens it. The old rule here said "2–3 lines", which was unenforceable — a markdown line has no length limit, so every log passed it while running 3–6× the size the rule intended. **Above ~3,000 characters is the signal worth acting on** (2–5% of entries in every log measured): that is a page, and a page belongs in a topic file or an ADR.
 
 ## Step 2 — Pattern detection and promotion
 

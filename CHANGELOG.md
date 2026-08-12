@@ -19,6 +19,30 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.25.0 (candidate, unreleased)
+
+The gotcha log's entry-size rule is restated in the unit that costs, and the check it seemed to need is not built. Closes the rest of #46.
+
+**Adopter action: none.** If you have been ignoring "keep each entry to 2-3 lines", you were right to.
+
+### The rule was unenforceable, and enforcing it would have been wrong
+
+`curate` Step 1 said *"keep each entry to 2-3 lines"*. Measured across three logs and 277 entries, every one of them "passes" by lines — median 5 including the heading — while running 700–1,200 characters. A markdown source line has no length limit, so the unit did not track the cost and the rule could be met and violated at the same time.
+
+Restating it in characters made it worse, not better. At the ~200 characters the rule seemed to intend, **88–92% of entries in all three logs are violations** — a bulk false-positive generator, which is the class v1.15.1 spent a release removing from Step 4. When nine entries in ten breach a rule across three independent populations, the rule is wrong.
+
+| log | entries | median | >1500 | >3000 |
+|---|---|---|---|---|
+| agent-ready-projects | 34 | 737 | 20% | 2% |
+| agent-ready-papers | 40 | 1,108 | 27% | 2% |
+| llm-distillery | 203 | 1,200 | 35% | 5% |
+
+### And the reason to police it had already gone
+
+v1.24.0 stopped `curate` reading bodies: Step 0.3 reads headings, and a body is opened only for an entry being acted on. **A long entry now costs nothing per session.** The cost argument that would have justified an entry-size check died with the read-path fix, and what remained was a quality argument — weaker, and per the #16 closure this repo does not ship a pattern on enthusiasm.
+
+So the outcome is a rule removed and replaced with a measured one, and no new check: entries run ~700–1,200 characters and that is fine; **above ~3,000 is the signal worth acting on** — 2–5% in every log measured, and at that size it is a page, which belongs in a topic file or an ADR.
+
 ## v1.24.0 (2026-08-12)
 
 `curate` Step 0 stops reading the corpus it maintains. Closes part of #46.
