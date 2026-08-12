@@ -25,6 +25,7 @@ Lifecycle: **open** → dormant → revisit (with evidence) → resolved (close 
 **How to use this file:**
 
 - Add an entry when you take a provisional position you want to revisit later.
+- **Write it at the moment the claim is made, not at end-of-session.** The alternatives and the refutation criterion are live while you are making the claim; reconstructing them hours later loses exactly the part worth keeping. A review lens flagging a claim whose measurement cannot be taken yet is the cue — the lens reports it as a finding, and the entry is written here, where the fields below can actually be filled.
 - Each entry has a `Review by:` date and a `Revisit trigger:` so the agent can surface due items at session start and in `/curate`.
 - The **Method** field pins the falsification criterion *before* the data lands — that's the whole point. Don't loosen Method when the answer arrives; if you want to redefine the bet, open a new entry.
 - When an entry is resolved (ratified, revised, or no longer relevant), move it to the `## Resolved` section at the bottom with a one-line outcome.

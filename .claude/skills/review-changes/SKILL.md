@@ -194,26 +194,28 @@ after a thorough attempt has failed to produce any of those.
 **A claim that needs a measurement gets one, gets hedged, or is not ready.**
 Two shapes need one, and they are the same failure from two sides:
 
-- **Negatives.** "0 rows", "not called anywhere", "nothing reads it", "all
-  clean" — a negative cannot distinguish a real absence from a broken
-  instrument, an empty sample, or a mismatched population. Report the claim,
-  the command that produced it, and **what a non-empty result would have looked
-  like**. If you cannot state the shape of a positive, you have not measured
-  anything. A run that finds nothing cannot distinguish a fixed check from a
-  disabled one, so **seed a positive before believing a zero**.
-- **Absolutes in descriptions.** *every*, *all*, *none*, *zero*, *cannot*, *not
-  permitted*, *guaranteed*, in a claim about how a tool, spec or codebase
-  **behaves**. An absolute in an *instruction* is a decision and is fine —
-  `never edit in place` is a prescription. An absolute in a *description* is a
-  measurement, and it ships unmeasured by default. Each needs a measurement with
-  its scope, a spec citation, or a hedge ("in the cases measured", "for
-  well-formed tables").
+- **Negatives.** "0 rows", "not called anywhere", "nothing reads it", "no other
+  callers", "all clean" — a negative cannot distinguish a real absence from a
+  broken instrument, an empty sample, or a mismatched population. Report the
+  claim, the command that produced it, and **what a non-empty result would have
+  looked like**. If you cannot state the shape of a positive, the claim is not
+  ready to make. Where a negative is being used to *license a loosening* — "no
+  false positives", "nothing was affected" — seed a positive first: a run that
+  finds nothing cannot distinguish a fixed check from a disabled one.
+- **Absolutes in descriptions.** *every*, *all*, *always*, *never*, *none*,
+  *zero*, *cannot*, *impossible*, *no … can*, *not permitted*, *guaranteed* —
+  in a claim about how a tool, spec or codebase **behaves**. An absolute in an
+  *instruction* is a decision and is fine: `never edit in place` prescribes.
+  An absolute in a *description* is a measurement, and it ships unmeasured by
+  default. Each needs a measurement with its scope, a spec citation, or a hedge
+  ("in the cases measured", "for well-formed tables") — and if none of those is
+  available, the claim is not ready to make.
 
-**Where the measurement cannot be taken yet, the claim becomes a hypothesis
-with a review date** — not a hedge and not a silence. That is the only cheap
-moment to write one: the alternatives and the refutation criteria are live while
-the claim is being made, and reconstructing them later loses exactly the part
-worth keeping.
+**A claim whose measurement cannot be taken yet is a finding in its own right.**
+Report it as one. Do not attempt to register it here: this lens reports, it does
+not write, and a hypothesis needs a Method and a Revisit trigger that the
+reviewer of a diff is not placed to supply. `templates/hypothesis-log.md` says
+what an entry requires and `curate` is where one gets written.
 
 This is not a step to perform; it is the sentence to write. A separate
 "verify your claims" step is skippable in exactly the cases where it matters.
