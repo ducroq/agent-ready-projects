@@ -1,0 +1,19 @@
+# Lint rule 8 baseline — bytes per adopter-facing template.
+# Regenerate with: bash tests/lint/size-ratchet.sh . --update
+# Growth fails. Shrinkage fails until locked in here, so this file only goes down.
+templates/adr.md	2115
+templates/audit-context.md	27409
+templates/coordination.md	3909
+templates/curate.md	37971
+templates/gotcha-log.md	4359
+templates/hypothesis-log.md	3146
+templates/memory-index.md	3396
+templates/project-file.md	4436
+templates/README.md	12325
+templates/release.md	18128
+templates/review-agent.md	5720
+templates/review-changes.md	19909
+templates/RUNBOOK.md	2795
+templates/test-verify-memory.md	5494
+templates/update-drift.md	9096
+templates/work-item.md	3860

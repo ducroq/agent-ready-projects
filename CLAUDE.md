@@ -15,7 +15,7 @@ The source framework that teaches the layered memory method for AI coding agents
 | Starting any session (self drift) | Compare the `agent-ready-projects: vX.Y.Z` line in this file's header against `CHANGELOG.md`. If a newer version has shipped since you last worked here, surface the drift before starting. |
 | Installing, moving, or removing a skill | `docs/GUIDE.md` § "Where a skill lives" — global shadows local, so scope is exclusive. Run `bash scripts/install-global-skills.sh --check ~/repos` to verify the global install matches the tracked source and no inert local copies remain. **The install path refuses when the bytes it would copy are not what the highest release tag reachable from HEAD holds** (#33): refresh globals after the tag is pushed *and verified*, per `templates/release.md` Step 7 — a local tag satisfies the guard, so tagging alone is not the safe point. `--force` overrides it and is the right call only when you mean to run an unreleased skill knowingly. |
 | Editing a skill — either `templates/<name>.md` or `.claude/skills/<name>/SKILL.md` | **Edit both.** They are one artifact in two files; an edit to one is drift until the other matches. `install-global-skills.sh --check` cannot see this — it compares the global install to the tracked one, so both read as current while diverging from the template. `bash tests/lint/run.sh` rule 6 is what catches it. |
-| Before committing structural changes (CLAUDE.md, `memory/`, `templates/`) | Run `bash tests/lint/run.sh` — deterministic structural check, seven rules. Catches stale `CLAUDE.md` path references, `memory/MEMORY.md` orphans, broken skill-template frontmatter, a reference install that cannot register, unclosed YAML frontmatter, template↔install drift, and a skill that provisions a canonical row without quoting it. See `tests/lint/README.md` for the rule catalog. Then run `/review-changes` for diff-driven LLM review — picks review lenses from what changed *and* how big it is (templates touched → full battery, unless the diff is small and hits no carve-out; docs-only → adversarial + doc-accuracy). |
+| Before committing structural changes (CLAUDE.md, `memory/`, `templates/`) | Run `bash tests/lint/run.sh` — deterministic structural check, eight rules. Catches stale `CLAUDE.md` path references, `memory/MEMORY.md` orphans, broken skill-template frontmatter, a reference install that cannot register, unclosed YAML frontmatter, template↔install drift, a skill that provisions a canonical row without quoting it, and adopter-facing templates growing unmeasured. See `tests/lint/README.md` for the rule catalog. Then run `/review-changes` for diff-driven LLM review — picks review lenses from what changed *and* how big it is (templates touched → full battery, unless the diff is small and hits no carve-out; docs-only → adversarial + doc-accuracy). |
 | Picking up where the last session left off | `memory/MEMORY.md` — the index itself. Nothing loads it automatically; this row is what reaches it. Topic files in `memory/` stay on demand, per the index's own table. |
 | Editing templates | `templates/README.md` for the tool-agnostic naming map. Templates are the adopter-facing surface; changes ripple to every downstream consumer. |
 | Editing the guide | `docs/GUIDE.md` is the full reference; `README.md` is the on-ramp. Keep them in sync — when you change one, ask whether the other needs the same change. |
@@ -91,6 +91,7 @@ agent-ready-projects/
 │       ├── reference-integrity/  <- Seeded breaks for audit-context Step 4; refcheck.py is its oracle
 │       ├── skill-template-sync/  <- Seeded drift for lint rule 6 (17 positives, 7 negatives)
 │       ├── provisioning-quote/  <- Seeded drift for lint rule 7 (9 positives, 4 negatives)
+│       ├── size-ratchet/       <- Seeded growth for lint rule 8 (4 positives, 4 negatives)
 │       ├── verify-runner/       <- Seeded claims + prose for curate's verify runner
 │       │                           (32 positives, 10 negatives, 4 malformed, 7 structural,
 │       │                            4 timing, 29 ablations)
@@ -134,6 +135,7 @@ Listed here so the architecture diagram above is honest about what an adopter se
 | `scripts/install-global-skills.sh` | Installs the user-global skills from tracked `.claude/skills/`, verifies they match, and with a root argument scans an estate for inert project-local copies. Refuses to install when the bytes it would copy are not what the highest release tag reachable from HEAD holds; fixture at `tests/fixtures/installer-release-guard/` |
 | `.claude/skills/` | Reference installs (tracked) — the frontmatter-correct source a global install is derived from |
 | `tests/lint/skill-sync.sh` | Lint rule 6 — template↔reference-install drift; fixture at `tests/fixtures/skill-template-sync/` |
+| `tests/lint/size-ratchet.sh` | Lint rule 8 — a ratchet on adopter-facing template sizes; baseline in `size-baseline.tsv`, fixture at `tests/fixtures/size-ratchet/`. **Measures the smaller of the two costs**: a skill body is paid once per invocation and is prompt-cached, while the *read surface* a run consumes is fresh tokens every time and is 4–25× larger. See #46 |
 | `tests/lint/provision-quote.sh` | Lint rule 7 — the #42 class: a file that *provisions* a canonical row must quote it, not describe it by category. Rule 6 cannot see it, because the two `audit-context` copies agree with each other while contradicting `templates/project-file.md`. Fixture at `tests/fixtures/provisioning-quote/` |
 | `tests/fixtures/installer-release-guard/` | Seeded git states for the installer's release guard (#33). Its README carries the two rejected predicates and why — read before changing the comparison |
 | `tests/fixtures/verify-runner/` | Seeded claims and prose for `curate` Step 0 sub-step 5's runner (#34). It extracts the runner from `templates/curate.md` rather than copying it, so it cannot drift. ~90s — the slowest check here, and the only one with timing cases. Its README carries the rejected `\|` predicate and the three review rounds that produced the rest — read before touching the extraction |
@@ -150,12 +152,13 @@ git push --tags
 git diff vX.Y.Z..vX.Y+1.0 -- templates/
 
 # Self-tests, before committing structural changes
-bash tests/lint/run.sh                              # seven structural rules
+bash tests/lint/run.sh                              # eight structural rules
 bash tests/fixtures/skill-template-sync/run.sh      # sensitivity of lint rule 6
 bash tests/fixtures/reference-integrity/run.sh      # sensitivity of audit-context Step 4
 bash tests/fixtures/installer-release-guard/run.sh  # sensitivity of the installer's release guard
 bash tests/fixtures/verify-runner/run.sh            # sensitivity of curate's verify runner
 bash tests/fixtures/provisioning-quote/run.sh       # sensitivity of lint rule 7
+bash tests/fixtures/size-ratchet/run.sh             # sensitivity of lint rule 8
 
 # End a session
 /curate     # if installed locally from templates/curate.md

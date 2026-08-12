@@ -9,7 +9,7 @@ cd "$(dirname "$0")/../.."
 ISSUES=0
 fail() { printf 'FAIL  %s\n' "$1"; ISSUES=$((ISSUES + 1)); }
 
-echo "[1/7] CLAUDE.md path references resolve on disk"
+echo "[1/8] CLAUDE.md path references resolve on disk"
 while IFS= read -r path; do
   [ -e "$path" ] || fail "CLAUDE.md references \`$path\` but it does not exist"
 done < <(grep -oE '`[A-Za-z0-9_./-]+\.(md|yml|yaml|json|sh)`' CLAUDE.md | tr -d '`' | sort -u)
@@ -27,7 +27,7 @@ while IFS= read -r path; do
   fail "CLAUDE.md references directory \`$path\` but it does not exist"
 done < <(grep -oE '`[A-Za-z0-9_./-]+/`' CLAUDE.md | tr -d '`' | sort -u)
 
-echo "[2/7] memory/MEMORY.md index integrity"
+echo "[2/8] memory/MEMORY.md index integrity"
 while IFS= read -r name; do
   [ -e "memory/$name" ] || fail "memory/MEMORY.md references \`$name\` but it does not exist"
 done < <(grep -oE '`project_[a-z_]+\.md`' memory/MEMORY.md | tr -d '`' | sort -u)
@@ -38,7 +38,7 @@ for f in memory/project_*.md; do
   grep -qF "$name" memory/MEMORY.md || fail "memory/$name exists but is not referenced in MEMORY.md"
 done
 
-echo "[3/7] skill template embedded SKILL.md frontmatter"
+echo "[3/8] skill template embedded SKILL.md frontmatter"
 for f in templates/*.md; do
   grep -q 'SAVE AS:.*\.claude/skills/' "$f" || continue
   block=$(awk '/<!--/{c=1} c{print} /-->/{c=0}' "$f")
@@ -48,7 +48,7 @@ for f in templates/*.md; do
     || fail "$f: skill template missing \`description:\` in SAVE AS comment"
 done
 
-echo "[4/7] installed skills are loadable"
+echo "[4/8] installed skills are loadable"
 # Rule 3 checks that each template CARRIES installable frontmatter in its SAVE AS
 # comment. It cannot check that an install CONVERTED it. That gap is not theoretical:
 # an adopter repo was found holding all three skills copied verbatim, SAVE AS comment
@@ -81,7 +81,7 @@ for d in .claude/skills/*/; do
     || fail "$f: frontmatter has no non-empty \`description:\` — the agent is never told when to use it"
 done
 
-echo "[5/7] top-level YAML frontmatter closure"
+echo "[5/8] top-level YAML frontmatter closure"
 for f in templates/*.md templates/checklists/*.md templates/physics-tests/*.md memory/*.md; do
   [ -f "$f" ] || continue
   [ "$(head -1 "$f")" = '---' ] || continue
@@ -89,7 +89,7 @@ for f in templates/*.md templates/checklists/*.md templates/physics-tests/*.md m
     || fail "$f: opens with \`---\` but no closing \`---\` within first 30 lines"
 done
 
-echo "[6/7] skill templates and reference installs agree"
+echo "[6/8] skill templates and reference installs agree"
 # Rules 3 and 4 check each side in isolation; neither compares them. Factored into
 # its own script so tests/fixtures/skill-template-sync/ can drive it against seeded
 # drift — a run over this repo finds nothing, which is also what a broken check
@@ -123,7 +123,7 @@ else
 fi
 rm -f "$sync_out" "$sync_err"
 
-echo "[7/7] a skill that provisions a canonical row must quote it"
+echo "[7/8] a skill that provisions a canonical row must quote it"
 # Factored out for the same reason rule 6 is: the check needs a fixture with
 # seeded true positives, and tests/lint/README.md's own "adding a rule" checklist
 # says so. The first draft of this rule was inline, had no fixture, and shipped a
@@ -141,6 +141,25 @@ else
   done < "$pq_out"
 fi
 rm -f "$pq_out" "$pq_err"
+
+echo "[8/8] adopter-facing templates have not grown"
+# The surface nobody measured. curate.md went 11,358 -> 37,971 bytes across
+# eight releases, more than half of it in one session, and the framework had no
+# instrument that would have said so. A ratchet rather than a budget: no
+# threshold is invented, growth fails, and shrinkage fails until it is locked in.
+sz_out=$(mktemp); sz_err=$(mktemp)
+bash tests/lint/size-ratchet.sh . >"$sz_out" 2>"$sz_err"; sz_rc=$?
+cat "$sz_err"
+if [ $sz_rc -gt 1 ]; then
+  fail "rule 8 checker could not run (exit $sz_rc) — this rule measured nothing"
+elif ! grep -q 'template(s) measured' "$sz_err"; then
+  fail "rule 8 checker produced no measurement line — this rule measured nothing"
+else
+  while IFS= read -r line; do
+    [ -n "$line" ] && fail "$line"
+  done < "$sz_out"
+fi
+rm -f "$sz_out" "$sz_err"
 
 echo
 if [ $ISSUES -eq 0 ]; then
