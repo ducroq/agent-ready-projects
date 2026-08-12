@@ -4,7 +4,7 @@ The source framework that teaches the layered memory method for AI coding agents
 
 - **Type**: Public methodology repo (guide + templates + skills)
 - **License**: MIT
-- **agent-ready-projects** (this repo): v1.23.0 (`audit-context` Step 4 skips paths that were never meant to resolve — #45: `<!-- placeholder -->` span-scoped to the path before it, plus self-announcing `<...>` segments, both counted in their own section. New convention = MINOR; the marker cannot detect a *wrong* assertion of intent, which the step now states.)
+- **agent-ready-projects** (this repo): v1.24.0 (`curate` Step 0 reads metadata rather than documents — #46: an ordinary session reads a median of 3 memory files, measured across 2,264 transcripts, and Step 0 was the only thing reading the whole corpus. 64/60/92% less read surface. Heading status and recurrence counts now live in the heading.)
 
 > Live project state (current threads, deferred items, surfaced patterns) lives in `memory/MEMORY.md` (maintainer-local — see *What is intentionally not shipped* below). Release notes live in `CHANGELOG.md`.
 
