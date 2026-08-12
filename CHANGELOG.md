@@ -21,6 +21,14 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 ## v1.25.0 (candidate, unreleased)
 
+### `review-changes` warns about a prettier-2 rewrite that corrupts its own risk table (adopter report)
+
+An adopter porting the magnitude gate added a second glob to the bolded bullet — `` **… under `.claude/skills/**` or `.claude/agents/**`** `` — and their husky/prettier hook rewrote it to `` `…skills/**`or`…agents/**` ``, eating the spaces, because a glob's trailing `**` is parsed as a bold delimiter. Correct in the diff, wrong only when rendered, on the line that tells adopters skills are HIGH risk.
+
+**Measured rather than assumed**, since the reporter flagged the single-glob form as untested: two globs break on **prettier 2** and survive **prettier 3**; the single-glob form this repo ships survives both. So nothing was broken here — the bullet now carries the warning so the extension that broke it elsewhere does not get made again, and points at the parenthetical form that sidesteps it.
+
+Step 1.5 does not catch this: it checks tables and fences, not emphasis spans. Filed separately.
+
 The gotcha log's entry-size rule is restated in the unit that costs, and the check it seemed to need is not built. Closes the rest of #46.
 
 **Adopter action: none.** If you have been ignoring "keep each entry to 2-3 lines", you were right to.
