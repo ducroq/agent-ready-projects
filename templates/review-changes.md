@@ -49,14 +49,34 @@ The tier above is set by *path*. Depth is also set by *size* — but size is the
 - **A new executable, or any new file in a HIGH path** — the tier for new content has not been decided yet.
 - **Any diff that removes or loosens a check** — a deleted guard, a weakened assertion, a broadened exclusion. Loosenings are characteristically a handful of lines, and this is the class the seeded-true-positives rule exists for.
 
-**Otherwise size sets the depth.** Size means the whole change that will land, not the slice in front of you — 10 lines committed locally plus 15 staged is a 25-line change, and reviewing each half on its own means nothing ever sees the whole. Sum staged, unstaged, and any local commits not yet pushed:
+**Otherwise size sets the depth.** Size means the whole change that will land, not the slice in front of you — 10 lines committed locally plus 15 staged is a 25-line change, and reviewing each half on its own means nothing ever sees the whole.
+
+**The baseline is the default branch, never `@{u}`.** On a branch that is committed and pushed but not merged — the commonest state in which anyone wants a pre-merge review — `@{u}` is *empty*, because the upstream exists and is current. Every `@{u}`-derived term then reports zero and the step reads as "nothing to review" on a whole PR. Resolve the baseline once, here, and reuse it:
 
 ```bash
-git diff --shortstat; git diff --cached --shortstat
-git log @{u}.. --shortstat 2>/dev/null || echo 'no upstream — count all commits on this branch'
+BASE=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD) ||
+BASE=$(for c in origin/main origin/master main master; do
+         git rev-parse --verify --quiet "$c" >/dev/null && { printf %s "$c"; break; }; done)
+# On the default branch HEAD...HEAD is empty, so the upstream is the baseline.
+[ -n "${BASE:-}" ] && [ "$(git rev-parse --abbrev-ref HEAD 2>/dev/null)" = "${BASE##*/}" ] &&
+  BASE=$(git rev-parse --abbrev-ref '@{u}' 2>/dev/null || printf %s '')
+# A name that resolves to nothing is the dangerous case: an empty or dangling BASE
+# makes "$BASE"...HEAD an empty diff, which is what a clean tree also yields. Fall
+# back to the whole branch — over-reporting is the safe direction for a review tool.
+git rev-parse --verify --quiet "${BASE:-nope}^{commit}" >/dev/null || {
+  BASE=$(git rev-list --max-parents=0 HEAD 2>/dev/null | tail -1)
+  echo "BASELINE UNRESOLVED — reviewing the whole branch instead. Say so in the report." >&2
+}
+: "${BASE:?no commits in this repository — nothing can be reviewed}"
+
+git diff --shortstat "$BASE"...HEAD    # committed on this branch
+git diff --shortstat                   # unstaged
+git diff --cached --shortstat          # staged
 ```
 
-On a branch with no upstream the third command has nothing to compare against; fall back to the whole branch rather than silently dropping the term.
+**Resolving a name is not enough — it has to resolve to a commit.** `git symbolic-ref` reads `origin/HEAD` without following it, so a renamed or deleted upstream default yields a ref that looks fine and diffs to nothing; a stale local `main` in a `master` repo does the same. Both were measured. That is why the block validates `^{commit}` and, on failure, falls back to the root commit and says so: an unresolved baseline and a clean tree produce identical output, and this step exists because those two were confused.
+
+`origin/HEAD` is set by `git clone` (including `--depth 1`) and by the first `git fetch` on git ≥2.45; the loop covers `git init` + `git remote add` with no fetch, older git, and a remote whose HEAD is unset — measured on git 2.53.0, not assumed.
 
 Line count is a proxy, and in these templates a weak one — they are written one sentence per line, so replacing two dense normative paragraphs is four changed lines while a whitespace reflow is a hundred. **When the line count and your read of the change disagree, the line count is wrong.** Escalate.
 
@@ -74,7 +94,7 @@ If only LOW files changed **and the gate above does not escalate**, run Step 1.5
 
 **If a changed file matches no pattern, treat it as MEDIUM, and name it in the report under "Unclassified" even when a HIGH file in the same diff makes the tier moot.** The naming is the point: an unrecognized path is usually new shipped content whose tier nobody has decided yet, and it will keep arriving un-triaged until someone adds a row. Do not silently drop it, and do not default it to LOW. **If it is executable or is copied into an adopter's tree, escalate it to HIGH rather than leaving it at MEDIUM** — MEDIUM omits both the guarantee-preservation and shell-correctness lenses, which are exactly the two that shipped content needs.
 
-If no files changed, report "nothing to review" and stop.
+If no files changed, report "nothing to review" and stop — but only after `$BASE` resolved. A clean tree because everything is merged and a clean tree because the work is already pushed are indistinguishable from `git diff` alone, and the second is a full PR. If the baseline could not be resolved, that is the finding; report it instead of a clean result.
 
 ## Step 1.5 — Structural pre-check
 
@@ -83,9 +103,10 @@ Runs at **every tier and every magnitude**, before any lens, on every changed ma
 The lenses below all read *content*: does this path exist, is this flag right, what would a future session do wrong. None of them asks whether the file is still **valid markdown** after the edit. That gap matters disproportionately here, because the memory layer is predominantly wide tables — inventories, index files, machine lists — where a row is one very long line. A `|` added inside a cell (a regex like `'recordfail|initrdfail'`, an `||` in a shell fragment, an alternation in a note) pushes cells past the end of the table, and **GFM drops the excess silently**. It reads fine as prose in the diff and is wrong only when rendered, so a human reviewer and an adversarial lens both pass it.
 
 ```bash
+  : "${BASE:?run the Step 1 baseline block first; without it this pipeline loses its largest term}"
 { git -c core.quotePath=false diff --name-only
   git -c core.quotePath=false diff --cached --name-only
-  git -c core.quotePath=false diff --name-only @{u} 2>/dev/null
+  git -c core.quotePath=false diff --name-only "$BASE"...HEAD 2>/dev/null
   git -c core.quotePath=false ls-files --others --exclude-standard; } |
   sort -u | grep '\.md$' | while IFS= read -r f; do
   [ -f "$f" ] || continue
@@ -131,7 +152,7 @@ The lenses below all read *content*: does this path exist, is this flag right, w
 done
 ```
 
-The file list is the union of unstaged, staged, unpushed, and **untracked** — `git diff` in any form never lists a file git has not seen, and a brand-new document is where fresh corruption is most likely. `core.quotePath=false` is load-bearing: git otherwise renders a non-ASCII path as `"caf\303\251.md"`, which does not end in `.md`, so the file is dropped from both the check and the count with no error.
+The file list is the union of unstaged, staged, **everything committed on this branch**, and **untracked** — `git diff` in any form never lists a file git has not seen, and a brand-new document is where fresh corruption is most likely. `core.quotePath=false` is load-bearing: git otherwise renders a non-ASCII path as `"caf\303\251.md"`, which does not end in `.md`, so the file is dropped from both the check and the count with no error.
 
 **The delimiter row defines the table, and only *excess* cells are reported.** GFM inserts empty cells when a row is short and discards them when a row is long, so a short row renders exactly as intended and is not a defect — a section-divider row like `| **PART ONE** |` inside a wide table is idiomatic, not corruption. A long row loses data. Reporting both was measured at a **39% false-positive rate**; anchoring on the delimiter and reporting only the lossy direction took the estate from 168 hits to 68 across 4381 files, with the removed hits all in legal-but-short or not-a-table-at-all classes.
 
@@ -144,14 +165,15 @@ Hits come in three shapes: a row whose excess cells are discarded, a header that
 The command prints nothing on a clean run — which is also what it prints when the file list was empty. **Report the count alongside the result** so the two are distinguishable:
 
 ```bash
+  : "${BASE:?run the Step 1 baseline block first; without it this pipeline loses its largest term}"
 { git -c core.quotePath=false diff --name-only
   git -c core.quotePath=false diff --cached --name-only
-  git -c core.quotePath=false diff --name-only @{u} 2>/dev/null
+  git -c core.quotePath=false diff --name-only "$BASE"...HEAD 2>/dev/null
   git -c core.quotePath=false ls-files --others --exclude-standard; } |
   sort -u | grep -c '\.md$'
 ```
 
-That count is files *in scope*, not files you edited: `@{u}` includes anything changed upstream, and `ls-files --others` includes every untracked markdown in the tree. If it is zero while the Step 1 diff listed markdown files, the pipeline is broken — not the changes clean.
+That count is files *in scope*, not files you edited: the baseline term includes everything committed on this branch, and `ls-files --others` includes every untracked markdown in the tree. If it is zero while the Step 1 diff listed markdown files, the pipeline is broken — not the changes clean. It reads `$BASE` from Step 1; run that block first, or this pipeline silently loses its largest term.
 
 ## Step 2 — Execute review lenses
 

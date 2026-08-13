@@ -19,6 +19,39 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.26.1 (candidate, unreleased)
+
+### `review-changes` reported "nothing to review" on a pushed PR branch (closes #64)
+
+Step 1 defined the change set as staged + unstaged + `@{u}`, and Step 1.5's file list unioned the same three. **On a branch that is committed and pushed but not merged, all three are empty** — `@{u}` precisely *because* the upstream exists and is current. The step's literal instruction is then to report "nothing to review" and stop, on a whole PR.
+
+That is the commonest state in which anyone wants a pre-merge review: the PR is open, CI is green, and the question is whether to merge.
+
+The documented fallback could not save it. What the skill actually said was `git log @{u}.. --shortstat 2>/dev/null || echo 'no upstream — count all commits on this branch'`, glossed as *"On a branch with no upstream the third command has nothing to compare against."* That is conditioned on the branch being **un**pushed — the opposite of the failing case, where an upstream exists and is current. (An earlier draft of this entry quoted a fallback that does not appear anywhere in the file. The wording came from the issue report and was shipped without being checked against the source — the inherited-claim defect #60 describes, committed while fixing a different one.)
+
+**Measured on this repo, on the branch that carries this fix, with the working tree clean** (the numbers are for committed work only; `git diff @{u}` is a two-dot diff against the *working tree*, so an uncommitted edit masks the defect and inflates the old column):
+
+| | files reported |
+|---|---|
+| `git diff --name-only @{u}` (old) | **0** |
+| `git diff --name-only "$BASE"...HEAD` (new) | **3** |
+| Step 1.5 markdown file list, old | **0** |
+| Step 1.5 markdown file list, new | **2** |
+
+The baseline is now the default branch, resolved once in Step 1 and reused by Step 1.5. `origin/HEAD` first, then `origin/main`, `origin/master`, `main`, `master` — `origin/HEAD` is unset in many clones, so the loop is load-bearing rather than defensive. If none resolves, the step says the scope could not be established instead of reporting a clean diff. On the default branch itself the baseline falls back to the upstream, since `HEAD...HEAD` is empty.
+
+Verified across four states: unpushed feature branch, **pushed feature branch** (the defect), the default branch, and a repo with no remote at all.
+
+Reported by an adopter (NexusMind) who hit it on a real PR, where following the instruction literally would have returned "nothing to review" on a diff that a widened review then found **4 blockers** in. This repo hit the same defect twice on the same day and worked around it both times without recognising it — the workaround (`master...HEAD`) is what the fix now prescribes.
+
+### Rule 8
+
+`templates/review-changes.md` 23,540 → 26,210 bytes. The ratchet's contract is that the number only goes down unless the growth is *recorded here* and the baseline re-run with `--update`; an earlier draft of this change bumped the baseline silently, which is disabling the guard rather than satisfying it.
+
+What the bytes buy: a baseline that validates it resolved to a real commit, a loud fallback where it did not, and a `${BASE:?}` guard at the head of both Step 1.5 pipelines. The first draft warned on an unresolved baseline and carried on, which reproduced the very defect being fixed in three narrower states — a detector with no actuator, found by review and measured in each state. A second draft then shipped the guard with an apostrophe in it (`Step 1's`), which makes `${BASE:?...}` a bash syntax error even inside double quotes — a guard that aborts with a parse error exactly where it was meant to protect. Caught by running the extracted block rather than reading it.
+
+**PATCH** — a shipped checker made to honour a contract it already documented, on the `v1.25.1` precedent. Adopters must re-copy `templates/review-changes.md` by hand; the skill is project-local, so `install-global-skills.sh` does not carry it.
+
 ## v1.26.0 (2026-08-13)
 
 *v1.25.1 (the Step 1.5 CRLF fix, PR #53) landed first, as this note required. The code changes were independent, but both branches inserted a block at the same point in this file, so the conflict predicted here was resolved by hand on merge.*
