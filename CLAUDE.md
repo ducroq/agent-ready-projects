@@ -4,7 +4,7 @@ The source framework that teaches the layered memory method for AI coding agents
 
 - **Type**: Public methodology repo (guide + templates + skills)
 - **License**: MIT
-- **agent-ready-projects** (this repo): v1.25.0 (the adversarial lens carries one rule for claims that need measuring — #35 and #39 merged, #39 promoted after its gate was met by this repo violating it; the gotcha-log entry-size rule is removed rather than enforced; `audit-context` Step 4 skips declared placeholders. New behaviour = MINOR.)
+- **agent-ready-projects** (this repo): v1.25.1 (Step 1.5's checker stripped spaces and tabs but not `\r`, so on a CRLF checkout no table in any file was examined and it printed what a clean run prints. One awk rule fixes it. Two review rounds found fourteen defects in the prose shipped alongside the one-line fix and none in the fix; the corrections are recorded as withdrawals rather than quiet edits. A shipped checker made to honour a contract it already documented = PATCH.)
 
 > Live project state (current threads, deferred items, surfaced patterns) lives in `memory/MEMORY.md` (maintainer-local — see *What is intentionally not shipped* below). Release notes live in `CHANGELOG.md`.
 

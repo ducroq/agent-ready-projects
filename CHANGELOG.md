@@ -19,7 +19,7 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.25.1 (candidate, unreleased)
+## v1.25.1 (2026-08-13)
 
 ### Step 1.5 examined no tables on a CRLF checkout, and said so in the same words as a clean run (closes the CRLF half of #52)
 
