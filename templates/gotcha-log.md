@@ -10,8 +10,10 @@
        as an "if X, then Y" pattern (Promote phase)
      - When a gotcha's root cause is fixed, mark it [RESOLVED] IN THE HEADING
        (Retire phase) — `### Title (2026-08-12) [RESOLVED]`. Curation reads
-       headings, not bodies; a status in a body is invisible to it and the
-       entry is reported as lingering on every future run.
+       headings and the Promoted table, not bodies, so a status written in a
+       body is invisible to it. Such an entry is flagged as lingering once it
+       is older than 14 days, and keeps being flagged until either the heading
+       is marked or the entry is recorded in the Promoted table.
      - Track what you've promoted in the "Promoted" section below
 
      When the root cause is fixed, mark it resolved here (don't delete). -->

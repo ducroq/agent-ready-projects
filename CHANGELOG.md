@@ -19,6 +19,40 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.26.0 (candidate, unreleased)
+
+*v1.25.1 (the Step 1.5 CRLF fix, PR #53) landed first, as this note required. The code changes were independent, but both branches inserted a block at the same point in this file, so the conflict predicted here was resolved by hand on merge.*
+
+### A claim audit over the live surfaces, and the two defects it found
+
+**Method, and its limits.** A lexical extractor swept 28 files — `CLAUDE.md`, `adopt.md`, `README.md`, `docs/GUIDE.md`, `docs/verification-rationale.md`, all of `templates/*.md` and all of `memory/*.md`, code fences excluded — and flagged roughly 570 candidate claim-lines, of which about 90% carried no probe, hedge or citation. It was validated against 8 claims known to exist before its output was believed (8/8 found, after a first run missed 3 because the *validator* truncated at 240 chars).
+
+**Those denominators are one session's unreproduced measurement and are deliberately given as approximations.** The extractor was scratch and is not in the tree, and 7 of the 28 files are gitignored `memory/`, so no adopter or later session can re-derive them — which is this release's own rule failing on the entry that states it. What *is* reproducible is the sample: 20 lines drawn at random (seed 20260813), committed at `docs/claim-audit-sample-2026-08-13.md` with each line's classification, and independently classified by two reviewers.
+
+**Measured defect rate: 2 of 20.** The other 18 were 6 prescriptions, 7 descriptions whose support sits a paragraph away rather than on the line, 4 historical records, and 1 extractor artifact. So the 514 substantially overstates the problem, and the dominant cause is that the extractor is **line-scoped** while support is written at sentence and paragraph scale — the same line-scoping defect this repo already has on record from #45, rebuilt while auditing for it.
+
+The two real ones:
+
+- **`templates/test-verify-memory.md`** claimed *"Nothing parses the output for a verdict"*. The shipped runner does, in two narrow places, both measured: a first line of exactly `FAIL` is flagged as a legacy verdict word, and empty output is `ERROR` whatever the exit status. The sentence generalised a property of eleven fixtures into a property of the protocol. Corrected to state both exceptions.
+- **`templates/gotcha-log.md`** claimed a body-marked entry is reported as lingering *"on every future run"*. Over-broad two ways: curation also reads the Promoted table, and its actuator only flags entries older than 14 days. Corrected to "keeps resurfacing until the heading is marked", which is what was meant and is true.
+
+### `curate` Step 0 sub-step 5 takes the project file
+
+The runner's prescribed invocation was `memory/*.md` plus the hypothesis log. The project file was not in it — so a probe written there would never run, which is worse than no probe because it reads as a checked claim. The project file is now named in both the sub-step and the invocation, since that is where version lines, adopter counts and occurrence tallies live, and an always-loaded wrong number misleads every session that starts.
+
+**New behaviour, hence MINOR.** The Hard Constraint routes new behaviours to MINOR and documentation-only changes to PATCH; this release changes what `curate` does, so MINOR is the floor regardless of how the prose fixes alone would classify.
+
+### The first probe on a project-file count, and the defect it caught on contact
+
+`CLAUDE.md`'s self-certification tally read "Fifteen occurrences at last count" while `memory/gotcha-log.md`'s Promoted table read **16** — the third time that line has lagged the table, in a constraint whose own text warns it had lagged twice. The number is now a digit so it can be read mechanically, and carries a probe comparing it to the table.
+
+The probe was seeded before being believed, and distinguishes three states rather than two: counts agree → PASS; counts disagree → FAIL with both numbers; the table row missing → **CANNOT VERIFY**, not a pass. That last case is the point — a probe that cannot find its own instrument must not report success.
+
+### Repo-specific counts in adopter-facing templates are attributed, not probed
+
+A `<!-- verify: -->` in `templates/` would ship to adopters and run against *their* tree, where a count about the framework repo is meaningless. So `templates/audit-context.md`'s "twelve files in this repo alone" became "a dozen files in the framework repo at v1.25.0, and it only grows". Probes are for surfaces that stay in the repo that owns the claim.
+
+**No sweep of the remaining 514 is planned.** At a measured 2-in-20, and with the extractor's own line-scoping inflating the denominator, the cost is not justified by the yield — and the first reviewer's stopping rule is the better test: when the only available repair is a vacuous hedge, the finding is spurious.
 ## v1.25.1 (2026-08-13)
 
 ### Step 1.5 examined no tables on a CRLF checkout, and said so in the same words as a clean run (closes the CRLF half of #52)
