@@ -19,7 +19,7 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.26.0 (candidate, unreleased)
+## v1.26.0 (2026-08-13)
 
 *v1.25.1 (the Step 1.5 CRLF fix, PR #53) landed first, as this note required. The code changes were independent, but both branches inserted a block at the same point in this file, so the conflict predicted here was resolved by hand on merge.*
 

@@ -4,7 +4,7 @@ The source framework that teaches the layered memory method for AI coding agents
 
 - **Type**: Public methodology repo (guide + templates + skills)
 - **License**: MIT
-- **agent-ready-projects** (this repo): v1.25.1 (Step 1.5's checker stripped spaces and tabs but not `\r`, so on a CRLF checkout no table in any file was examined and it printed what a clean run prints. One awk rule fixes it. Two review rounds found fourteen defects in the prose shipped alongside the one-line fix and none in the fix; the corrections are recorded as withdrawals rather than quiet edits. A shipped checker made to honour a contract it already documented = PATCH.)
+- **agent-ready-projects** (this repo): v1.26.0 (`curate` Step 0 sub-step 5 now takes the project file and says to run from the repo root — a probe in a file never passed to the runner reads as a checked claim and is never checked. A claim audit over 28 live surfaces sampled 20 of ~514 unsupported claim-lines and found 2 real defects, both fixed; the sample is committed, the denominators are not reproducible and say so. New behaviour = MINOR.)
 
 > Live project state (current threads, deferred items, surfaced patterns) lives in `memory/MEMORY.md` (maintainer-local — see *What is intentionally not shipped* below). Release notes live in `CHANGELOG.md`.
 
