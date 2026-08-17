@@ -93,7 +93,7 @@ declare -a NEG=(
   # #73 — the marked arm runs before rung 3, so a file THIS repo's runtime
   # writes gets claimed by a neighbour that happens to hold a copy. The
   # resolver's own comment forbids exactly this ordering.
-  "N20 marked runtime state is not a neighbour's file|data/pipeline_state.json"
+  "N20 marked runtime state is not a neighbour's file|data/marked_state.json"
 )
 
 FAIL=0
@@ -182,10 +182,10 @@ done
 # call this harness should not make. What it must not be is absent from both,
 # which is the silent-skip failure and the only way N20 could pass vacuously.
 COUNTED="$(printf '%s' "$OUT" | sed -n '/== RESOLVED BELOW RUNG 1/,/^  total:/p;/== SKIPPED as declared-placeholder/,/^  total:/p')"
-if printf '%s' "$COUNTED" | grep -qF -- "data/pipeline_state.json"; then
+if printf '%s' "$COUNTED" | grep -qE "data/marked_state\.json .*(declared-placeholder|runtime state)"; then
   printf '  PASS  N20 marked runtime state is counted, not silently dropped\n'
 else
-  printf '  FAIL  N20 data/pipeline_state.json is in no counted section — excused and never-extracted are indistinguishable\n'; FAIL=1
+  printf '  FAIL  N20 data/marked_state.json is in no counted section — excused and never-extracted are indistinguishable\n'; FAIL=1
 fi
 
 # D1 — the listing cache is keyed on the neighbour's NAME, so two reachable

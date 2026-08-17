@@ -54,7 +54,9 @@ PATH_RE = re.compile(r'`([A-Za-z0-9_.<][A-Za-z0-9_./*<>-]*\.(?:' + EXT + r'))`')
 # arriving through it rather than around it (#70).
 #
 # Keep such a token only when it still looks like a path: it contains a `/`, or
-# it starts with a `.` (`.env.example`). A bare `.env` never matched anyway —
+# it starts with a `.` — `.config.env`, NOT `.env.example`, whose extension is
+# `example` and which therefore never reaches this test. A bare `.env` never
+# matched anyway —
 # PATH_RE needs a dot with something before it.
 #
 # ⚠️ Measured cost, stated rather than hidden: a bare `settings.env` written
@@ -143,9 +145,11 @@ def _sibling_hit(frag, siblings, listing, named):
     references that need it most (#73). This arm therefore widens the search,
     but only where widening cannot invent a provenance:
 
-    - **A QUALIFIED path** (it contains a `/`) carries its own evidence, so it
-      may be matched against any reachable sibling.
-    - **A BARE BASENAME** may only be matched against siblings NAMED IN PROSE.
+    - **Every candidate sibling must be NAMED IN PROSE**, qualified path or bare
+      basename alike. A qualified path gets a wider candidate set (its own head
+      may be stripped when it repeats the sibling's name); it does not get an
+      unnamed sibling. Exempting qualified paths from the gate was tried and
+      reintroduced the self-marking failure it was meant to avoid.
       Measured by a reviewer on a real tree: of the bare basenames extractable
       and absent locally, 207 occurred in more than one sibling repo, and the
       unrestricted form told `ovr.news` to qualify its own `principes.md`
@@ -160,26 +164,48 @@ def _sibling_hit(frag, siblings, listing, named):
     hits = []
     qualified = '/' in frag
     for s in siblings:
-        if not qualified and s not in named:
+        is_named = s in named
+        if not qualified and not is_named:
             continue
         cands = [frag]
         head, _, tail = frag.partition('/')
-        if tail and head.lower() == s.name.lower():
+        # THE HEAD-STRIP IS GATED ON NAMING, NOT THE SIBLING. Stripping a
+        # leading segment that repeats the sibling's own name is precisely the
+        # self-marking mechanism `_marked_siblings` exists to prevent: allow it
+        # unnamed and `docs/ARCHITECTURE.md` matches `runbooks/ARCHITECTURE.md`
+        # inside a neighbour called `docs`, after which every broken `docs/X.md`
+        # resolves next door — rung 4's own rule, which the unmarked path has
+        # always honoured. Two drafts got this wrong in opposite directions:
+        # exempting qualified paths from the gate entirely reintroduced that
+        # failure, and then gating the whole sibling on naming killed #73's
+        # actual case, since a marked cross-repo path typically does NOT name
+        # its repo. An unnamed sibling is searched with the WHOLE fragment only,
+        # which carries its own evidence.
+        if tail and is_named and head.lower() == s.name.lower():
             cands.append(tail)
-        for h in _suffix_matches(listing(s), cands[0] if len(cands) == 1 else cands[-1]):
-            hits.append((s.name, h))
-        if len(cands) > 1:
-            for h in _suffix_matches(listing(s), cands[0]):
-                if (s.name, h) not in hits:
-                    hits.append((s.name, h))
+        for c in cands:
+            for h in _suffix_matches(listing(s), c):
+                # Keyed on the sibling PATH, not its name: two distinct repos
+                # can share a basename, and collapsing them here rebuilds the
+                # very defect the listing cache was re-keyed to remove — one
+                # function lower, and deterministically, so a hash-seed sweep
+                # cannot see it.
+                if (s, h) not in hits:
+                    hits.append((s, h))
     if not hits:
         return None
-    uniq = sorted(set(hits))
+    uniq = sorted(set(hits), key=lambda x: (str(x[0]), x[1]))
     if len(uniq) > 1:
+        # If two siblings share a basename, naming them both `shared` prints the
+        # same string twice and reads like a duplicate rather than two repos.
+        dupe = len({s.name for s, _ in uniq}) < len({s for s, _ in uniq})
+        shown = ', '.join('%s -> %s' % (str(s) if dupe else s.name, h)
+                          for s, h in uniq[:3])
+        more = '' if len(uniq) <= 3 else ', and %d more' % (len(uniq) - 3)
         return ('AMBIGUOUS',
-                'resolves in %d places (%s) — no single provenance, so it cannot be qualified '
-                'against one' % (len(uniq), ', '.join('%s -> %s' % u for u in uniq[:3])))
-    return ('RESOLVED', 'sibling %s -> %s' % uniq[0])
+                'resolves in %d places (%s%s) — no single provenance, so it cannot be '
+                'qualified against one' % (len(uniq), shown, more))
+    return ('RESOLVED', 'sibling %s -> %s' % (uniq[0][0].name, uniq[0][1]))
 
 
 def _read(root, src):
@@ -243,7 +269,11 @@ def check(root, sources, sibling_roots=None):
             siblings += [p for p in cand.glob(pat)
                          if p.is_dir() and (p / '.git').exists()
                          and p.resolve() != root]
-    siblings = sorted(set(siblings), key=lambda p: p.name)
+    # Sort on the full path, not the basename: `sorted` is stable, so same-named
+    # siblings would otherwise keep set-iteration (hash) order, and the unmarked
+    # rung-4 loop below breaks on the FIRST hit. Re-keying the listing cache fixed
+    # which listing a name maps to; it did not fix the order they are tried in.
+    siblings = sorted(set(siblings), key=lambda p: (p.name, str(p)))
     # If no sibling repo is reachable, rung 4 cannot run. Findings are then
     # annotated to say so, rather than presented as confirmed breaks.
     rung4_runnable = bool(siblings)
@@ -317,7 +347,19 @@ def check(root, sources, sibling_roots=None):
                                      'that case. The example lives in the template prose instead)'))
 
             para = ' '.join(lines[max(0, i - 1):i + 2])
-            named = _marked_siblings(para, siblings)
+            # Computed at most once per line and only when something actually
+            # needs it. Hoisting it unconditionally cost one `re.sub` plus a
+            # regex search PER SIBLING for every line including those with no
+            # backticks: measured 5.69s against 0.11s on 60k lines with 38
+            # siblings and zero references, in the change whose headline is a
+            # speed-up. `None` is the not-yet-computed sentinel; `[]` is a real
+            # empty answer.
+            named_cache = [None]
+
+            def named_siblings():
+                if named_cache[0] is None:
+                    named_cache[0] = _marked_siblings(para, siblings)
+                return named_cache[0]
 
             for frag in PATH_RE.findall(line):
                 if '*' in frag or URLISH.match(frag):
@@ -357,7 +399,7 @@ def check(root, sources, sibling_roots=None):
                     # the first place (#73). Naming the rung matters: the author's
                     # remedy is to qualify the reference, and a qualified reference is
                     # checked forever where a marker is never checked again.
-                    sib = _sibling_hit(frag, siblings, listing, named)
+                    sib = _sibling_hit(frag, siblings, listing, named_siblings())
                     if sib and sib[0] == 'RESOLVED':
                         findings.append((src, frag,
                                          'STALE PLACEHOLDER MARKER (resolves at rung 4: '
@@ -394,12 +436,21 @@ def check(root, sources, sibling_roots=None):
                 # rung 4 — marked cross-repo, suffix-matched inside the sibling,
                 # carrying rung 2's collision rule with it.
                 claim = None
-                for s in named:
+                for s in named_siblings():
                     cands = [frag]
                     head, _, tail = frag.partition('/')
                     if tail and head.lower() == s.name.lower():
                         cands.append(tail)
-                    hits = [h for c in cands for h in _suffix_matches(listing(s), c)]
+                    # Dedup: with `cands = ['foo/bar.py', 'bar.py']` against a
+                    # sibling `foo` nesting `foo/`, both candidates suffix-match
+                    # the SAME file and the undeduped list reported
+                    # "COLLISION (2 matches)" for one file. A count inside a
+                    # finding message is a measurement; it has to be true.
+                    hits = []
+                    for c in cands:
+                        for h in _suffix_matches(listing(s), c):
+                            if h not in hits:
+                                hits.append(h)
                     if len(hits) > 1:
                         claim = (f'COLLISION ({len(hits)} matches in {s.name})', True)
                         break

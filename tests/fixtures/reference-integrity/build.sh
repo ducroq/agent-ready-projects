@@ -31,7 +31,7 @@ touch ../sibling-repo/deploy/rung4_only.sh \
 # prose names the repo, which is the whole question B3 turns on. The two copies of
 # shared/ambiguous_note.md make "which neighbour" unanswerable on purpose.
 touch ../sibling-repo/scripts/bare_named.sh ../docs/runbooks/orphan_note.md \
-      ../sibling-repo/data/pipeline_state.json \
+      ../sibling-repo/data/pipeline_state.json ../sibling-repo/data/marked_state.json \
       ../sibling-repo/shared/ambiguous_note.md ../docs/shared/ambiguous_note.md
 
 cat > CLAUDE.md <<'EOF'
@@ -195,7 +195,10 @@ same ambiguity and must not resolve to a single name.
 holding a copy does not make the file theirs, and the resolver's own comment
 says so: letting a neighbour claim it first produces a provenance that is
 simply false. Marked and unmarked must agree about who owns it.
-Marked:   `data/pipeline_state.json` <!-- placeholder -->
+Marked:   `data/marked_state.json` <!-- placeholder -->
+# Its OWN path, not the unmarked one above. Sharing it made the counted-section
+# assertion satisfiable by the two unmarked occurrences, which are rung-3
+# resolutions — so the marked entry could be dropped entirely and nothing failed.
 Unmarked: `data/pipeline_state.json`
 
 # N21 — a marker on a dropped identifier must say WHY it covers no path (#70)

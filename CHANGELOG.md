@@ -126,6 +126,20 @@ Consequences, both measured rather than argued: with one leftover fixture presen
 
 So every number this fixture has ever produced was a function of what else was in `/tmp`. `refcheck.py` gains `--sibling-root` — six lines; `check()` had always accepted `sibling_roots` and nothing could pass them — and `run.sh` pins the search to `$WORK`. Independent of everything else here and worth landing on its own.
 
+### Round 3: the fix for the nondeterminism was half a fix, and two more defects were the same bug one function lower
+
+A second non-author review — this one a subagent, run after the first reviewer's cases landed — found the suite genuinely alive (all five prescribed ablations armed) and then found three blockers anyway.
+
+**The name-versus-path bug survived eleven lines below its own fix.** `_sibling_hit` deduplicated on `s.name`, so two distinct repositories sharing a basename collapsed to one entry, `len(uniq)` stayed 1, and the AMBIGUOUS branch never fired — the finding named one repo and told the author to qualify against it. That refutes this step's own sentence, *"the finding names a repo and a file … that sentence has to be true."* Deterministically wrong, which is why the hash-seed case could not see it.
+
+**And the order was never fixed, only the listing.** `sorted(set(siblings), key=lambda p: p.name)` is stable, so same-named siblings kept hash order and the *unmarked* rung-4 loop — which every ordinary reference goes through — broke its tie nondeterministically: 4 of 8 seeds each way. The entry above claimed this was fixed. It was fixed for the arm this change added and for nothing else. Now sorted on the full path.
+
+**The qualified-path exemption reintroduced the failure it was written to prevent.** Letting a qualified path match any reachable sibling also let the head-strip run unnamed, so `docs/ARCHITECTURE.md` resolved inside a neighbour called `docs` — rung 4's own *a reference may not mark itself* rule, violated by the paragraph fixing a different violation, ~55 lines from the bullet stating it. Two drafts got it wrong in opposite directions: the exemption, and then gating the whole sibling on naming, which killed the actual #73 case. The gate belongs on the **head-strip**, not on the sibling: an unnamed sibling is searched with the whole fragment only.
+
+**Third vacuous case, same lesson as the first two.** N20 asserted a marked runtime-state path appears in a counted section, by grepping a union of two sections for a bare path — and `build.sh` wrote that same path twice more, unmarked, where it resolves at rung 3. Deleting the marked entry entirely failed nothing. It now has its own path and the assertion is scoped to the section and the reason. That is three needle collisions in one change: T19/T4, `process.env`/N15, and this.
+
+**Also:** the unmarked arm double-counted one file as `COLLISION (2 matches)` when a sibling nested a directory repeating its own name — a count inside a finding message is a measurement. And hoisting `named` out of the reference loop cost a measured **5.69s against 0.11s** on 60k lines with 38 siblings and no references, in the change whose headline is a speed-up; it is lazy again.
+
 ### What the non-author review changed, recorded because the first draft shipped none of it
 
 `nexusmind-a9` reviewed this by running it against the repository the class was found in, and returned six defects. Three were blockers: the nondeterministic cache above; rung 4 running **before** rung 3 in the marked arm, which the same file forbids two hundred lines below (marking a runtime-state path flipped its provenance to another repo); and an unrestricted sibling search that told `ovr.news` to qualify its own `principes.md` against a house-renovation repo — a confident wrong answer, produced live, on real data.
