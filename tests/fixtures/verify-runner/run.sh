@@ -369,6 +369,99 @@ micro_expect M2a "sharing one file lets a child poison the next verdict" "$WORK/
 
 structural M3-directory      2 "a directory operand must refuse, not be read as a file" "$WORK"
 
+# ---- CRLF (#58) -------------------------------------------------------------
+# isdelim() strips spaces and tabs but not \r, so on a CRLF checkout intbl is
+# never set, the table-cell pipe un-escape never runs, and an escaped-pipe
+# command is still extracted, counted and EXECUTED — mangled. Corruption, not
+# silence, which is what makes it worse than #52 in review-changes.
+#
+# The assertion is EQUIVALENCE, not a needle: a CRLF file must produce the same
+# OUTPUT as its LF twin — dispositions and the echoed command string both, which
+# is stronger than dispositions alone and catches a left-over `\|` even where the
+# verdict happens to match. A needle per row would pass for a file that was never
+# examined; identical output cannot.
+#
+# ⚠️ The reconciliation line reads "ran 3 of 3" under BOTH line endings, so the
+# runner's headline guarantee — the denominator assertion — is blind to this
+# class BY CONSTRUCTION. Extraction never depended on intbl. Recorded here so
+# nobody reads that assertion as covering it.
+echo
+echo "CRLF (#58) — same dispositions as LF, or the un-escape never ran:"
+# Row 2 needs its own file, and the fixture makes it rather than reaching for one
+# on the host. `/etc/hostname` was absent on macOS; `false \| cat` was worse — it
+# writes NOTHING, so the runner's no-output rule scored it ERROR on both sides and
+# the row stopped distinguishing anything on the platform it was measured on.
+# `grep -c nomatch FILE \| cat` un-escapes to a pipeline whose tail exits 0 with
+# stdout "0" (PASS); mangled, grep is handed `\|` and `cat` as extra FILENAMES,
+# exits 2, and prints a filename-prefixed count (FAIL). Measured both.
+printf 'content\n' > "$WORK/row2.txt"
+{ printf '| claim | check |\n'
+  printf '|---|---|\n'
+  printf '| false pass under CRLF | <!-- verify: echo hello \\| grep -c nomatch --> |\n'
+  printf '| false failure under CRLF | <!-- verify: grep -c nomatch %s \\| cat --> |\n' "$WORK/row2.txt"
+  printf '| the idiom this framework teaches | <!-- verify: test -f /nonexistent && echo PASS \\|\\| echo FAIL --> |\n'
+} > "$WORK/crlf-lf.md"
+sed 's/$/\r/' "$WORK/crlf-lf.md" > "$WORK/crlf.md"
+# the inputs differ ONLY by line ending; assert that rather than trusting sed
+if ! cmp -s <(tr -d '\r' < "$WORK/crlf.md") "$WORK/crlf-lf.md"; then
+  printf '  FAIL  C0 — the CRLF input differs from its LF twin by more than line endings\n'; FAIL=1
+fi
+# Only the filename is normalised. An earlier version also blanked the `ran N of N`
+# line, which carries no filename and therefore never needed blanking — it only
+# narrowed what C1 compares. Including it is free and strictly stronger.
+norm() { sed -e 's|[^ ]*crlf\(-lf\)\?\.md|FILE|g' "$1"; }
+bash "$RUNNER" "$WORK/crlf-lf.md" > "$WORK/c-lf.out" 2>&1 || true
+bash "$RUNNER" "$WORK/crlf.md"    > "$WORK/c-crlf.out" 2>&1 || true
+if cmp -s <(norm "$WORK/c-lf.out") <(norm "$WORK/c-crlf.out"); then
+  printf '  PASS  C1 — CRLF and LF produce identical dispositions\n'
+else
+  printf '  FAIL  C1 — CRLF and LF disagree:\n'; diff <(norm "$WORK/c-lf.out") <(norm "$WORK/c-crlf.out") | sed 's/^/        /'
+  FAIL=1
+fi
+# CRLF with NO trailing newline. `sed 's/$/\r/'` always terminates its output, so
+# C1-C3 structurally cannot reach this shape — a file whose last line is the
+# annotation is exactly the shape a table at end-of-file has.
+printf '| c | k |\r\n|---|---|\r\n| last | <!-- verify: echo hello \\| grep -c nomatch --> |\r' > "$WORK/crlf-nonl.md"
+bash "$RUNNER" "$WORK/crlf-nonl.md" > "$WORK/c-nonl.out" 2>&1 || true
+if grep -q '^FAIL' "$WORK/c-nonl.out"; then
+  printf '  PASS  C4 — CRLF with no final newline still un-escapes and fails correctly\n'
+else
+  printf '  FAIL  C4 — expected FAIL on the unterminated-final-line CRLF file, got:\n'
+  sed 's/^/        /' "$WORK/c-nonl.out"; FAIL=1
+fi
+
+# C5 — `\r\r\n`. A blob already holding CRLF, converted again, produces a doubled
+# CR; so does applying the fixture's own `sed 's/$/\r/'` idiom to an already-CRLF
+# checkout. `sub(/\r$/, "")` strips ONE, which left the defect fully intact on the
+# fixed runner — measured: base PASS, single-CR strip PASS, `\r+` FAIL (correct).
+printf '| p | k |\r\r\n|---|---|\r\r\n| x | <!-- verify: echo hello \\| grep -c nomatch --> |\r\r\n' > "$WORK/crcrlf.md"
+bash "$RUNNER" "$WORK/crcrlf.md" > "$WORK/c-dbl.out" 2>&1 || true
+if grep -q '^FAIL .*echo hello | grep' "$WORK/c-dbl.out"; then
+  printf '  PASS  C5 — a doubled CR is stripped, so the un-escape still runs\n'
+else
+  printf '  FAIL  C5 — expected an un-escaped FAIL on the \\r\\r\\n file, got:\n'
+  sed 's/^/        /' "$WORK/c-dbl.out"; FAIL=1
+fi
+
+# The guard must be load-bearing: without the strip the SAME input must diverge.
+sed '/CRLF: strip before anything reads/d' "$RUNNER" > "$WORK/c-mut.sh"
+if cmp -s "$WORK/c-mut.sh" "$RUNNER"; then
+  printf '  FAIL  C2 — the ablation changed nothing; it no longer targets the runner\n'; FAIL=1
+else
+  bash "$WORK/c-mut.sh" "$WORK/crlf.md" > "$WORK/c-mut.out" 2>&1 || true
+  if cmp -s <(norm "$WORK/c-lf.out") <(norm "$WORK/c-mut.out"); then
+    printf '  FAIL  C2 — removing the CRLF strip changed nothing; C1 passes vacuously\n'; FAIL=1
+  else
+    printf '  PASS  C2 — removing the CRLF strip does corrupt the dispositions\n'
+  fi
+  # and specifically: the false PASS, which is the one nothing in the run signals
+  if grep -q '^PASS .*echo hello' "$WORK/c-mut.out"; then
+    printf '  PASS  C3 — without the strip the failing claim reports PASS, exit 0\n'
+  else
+    printf '  FAIL  C3 — expected a false PASS on the escaped-pipe row without the strip\n'; FAIL=1
+  fi
+fi
+
 # ---- ablations --------------------------------------------------------------
 # "the output changed" is too weak a consequence to assert. A mutation that
 # breaks the runner in some unrelated way also changes the output, so a
