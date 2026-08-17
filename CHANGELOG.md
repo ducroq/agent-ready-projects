@@ -118,6 +118,14 @@ It is keyed on the **path**, not the repository name. A name-keyed cache silentl
 
 One sentence in Step 4 described the marker as **line-scoped**, two paragraphs above another sentence calling it **span-scoped**, and against a shipped implementation that is span-scoped. Line-scoping was the first draft and it relabelled a co-located genuine break as intentional — the defect seeded as T15. The normative surface carried the refuted version; corrected in both copies.
 
+### The reference-integrity fixture was never hermetic, and the leak source was itself
+
+Found by the same review, and it is **not about this PR**. `WORK="$(mktemp -d)"` puts the fixture root at `/tmp/tmp.X/repo`, so `root.parent.parent` is `/tmp` — every git repository sitting in the system temp directory became a sibling. `run.sh`'s trap does not fire on SIGKILL or a CI timeout, so an interrupted run leaves a fixture behind and **the next run adopts it**.
+
+Consequences, both measured rather than argued: with one leftover fixture present, **T19 failed on 1 seed in 8** — same command, same disk, same code. And a newly written negative (N18) **passed for that reason alone**, because a stray fixture supplied a second repo named `docs`; it was caught only because a single-doc run disagreed with the suite run.
+
+So every number this fixture has ever produced was a function of what else was in `/tmp`. `refcheck.py` gains `--sibling-root` — six lines; `check()` had always accepted `sibling_roots` and nothing could pass them — and `run.sh` pins the search to `$WORK`. Independent of everything else here and worth landing on its own.
+
 ### What the non-author review changed, recorded because the first draft shipped none of it
 
 `nexusmind-a9` reviewed this by running it against the repository the class was found in, and returned six defects. Three were blockers: the nondeterministic cache above; rung 4 running **before** rung 3 in the marked arm, which the same file forbids two hundred lines below (marking a runtime-state path flipped its provenance to another repo); and an unrestricted sibling search that told `ovr.news` to qualify its own `principes.md` against a house-renovation repo — a confident wrong answer, produced live, on real data.
@@ -125,6 +133,10 @@ One sentence in Step 4 described the marker as **line-scoped**, two paragraphs a
 ⚠️ **And one the author had asked about and got the direction wrong on.** T19 reused `scripts/deploy_thing.sh`, which is T4's needle, so T4 became satisfied by T19's finding: a new case turned an existing one **vacuous**, in the same commit whose own T19 had just been rewritten for exactly that weakness. T19 now has its own file. Ablating the prose-naming gate fails T4, T7 and T8 again, matching `master`.
 
 *Then it happened once more, immediately.* Naming `process.env` inside the improved `COVERS NO PATH` message made that string collide with N15's needle and disarm it. The message now names no literal identifier and says why; the example lives in the template prose.
+
+The review also supplied its probes as fixture cases rather than prose: **T21, T22, N18, N19, N20, N21, D1 and E1**. Three are worth naming for their shape. **T21** is the other side of N18's gate — same bare basename living next door, differing only in whether the prose names the neighbour — so that "make N18 pass" cannot be solved by turning the arm off. **N19** asserts the *shape of the wrong answer* (neither single-provenance form, and the path still reported) so it survives whatever wording the ambiguous case gets. **D1** asserts invariance across eight `PYTHONHASHSEED` values, because a single run cannot see the nondeterminism at all, and lives in its own sub-fixture so the collision does not make T4/T9/T19 flake.
+
+On the branch before these fixes: **46 pass, 6 fail**, one intended failure per defect, stable across three runs. After: **51 pass, 0 fail**.
 
 Rule 8: `templates/audit-context.md` +4232 bytes across all entries, recorded here and the baseline re-run with `--update`. The prose grew because three of the review's findings were **spec** defects, not code defects — an adopter implementing Step 4 from the text would have reproduced them.
 

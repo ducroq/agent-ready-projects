@@ -11,9 +11,9 @@ DEST="${1:-$(mktemp -d)}"
 mkdir -p "$DEST"
 cd "$DEST"
 
-rm -rf repo sibling-repo docs
+rm -rf repo sibling-repo docs dupname
 mkdir -p repo/{src/utils,src/models,src/lib,packages/api/config,packages/worker/config,docs,memory,data,.claude/skills,infra,analysis,config}
-mkdir -p sibling-repo/{scripts,deploy} docs/runbooks
+mkdir -p sibling-repo/{scripts,deploy,data,shared} docs/runbooks docs/shared
 
 for d in repo sibling-repo docs; do (cd "$d" && git init -q . && git config user.email f@x && git config user.name f); done
 
@@ -26,6 +26,13 @@ echo '{}' > .claude/settings.json
 touch ../sibling-repo/deploy/rung4_only.sh \
       ../sibling-repo/scripts/main.py ../sibling-repo/scripts/deploy_thing.sh \
       ../sibling-repo/deploy/main.py ../docs/runbooks/DEPLOY.md
+# Rung-4 stale-marker material (#73 follow-ups). bare_named.sh and orphan_note.md
+# are the same SHAPE — a bare basename next door — and differ only in whether the
+# prose names the repo, which is the whole question B3 turns on. The two copies of
+# shared/ambiguous_note.md make "which neighbour" unanswerable on purpose.
+touch ../sibling-repo/scripts/bare_named.sh ../docs/runbooks/orphan_note.md \
+      ../sibling-repo/data/pipeline_state.json \
+      ../sibling-repo/shared/ambiguous_note.md ../docs/shared/ambiguous_note.md
 
 cat > CLAUDE.md <<'EOF'
 # Fixture — fragment-convention document
@@ -159,6 +166,45 @@ not to mark it: a qualified reference is checked on every run.
 `src/aggregators/never_anywhere.py` <!-- placeholder -->
 EOF
 
+cat > docs/RUNG4.md <<'EOF'
+# Cases the unconditional rung-4 walk newly permits (#73 follow-ups)
+
+# T21 — a marked bare basename whose repo IS named must still be reported
+The sibling-repo copy is the live one and ours was never written.
+`bare_named.sh` <!-- placeholder -->
+Naming the neighbour is what makes the claim checkable, so the arm must keep
+firing here. This case passes today; its job is to fail if the fix for N18
+disables the arm instead of gating it.
+
+# N18 — the same shape with no neighbour named must stay excused
+Nothing in these three lines names a checkout next door, so a bare filename
+`orphan_note.md` <!-- placeholder -->
+is far too weak a token to pin on any one of them. A confident wrong provenance
+is worse than a miss: the finding tells the author to qualify the reference
+against a repository that has nothing to do with it.
+
+# N19 — a marked path resolving in TWO neighbours must not assert one of them
+Both checkouts next door keep a copy in step, and picking whichever sorts first
+`shared/ambiguous_note.md` <!-- placeholder -->
+is a guess wearing the costume of a fact. Rung 4 already reports a COLLISION
+when one neighbour holds two matches; two neighbours holding one each is the
+same ambiguity and must not resolve to a single name.
+
+# N20 / T22 — rung 3 still comes before rung 4 when the path is MARKED
+`data/pipeline_state.json` is this project's own runtime state. A neighbour
+holding a copy does not make the file theirs, and the resolver's own comment
+says so: letting a neighbour claim it first produces a provenance that is
+simply false. Marked and unmarked must agree about who owns it.
+Marked:   `data/pipeline_state.json` <!-- placeholder -->
+Unmarked: `data/pipeline_state.json`
+
+# N21 — a marker on a dropped identifier must say WHY it covers no path (#70)
+We read `process.env` <!-- placeholder --> at startup.
+Marking it is the reflex the old phantom taught, so the ineffective-marker
+message must name the identifier case. Without that, the reader is sent to hunt
+a whitelist gap that is not there.
+EOF
+
 cat > memory/MEMORY.md <<'EOF'
 # Full-path-convention document
 - `src/utils/redaction.py` is the single definition
@@ -176,4 +222,24 @@ cat > memory/gotcha-log.md <<'EOF'
 EOF
 
 git add -A >/dev/null && git commit -qm fixture
+
+# --- D1: a self-contained tree where two REACHABLE siblings share a basename.
+# Kept out of the main fixture on purpose: with the listing cache keyed on the
+# name, seeding the collision in the shared tree would make T4/T9/T19 flake too,
+# and a suite that fails at random teaches people to re-run it. Its own root is
+# two levels inside $DEST so the sibling glob never reaches the system temp dir.
+cd "$DEST"
+mkdir -p dupname/shared/b dupname/mid/repo dupname/mid/shared/a
+for d in dupname/shared dupname/mid/repo dupname/mid/shared; do
+  (cd "$d" && git init -q . && git config user.email f@x && git config user.name f)
+done
+touch dupname/mid/shared/a/wanted.py dupname/shared/b/unrelated.py
+cat > dupname/mid/repo/CLAUDE.md <<'EOF'
+# D1 — two reachable neighbours share the basename `shared`
+The scorer in the shared checkout is `a/wanted.py`, and we call it every run.
+Only one of the two holds it. A listing cache keyed on the neighbour's NAME
+collapses them, and because ties in the sort land in hash order the survivor
+changes from process to process — so the verdict here changes from run to run.
+EOF
+
 echo "$DEST"

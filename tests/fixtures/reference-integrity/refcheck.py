@@ -429,8 +429,24 @@ def main():
     legacy = '--legacy' in argv
     if legacy:
         argv.remove('--legacy')
+    # `check()` has always accepted explicit sibling roots; nothing could pass
+    # them. Without that, the search is root.parent and root.parent.parent, so a
+    # fixture built under the system temp dir adopts every git repo sitting in
+    # /tmp — including one left behind by an interrupted run of this very
+    # harness. Measured: a leftover fixture supplied a second repo named `docs`
+    # and a newly-added negative passed for that reason alone.
+    sibling_roots = None
+    while '--sibling-root' in argv:
+        i = argv.index('--sibling-root')
+        if i + 1 >= len(argv):
+            # A traceback is not a usage error. This harness pins the search
+            # with this flag, so a typo that drops its value must say so rather
+            # than crash into an IndexError a caller has to decode.
+            sys.exit('--sibling-root needs a directory')
+        sibling_roots = (sibling_roots or []) + [argv[i + 1]]
+        del argv[i:i + 2]
     if len(argv) < 2:
-        sys.exit('usage: refcheck.py [--legacy] <repo-root> <doc> [<doc> ...]\n'
+        sys.exit('usage: refcheck.py [--legacy] [--sibling-root DIR] <repo-root> <doc> [<doc> ...]\n'
                  '  e.g. refcheck.py . CLAUDE.md memory/MEMORY.md')
     root, sources = argv[0], argv[1:]
 
@@ -444,7 +460,8 @@ def main():
         print(f"  TOTAL ITEMS PUT TO A HUMAN: {len(reports) + len(stale)}")
         return 0
 
-    findings, weak, skipped, placeheld, unknown, missing, n_siblings = check(root, sources)
+    findings, weak, skipped, placeheld, unknown, missing, n_siblings = check(
+        root, sources, sibling_roots)
 
     # State rung 4's coverage as a fact rather than inferring a verdict per
     # reference. We cannot tell which unresolved paths a sibling would have
