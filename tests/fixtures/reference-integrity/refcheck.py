@@ -39,7 +39,7 @@ EXT = (
     'py|md|yaml|yml|json|jsonl|sh|bash|zsh|ini|cfg|conf|toml|txt|csv|tsv|sql|db'
     '|xml|html|css|js|ts|tsx|jsx|rs|go|java|rb|php|c|h|cpp|hpp|cs|kt|swift|r'
     '|lock|env|example|service|timer|socket|gitignore|dockerfile|tf|ipynb|proto'
-    '|vue|svelte|rst|log|tag|svg|png'
+    '|vue|svelte|rst|log|tag|svg|png|qmd'
 )
 # `<` and `>` are in the class so that `docs/work-items/<slug>.md` is EXTRACTED.
 # Leaving them out looked like the skip working — the path simply never

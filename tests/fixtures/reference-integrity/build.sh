@@ -12,7 +12,7 @@ mkdir -p "$DEST"
 cd "$DEST"
 
 rm -rf repo sibling-repo docs
-mkdir -p repo/{src/utils,src/models,src/lib,packages/api/config,packages/worker/config,docs,memory,data,.claude/skills,infra}
+mkdir -p repo/{src/utils,src/models,src/lib,packages/api/config,packages/worker/config,docs,memory,data,.claude/skills,infra,analysis}
 mkdir -p sibling-repo/{scripts,deploy} docs/runbooks
 
 for d in repo sibling-repo docs; do (cd "$d" && git init -q . && git config user.email f@x && git config user.name f); done
@@ -21,7 +21,7 @@ cd repo
 printf 'data/*\n!data/.gitkeep\n.claude/\n' > .gitignore
 touch src/utils/redaction.py src/utils/time_utils.py src/models/temporal.py \
       src/utils/helpers.py src/lib/helpers.py data/.gitkeep docs/ARCHITECTURE.md \
-      packages/worker/config/settings.py infra/main.tf
+      packages/worker/config/settings.py infra/main.tf analysis/index.qmd
 echo '{}' > .claude/settings.json
 touch ../sibling-repo/scripts/main.py ../sibling-repo/scripts/deploy_thing.sh \
       ../sibling-repo/deploy/main.py ../docs/runbooks/DEPLOY.md
@@ -119,6 +119,14 @@ cat > docs/EXOTIC.md <<'EOF'
 # T11 — extensions outside the whitelist must not be silently invisible
 `infra/nonexistent.tf` and `notebooks/missing.ipynb` are broken references.
 If the extractor's whitelist omits their extension they vanish with no report.
+
+# T16 — a Quarto project's own extension
+`analysis/missing.qmd` is broken and must be reported. Before `qmd` was
+whitelisted this file was invisible, so an adopter whose entire content layer
+is `.qmd` got a clean audit that had examined none of it.
+
+`analysis/index.qmd` exists. It must stay silent: widening the whitelist must
+add coverage, not turn every real Quarto source into a phantom reference.
 EOF
 
 cat > memory/MEMORY.md <<'EOF'

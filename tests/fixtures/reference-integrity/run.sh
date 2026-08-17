@@ -27,6 +27,10 @@ declare -a CASES=(
   "T10 deletion with surviving twin|packages/api/config/settings.py"
   "T11 unlisted extension .tf|infra/nonexistent.tf"
   "T11 unlisted extension .ipynb|notebooks/missing.ipynb"
+  # #69 — the whitelist is a denominator. A repo whose PRIMARY source extension
+  # is missing gets a clean audit having extracted nothing, and the instrument's
+  # own "extensions not extracted" line reads as trivia under a zero.
+  "T16 fabricated .qmd is caught|analysis/missing.qmd"
   # #45 — the failure the placeholder skip newly permits: a marker on a path
   # that resolves. Mislabelling must not become a way to hide a real break.
   "T12 stale placeholder marker on a resolving path|src/models/temporal.py"
@@ -48,6 +52,9 @@ declare -a NEG=(
   "N10 angle-bracket path, second form|filters/<name>/<version>/config.yaml"
   "N11 live path after a marker is not a stale marker|src/utils/redaction.py"
   "N12 leading angle bracket is extracted, not invisible|<root>/memory/MEMORY.md"
+  # The failure #69's widening newly permits: every real .qmd becoming a
+  # phantom. Adding an extension must buy coverage, not noise.
+  "N14 a resolving .qmd stays silent|analysis/index.qmd"
 )
 
 FAIL=0

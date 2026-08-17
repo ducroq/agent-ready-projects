@@ -21,6 +21,58 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 ## v1.26.1 (candidate, unreleased)
 
+### `audit-context` Step 4 was blind to whole repositories, and had been saying so in a line that reads as trivia (closes #69)
+
+`refcheck.py`'s extension whitelist decides which paths are extracted *at all*,
+and a path that is never extracted cannot be reported, cannot be counted, and
+does not reach the skip list either. `qmd` was not on it. So for a Quarto
+adopter — whose content layer, whose project-file `Key paths` table and whose
+gotcha log are all `.qmd` — Step 4 examined none of the files the repo is made
+of and returned a clean result.
+
+**Measured** on the adopter that found it, with a document carrying a
+fabricated `reference/does-not-exist-xyz.qmd` beside a real one:
+
+| | findings |
+|---|---|
+| before | **0** — never extracted |
+| after | **1** — reported UNRESOLVED |
+
+Closing the gap produced **no new findings** on that repo's real documents:
+every `.qmd` reference there resolves at rung 1. The hole was real and the
+damage was nil, and the distinction is worth keeping rather than rounding to
+"no harm done" — the next repo's coin can land the other way.
+
+**The instrument had been reporting this on every run.** `EXTENSIONS IN TREE
+NOT EXTRACTED` printed `qmd` the whole time. It sits below the findings count,
+and a footnote under a zero reads as trivia. That line worked exactly as
+designed and was still not enough, which is worth knowing before anyone adds
+another one: the narrower question — "is any *extracted* reference broken?" —
+had a true answer, and the whole gap lived in the reader's head.
+
+`tests/fixtures/reference-integrity/run.sh` gains two cases. **T16** — a
+fabricated `.qmd` must be reported — is the load-bearing one: with the
+whitelist change reverted it fails and the harness exits 1, which was run
+rather than assumed. **N14** — a resolving `.qmd` must stay silent — is the
+failure this widening newly permits, per the fixture's own rule that a
+permissive change seeds what it lets through. N14 passes with or without the
+fix, because an un-extracted path is trivially not a finding; it is vacuously
+true before the change and only carries meaning after it, and is recorded that
+way so nobody reads the pair as two independent proofs.
+
+**PATCH** — a shipped checker made to honour a contract it already documented.
+`EXT`'s own comment says it is "NOT a closed world", and the unknown-extension
+report exists precisely so "a repo whose primary sources are .tf/.ipynb/.kt
+cannot be silently un-audited". This is that promise being kept. On the v1.25.1
+precedent. **No adopter action**: the fixture is not a template, so nothing
+needs re-copying.
+
+*Conflict note, in the v1.26.0 tradition of predicting it here rather than
+discovering it on merge: the `review-changes` scope fix carries its own
+`v1.26.1` candidate block inserting at this same point. The two changes are
+independent; whichever lands second becomes `v1.26.2` and its heading needs
+renumbering, nothing more.*
+
 ### `review-changes` reported "nothing to review" on a pushed PR branch (closes #64)
 
 Step 1 defined the change set as staged + unstaged + `@{u}`, and Step 1.5's file list unioned the same three. **On a branch that is committed and pushed but not merged, all three are empty** — `@{u}` precisely *because* the upstream exists and is current. The step's literal instruction is then to report "nothing to review" and stop, on a whole PR.
