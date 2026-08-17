@@ -211,6 +211,7 @@ fi
 list_detail() { printf '%s\n' "$detail" | while IFS= read -r p; do [ -n "$p" ] && printf '%s%s\n' "$1" "$p"; done; }
 
 REFUSED=0
+AHEAD=0            # skills whose install matches the release while the tree moved on (#49)
 REFRESH_HINT="run without --check to refresh"
 [ -n "$unreleased" ] && REFRESH_HINT="the tracked copy is itself unreleased (see above), so a refresh is refused; tag the release first, or re-run with --force"
 
@@ -263,9 +264,40 @@ for s in $GLOBAL_SKILLS; do
   elif [ -L "$DEST/$s" ] || [ -L "$DEST/$s/SKILL.md" ]; then fail "$s at $DEST is a SYMLINK — a global install must be a real copy derived from the tracked source, or drift becomes structurally undetectable"
   elif [ ! -f "$DEST/$s/SKILL.md" ]; then fail "$s is not installed at $DEST/$s/SKILL.md"
   elif ! cmp -s ".claude/skills/$s/SKILL.md" "$DEST/$s/SKILL.md"; then
-    # The hint has to agree with the guard above, or it sends you straight into
-    # a refusal: for an unreleased tree, refreshing is exactly what is blocked.
-    fail "$s at $DEST differs from the tracked copy — $REFRESH_HINT"
+    # Two states reach this branch and only one is a defect (#49):
+    #
+    #   install != latest release              genuinely stale — act        exit 1
+    #   install == latest release, tree ahead  correct — nothing to do      exit 0
+    #
+    # The second holds on this repo's own machine on any day with an unreleased
+    # skill edit, which during active development is most of them. Reporting it
+    # as an issue makes --check return failure daily for a healthy install —
+    # the cries-wolf class that v1.15.1 and v1.23.0 each spent a release
+    # removing. The exit code is what a hook or wrapper reads; prose is not
+    # available to it, so the machine-readable half has to agree with the
+    # human-readable half. Reported by an adopter (ovr.news), v1.24.0 triage.
+    # Keyed on `$unreleased`, NOT on `$REFUSED`. `REFUSED` is set only on the
+    # install path — under `--check` it stays 0, so a guard keyed on it can
+    # never fire in the mode this defect was reported in. (The check further
+    # down IS keyed on `REFUSED`, deliberately: its comment says the WARN
+    # covers the `--check` case. This one is the opposite — `--check` is the
+    # only mode where it matters.)
+    relblob=""; instblob=""
+    if [ -n "$unreleased" ] && [ -n "$TAG" ]; then
+      relblob=$(git rev-parse --verify --quiet "$TAG:.claude/skills/$s/SKILL.md")
+      instblob=$(git hash-object --path=".claude/skills/$s/SKILL.md" -- "$DEST/$s/SKILL.md" 2>/dev/null)
+    fi
+    # `[ "$relblob" = "$instblob" ]` alone is satisfied by BOTH being empty —
+    # a skill absent from the tag and an unhashable install would then read as
+    # healthy. Require a real blob on each side before believing the match.
+    if [ -n "$relblob" ] && [ -n "$instblob" ] && [ "$relblob" = "$instblob" ]; then
+      printf 'OK    %s at %s matches %s; the tracked copy is ahead of the release, so there is nothing to refresh yet\n' "$s" "$DEST" "$TAG"
+      AHEAD=$((AHEAD + 1))
+    else
+      # The hint has to agree with the guard above, or it sends you straight into
+      # a refusal: for an unreleased tree, refreshing is exactly what is blocked.
+      fail "$s at $DEST differs from the tracked copy — $REFRESH_HINT"
+    fi
   elif [ "$(first_line "$DEST/$s/SKILL.md")" != "---" ]; then
     fail "$s at $DEST has no frontmatter — it is installed but will not register"
   elif [ "$REFUSED" -eq 1 ] && [ -n "$TAG" ] &&
@@ -373,5 +405,12 @@ if [ "$REFUSED" -eq 1 ]; then
   # having installed, so a 0 must not read as success.
   printf 'REFUSED — nothing was installed (see the top of this report). %s issue(s) reported by the read-only checks.\n' "$ISSUES"
   exit 2
+elif [ $ISSUES -eq 0 ] && [ "$AHEAD" -gt 0 ]; then
+  # Do not claim they match the tracked source when at least one matches the
+  # RELEASE and the tracked copy has moved on. Both are healthy; they are not
+  # the same statement, and the summary is the line most likely to be the only
+  # one read.
+  printf 'OK — %s global skill(s) match %s, with the tracked copy ahead; the rest match the tracked source. Nothing to refresh until the release is tagged.\n' "$AHEAD" "$TAG"
+  exit 0
 elif [ $ISSUES -eq 0 ]; then echo "OK — global skills match the tracked source."; exit 0
 else echo "$ISSUES issue(s) found."; exit 1; fi
