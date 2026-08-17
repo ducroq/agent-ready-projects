@@ -376,8 +376,10 @@ structural M3-directory      2 "a directory operand must refuse, not be read as 
 # silence, which is what makes it worse than #52 in review-changes.
 #
 # The assertion is EQUIVALENCE, not a needle: a CRLF file must produce the same
-# dispositions as its LF twin. A needle per row would pass for a file that was
-# never examined; identical output cannot.
+# OUTPUT as its LF twin — dispositions and the echoed command string both, which
+# is stronger than dispositions alone and catches a left-over `\|` even where the
+# verdict happens to match. A needle per row would pass for a file that was never
+# examined; identical output cannot.
 #
 # ⚠️ The reconciliation line reads "ran 3 of 3" under BOTH line endings, so the
 # runner's headline guarantee — the denominator assertion — is blind to this
@@ -388,7 +390,7 @@ echo "CRLF (#58) — same dispositions as LF, or the un-escape never ran:"
 { printf '| claim | check |\n'
   printf '|---|---|\n'
   printf '| false pass under CRLF | <!-- verify: echo hello \\| grep -c nomatch --> |\n'
-  printf '| false failure under CRLF | <!-- verify: grep -c nomatch /etc/hostname \\| cat --> |\n'
+  printf '| false failure under CRLF | <!-- verify: false \\| cat --> |\n'
   printf '| the idiom this framework teaches | <!-- verify: test -f /nonexistent && echo PASS \\|\\| echo FAIL --> |\n'
 } > "$WORK/crlf-lf.md"
 sed 's/$/\r/' "$WORK/crlf-lf.md" > "$WORK/crlf.md"
@@ -418,6 +420,19 @@ if grep -q '^FAIL' "$WORK/c-nonl.out"; then
 else
   printf '  FAIL  C4 — expected FAIL on the unterminated-final-line CRLF file, got:\n'
   sed 's/^/        /' "$WORK/c-nonl.out"; FAIL=1
+fi
+
+# C5 — `\r\r\n`. A blob already holding CRLF, converted again, produces a doubled
+# CR; so does applying the fixture's own `sed 's/$/\r/'` idiom to an already-CRLF
+# checkout. `sub(/\r$/, "")` strips ONE, which left the defect fully intact on the
+# fixed runner — measured: base PASS, single-CR strip PASS, `\r+` FAIL (correct).
+printf '| p | k |\r\r\n|---|---|\r\r\n| x | <!-- verify: echo hello \\| grep -c nomatch --> |\r\r\n' > "$WORK/crcrlf.md"
+bash "$RUNNER" "$WORK/crcrlf.md" > "$WORK/c-dbl.out" 2>&1 || true
+if grep -q '^FAIL .*echo hello | grep' "$WORK/c-dbl.out"; then
+  printf '  PASS  C5 — a doubled CR is stripped, so the un-escape still runs\n'
+else
+  printf '  FAIL  C5 — expected an un-escaped FAIL on the \\r\\r\\n file, got:\n'
+  sed 's/^/        /' "$WORK/c-dbl.out"; FAIL=1
 fi
 
 # The guard must be load-bearing: without the strip the SAME input must diverge.

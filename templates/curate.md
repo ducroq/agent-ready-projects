@@ -88,7 +88,7 @@ Check for context rot from *previous* sessions. This catches what the session-fo
          }
          return res
        }
-       { sub(/\r$/, "") }                                     # CRLF: strip before anything reads
+       { sub(/\r+$/, "") }                                     # CRLF: strip before anything reads
                                                               # the line. isdelim() strips spaces and
                                                               # tabs but not \r, so intbl is never set,
                                                               # the table un-escape never runs, and an
@@ -96,6 +96,17 @@ Check for context rot from *previous* sessions. This catches what the session-fo
                                                               # counted and EXECUTED — mangled.
                                                               # Corruption, not silence: the shape of
                                                               # #52 with a worse disposition. See #58.
+                                                              # `\r+`, not `\r`: an index blob already
+                                                              # holding CRLF, converted again, yields
+                                                              # `\r\r\n`, and stripping one CR left the
+                                                              # defect intact on the fixed runner.
+                                                              # ⚠️ A LONE CR (no LF) is NOT fixed and
+                                                              # cannot be here: awk reads the file as one
+                                                              # record, so no table is entered and the
+                                                              # un-escape never runs — a false PASS at
+                                                              # exit 0. Same residual review-changes
+                                                              # discloses beside its own #52 fix; worse
+                                                              # here, because this runner EXECUTES.
                                                               # NB no apostrophe anywhere in this block:
                                                               # the awk program is single-quoted.
        FNR == 1 {

@@ -84,7 +84,7 @@ In Step 1.5 the failure is **silence**: no table is entered, so nothing is exami
 | command in the table cell | LF | CRLF, before |
 |---|---|---|
 | `echo hello \| grep -c nomatch` | FAIL | **PASS** — false pass, exit 0 |
-| `grep -c nomatch /etc/hostname \| cat` | PASS | **FAIL** — false failure |
+| `false \| cat` | PASS | **FAIL** — false failure |
 | `test -f /nonexistent && echo PASS \|\| echo FAIL` | FAIL | **ERROR** — silently, no output at all |
 
 The third is the idiom this framework itself teaches, so it is the shape adopters' tables actually carry.
@@ -98,6 +98,16 @@ The third is the idiom this framework itself teaches, so it is the shape adopter
 **Seeded as C1–C3.** C1 asserts **equivalence** rather than a needle — a CRLF file must produce the same dispositions as its LF twin — because a per-row needle would also pass for a file that was never examined, and identical output cannot. C2 removes the strip and requires the same input to diverge, so C1 cannot pass vacuously. C3 pins the specific false PASS, the one disposition nothing in the run signals. Ablating the strip from the *template* makes C1 fail and C2 report that it can no longer target the runner.
 
 *Written, and then debugged, on this repo's own rake:* the first draft of the comment contained `#52's`, and the awk program is single-quoted — the apostrophe closed it and broke eight unrelated ablations. Exactly the defect that draft 2 of the `review-changes` scope fix shipped (`Step 1's` inside `${BASE:?…}`), one release earlier, in a different file. The comment now says so and carries no apostrophe.
+
+### Two residual CR shapes, one fixed and one disclosed
+
+An adversarial review found the first fix incomplete in two directions, both measured on the extracted runner.
+
+**A doubled CR was not handled.** `sub(/\r$/, "")` strips one CR; an index blob already holding CRLF and converted again yields `\r\r\n`, and so does applying this fixture's own `sed 's/$/\r/'` idiom to an already-CRLF checkout. On that input the fixed runner reproduced the defect **in full** — base `PASS`, single-CR strip `PASS`, both with `\|` still escaped. Now `\r+$`, measured `FAIL` with the pipe un-escaped. Seeded as **C5**.
+
+⚠️ **A lone CR is NOT fixed, and cannot be by a trailing strip.** awk reads a CR-only file as a single record, so no table is entered, the un-escape never runs, and the result is a false `PASS` at exit 0. `templates/review-changes.md` ships an explicit lone-CR disclosure beside its identical #52 fix; this one shipped none — **in the copy where the residual is worse, because this runner executes the mangled command rather than merely going quiet.** Now disclosed in both copies.
+
+**And one seeded row degraded silently on a supported platform.** Row 2 used `/etc/hostname`, which does not exist on macOS: there all three variants score ERROR, so the row stops distinguishing anything while C1–C3 still pass, carried by the other rows. Replaced with `false \| cat`, the same shape with no filesystem dependency.
 
 Rule 8: `templates/curate.md` +1018 bytes, recorded here and the baseline re-run with `--update`.
 
