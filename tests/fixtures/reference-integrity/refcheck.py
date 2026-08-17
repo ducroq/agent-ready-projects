@@ -47,6 +47,33 @@ EXT = (
 # the silent-skip failure this file exists to prevent (#45).
 PATH_RE = re.compile(r'`([A-Za-z0-9_.<][A-Za-z0-9_./*<>-]*\.(?:' + EXT + r'))`')
 
+# Some EXT entries are FILENAME-shaped, not extension-shaped, and the rule
+# matches the tail of any dotted token — so `env` captures `process.env`, a
+# ubiquitous code identifier and a guaranteed phantom: no such file exists and
+# none was ever meant to. That is the failure the whitelist exists to prevent,
+# arriving through it rather than around it (#70).
+#
+# Keep such a token only when it still looks like a path: it contains a `/`, or
+# it starts with a `.` (`.env.example`). A bare `.env` never matched anyway —
+# PATH_RE needs a dot with something before it.
+#
+# ⚠️ Measured cost, stated rather than hidden: a bare `settings.env` written
+# with no directory is no longer extracted. Both shapes are seeded in the
+# fixture (T17 keeps the path form reported, N15 keeps `process.env` silent).
+# Only `env` is listed. `example`, `gitignore` and `dockerfile` are the same
+# shape and are deliberately NOT included — no collision has been measured for
+# them, and tightening on argument rather than evidence is how a check loses
+# sensitivity nobody notices.
+IDENTIFIER_EXT = ('env',)
+
+
+def _is_identifier_not_path(frag):
+    """True for a dotted code identifier wearing a whitelisted extension."""
+    ext = frag.rsplit('.', 1)[-1].lower()
+    if ext not in IDENTIFIER_EXT:
+        return False
+    return '/' not in frag and not frag.startswith('.')
+
 STATE_DIRS = ('data/', 'state/', 'cache/', 'logs/', 'run/', 'var/', 'artifacts/')
 STATE_SHAPE = re.compile(r'(_state\.json|_health\.json|\.pid|\.sock)$')
 # NB: there is deliberately no 'bare lowercase .json' rule. One existed and was
@@ -204,7 +231,8 @@ def check(root, sources, sibling_roots=None):
             # already measured once for strikethrough.
             placeheld_frags = set()
             eligible = [m for m in PATH_RE.finditer(line)
-                        if '*' not in m.group(1) and not URLISH.match(m.group(1))]
+                        if '*' not in m.group(1) and not URLISH.match(m.group(1))
+                        and not _is_identifier_not_path(m.group(1))]
             for pm in PLACEHOLDER_RE.finditer(_mask_spans(line)):
                 before = [m for m in eligible if m.end() <= pm.start()]
                 if before:
@@ -222,6 +250,8 @@ def check(root, sources, sibling_roots=None):
             for frag in PATH_RE.findall(line):
                 if '*' in frag or URLISH.match(frag):
                     continue  # a hostname is not a path
+                if _is_identifier_not_path(frag):
+                    continue  # `process.env` is not a file (#70)
                 if frag in covered:
                     skipped.append((src, frag, 'asserted-absent'))
                     continue

@@ -62,6 +62,8 @@ For every file path mentioned in the project file, memory index, and gotcha log:
 
 **Extract paths with an extension whitelist, not "a dot near the end".** A permissive suffix rule turns every dotted identifier (`re.sub`, `json.dumps`, `ContentItem.url`), every bare domain (`storm.mg`, `news.google.com`) and every version number (`3.1`) into a phantom reference. In one run this alone accounted for 20 phantom references. Whitelist real file extensions and extend the list when a project uses more; a reference the extractor never captures is invisible to every rung below.
 
+⚠️ **An entry that is filename-shaped rather than extension-shaped re-admits the phantom class the whitelist exists to exclude.** The rule matches the tail of any dotted token, so whitelisting `env` captures `process.env` — a ubiquitous code identifier that no rung can ever resolve. Real uses of such a name are a bare `.env` or a path (`config/settings.env`), so keep the token only when it still looks like one: it contains a `/`, or it starts with a `.`. Measured on `env`; `example`, `gitignore` and `dockerfile` are the same shape and are left alone until a collision is actually observed, because tightening on argument rather than evidence loses sensitivity nobody notices.
+
 **For every other path, try to resolve it before reporting it broken** — in this order:
 
 1. **As written**, relative to the repo root.

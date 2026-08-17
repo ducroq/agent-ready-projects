@@ -27,6 +27,9 @@ declare -a CASES=(
   "T10 deletion with surviving twin|packages/api/config/settings.py"
   "T11 unlisted extension .tf|infra/nonexistent.tf"
   "T11 unlisted extension .ipynb|notebooks/missing.ipynb"
+  # #70 — the loss this tightening could cause. `env` keeps its coverage for
+  # the path form; only the identifier shape is dropped.
+  "T17 broken .env with a directory is still caught|config/missing.env"
   # #45 — the failure the placeholder skip newly permits: a marker on a path
   # that resolves. Mislabelling must not become a way to hide a real break.
   "T12 stale placeholder marker on a resolving path|src/models/temporal.py"
@@ -48,6 +51,12 @@ declare -a NEG=(
   "N10 angle-bracket path, second form|filters/<name>/<version>/config.yaml"
   "N11 live path after a marker is not a stale marker|src/utils/redaction.py"
   "N12 leading angle bracket is extracted, not invisible|<root>/memory/MEMORY.md"
+  # #70 — the phantom itself. No rung can resolve `process.env`; it is not a file.
+  "N15 process.env is an identifier, not a path|process.env"
+  "N15b a resolving .env with a directory stays silent|config/live.env"
+  # #70/T18 — with the marker correctly reaching past the identifier, this is
+  # placeheld rather than reported. Fails if only the findings loop is filtered.
+  "N16 marker reaches past an identifier to the real path|config/absent.env"
 )
 
 FAIL=0
@@ -84,7 +93,7 @@ fi
 # extracted also is not a finding — which is the silent-skip failure this whole
 # step is built against. Assert the counted section names them.
 PLACEHELD="$(printf '%s' "$OUT" | sed -n '/== SKIPPED as declared-placeholder/,/^  total:/p')"
-for want in "src/aggregators/my_new_aggregator.py" "docs/work-items/<slug>.md" \
+for want in "config/absent.env" "src/aggregators/my_new_aggregator.py" "docs/work-items/<slug>.md" \
             "filters/<name>/<version>/config.yaml" "<slug>.md" "<root>/memory/MEMORY.md"; do
   if printf '%s' "$PLACEHELD" | grep -qF -- "$want"; then
     printf '  PASS  counted as declared-placeholder: %s\n' "$want"

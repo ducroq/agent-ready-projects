@@ -19,6 +19,33 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.26.1 (candidate, unreleased)
+
+### `refcheck`'s own whitelist admitted the phantom class it exists to exclude (closes #70)
+
+`audit-context` Step 4 warns that a permissive suffix rule turns every dotted identifier into a phantom reference, and the extension whitelist is the defence against it. But several whitelist entries are **filename-shaped rather than extension-shaped**, and the rule matches the tail of any dotted token — so `env` captured `process.env`, which is not a file, was never meant to be one, and can never resolve at any rung.
+
+**Measured**, one line of prose and nothing else (`we read \`process.env\` at startup`):
+
+| | findings |
+|---|---|
+| before | **1** — `process.env` UNRESOLVED |
+| after | **0** |
+
+The fix keeps such a token only when it still looks like a path: it contains a `/`, or it starts with a `.` (`.env.example`). A bare `.env` never matched anyway — `PATH_RE` needs a dot with something before it.
+
+**The cost is stated rather than hidden.** This is a tightening, so the risk is a false negative, and there is one: a bare `settings.env` written with no directory is no longer extracted. **T17** seeds the shape that must survive (`config/missing.env` still reported) so the coverage loss is bounded to the identifier form and not the path form. Only `env` is listed — `example`, `gitignore` and `dockerfile` are the same shape and are deliberately left alone, because no collision has been measured for them and tightening on argument rather than evidence is how a check loses sensitivity nobody notices.
+
+**Two call sites, and the fixture initially could not tell them apart.** The predicate has to run both where findings are emitted and where the placeholder marker's *eligible* list is built. Patching only the first passed every seeded case — so the second was untested, which is the cross-step-contract shape. **T18/N16** closes it: a marker after an identifier must reach *past* it to the real broken path beside it. Ablated to the findings-loop-only patch, N16 now fails twice — once as a finding that should not be, once as a path missing from the counted skip section.
+
+Ablation confirms both directions: neutering the predicate fails **N15** and exits 1; the fixture was not passing vacuously.
+
+`templates/audit-context.md` gains the rule, because **the prose is the spec** — an adopter implementing Step 4 from it would have reproduced the bug. Rule 8: +689 bytes, recorded here and the baseline re-run with `--update`.
+
+**PATCH** — a shipped checker made to honour a contract it already documented, on the `v1.25.1` precedent. Adopters using `audit-context` should re-copy `templates/audit-context.md`; it is user-global, so refresh via `scripts/install-global-skills.sh` after the release tag is pushed and verified.
+
+*Conflict note: PR #67 and PR #71 each carry their own `v1.26.1` candidate block inserting at this same point. All three changes are independent; whichever land later become `v1.26.2` / `v1.26.3` and need their headings renumbered, nothing more.*
+
 ## v1.26.0 (2026-08-13)
 
 *v1.25.1 (the Step 1.5 CRLF fix, PR #53) landed first, as this note required. The code changes were independent, but both branches inserted a block at the same point in this file, so the conflict predicted here was resolved by hand on merge.*

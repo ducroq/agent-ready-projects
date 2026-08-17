@@ -12,7 +12,7 @@ mkdir -p "$DEST"
 cd "$DEST"
 
 rm -rf repo sibling-repo docs
-mkdir -p repo/{src/utils,src/models,src/lib,packages/api/config,packages/worker/config,docs,memory,data,.claude/skills,infra}
+mkdir -p repo/{src/utils,src/models,src/lib,packages/api/config,packages/worker/config,docs,memory,data,.claude/skills,infra,config}
 mkdir -p sibling-repo/{scripts,deploy} docs/runbooks
 
 for d in repo sibling-repo docs; do (cd "$d" && git init -q . && git config user.email f@x && git config user.name f); done
@@ -21,7 +21,7 @@ cd repo
 printf 'data/*\n!data/.gitkeep\n.claude/\n' > .gitignore
 touch src/utils/redaction.py src/utils/time_utils.py src/models/temporal.py \
       src/utils/helpers.py src/lib/helpers.py data/.gitkeep docs/ARCHITECTURE.md \
-      packages/worker/config/settings.py infra/main.tf
+      packages/worker/config/settings.py infra/main.tf config/live.env
 echo '{}' > .claude/settings.json
 touch ../sibling-repo/scripts/main.py ../sibling-repo/scripts/deploy_thing.sh \
       ../sibling-repo/deploy/main.py ../docs/runbooks/DEPLOY.md
@@ -119,6 +119,21 @@ cat > docs/EXOTIC.md <<'EOF'
 # T11 — extensions outside the whitelist must not be silently invisible
 `infra/nonexistent.tf` and `notebooks/missing.ipynb` are broken references.
 If the extractor's whitelist omits their extension they vanish with no report.
+
+# T17 / N15 — `env` is filename-shaped, not extension-shaped (#70)
+`config/missing.env` is a genuine broken reference and must stay reported:
+the fix for the phantom below must not cost the path form its coverage.
+`config/live.env` exists and must stay silent.
+`process.env` is a code identifier, not a file. It can never resolve at any
+rung, and reporting it is the phantom-reference failure the whitelist exists
+to prevent, arriving through the whitelist rather than around it.
+
+# T18 — the marker must reach PAST an identifier to the real path
+`config/absent.env` and `process.env` <!-- placeholder -->
+The marker is span-scoped and takes the nearest ELIGIBLE path before it. If the
+identifier filter is applied only where findings are emitted and not where the
+eligible list is built, the marker lands on `process.env`, and the real broken
+path beside it silently stays a finding — the two filters must agree.
 EOF
 
 cat > memory/MEMORY.md <<'EOF'
