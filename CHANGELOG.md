@@ -38,15 +38,29 @@ The documented fallback could not save it. What the skill actually said was `git
 | Step 1.5 markdown file list, old | **0** |
 | Step 1.5 markdown file list, new | **2** |
 
-The baseline is now the default branch, resolved once in Step 1 and reused by Step 1.5. `origin/HEAD` first, then `origin/main`, `origin/master`, `main`, `master` — `origin/HEAD` is unset in many clones, so the loop is load-bearing rather than defensive. If none resolves, the step says the scope could not be established instead of reporting a clean diff. On the default branch itself the baseline falls back to the upstream, since `HEAD...HEAD` is empty.
+The baseline is now the default branch, resolved once in Step 1 and reused by Step 1.5. `origin/HEAD` first, then `origin/main`, `origin/master`, `main`, `master`. If none resolves, the step says the scope could not be established instead of reporting a clean diff. On the default branch itself the baseline falls back to the upstream, since `HEAD...HEAD` is empty.
+
+*An earlier version of this paragraph said `origin/HEAD` is unset in many clones, so the loop is load-bearing rather than defensive.* **That was refuted and the correction had not reached here** — the template already says the measured thing (`git clone`, including `--depth 1`, sets it, as does the first `git fetch` on git ≥2.45; measured on git 2.53.0), while this file still asserted its opposite. The loop covers `git init` + `git remote add` with no fetch, older git, and a remote whose HEAD is unset — narrower than "many clones", and enough to keep it.
 
 Verified across four states: unpushed feature branch, **pushed feature branch** (the defect), the default branch, and a repo with no remote at all.
 
 Reported by an adopter (NexusMind) who hit it on a real PR, where following the instruction literally would have returned "nothing to review" on a diff that a widened review then found **4 blockers** in. This repo hit the same defect twice on the same day and worked around it both times without recognising it — the workaround (`master...HEAD`) is what the fix now prescribes.
 
+### Round 2 — three defects the round-1 fix introduced
+
+Round 1's fixes were merged into the branch unreviewed. A second round found three defects, all created by the fix, two of them by **executing** the block rather than reading it. Fourth consecutive time round 2 has found defects in round 1's fixes here (#34, PR #53, `extract-block.sh`).
+
+1. **Step 1.5 could not run at all.** Both its pipelines open with `: "${BASE:?…}"`, reading a variable Step 1 sets — but shell state does not survive between tool calls, and the skill's own text said *"run that block first"*, i.e. separately. Measured in a fresh shell: new version `exit 127`, no output; old version `exit 0`, count printed. A step that *"runs at every tier and every magnitude, before any lens"* was unrunnable in the harness the skill is written for — a silent undercount traded for a hard abort. The abort is the right direction and stays; what was missing is the instruction that Step 1 and Step 1.5 must share one shell invocation. Now stated where the baseline is resolved, and in both guard messages.
+
+2. **`set -e` aborted before the fallback that reports failure.** In a repo with no remote and no `main`/`master` branch, the candidate loop is the last command of the `||` chain and returns non-zero, so the block died at that line with **no output at all** — never reaching the `BASELINE UNRESOLVED` fallback written for exactly this case. Both "no remote" and "`set -e`" were listed as verified states in round 1; they were verified separately and never in combination. Fixed by terminating the chain in `|| :` and converting the default-branch test to an `if`, whose condition `set -e` does not police. Re-measured: `BASELINE UNRESOLVED` now prints and the block completes at exit 0.
+
+3. **The prose contradicted the guard added ten lines above it**, in both copies, so rule 6 could not see it: *"run that block first, or this pipeline silently loses its largest term."* With the `:?` guard it does not silently lose anything — it aborts. The sentence described the pre-fix behaviour.
+
+Also corrected here rather than in the template: **this changelog still carried a claim the template had already refuted** — that `origin/HEAD` is unset in many clones. The retraction reached the normative surface and not the release note, which is the #61 shape (a claim decays where its correction did not travel).
+
 ### Rule 8
 
-`templates/review-changes.md` 23,540 → 26,210 bytes. The ratchet's contract is that the number only goes down unless the growth is *recorded here* and the baseline re-run with `--update`; an earlier draft of this change bumped the baseline silently, which is disabling the guard rather than satisfying it.
+`templates/review-changes.md` 23,540 → 26,210 → 27,041 bytes; the second step is round 2's +831, and it buys the same-shell instruction, the `set -e` comment naming the measured failure, and two reworded guard messages. The ratchet's contract is that the number only goes down unless the growth is *recorded here* and the baseline re-run with `--update`; an earlier draft of this change bumped the baseline silently, which is disabling the guard rather than satisfying it.
 
 What the bytes buy: a baseline that validates it resolved to a real commit, a loud fallback where it did not, and a `${BASE:?}` guard at the head of both Step 1.5 pipelines. The first draft warned on an unresolved baseline and carried on, which reproduced the very defect being fixed in three narrower states — a detector with no actuator, found by review and measured in each state. A second draft then shipped the guard with an apostrophe in it (`Step 1's`), which makes `${BASE:?...}` a bash syntax error even inside double quotes — a guard that aborts with a parse error exactly where it was meant to protect. Caught by running the extracted block rather than reading it.
 
