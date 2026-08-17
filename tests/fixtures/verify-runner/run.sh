@@ -387,10 +387,18 @@ structural M3-directory      2 "a directory operand must refuse, not be read as 
 # nobody reads that assertion as covering it.
 echo
 echo "CRLF (#58) — same dispositions as LF, or the un-escape never ran:"
+# Row 2 needs its own file, and the fixture makes it rather than reaching for one
+# on the host. `/etc/hostname` was absent on macOS; `false \| cat` was worse — it
+# writes NOTHING, so the runner's no-output rule scored it ERROR on both sides and
+# the row stopped distinguishing anything on the platform it was measured on.
+# `grep -c nomatch FILE \| cat` un-escapes to a pipeline whose tail exits 0 with
+# stdout "0" (PASS); mangled, grep is handed `\|` and `cat` as extra FILENAMES,
+# exits 2, and prints a filename-prefixed count (FAIL). Measured both.
+printf 'content\n' > "$WORK/row2.txt"
 { printf '| claim | check |\n'
   printf '|---|---|\n'
   printf '| false pass under CRLF | <!-- verify: echo hello \\| grep -c nomatch --> |\n'
-  printf '| false failure under CRLF | <!-- verify: false \\| cat --> |\n'
+  printf '| false failure under CRLF | <!-- verify: grep -c nomatch %s \\| cat --> |\n' "$WORK/row2.txt"
   printf '| the idiom this framework teaches | <!-- verify: test -f /nonexistent && echo PASS \\|\\| echo FAIL --> |\n'
 } > "$WORK/crlf-lf.md"
 sed 's/$/\r/' "$WORK/crlf-lf.md" > "$WORK/crlf.md"

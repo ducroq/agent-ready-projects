@@ -88,7 +88,7 @@ Check for context rot from *previous* sessions. This catches what the session-fo
          }
          return res
        }
-       { sub(/\r+$/, "") }                                     # CRLF: strip before anything reads
+       { sub(/\r+$/, "") }                                    # CRLF: strip before anything reads
                                                               # the line. isdelim() strips spaces and
                                                               # tabs but not \r, so intbl is never set,
                                                               # the table un-escape never runs, and an
