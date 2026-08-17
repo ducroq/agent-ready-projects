@@ -400,7 +400,15 @@ else pass "$id"; fi
 id=N6-refresh-hint-agrees-with-guard
 root="$WORK/$id"; mkdir -p "$root"; mkrepo "$root"
 CLAUDE_SKILLS_DIR="$root/dest" bash "$root/scripts/install-global-skills.sh" >/dev/null 2>&1  # install at the tag
-m_dirty "$root"                                                                               # now the source is ahead
+# ⚠️ This case used to stop here and assert exit 1 — but "install at the tag,
+# source ahead" is the state #49 identifies as HEALTHY, so the assertion encoded
+# the defect. It was not changed to make a fix pass: the state it now builds is
+# a genuinely stale install (matching neither the release nor the tree) on an
+# unreleased tree, which is the only state where this hint has to be the
+# refusal-aware one. The purpose of the case is unchanged; its premise was
+# wrong. P19/P20 pin the distinction that made it wrong.
+printf 'drifted in the install\n' >> "$root/dest/curate/SKILL.md"                              # genuinely stale
+m_dirty "$root"                                                                               # and the source is ahead
 out=$(CLAUDE_SKILLS_DIR="$root/dest" bash "$root/scripts/install-global-skills.sh" --check 2>&1); rc=$?
 if [ $rc -ne 1 ]; then bad "$id" "expected exit 1 (install differs from source), got $rc:
 $out"
@@ -626,6 +634,50 @@ $out"
 else
   judge "$id" INSTALL "curate: installed" "$root" "$rc" "$out"
 fi
+
+# ---- --check answers two questions and used to report one code (#49) --------
+# The guard refusing an unreleased tree is correct and unchanged. What was wrong
+# is that `--check` could not distinguish these by exit code:
+#
+#   install != latest release              genuinely stale — act        want 1
+#   install == latest release, tree ahead  correct — nothing to do      want 0
+#
+# The second holds on any day with an unreleased skill edit, so --check returned
+# failure daily for a healthy install — the cries-wolf class v1.15.1 and v1.23.0
+# each spent a release removing. Reported by an adopter (ovr.news).
+#
+# Both cases share a tree that is AHEAD of the tag; they differ only in what the
+# destination holds. If the exit codes ever agree again, one of them fails.
+echo
+echo "--check: install-at-release vs install-stale must differ by exit code (#49):"
+
+check_case() {  # check_case <id> <dest-content: RELEASE|STALE> <want-rc> <needle>
+  local id="$1" what="$2" want="$3" needle="$4"
+  local root="$WORK/$id" out rc
+  mkdir -p "$root"; mkrepo "$root"
+  # Populate the destination from the TAG, before the tree moves on.
+  mkdir -p "$root/dest/curate" "$root/dest/audit-context" "$root/dest/update-drift"
+  for s in curate audit-context update-drift; do
+    g "$root" show "v1.0.0:.claude/skills/$s/SKILL.md" > "$root/dest/$s/SKILL.md"
+  done
+  [ "$what" = STALE ] && printf 'drifted in the install\n' >> "$root/dest/curate/SKILL.md"
+  # Now put the tracked tree ahead of the release, which is the whole premise.
+  printf 'An unreleased draft rule.\n' >> "$root/.claude/skills/curate/SKILL.md"
+  out=$(CLAUDE_SKILLS_DIR="$root/dest" bash "$root/scripts/install-global-skills.sh" --check 2>&1); rc=$?
+  if [ "$rc" -ne "$want" ]; then
+    bad "$id" "expected exit $want, got $rc:
+$out"
+  elif ! printf '%s' "$out" | grep -qF -- "$needle"; then
+    bad "$id" "expected output matching \"$needle\", got:
+$out"
+  else pass "$id"; fi
+}
+
+# Healthy: the install is exactly the release, the tree has moved on. Nothing to
+# do until the release is tagged, so a hook reading the code must see success.
+check_case P19-check-at-release-tree-ahead RELEASE 0 "matches v1.0.0"
+# Genuinely stale: the install matches neither the release nor the tree.
+check_case P20-check-install-stale        STALE   1 "differs from the tracked copy"
 
 echo
 if [ $FAIL -eq 0 ]; then echo "All installer release-guard cases passed."; else echo "Fixture failures above."; fi
