@@ -75,7 +75,7 @@ renumbering, nothing more.*
 
 ### `curate`'s verify runner had the same missing `\r` strip as #52 — but here CRLF corrupts verdicts instead of silencing them (closes #58)
 
-`templates/curate.md`'s canonical verify runner carries the same `isdelim()` as `review-changes` Step 1.5, copied — the two bodies are character-identical modulo the local variable name — including the missing `\r` strip that #52 fixed in v1.25.1.
+`templates/curate.md`'s canonical verify runner carries the same `isdelim()` as `review-changes` Step 1.5, copied — the two bodies are identical modulo whitespace, layout and the local variable name (`x` here, `t` there) — including the missing `\r` strip that #52 fixed in v1.25.1. *An earlier draft of this line said "character-identical", which is false: the two are formatted differently. An absolute in a description is a measurement.*
 
 In Step 1.5 the failure is **silence**: no table is entered, so nothing is examined. Here it is **corruption**. `intbl` gates the table-cell pipe un-escape; under CRLF the delimiter row never matches, `intbl` is never set, and an escaped-pipe command is still **extracted, counted and executed** — mangled. The disposition becomes whatever the mangled command happens to do.
 
@@ -85,9 +85,11 @@ In Step 1.5 the failure is **silence**: no table is entered, so nothing is exami
 |---|---|---|
 | `echo hello \| grep -c nomatch` | FAIL | **PASS** — false pass, exit 0 |
 | `grep -c nomatch /etc/hostname \| cat` | PASS | **FAIL** — false failure |
-| `test -f /nonexistent && echo PASS \|\| echo FAIL` | FAIL | **ERROR** — bash syntax error |
+| `test -f /nonexistent && echo PASS \|\| echo FAIL` | FAIL | **ERROR** — silently, no output at all |
 
 The third is the idiom this framework itself teaches, so it is the shape adopters' tables actually carry.
+
+⚠️ *That row's mechanism was stated wrongly, and the wrong version was inherited verbatim from the issue report without being checked — the #60 shape, in the change fixing a different one.* It is **not** a bash syntax error. `\|\|` is an escaped literal, so the fallback is an argument to `echo`, and `&&` short-circuits before `echo` runs: `bash -c 'test -f /nonexistent && echo PASS \|\| echo FAIL'` exits 1 with **empty stdout and empty stderr**. The runner scores it ERROR through the *no-output* rule, and prints no diagnostic — the opposite of the loud failure "syntax error" implies. `templates/curate.md` already described this correctly one file over: *a `\|`-escaped command from a table cell runs with its pipes as literal `echo` arguments, so its fallback branch is dead code.*
 
 ⚠️ **The runner's headline guarantee cannot see this class, by construction.** The reconciliation line reads `ran 3 of 3 annotations` under both line endings, because extraction never depended on `intbl` — the annotation never leaves the numerator or the denominator. In the false-pass row the exit status is 0 as well, so nothing in the run signals anything. That assertion catches truncation, which is what it was built for; it is stated here so nobody reads it as covering more.
 
@@ -98,6 +100,8 @@ The third is the idiom this framework itself teaches, so it is the shape adopter
 *Written, and then debugged, on this repo's own rake:* the first draft of the comment contained `#52's`, and the awk program is single-quoted — the apostrophe closed it and broke eight unrelated ablations. Exactly the defect that draft 2 of the `review-changes` scope fix shipped (`Step 1's` inside `${BASE:?…}`), one release earlier, in a different file. The comment now says so and carries no apostrophe.
 
 Rule 8: `templates/curate.md` +1018 bytes, recorded here and the baseline re-run with `--update`.
+
+**PATCH** — a shipped checker made to honour a contract it already documented, on the `v1.25.1` precedent. ⚠️ **Adopter action required**: this changes an adopter-facing template, so anyone who copied the verify runner must re-copy `templates/curate.md`. It is user-global, so refresh via `scripts/install-global-skills.sh` after the release tag is pushed and verified.
 
 ## v1.26.0 (2026-08-13)
 
@@ -153,7 +157,7 @@ Regression set: a CRLF header/delimiter mismatch now reports, while a clean CRLF
 
 **Two fixes ride along** that were not designed for, each of which *removes* a phantom hit rather than adding one: `cells()` over-counted by one under CRLF (a trailing `\r` blocks `sub(/\|$/, "")`), producing hits on clean rows in mixed-ending files; and a blank CRLF line did not match `^[ \t]*$`, so tables never terminated and the cell base bled onto following prose.
 
-**The same defect is unfixed one file over.** `templates/curate.md`'s canonical verify runner carries the same `isdelim()`, copied, with the same missing strip, and `.claude/skills/curate/SKILL.md` with it. There the annotation is still extracted, counted and executed — the reconciliation line reads `ran 1 of 1` and catches nothing — but the `\|` un-escape is skipped, so the mangled command's result is whatever it happens to be: a genuine FAIL becoming PASS, a genuine PASS becoming FAIL, and this framework's own `&& echo PASS || echo FAIL` idiom becoming a bash syntax error. **Filed as #58**, not fixed here, because it is a behaviour change to a different shipped skill with its own fixture.
+**The same defect is unfixed one file over.** `templates/curate.md`'s canonical verify runner carries the same `isdelim()`, copied, with the same missing strip, and `.claude/skills/curate/SKILL.md` with it. There the annotation is still extracted, counted and executed — the reconciliation line reads `ran 1 of 1` and catches nothing — but the `\|` un-escape is skipped, so the mangled command's result is whatever it happens to be: a genuine FAIL becoming PASS, a genuine PASS becoming FAIL, and this framework's own `&& echo PASS || echo FAIL` idiom producing no output at all. *(This sentence said "becoming a bash syntax error" when v1.25.1 shipped. It is wrong — corrected in place rather than left standing, with the correction and its measurement in the v1.26.1 entry above.)* **Filed as #58**, not fixed here, because it is a behaviour change to a different shipped skill with its own fixture.
 
 Three claims in earlier drafts of this entry were wrong and are withdrawn rather than quietly dropped: that the whole *file* went unexamined (only tables did — the fence check anchors at line start, where a trailing `\r` cannot reach, and reported under CRLF all along); that an unclosed CRLF fence was newly fixed by this change (it was not); and that a stray `\r\n` inside an otherwise-LF table now ends the table (it does not — that was the blank-line fix described a second time, and the CommonMark §2.1 citation attached to it argued the opposite of the claim).
 

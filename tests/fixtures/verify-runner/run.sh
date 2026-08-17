@@ -396,7 +396,10 @@ sed 's/$/\r/' "$WORK/crlf-lf.md" > "$WORK/crlf.md"
 if ! cmp -s <(tr -d '\r' < "$WORK/crlf.md") "$WORK/crlf-lf.md"; then
   printf '  FAIL  C0 — the CRLF input differs from its LF twin by more than line endings\n'; FAIL=1
 fi
-norm() { sed -e 's|[^ ]*crlf\(-lf\)\?\.md|FILE|g' -e '/^ran /s/.*//' "$1"; }
+# Only the filename is normalised. An earlier version also blanked the `ran N of N`
+# line, which carries no filename and therefore never needed blanking — it only
+# narrowed what C1 compares. Including it is free and strictly stronger.
+norm() { sed -e 's|[^ ]*crlf\(-lf\)\?\.md|FILE|g' "$1"; }
 bash "$RUNNER" "$WORK/crlf-lf.md" > "$WORK/c-lf.out" 2>&1 || true
 bash "$RUNNER" "$WORK/crlf.md"    > "$WORK/c-crlf.out" 2>&1 || true
 if cmp -s <(norm "$WORK/c-lf.out") <(norm "$WORK/c-crlf.out"); then
@@ -405,6 +408,18 @@ else
   printf '  FAIL  C1 — CRLF and LF disagree:\n'; diff <(norm "$WORK/c-lf.out") <(norm "$WORK/c-crlf.out") | sed 's/^/        /'
   FAIL=1
 fi
+# CRLF with NO trailing newline. `sed 's/$/\r/'` always terminates its output, so
+# C1-C3 structurally cannot reach this shape — a file whose last line is the
+# annotation is exactly the shape a table at end-of-file has.
+printf '| c | k |\r\n|---|---|\r\n| last | <!-- verify: echo hello \\| grep -c nomatch --> |\r' > "$WORK/crlf-nonl.md"
+bash "$RUNNER" "$WORK/crlf-nonl.md" > "$WORK/c-nonl.out" 2>&1 || true
+if grep -q '^FAIL' "$WORK/c-nonl.out"; then
+  printf '  PASS  C4 — CRLF with no final newline still un-escapes and fails correctly\n'
+else
+  printf '  FAIL  C4 — expected FAIL on the unterminated-final-line CRLF file, got:\n'
+  sed 's/^/        /' "$WORK/c-nonl.out"; FAIL=1
+fi
+
 # The guard must be load-bearing: without the strip the SAME input must diverge.
 sed '/CRLF: strip before anything reads/d' "$RUNNER" > "$WORK/c-mut.sh"
 if cmp -s "$WORK/c-mut.sh" "$RUNNER"; then
