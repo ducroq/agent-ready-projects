@@ -134,6 +134,30 @@ def _marked_siblings(paragraph, siblings):
     return out
 
 
+def _sibling_hit(frag, siblings, srel_by_name):
+    """Rung 4 attempted against EVERY sibling, not only the prose-named ones.
+
+    For a MARKED path only. A marker is an assertion that the path is not meant
+    to resolve here, and the population most likely to be marked is precisely
+    the cross-repo one — so requiring the sibling to be named in prose, as the
+    normal rung 4 does, can never fire on the references that need it most
+    (#73). Marked paths are few, so the unconditional walk is bounded.
+
+    Returns (sibling_name, hit) or None. Collisions are not distinguished: for a
+    marked path the question is only whether it resolves *somewhere*, and one
+    hit is already enough to make the marker stale.
+    """
+    for s in siblings:
+        cands = [frag]
+        head, _, tail = frag.partition('/')
+        if tail and head.lower() == s.name.lower():
+            cands.append(tail)
+        hits = [h for c in cands for h in _suffix_matches(srel_by_name[s.name], c)]
+        if hits:
+            return s.name, hits[0]
+    return None
+
+
 def _read(root, src):
     """Return file text, or None if it cannot be read. Callers must report None
     loudly — a document that was never read is not a document that is clean."""
@@ -199,6 +223,10 @@ def check(root, sources, sibling_roots=None):
     # If no sibling repo is reachable, rung 4 cannot run. Findings are then
     # annotated to say so, rather than presented as confirmed breaks.
     rung4_runnable = bool(siblings)
+    # Walked once, not once per reference. The stale-marker arm below now
+    # consults rung 4 for every marked path, which would otherwise re-walk
+    # every sibling tree each time.
+    srel_by_name = {s.name: [str(q.relative_to(s)) for q in _tree(s)] for s in siblings}
 
     rel = [str(p.relative_to(root)) for p in _tree(root)]
     findings, resolved_weak, skipped, placeheld = [], [], [], []
@@ -262,7 +290,21 @@ def check(root, sources, sibling_roots=None):
                     # skip newly permits: mislabelling is how a real break gets
                     # hidden. Report it instead of skipping it.
                     if (root / frag).exists() or _suffix_matches(rel, frag):
-                        findings.append((src, frag, 'STALE PLACEHOLDER MARKER (the path resolves)'))
+                        findings.append((src, frag,
+                                         'STALE PLACEHOLDER MARKER (resolves at rung 1-2, locally)'))
+                        continue
+                    # Both arms above are LOCAL. A marker on a path that lives in a
+                    # SIBLING repo resolved nowhere, was excused, and left the checked
+                    # set permanently — so a later move or deletion there is reported
+                    # by nothing. That is the population most likely to be marked in
+                    # the first place (#73). Naming the rung matters: the author's
+                    # remedy is to qualify the reference, and a qualified reference is
+                    # checked forever where a marker is never checked again.
+                    sib = _sibling_hit(frag, siblings, srel_by_name)
+                    if sib:
+                        findings.append((src, frag,
+                                         'STALE PLACEHOLDER MARKER (resolves at rung 4: '
+                                         f'sibling {sib[0]} -> {sib[1]}) — qualify it instead'))
                     else:
                         placeheld.append((src, frag,
                                           'declared-placeholder'
@@ -298,8 +340,8 @@ def check(root, sources, sibling_roots=None):
                     head, _, tail = frag.partition('/')
                     if tail and head.lower() == s.name.lower():
                         cands.append(tail)
-                    srel = [str(p.relative_to(s)) for p in _tree(s)]
-                    hits = [h for c in cands for h in _suffix_matches(srel, c)]
+                    hits = [h for c in cands
+                            for h in _suffix_matches(srel_by_name[s.name], c)]
                     if len(hits) > 1:
                         claim = (f'COLLISION ({len(hits)} matches in {s.name})', True)
                         break

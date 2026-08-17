@@ -44,6 +44,26 @@ Ablation confirms both directions: neutering the predicate fails **N15** and exi
 
 **PATCH** — a shipped checker made to honour a contract it already documented, on the `v1.25.1` precedent. Adopters using `audit-context` should re-copy `templates/audit-context.md`; it is user-global, so refresh via `scripts/install-global-skills.sh` after the release tag is pushed and verified.
 
+### The stale-marker check was local-only, so a marker on a sibling-repo path was excused forever (closes #73)
+
+`audit-context` Step 4 reports a marker on a path that *does* resolve as a **stale marker** — the guard against the failure the placeholder skip newly permits. Both arms of that test were **local**: rung 1 (as written) and rung 2 (suffix in the working tree). Rung 4, the sibling-repo walk, was never consulted.
+
+So a marker on a path that lives in a sibling repo was not a stale marker, not a finding, and not resolvable. It landed in `SKIPPED as declared-placeholder` and **left the checked set permanently** — if that sibling file later moved or was deleted, nothing would report it. The blind spot sat exactly where the convention gets used most: cross-repo references are the population most likely to be marked, because they are the ones that legitimately do not resolve locally.
+
+Found in an adopter audit (`NexusMind`, 2026-08-17): of 34 marker-form paths, one was a genuine mislabel — a live cross-repo reference in a promoted-patterns table, marked and therefore never checked. The checker reported **0 stale markers before and after**; only a manual read found it, and this step's own text concedes the manual read is "the step most likely to be skipped".
+
+The fix runs rung 4 for marked paths against **every reachable sibling**, not only prose-named ones — a marked reference typically does not name its repo, which is why the normal rung-4 gate could never fire on it. The finding names the rung and the remedy: qualify the reference instead, because a qualified reference is checked on every run and a marker is never checked again.
+
+**Sensitivity, and a positive that had to be rewritten.** T19 seeds the sibling-resolving marker; N17 holds the other direction. The first T19 asserted only that the path appeared in findings — and it **passed with the fix reverted**, because the marker then failed to attach and the path was reported `UNRESOLVED`: a finding, for the wrong reason. Caught by ablation, not by review. The needle now asserts the reason string, and ablating the rung-4 arm fails T19 and exits 1. A positive that cannot distinguish *why* it fired is not a test.
+
+Sibling tree listings are now walked once and cached rather than per reference, since this arm makes rung 4 run for every marked path.
+
+### `templates/audit-context.md` said the placeholder marker is line-scoped; it is span-scoped
+
+One sentence in Step 4 described the marker as **line-scoped**, two paragraphs above another sentence calling it **span-scoped**, and against a shipped implementation that is span-scoped. Line-scoping was the first draft and it relabelled a co-located genuine break as intentional — the defect seeded as T15. The normative surface carried the refuted version; corrected in both copies.
+
+Rule 8: `templates/audit-context.md` +1467 bytes across both entries, recorded here and the baseline re-run with `--update`.
+
 *Conflict note: PR #67 and PR #71 each carry their own `v1.26.1` candidate block inserting at this same point. All three changes are independent; whichever land later become `v1.26.2` / `v1.26.3` and need their headings renumbered, nothing more.*
 
 ## v1.26.0 (2026-08-13)

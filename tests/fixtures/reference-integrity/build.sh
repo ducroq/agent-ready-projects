@@ -130,6 +130,15 @@ to prevent, arriving through the whitelist rather than around it.
 
 # T18 — the marker must reach PAST an identifier to the real path
 `config/absent.env` and `process.env` <!-- placeholder -->
+
+# T19 — a marker on a path that lives in a SIBLING repo is stale (#73)
+`scripts/deploy_thing.sh` <!-- placeholder -->
+It resolves nowhere locally, so rungs 1-2 excuse it and it leaves the checked
+set forever — but it exists next door. The remedy is to qualify the reference,
+not to mark it: a qualified reference is checked on every run.
+
+# N17 — a marker on a path that resolves NOWHERE must stay excused
+`src/aggregators/never_anywhere.py` <!-- placeholder -->
 The marker is span-scoped and takes the nearest ELIGIBLE path before it. If the
 identifier filter is applied only where findings are emitted and not where the
 eligible list is built, the marker lands on `process.env`, and the real broken

@@ -30,6 +30,13 @@ declare -a CASES=(
   # #70 — the loss this tightening could cause. `env` keeps its coverage for
   # the path form; only the identifier shape is dropped.
   "T17 broken .env with a directory is still caught|config/missing.env"
+  # #73 — the stale-marker arm was rung 1-2 only, so a marker on a path that
+  # exists in a SIBLING repo could never be reported and was excused forever.
+  # The needle is the REASON, not the path. Asserting only the path passed with
+  # the rung-4 arm reverted, because the marker then failed to attach and the
+  # path was reported UNRESOLVED — a finding, for the wrong reason. Caught by
+  # ablation; a positive that cannot distinguish why it fired is not a test.
+  "T19 stale marker resolving at rung 4|STALE PLACEHOLDER MARKER (resolves at rung 4: sibling sibling-repo -> scripts/deploy_thing.sh)"
   # #45 — the failure the placeholder skip newly permits: a marker on a path
   # that resolves. Mislabelling must not become a way to hide a real break.
   "T12 stale placeholder marker on a resolving path|src/models/temporal.py"
@@ -57,6 +64,9 @@ declare -a NEG=(
   # #70/T18 — with the marker correctly reaching past the identifier, this is
   # placeheld rather than reported. Fails if only the findings loop is filtered.
   "N16 marker reaches past an identifier to the real path|config/absent.env"
+  # #73's other direction: extending the arm to rung 4 must not start reporting
+  # markers on paths that genuinely resolve nowhere.
+  "N17 marker on a path absent everywhere stays excused|src/aggregators/never_anywhere.py"
 )
 
 FAIL=0
@@ -93,7 +103,7 @@ fi
 # extracted also is not a finding — which is the silent-skip failure this whole
 # step is built against. Assert the counted section names them.
 PLACEHELD="$(printf '%s' "$OUT" | sed -n '/== SKIPPED as declared-placeholder/,/^  total:/p')"
-for want in "config/absent.env" "src/aggregators/my_new_aggregator.py" "docs/work-items/<slug>.md" \
+for want in "config/absent.env" "src/aggregators/never_anywhere.py" "src/aggregators/my_new_aggregator.py" "docs/work-items/<slug>.md" \
             "filters/<name>/<version>/config.yaml" "<slug>.md" "<root>/memory/MEMORY.md"; do
   if printf '%s' "$PLACEHELD" | grep -qF -- "$want"; then
     printf '  PASS  counted as declared-placeholder: %s\n' "$want"
