@@ -73,6 +73,32 @@ discovering it on merge: the `review-changes` scope fix carries its own
 independent; whichever lands second becomes `v1.26.2` and its heading needs
 renumbering, nothing more.*
 
+### `curate`'s verify runner had the same missing `\r` strip as #52 — but here CRLF corrupts verdicts instead of silencing them (closes #58)
+
+`templates/curate.md`'s canonical verify runner carries the same `isdelim()` as `review-changes` Step 1.5, copied — the two bodies are character-identical modulo the local variable name — including the missing `\r` strip that #52 fixed in v1.25.1.
+
+In Step 1.5 the failure is **silence**: no table is entered, so nothing is examined. Here it is **corruption**. `intbl` gates the table-cell pipe un-escape; under CRLF the delimiter row never matches, `intbl` is never set, and an escaped-pipe command is still **extracted, counted and executed** — mangled. The disposition becomes whatever the mangled command happens to do.
+
+**Measured** on the runner extracted programmatically from the template (never retyped), inputs differing only by `sed 's/$/\r/'`:
+
+| command in the table cell | LF | CRLF, before |
+|---|---|---|
+| `echo hello \| grep -c nomatch` | FAIL | **PASS** — false pass, exit 0 |
+| `grep -c nomatch /etc/hostname \| cat` | PASS | **FAIL** — false failure |
+| `test -f /nonexistent && echo PASS \|\| echo FAIL` | FAIL | **ERROR** — bash syntax error |
+
+The third is the idiom this framework itself teaches, so it is the shape adopters' tables actually carry.
+
+⚠️ **The runner's headline guarantee cannot see this class, by construction.** The reconciliation line reads `ran 3 of 3 annotations` under both line endings, because extraction never depended on `intbl` — the annotation never leaves the numerator or the denominator. In the false-pass row the exit status is 0 as well, so nothing in the run signals anything. That assertion catches truncation, which is what it was built for; it is stated here so nobody reads it as covering more.
+
+**Fixed** with #52's one-line rule, placed before anything reads the line, in both copies.
+
+**Seeded as C1–C3.** C1 asserts **equivalence** rather than a needle — a CRLF file must produce the same dispositions as its LF twin — because a per-row needle would also pass for a file that was never examined, and identical output cannot. C2 removes the strip and requires the same input to diverge, so C1 cannot pass vacuously. C3 pins the specific false PASS, the one disposition nothing in the run signals. Ablating the strip from the *template* makes C1 fail and C2 report that it can no longer target the runner.
+
+*Written, and then debugged, on this repo's own rake:* the first draft of the comment contained `#52's`, and the awk program is single-quoted — the apostrophe closed it and broke eight unrelated ablations. Exactly the defect that draft 2 of the `review-changes` scope fix shipped (`Step 1's` inside `${BASE:?…}`), one release earlier, in a different file. The comment now says so and carries no apostrophe.
+
+Rule 8: `templates/curate.md` +1018 bytes, recorded here and the baseline re-run with `--update`.
+
 ## v1.26.0 (2026-08-13)
 
 *v1.25.1 (the Step 1.5 CRLF fix, PR #53) landed first, as this note required. The code changes were independent, but both branches inserted a block at the same point in this file, so the conflict predicted here was resolved by hand on merge.*
