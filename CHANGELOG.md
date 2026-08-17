@@ -102,19 +102,31 @@ Ablation confirms both directions: neutering the predicate fails **N15** and exi
 
 So a marker on a path that lives in a sibling repo was not a stale marker, not a finding, and not resolvable. It landed in `SKIPPED as declared-placeholder` and **left the checked set permanently** — if that sibling file later moved or was deleted, nothing would report it. The blind spot sat exactly where the convention gets used most: cross-repo references are the population most likely to be marked, because they are the ones that legitimately do not resolve locally.
 
-Found in an adopter audit (`NexusMind`, 2026-08-17): of 34 marker-form paths, one was a genuine mislabel — a live cross-repo reference in a promoted-patterns table, marked and therefore never checked. The checker reported **0 stale markers before and after**; only a manual read found it, and this step's own text concedes the manual read is "the step most likely to be skipped".
+The **class** was found in an adopter audit (`NexusMind`, 2026-08-17) over 34 marker-form paths. *An earlier draft of this entry said the fix catches the mislabel that motivated it. A non-author review checked, and it does not:* that instance was qualified by hand in the same session that filed #73, so it resolves on `master` today and the new arm never sees it. What the arm does fire on is **17 other paths of the same shape** in that repo, plus the *narration* of the original mislabel. The claim as first written was checkable and false, which is why it is corrected here rather than softened.
 
 The fix runs rung 4 for marked paths against **every reachable sibling**, not only prose-named ones — a marked reference typically does not name its repo, which is why the normal rung-4 gate could never fire on it. The finding names the rung and the remedy: qualify the reference instead, because a qualified reference is checked on every run and a marker is never checked again.
 
 **Sensitivity, and a positive that had to be rewritten.** T19 seeds the sibling-resolving marker; N17 holds the other direction. The first T19 asserted only that the path appeared in findings — and it **passed with the fix reverted**, because the marker then failed to attach and the path was reported `UNRESOLVED`: a finding, for the wrong reason. Caught by ablation, not by review. The needle now asserts the reason string, and ablating the rung-4 arm fails T19 and exits 1. A positive that cannot distinguish *why* it fired is not a test.
 
-Sibling tree listings are now walked once and cached rather than per reference, since this arm makes rung 4 run for every marked path.
+### A pre-existing per-reference re-walk made Step 4 close to unusable on a large memory tree
+
+Caching the sibling listings was written to pay for the new arm and turned out to be the larger user-visible change. Rung 4 had been re-walking every sibling tree for **every reference**. Measured by a non-author reviewer on real repositories: **NexusMind 19.7s → 7.8s** (24 docs, 38 siblings), and **ovr.news from over four minutes — killed, not completed — to 5.8s** (100 docs). The cache is lazy, so a repo with no rung-4 traffic pays nothing for it.
+
+It is keyed on the **path**, not the repository name. A name-keyed cache silently drops one of any two siblings sharing a basename, and `sorted(set(...))` breaks the tie in set-iteration order — hash order, randomized per process. The checker's findings then **varied between two runs of the same command**: the reviewer reproduced eight seeds giving two different verdicts on identical input. An oracle that is not reproducible is worse than the gap it closes. No such collision exists on this machine today; it is one `git init` away, and it fails silently in both directions.
 
 ### `templates/audit-context.md` said the placeholder marker is line-scoped; it is span-scoped
 
 One sentence in Step 4 described the marker as **line-scoped**, two paragraphs above another sentence calling it **span-scoped**, and against a shipped implementation that is span-scoped. Line-scoping was the first draft and it relabelled a co-located genuine break as intentional — the defect seeded as T15. The normative surface carried the refuted version; corrected in both copies.
 
-Rule 8: `templates/audit-context.md` +1467 bytes across both entries, recorded here and the baseline re-run with `--update`.
+### What the non-author review changed, recorded because the first draft shipped none of it
+
+`nexusmind-a9` reviewed this by running it against the repository the class was found in, and returned six defects. Three were blockers: the nondeterministic cache above; rung 4 running **before** rung 3 in the marked arm, which the same file forbids two hundred lines below (marking a runtime-state path flipped its provenance to another repo); and an unrestricted sibling search that told `ovr.news` to qualify its own `principes.md` against a house-renovation repo — a confident wrong answer, produced live, on real data.
+
+⚠️ **And one the author had asked about and got the direction wrong on.** T19 reused `scripts/deploy_thing.sh`, which is T4's needle, so T4 became satisfied by T19's finding: a new case turned an existing one **vacuous**, in the same commit whose own T19 had just been rewritten for exactly that weakness. T19 now has its own file. Ablating the prose-naming gate fails T4, T7 and T8 again, matching `master`.
+
+*Then it happened once more, immediately.* Naming `process.env` inside the improved `COVERS NO PATH` message made that string collide with N15's needle and disarm it. The message now names no literal identifier and says why; the example lives in the template prose.
+
+Rule 8: `templates/audit-context.md` +4232 bytes across all entries, recorded here and the baseline re-run with `--update`. The prose grew because three of the review's findings were **spec** defects, not code defects — an adopter implementing Step 4 from the text would have reproduced them.
 
 *The conflict predicted here happened and was resolved by hand on merge, as v1.26.0's note describes — but not the way the prediction assumed. The prediction said whichever landed later would be renumbered to `v1.26.2`; in fact the version heading was **common context, not conflicted**, so the three entries merged into a single unreleased `v1.26.1` candidate. That is the better outcome — all three are PATCH, none has been tagged, and one release note is what an adopter actually wants — but it is worth recording that the predicted resolution and the real one differed. PR #67 is still open with a block at this same point and will merge into this block too, not into a new version.*
 ## v1.26.0 (2026-08-13)

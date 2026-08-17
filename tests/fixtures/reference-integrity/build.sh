@@ -23,7 +23,8 @@ touch src/utils/redaction.py src/utils/time_utils.py src/models/temporal.py \
       src/utils/helpers.py src/lib/helpers.py data/.gitkeep docs/ARCHITECTURE.md \
       packages/worker/config/settings.py infra/main.tf analysis/index.qmd config/live.env
 echo '{}' > .claude/settings.json
-touch ../sibling-repo/scripts/main.py ../sibling-repo/scripts/deploy_thing.sh \
+touch ../sibling-repo/deploy/rung4_only.sh \
+      ../sibling-repo/scripts/main.py ../sibling-repo/scripts/deploy_thing.sh \
       ../sibling-repo/deploy/main.py ../docs/runbooks/DEPLOY.md
 
 cat > CLAUDE.md <<'EOF'
@@ -144,7 +145,12 @@ eligible list is built, the marker lands on `process.env`, and the real broken
 path beside it silently stays a finding — the two filters must agree.
 
 # T19 — a marker on a path that lives in a SIBLING repo is stale (#73)
-`scripts/deploy_thing.sh` <!-- placeholder -->
+# Its own file, NOT T4's `scripts/deploy_thing.sh`: sharing that needle made T4
+# satisfied by T19's finding line, so T4 went from live to vacuous. Keep the
+# needles of any two cases disjoint.
+# The path is QUALIFIED (it has a `/`), which is what lets rung 4 search an
+# unnamed sibling at all — a bare basename must be named in prose (#73/B3).
+`deploy/rung4_only.sh` <!-- placeholder -->
 It resolves nowhere locally, so rungs 1-2 excuse it and it leaves the checked
 set forever — but it exists next door. The remedy is to qualify the reference,
 not to mark it: a qualified reference is checked on every run.

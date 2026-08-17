@@ -134,28 +134,52 @@ def _marked_siblings(paragraph, siblings):
     return out
 
 
-def _sibling_hit(frag, siblings, srel_by_name):
-    """Rung 4 attempted against EVERY sibling, not only the prose-named ones.
+def _sibling_hit(frag, siblings, listing, named):
+    """Rung 4 for a MARKED path. Returns (kind, text) or None.
 
-    For a MARKED path only. A marker is an assertion that the path is not meant
-    to resolve here, and the population most likely to be marked is precisely
-    the cross-repo one — so requiring the sibling to be named in prose, as the
-    normal rung 4 does, can never fire on the references that need it most
-    (#73). Marked paths are few, so the unconditional walk is bounded.
+    A marker asserts the path is not meant to resolve here, and the population
+    most likely to be marked is the cross-repo one — so requiring the sibling to
+    be named in prose, as the normal rung 4 does, can never fire on the
+    references that need it most (#73). This arm therefore widens the search,
+    but only where widening cannot invent a provenance:
 
-    Returns (sibling_name, hit) or None. Collisions are not distinguished: for a
-    marked path the question is only whether it resolves *somewhere*, and one
-    hit is already enough to make the marker stale.
+    - **A QUALIFIED path** (it contains a `/`) carries its own evidence, so it
+      may be matched against any reachable sibling.
+    - **A BARE BASENAME** may only be matched against siblings NAMED IN PROSE.
+      Measured by a reviewer on a real tree: of the bare basenames extractable
+      and absent locally, 207 occurred in more than one sibling repo, and the
+      unrestricted form told `ovr.news` to qualify its own `principes.md`
+      against a house-renovation repo that happened to sort first. A confident
+      wrong answer is worse than a miss, and it is what makes a reader stop
+      trusting the step.
+    - **More than one sibling matching** yields no single provenance, so the
+      finding says so rather than picking one. The finding text names a repo and
+      a file and tells the author to qualify against them; that sentence has to
+      be true.
     """
+    hits = []
+    qualified = '/' in frag
     for s in siblings:
+        if not qualified and s not in named:
+            continue
         cands = [frag]
         head, _, tail = frag.partition('/')
         if tail and head.lower() == s.name.lower():
             cands.append(tail)
-        hits = [h for c in cands for h in _suffix_matches(srel_by_name[s.name], c)]
-        if hits:
-            return s.name, hits[0]
-    return None
+        for h in _suffix_matches(listing(s), cands[0] if len(cands) == 1 else cands[-1]):
+            hits.append((s.name, h))
+        if len(cands) > 1:
+            for h in _suffix_matches(listing(s), cands[0]):
+                if (s.name, h) not in hits:
+                    hits.append((s.name, h))
+    if not hits:
+        return None
+    uniq = sorted(set(hits))
+    if len(uniq) > 1:
+        return ('AMBIGUOUS',
+                'resolves in %d places (%s) — no single provenance, so it cannot be qualified '
+                'against one' % (len(uniq), ', '.join('%s -> %s' % u for u in uniq[:3])))
+    return ('RESOLVED', 'sibling %s -> %s' % uniq[0])
 
 
 def _read(root, src):
@@ -223,10 +247,24 @@ def check(root, sources, sibling_roots=None):
     # If no sibling repo is reachable, rung 4 cannot run. Findings are then
     # annotated to say so, rather than presented as confirmed breaks.
     rung4_runnable = bool(siblings)
-    # Walked once, not once per reference. The stale-marker arm below now
-    # consults rung 4 for every marked path, which would otherwise re-walk
-    # every sibling tree each time.
-    srel_by_name = {s.name: [str(q.relative_to(s)) for q in _tree(s)] for s in siblings}
+    # Walked once per sibling, not once per reference, and LAZILY: a repo with
+    # no rung-4 traffic pays nothing. Measured by a reviewer on real trees —
+    # NexusMind 19.7s -> 7.8s, ovr.news >4min (killed) -> 5.8s — because the
+    # pre-existing rung 4 re-walked every sibling for every reference.
+    #
+    # Keyed on the PATH, not on `s.name`. A name-keyed dict silently drops one
+    # of any two siblings sharing a basename, and `sorted(set(...))` leaves the
+    # tie in set-iteration order — which is hash order, which is randomized per
+    # process. The checker's own findings then varied between two runs of the
+    # same command. An oracle that is not reproducible is worse than the gap it
+    # closes. No collision exists on this machine today; it is one `git init`
+    # away, and it fails silently in both directions.
+    _listing_cache = {}
+
+    def listing(s):
+        if s not in _listing_cache:
+            _listing_cache[s] = [str(q.relative_to(s)) for q in _tree(s)]
+        return _listing_cache[s]
 
     rel = [str(p.relative_to(root)) for p in _tree(root)]
     findings, resolved_weak, skipped, placeheld = [], [], [], []
@@ -270,10 +308,16 @@ def check(root, sources, sibling_roots=None):
                                      'PLACEHOLDER MARKER COVERS NO PATH — it is span-scoped and '
                                      'takes the nearest backticked path before it. Either none is '
                                      'there, or the token is not extractable: a directory, a glob, '
-                                     'a URL, or an extension outside the whitelist (that last one '
-                                     'is a whitelist gap, not a marker problem)'))
+                                     'a URL, an extension outside the whitelist (a whitelist gap, '
+                                     'not a marker problem), or a dotted code identifier wearing a '
+                                     'whitelisted extension (#70) — not a path, so there is nothing '
+                                     'here to suppress and the marker can simply go. NB: no literal '
+                                     'identifier is named in this string on purpose; embedding one '
+                                     'made it collide with a fixture needle and silently disarm '
+                                     'that case. The example lives in the template prose instead)'))
 
             para = ' '.join(lines[max(0, i - 1):i + 2])
+            named = _marked_siblings(para, siblings)
 
             for frag in PATH_RE.findall(line):
                 if '*' in frag or URLISH.match(frag):
@@ -293,6 +337,19 @@ def check(root, sources, sibling_roots=None):
                         findings.append((src, frag,
                                          'STALE PLACEHOLDER MARKER (resolves at rung 1-2, locally)'))
                         continue
+                    # rung 3 (runtime state) BEFORE rung 4, for the same reason the
+                    # unmarked path does it in that order two hundred lines below: a
+                    # file this repo's own runtime writes is explained here, and
+                    # letting a sibling claim it first produces a provenance that is
+                    # simply false. The first draft of this arm ran rung 4 straight
+                    # after the local test, so MARKING a runtime-state path flipped
+                    # its provenance to a sibling repo — and the remedy the finding
+                    # prescribes would have written that falsehood into the document.
+                    if frag.startswith(STATE_DIRS) or STATE_SHAPE.search(frag):
+                        placeheld.append((src, frag,
+                                          'declared-placeholder'
+                                          if frag in placeheld_frags else 'angle-bracket segment'))
+                        continue
                     # Both arms above are LOCAL. A marker on a path that lives in a
                     # SIBLING repo resolved nowhere, was excused, and left the checked
                     # set permanently — so a later move or deletion there is reported
@@ -300,11 +357,14 @@ def check(root, sources, sibling_roots=None):
                     # the first place (#73). Naming the rung matters: the author's
                     # remedy is to qualify the reference, and a qualified reference is
                     # checked forever where a marker is never checked again.
-                    sib = _sibling_hit(frag, siblings, srel_by_name)
-                    if sib:
+                    sib = _sibling_hit(frag, siblings, listing, named)
+                    if sib and sib[0] == 'RESOLVED':
                         findings.append((src, frag,
                                          'STALE PLACEHOLDER MARKER (resolves at rung 4: '
-                                         f'sibling {sib[0]} -> {sib[1]}) — qualify it instead'))
+                                         f'{sib[1]}) — qualify it instead'))
+                    elif sib:
+                        findings.append((src, frag,
+                                         f'STALE PLACEHOLDER MARKER ({sib[1]})'))
                     else:
                         placeheld.append((src, frag,
                                           'declared-placeholder'
@@ -333,15 +393,13 @@ def check(root, sources, sibling_roots=None):
 
                 # rung 4 — marked cross-repo, suffix-matched inside the sibling,
                 # carrying rung 2's collision rule with it.
-                named = _marked_siblings(para, siblings)
                 claim = None
                 for s in named:
                     cands = [frag]
                     head, _, tail = frag.partition('/')
                     if tail and head.lower() == s.name.lower():
                         cands.append(tail)
-                    hits = [h for c in cands
-                            for h in _suffix_matches(srel_by_name[s.name], c)]
+                    hits = [h for c in cands for h in _suffix_matches(listing(s), c)]
                     if len(hits) > 1:
                         claim = (f'COLLISION ({len(hits)} matches in {s.name})', True)
                         break

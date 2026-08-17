@@ -40,7 +40,7 @@ declare -a CASES=(
   # the rung-4 arm reverted, because the marker then failed to attach and the
   # path was reported UNRESOLVED — a finding, for the wrong reason. Caught by
   # ablation; a positive that cannot distinguish why it fired is not a test.
-  "T19 stale marker resolving at rung 4|STALE PLACEHOLDER MARKER (resolves at rung 4: sibling sibling-repo -> scripts/deploy_thing.sh)"
+  "T19 stale marker resolving at rung 4|STALE PLACEHOLDER MARKER (resolves at rung 4: sibling sibling-repo -> deploy/rung4_only.sh)"
   # #45 — the failure the placeholder skip newly permits: a marker on a path
   # that resolves. Mislabelling must not become a way to hide a real break.
   "T12 stale placeholder marker on a resolving path|src/models/temporal.py"
