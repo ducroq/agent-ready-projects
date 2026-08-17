@@ -98,6 +98,22 @@ Verified across four states: unpushed feature branch, **pushed feature branch** 
 
 Reported by an adopter (NexusMind) who hit it on a real PR, where following the instruction literally would have returned "nothing to review" on a diff that a widened review then found **4 blockers** in. This repo hit the same defect twice on the same day and worked around it both times without recognising it — the workaround (`master...HEAD`) is what the fix now prescribes.
 
+### Round 3 — #64 was only half fixed, in the place nobody re-read
+
+The fix replaced the `@{u}` term in the *magnitude* block and in Step 1.5. It did not touch the command at the top of Step 1 that produces **the file list the tier table, the Unclassified section and the report header are all computed from**. On the exact #64 state those commands are empty, so a `templates/**` change classified as nothing, the header said `0 files changed`, and the magnitude block one section later said `3`. All four zero-line carve-outs — rename, permission change, binary, submodule — were unobservable, against that same paragraph's own sentence: *a carve-out you cannot observe is not in force*.
+
+**The baseline is now resolved at the top of Step 1, before the tier table**, and every command in the step reads it. That also closes the second blocker: `$BASE` used to be defined only inside *"Otherwise size sets the depth"*, a subsection an agent is told to skip whenever the diff hits a carve-out — so Step 1.5, which "runs at every tier and every magnitude", hard-aborted for exactly the changes most likely to need it.
+
+Three smaller defects fixed in the same pass, each measured:
+
+- **A sentinel is a legal branch name.** `${BASE:-nope}^{commit}` resolved when a branch called `nope` existed, skipping the `BASELINE UNRESOLVED` fallback and firing the guard with *"no commits in this repository"* on a two-commit repo. The sentinel is gone; the check is now an explicit non-empty test.
+- **A local branch named `origin/main` outranked the remote-tracking ref.** `rev-parse` resolves `refs/heads/` before `refs/remotes/`, so `^{commit}` validated, no fallback printed, and the review reported a clean tree on a full branch — with only a stderr `ambiguous` warning nothing reads. The candidates are now fully qualified as `refs/remotes/…`.
+- **The headline contradicted its own code.** *"The baseline is the default branch, never `@{u}`"* — eleven lines above a line that assigns `@{u}` on the default branch. The CHANGELOG agreed with the code, so the shipped headline was the wrong one. Hedged.
+
+And one claim withdrawn rather than restated: *"the loop covers … a remote whose HEAD is unset"* is false where the default branch is neither `main` nor `master`. Measured on a repo whose default is `develop` with `origin/HEAD` deleted: it falls through to the root-commit fallback and reviews the whole branch. Over-reporting is the safe direction, but it is a fallback, not the intended path, and the text now says so.
+
+Verified across nine states under `set -e`, `set -u`, `set -eu` and no options: no remote with a non-standard branch name, pushed feature branch, default branch unpushed, detached HEAD, dangling `origin/HEAD`, a branch named `nope`, a local `origin/main`, a default branch named `develop`, and an empty repo — which aborts with the correct message rather than a wrong one.
+
 ### Round 2 — three defects the round-1 fix introduced
 
 Round 1's fixes were merged into the branch unreviewed. A second round found three defects, all created by the fix, two of them by **executing** the block rather than reading it. Fourth consecutive time round 2 has found defects in round 1's fixes here (#34, PR #53, `extract-block.sh`).

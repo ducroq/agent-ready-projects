@@ -19,7 +19,48 @@ Pre-commit review of pending changes. Scope and depth are driven by what changed
 
 ## Step 1 — Diff and classify
 
-Run `git diff --stat` and `git diff --cached --stat` to see pending changes, and `git diff --summary` alongside them. **`--stat` alone cannot see a mode change, a rename, a submodule, or a binary** — all four render as zero or near-zero lines, and three of them are carve-outs below. A carve-out you cannot observe is not in force. Classify each changed file into a risk tier:
+Resolve the review baseline first — **every command in this step depends on it.**
+
+**The baseline is the default branch — `@{u}` only on the default branch itself.** On a branch that is committed and pushed but not merged — the commonest state in which anyone wants a pre-merge review — `@{u}` is *empty*, because the upstream exists and is current. Every `@{u}`-derived term then reports zero and the step reads as "nothing to review" on a whole PR. Resolve it once, **here, before anything else in this step**, and reuse it everywhere below — the tier table, the magnitude gate and Step 1.5 all read `$BASE`:
+
+```bash
+# Every arm ends in a success, or `set -e` aborts here — before the fallback below,
+# which is the one place that reports the failure. Measured: a repo with no remote
+# and no main/master branch died at the loop with no output at all.
+BASE=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD) ||
+# Fully qualified: `rev-parse` resolves refs/heads/ before refs/remotes/, so a
+# LOCAL branch literally named `origin/main` would win and silently reintroduce
+# #64 — measured, with only a stderr `ambiguous` warning nothing reads.
+BASE=$(for c in refs/remotes/origin/main refs/remotes/origin/master main master; do
+         git rev-parse --verify --quiet "$c" >/dev/null && { printf %s "$c"; break; }; done) || :
+# On the default branch HEAD...HEAD is empty, so the upstream is the baseline.
+if [ -n "${BASE:-}" ] && [ "$(git rev-parse --abbrev-ref HEAD 2>/dev/null)" = "${BASE##*/}" ]; then
+  BASE=$(git rev-parse --abbrev-ref '@{u}' 2>/dev/null || printf %s '')
+fi
+# A name that resolves to nothing is the dangerous case: an empty or dangling BASE
+# makes "$BASE"...HEAD an empty diff, which is what a clean tree also yields. Fall
+# back to the whole branch — over-reporting is the safe direction for a review tool.
+# No `${BASE:-sentinel}` placeholder here: any word chosen as a sentinel is a
+# legal branch name, and if it exists the check passes while BASE stays empty,
+# so the guard below fires with a diagnosis that is simply wrong. Measured.
+{ [ -n "${BASE:-}" ] && git rev-parse --verify --quiet "$BASE^{commit}" >/dev/null; } || {
+  BASE=$(git rev-list --max-parents=0 HEAD 2>/dev/null | tail -1)
+  echo "BASELINE UNRESOLVED — reviewing the whole branch instead. Say so in the report." >&2
+}
+: "${BASE:?no commits in this repository — nothing can be reviewed}"
+
+git diff --shortstat "$BASE"...HEAD    # committed on this branch
+git diff --shortstat                   # unstaged
+git diff --cached --shortstat          # staged
+```
+
+**Resolving a name is not enough — it has to resolve to a commit.** `git symbolic-ref` reads `origin/HEAD` without following it, so a renamed or deleted upstream default yields a ref that looks fine and diffs to nothing; a stale local `main` in a `master` repo does the same. Both were measured. That is why the block validates `^{commit}` and, on failure, falls back to the root commit and says so: an unresolved baseline and a clean tree produce identical output, and this step exists because those two were confused.
+
+`origin/HEAD` is set by `git clone` (including `--depth 1`) and by the first `git fetch` on git ≥2.45 — measured on 2.53.0, not assumed. The loop covers `git init` + `git remote add` with no fetch, and older git. ⚠️ It does **not** cover a remote whose default branch is neither `main` nor `master` *and* whose `origin/HEAD` is unset: measured, a repo whose default is `develop` falls through to the root-commit fallback and reviews the whole branch. Over-reporting, which is the safe direction, but it is a fallback rather than the intended path.
+
+⚠️ **`$BASE` lives in a shell, and Step 1.5 needs it. Run Step 1.5's blocks in the same shell invocation as this one** — paste them together, or re-run this block at the top of that shell. A tool call that starts a fresh shell does not inherit it, and Step 1.5 is written to abort rather than proceed with the term missing. That abort is the intended behaviour: the alternative is Step 1.5 quietly reviewing a fraction of the change, which is #64 one step later.
+
+Now run `git diff --stat "$BASE"...HEAD`, `git diff --stat` and `git diff --cached --stat` to see the changed files, and `git diff --summary -M "$BASE"...HEAD` alongside them. **All three terms are needed and the baseline one is the one that is usually non-empty**: on a pushed, unmerged branch the other two are empty, and an earlier version of this step listed only those two — so the tier table, the Unclassified section and the report header were all computed over zero files while the magnitude gate below reported the real number. That was #64 surviving its own fix in the place nobody re-read. **`--stat` alone cannot see a mode change, a rename, a submodule, or a binary** — all four render as zero or near-zero lines, and three of them are carve-outs below. A carve-out you cannot observe is not in force; `--summary` without the baseline term cannot observe any of them on a pushed branch. Classify each changed file into a risk tier:
 
 | Tier | File patterns | Depth |
 |------|-------------|-------|
@@ -49,40 +90,14 @@ The tier above is set by *path*. Depth is also set by *size* — but size is the
 - **A new executable, or any new file in a HIGH path** — the tier for new content has not been decided yet.
 - **Any diff that removes or loosens a check** — a deleted guard, a weakened assertion, a broadened exclusion. Loosenings are characteristically a handful of lines, and this is the class the seeded-true-positives rule exists for.
 
-**Otherwise size sets the depth.** Size means the whole change that will land, not the slice in front of you — 10 lines committed locally plus 15 staged is a 25-line change, and reviewing each half on its own means nothing ever sees the whole.
-
-**The baseline is the default branch, never `@{u}`.** On a branch that is committed and pushed but not merged — the commonest state in which anyone wants a pre-merge review — `@{u}` is *empty*, because the upstream exists and is current. Every `@{u}`-derived term then reports zero and the step reads as "nothing to review" on a whole PR. Resolve the baseline once, here, and reuse it:
+**Otherwise size sets the depth.** Size means the whole change that will land, not the slice in front of you — 10 lines committed locally plus 15 staged is a 25-line change, and reviewing each half on its own means nothing ever sees the whole. `$BASE` is already resolved at the top of this step; do not resolve it again.
 
 ```bash
-# Every arm ends in a success, or `set -e` aborts here — before the fallback below,
-# which is the one place that reports the failure. Measured: a repo with no remote
-# and no main/master branch died at the loop with no output at all.
-BASE=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD) ||
-BASE=$(for c in origin/main origin/master main master; do
-         git rev-parse --verify --quiet "$c" >/dev/null && { printf %s "$c"; break; }; done) || :
-# On the default branch HEAD...HEAD is empty, so the upstream is the baseline.
-if [ -n "${BASE:-}" ] && [ "$(git rev-parse --abbrev-ref HEAD 2>/dev/null)" = "${BASE##*/}" ]; then
-  BASE=$(git rev-parse --abbrev-ref '@{u}' 2>/dev/null || printf %s '')
-fi
-# A name that resolves to nothing is the dangerous case: an empty or dangling BASE
-# makes "$BASE"...HEAD an empty diff, which is what a clean tree also yields. Fall
-# back to the whole branch — over-reporting is the safe direction for a review tool.
-git rev-parse --verify --quiet "${BASE:-nope}^{commit}" >/dev/null || {
-  BASE=$(git rev-list --max-parents=0 HEAD 2>/dev/null | tail -1)
-  echo "BASELINE UNRESOLVED — reviewing the whole branch instead. Say so in the report." >&2
-}
-: "${BASE:?no commits in this repository — nothing can be reviewed}"
-
 git diff --shortstat "$BASE"...HEAD    # committed on this branch
 git diff --shortstat                   # unstaged
 git diff --cached --shortstat          # staged
 ```
 
-**Resolving a name is not enough — it has to resolve to a commit.** `git symbolic-ref` reads `origin/HEAD` without following it, so a renamed or deleted upstream default yields a ref that looks fine and diffs to nothing; a stale local `main` in a `master` repo does the same. Both were measured. That is why the block validates `^{commit}` and, on failure, falls back to the root commit and says so: an unresolved baseline and a clean tree produce identical output, and this step exists because those two were confused.
-
-`origin/HEAD` is set by `git clone` (including `--depth 1`) and by the first `git fetch` on git ≥2.45; the loop covers `git init` + `git remote add` with no fetch, older git, and a remote whose HEAD is unset — measured on git 2.53.0, not assumed.
-
-⚠️ **`$BASE` lives in a shell, and Step 1.5 needs it. Run Step 1.5's blocks in the same shell invocation as this one** — paste them together, or re-run this block at the top of that shell. A tool call that starts a fresh shell does not inherit it, and Step 1.5 is written to abort rather than proceed with the term missing. That abort is the intended behaviour: the alternative is Step 1.5 quietly reviewing a fraction of the change, which is #64 one step later.
 
 Line count is a proxy, and in these templates a weak one — they are written one sentence per line, so replacing two dense normative paragraphs is four changed lines while a whitespace reflow is a hundred. **When the line count and your read of the change disagree, the line count is wrong.** Escalate.
 
