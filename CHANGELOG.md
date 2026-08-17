@@ -21,6 +21,58 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 ## v1.26.1 (candidate, unreleased)
 
+### `audit-context` Step 4 was blind to whole repositories, and had been saying so in a line that reads as trivia (closes #69)
+
+`refcheck.py`'s extension whitelist decides which paths are extracted *at all*,
+and a path that is never extracted cannot be reported, cannot be counted, and
+does not reach the skip list either. `qmd` was not on it. So for a Quarto
+adopter — whose content layer, whose project-file `Key paths` table and whose
+gotcha log are all `.qmd` — Step 4 examined none of the files the repo is made
+of and returned a clean result.
+
+**Measured** on the adopter that found it, with a document carrying a
+fabricated `reference/does-not-exist-xyz.qmd` beside a real one:
+
+| | findings |
+|---|---|
+| before | **0** — never extracted |
+| after | **1** — reported UNRESOLVED |
+
+Closing the gap produced **no new findings** on that repo's real documents:
+every `.qmd` reference there resolves at rung 1. The hole was real and the
+damage was nil, and the distinction is worth keeping rather than rounding to
+"no harm done" — the next repo's coin can land the other way.
+
+**The instrument had been reporting this on every run.** `EXTENSIONS IN TREE
+NOT EXTRACTED` printed `qmd` the whole time. It sits below the findings count,
+and a footnote under a zero reads as trivia. That line worked exactly as
+designed and was still not enough, which is worth knowing before anyone adds
+another one: the narrower question — "is any *extracted* reference broken?" —
+had a true answer, and the whole gap lived in the reader's head.
+
+`tests/fixtures/reference-integrity/run.sh` gains two cases. **T16** — a
+fabricated `.qmd` must be reported — is the load-bearing one: with the
+whitelist change reverted it fails and the harness exits 1, which was run
+rather than assumed. **N14** — a resolving `.qmd` must stay silent — is the
+failure this widening newly permits, per the fixture's own rule that a
+permissive change seeds what it lets through. N14 passes with or without the
+fix, because an un-extracted path is trivially not a finding; it is vacuously
+true before the change and only carries meaning after it, and is recorded that
+way so nobody reads the pair as two independent proofs.
+
+**PATCH** — a shipped checker made to honour a contract it already documented.
+`EXT`'s own comment says it is "NOT a closed world", and the unknown-extension
+report exists precisely so "a repo whose primary sources are .tf/.ipynb/.kt
+cannot be silently un-audited". This is that promise being kept. On the v1.25.1
+precedent. **No adopter action**: the fixture is not a template, so nothing
+needs re-copying.
+
+*Conflict note, in the v1.26.0 tradition of predicting it here rather than
+discovering it on merge: the `review-changes` scope fix carries its own
+`v1.26.1` candidate block inserting at this same point. The two changes are
+independent; whichever lands second becomes `v1.26.2` and its heading needs
+renumbering, nothing more.*
+
 ### `refcheck`'s own whitelist admitted the phantom class it exists to exclude (closes #70)
 
 `audit-context` Step 4 warns that a permissive suffix rule turns every dotted identifier into a phantom reference, and the extension whitelist is the defence against it. But several whitelist entries are **filename-shaped rather than extension-shaped**, and the rule matches the tail of any dotted token — so `env` captured `process.env`, which is not a file, was never meant to be one, and can never resolve at any rung.
@@ -64,8 +116,7 @@ One sentence in Step 4 described the marker as **line-scoped**, two paragraphs a
 
 Rule 8: `templates/audit-context.md` +1467 bytes across both entries, recorded here and the baseline re-run with `--update`.
 
-*Conflict note: PR #67 and PR #71 each carry their own `v1.26.1` candidate block inserting at this same point. All three changes are independent; whichever land later become `v1.26.2` / `v1.26.3` and need their headings renumbered, nothing more.*
-
+*The conflict predicted here happened and was resolved by hand on merge, as v1.26.0's note describes — but not the way the prediction assumed. The prediction said whichever landed later would be renumbered to `v1.26.2`; in fact the version heading was **common context, not conflicted**, so the three entries merged into a single unreleased `v1.26.1` candidate. That is the better outcome — all three are PATCH, none has been tagged, and one release note is what an adopter actually wants — but it is worth recording that the predicted resolution and the real one differed. PR #67 is still open with a block at this same point and will merge into this block too, not into a new version.*
 ## v1.26.0 (2026-08-13)
 
 *v1.25.1 (the Step 1.5 CRLF fix, PR #53) landed first, as this note required. The code changes were independent, but both branches inserted a block at the same point in this file, so the conflict predicted here was resolved by hand on merge.*

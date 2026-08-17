@@ -27,6 +27,10 @@ declare -a CASES=(
   "T10 deletion with surviving twin|packages/api/config/settings.py"
   "T11 unlisted extension .tf|infra/nonexistent.tf"
   "T11 unlisted extension .ipynb|notebooks/missing.ipynb"
+  # #69 — the whitelist is a denominator. A repo whose PRIMARY source extension
+  # is missing gets a clean audit having extracted nothing, and the instrument's
+  # own "extensions not extracted" line reads as trivia under a zero.
+  "T16 fabricated .qmd is caught|analysis/missing.qmd"
   # #70 — the loss this tightening could cause. `env` keeps its coverage for
   # the path form; only the identifier shape is dropped.
   "T17 broken .env with a directory is still caught|config/missing.env"
@@ -58,6 +62,9 @@ declare -a NEG=(
   "N10 angle-bracket path, second form|filters/<name>/<version>/config.yaml"
   "N11 live path after a marker is not a stale marker|src/utils/redaction.py"
   "N12 leading angle bracket is extracted, not invisible|<root>/memory/MEMORY.md"
+  # The failure #69's widening newly permits: every real .qmd becoming a
+  # phantom. Adding an extension must buy coverage, not noise.
+  "N14 a resolving .qmd stays silent|analysis/index.qmd"
   # #70 — the phantom itself. No rung can resolve `process.env`; it is not a file.
   "N15 process.env is an identifier, not a path|process.env"
   "N15b a resolving .env with a directory stays silent|config/live.env"
