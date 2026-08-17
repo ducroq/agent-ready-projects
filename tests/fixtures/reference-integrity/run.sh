@@ -84,6 +84,9 @@ declare -a NEG=(
   # #73's other direction: extending the arm to rung 4 must not start reporting
   # markers on paths that genuinely resolve nowhere.
   "N17 marker on a path absent everywhere stays excused|src/aggregators/never_anywhere.py"
+  # N22 — the regression the qualified-path exemption caused. A marked path that
+  # is common across repos, with no neighbour named, must not be claimed by one.
+  "N22 marked qualified path, no neighbour named, stays excused|docs/RUNBOOK.md"
   # #73 — the unconditional walk drops rung 4's prose-naming gate, so a bare
   # basename gets pinned on whichever neighbour sorts first. Measured on an
   # adopter: ovr.news's own `principes.md` was attributed to an unrelated
@@ -167,7 +170,7 @@ fi
 # extracted also is not a finding — which is the silent-skip failure this whole
 # step is built against. Assert the counted section names them.
 PLACEHELD="$(printf '%s' "$OUT" | sed -n '/== SKIPPED as declared-placeholder/,/^  total:/p')"
-for want in "config/absent.env" "src/aggregators/never_anywhere.py" "orphan_note.md" \
+for want in "docs/RUNBOOK.md" "config/absent.env" "src/aggregators/never_anywhere.py" "orphan_note.md" \
             "src/aggregators/my_new_aggregator.py" "docs/work-items/<slug>.md" \
             "filters/<name>/<version>/config.yaml" "<slug>.md" "<root>/memory/MEMORY.md"; do
   if printf '%s' "$PLACEHELD" | grep -qF -- "$want"; then

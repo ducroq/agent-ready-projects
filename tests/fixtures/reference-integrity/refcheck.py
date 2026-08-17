@@ -146,10 +146,17 @@ def _sibling_hit(frag, siblings, listing, named):
     but only where widening cannot invent a provenance:
 
     - **Every candidate sibling must be NAMED IN PROSE**, qualified path or bare
-      basename alike. A qualified path gets a wider candidate set (its own head
-      may be stripped when it repeats the sibling's name); it does not get an
-      unnamed sibling. Exempting qualified paths from the gate was tried and
-      reintroduced the self-marking failure it was meant to avoid.
+      basename alike. Exempting qualified paths was tried, on the argument that
+      a path containing `/` carries its own evidence. Measured false on a real
+      30-repo estate: 544 qualified relative paths occur in more than one
+      neighbour, headed by `memory/gotcha-log.md` (21) and `docs/RUNBOOK.md`
+      (8) — the files this framework tells every adopter to create. Marking one
+      before writing it produced a permanent finding per audit. Seeded as N22.
+    - A qualified path does get a wider CANDIDATE SET: its leading component may
+      be stripped when it repeats the sibling's name. That strip is gated on
+      naming too, redundantly now, because it was independently load-bearing
+      when the sibling gate was looser and re-loosening without noticing would
+      restore the self-marking failure.
       Measured by a reviewer on a real tree: of the bare basenames extractable
       and absent locally, 207 occurred in more than one sibling repo, and the
       unrestricted form told `ovr.news` to qualify its own `principes.md`
@@ -162,26 +169,27 @@ def _sibling_hit(frag, siblings, listing, named):
       be true.
     """
     hits = []
-    qualified = '/' in frag
     for s in siblings:
-        is_named = s in named
-        if not qualified and not is_named:
+        if s not in named:
+            # EVERY candidate must be named in prose, qualified path or bare
+            # basename alike. An earlier draft exempted qualified paths on the
+            # argument that a path with a `/` "carries its own evidence". That
+            # argument is false, and was measured false on the estate this
+            # framework lives in: 544 qualified relative paths occur in more
+            # than one neighbouring repo across 30 repos, headed by
+            # `memory/gotcha-log.md` (21) and `docs/RUNBOOK.md` (8) — the files
+            # this framework instructs every adopter to create. Marking one, as
+            # an adopter does before the file exists, produced a permanent
+            # finding per audit: exactly the re-triage cost the placeholder skip
+            # was added to remove, on the framework's own canonical paths.
             continue
         cands = [frag]
         head, _, tail = frag.partition('/')
-        # THE HEAD-STRIP IS GATED ON NAMING, NOT THE SIBLING. Stripping a
-        # leading segment that repeats the sibling's own name is precisely the
-        # self-marking mechanism `_marked_siblings` exists to prevent: allow it
-        # unnamed and `docs/ARCHITECTURE.md` matches `runbooks/ARCHITECTURE.md`
-        # inside a neighbour called `docs`, after which every broken `docs/X.md`
-        # resolves next door — rung 4's own rule, which the unmarked path has
-        # always honoured. Two drafts got this wrong in opposite directions:
-        # exempting qualified paths from the gate entirely reintroduced that
-        # failure, and then gating the whole sibling on naming killed #73's
-        # actual case, since a marked cross-repo path typically does NOT name
-        # its repo. An unnamed sibling is searched with the WHOLE fragment only,
-        # which carries its own evidence.
-        if tail and is_named and head.lower() == s.name.lower():
+        # The head-strip is gated on naming too — now implied by the loop gate
+        # above, kept explicit because it was independently load-bearing when
+        # the sibling gate was looser, and re-loosening the sibling gate without
+        # noticing this would restore the self-marking failure.
+        if tail and head.lower() == s.name.lower():
             cands.append(tail)
         for c in cands:
             for h in _suffix_matches(listing(s), c):

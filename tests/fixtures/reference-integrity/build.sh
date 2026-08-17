@@ -13,7 +13,7 @@ cd "$DEST"
 
 rm -rf repo sibling-repo docs dupname
 mkdir -p repo/{src/utils,src/models,src/lib,packages/api/config,packages/worker/config,docs,memory,data,.claude/skills,infra,analysis,config}
-mkdir -p sibling-repo/{scripts,deploy,data,shared} docs/runbooks docs/shared
+mkdir -p sibling-repo/{scripts,deploy,data,shared,docs} docs/runbooks docs/shared
 
 for d in repo sibling-repo docs; do (cd "$d" && git init -q . && git config user.email f@x && git config user.name f); done
 
@@ -30,7 +30,8 @@ touch ../sibling-repo/deploy/rung4_only.sh \
 # are the same SHAPE — a bare basename next door — and differ only in whether the
 # prose names the repo, which is the whole question B3 turns on. The two copies of
 # shared/ambiguous_note.md make "which neighbour" unanswerable on purpose.
-touch ../sibling-repo/scripts/bare_named.sh ../docs/runbooks/orphan_note.md \
+touch ../sibling-repo/docs/RUNBOOK.md ../docs/runbooks/RUNBOOK.md \
+      ../sibling-repo/scripts/bare_named.sh ../docs/runbooks/orphan_note.md \
       ../sibling-repo/data/pipeline_state.json ../sibling-repo/data/marked_state.json \
       ../sibling-repo/shared/ambiguous_note.md ../docs/shared/ambiguous_note.md
 
@@ -155,12 +156,15 @@ path beside it silently stays a finding — the two filters must agree.
 # Its own file, NOT T4's `scripts/deploy_thing.sh`: sharing that needle made T4
 # satisfied by T19's finding line, so T4 went from live to vacuous. Keep the
 # needles of any two cases disjoint.
-# The path is QUALIFIED (it has a `/`), which is what lets rung 4 search an
-# unnamed sibling at all — a bare basename must be named in prose (#73/B3).
+# EVERY candidate sibling must be named in prose. A draft exempted qualified
+# paths on the argument that a `/` "carries its own evidence"; measured false —
+# 544 qualified relative paths occur in >1 neighbour across 30 repos, headed by
+# memory/gotcha-log.md (21) and docs/RUNBOOK.md (8), files this framework tells every
+# adopter to create. N22 below pins that regression.
+The sibling-repo checkout still carries it and ours was never written:
 `deploy/rung4_only.sh` <!-- placeholder -->
 It resolves nowhere locally, so rungs 1-2 excuse it and it leaves the checked
-set forever — but it exists next door. The remedy is to qualify the reference,
-not to mark it: a qualified reference is checked on every run.
+set forever. The remedy is to qualify the reference, not to mark it.
 
 # N17 — a marker on a path that resolves NOWHERE must stay excused
 `src/aggregators/never_anywhere.py` <!-- placeholder -->
@@ -184,11 +188,18 @@ is worse than a miss: the finding tells the author to qualify the reference
 against a repository that has nothing to do with it.
 
 # N19 — a marked path resolving in TWO neighbours must not assert one of them
-Both checkouts next door keep a copy in step, and picking whichever sorts first
+Both sibling-repo and docs keep a copy in step, and picking whichever sorts first
 `shared/ambiguous_note.md` <!-- placeholder -->
 is a guess wearing the costume of a fact. Rung 4 already reports a COLLISION
 when one neighbour holds two matches; two neighbours holding one each is the
 same ambiguity and must not resolve to a single name.
+
+# N22 — a marked QUALIFIED path with no neighbour named must stay excused
+This is the shape an adopter writes before creating a file the framework tells
+them to create, and the path is common across repos rather than owned by one:
+`docs/RUNBOOK.md` <!-- placeholder -->
+Nothing here names a checkout, so no neighbour may claim it. Measured on the
+real estate, the ungated version reported this in 27 places at once.
 
 # N20 / T22 — rung 3 still comes before rung 4 when the path is MARKED
 `data/pipeline_state.json` is this project's own runtime state. A neighbour

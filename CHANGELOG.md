@@ -126,6 +126,18 @@ Consequences, both measured rather than argued: with one leftover fixture presen
 
 So every number this fixture has ever produced was a function of what else was in `/tmp`. `refcheck.py` gains `--sibling-root` — six lines; `check()` had always accepted `sibling_roots` and nothing could pass them — and `run.sh` pins the search to `$WORK`. Independent of everything else here and worth landing on its own.
 
+### Round 4: the widened arm fired on this method's own canonical paths, so it is narrowed
+
+A fourth review, run against a real 30-repo estate rather than the fixture, found the arm produced **false findings on the files this framework instructs every adopter to create**. Marking `memory/gotcha-log.md` before writing it — exactly what the placeholder convention is for — reported *"resolves in 27 places"*; `docs/RUNBOOK.md` reported 8. On `master` both are silently and correctly excused. That is a **regression**, and it is the re-triage cost the placeholder skip exists to remove, landing on the method's own canonical paths.
+
+The cause was a rule that read plausibly and was never measured: *"a qualified path carries its own evidence, so it may be matched against any reachable sibling."* Measured on that estate, **544** qualified relative paths occur in more than one neighbouring repo. The bare-basename half of the same rule got a 207-path measurement in round 3; the qualified half sat beside it unmeasured for two rounds and shipped as a plain assertion.
+
+**Now every candidate sibling must be named in prose, qualified or not.** Seeded as **N22**, which fails when the exemption is restored.
+
+⚠️ **This narrows what #73 delivers, and the entry above overstated it.** A marked cross-repo reference whose prose does *not* name the repo — the population #73 was filed for — is still never checked. What the arm now catches is the case where a marker and a naming coexist. Naming the repo remains the remedy and the step says so, but nothing detects the omission. That belongs with #76's *intent is unreadable* family rather than being claimed as fixed here.
+
+**Known debt, recorded rather than left to be discovered.** The same review found that four of round 3's code fixes are real but **unarmed** — ablating each leaves the suite green, because the fixture has no probe for a duplicate-named sibling pair, an unnamed head-strip, a tie-broken sort, or a self-nesting sibling. It also found that round 3's sort fix **disarmed D1**, the case round 2 added: two defended behaviours now share one test, which passes if either is present. And two more needle collisions (T9's `main.py`, T4's `scripts/deploy_thing.sh` appearing in three seeded findings), bringing the count in this branch to five. None of these is a shipping defect; all are test-coverage debt on a fixture whose whole purpose is sensitivity, and they are listed here so the next session does not have to rediscover them.
+
 ### Round 3: the fix for the nondeterminism was half a fix, and two more defects were the same bug one function lower
 
 A second non-author review — this one a subagent, run after the first reviewer's cases landed — found the suite genuinely alive (all five prescribed ablations armed) and then found three blockers anyway.
