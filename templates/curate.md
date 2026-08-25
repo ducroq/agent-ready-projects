@@ -109,12 +109,17 @@ Check for context rot from *previous* sessions. This catches what the session-fo
                                                               # here, because this runner EXECUTES.
                                                               # NB no apostrophe anywhere in this block:
                                                               # the awk program is single-quoted.
+       # `$(0)`, never `$0`: skill ARGUMENTS are substituted into the skill BODY,
+       # so a bare `$0` is delivered as the first argument word and this program
+       # then reads a constant — no table entered, escaped pipes EXECUTED mangled.
+       # `$(0)` is the only form correct on both that path and the extraction
+       # path the fixture uses. Measured; see #77 and the v1.26.2 changelog entry.
        FNR == 1 {
          if (fch != "") print "U\034" curfile "\034" "a fence opened at line " openline " and never closed"
          fch = ""; intbl = 0; prev = ""; curfile = FILENAME    # no state may cross a file
        }
        {
-         bare = $0; sub(/^[ \t]*/, "", bare)                   # a fence may be indented
+         bare = $(0); sub(/^[ \t]*/, "", bare)                 # a fence may be indented
          if (bare ~ /^```/ || bare ~ /^~~~/) {                 # and opens on ``` or ~~~
            c = substr(bare, 1, 1); k = 0
            while (substr(bare, k + 1, 1) == c) k++
@@ -123,9 +128,9 @@ Check for context rot from *previous* sessions. This catches what the session-fo
            intbl = 0; prev = ""; next                          # character, at least as long
          }
          if (fch != "") next                                   # inside a fence: documentation
-         if (isdelim($0) && index($0, "|") && prev != "") { intbl = 1; prev = $0; next }
-         if (intbl && !haspipe($0)) intbl = 0                  # a table ends at its last row
-         line = $0
+         if (isdelim($(0)) && index($(0), "|") && prev != "") { intbl = 1; prev = $(0); next }
+         if (intbl && !haspipe($(0))) intbl = 0                # a table ends at its last row
+         line = $(0)
          mask = maskspans(tolower(line), line)                 # match case-insensitively, at
          while (match(mask, /<!--[ \t]*verify:[ \t]*/)) {      # preserved offsets
            p = RSTART + RLENGTH
@@ -135,11 +140,11 @@ Check for context rot from *previous* sessions. This catches what the session-fo
            cmd = substr(rest, 1, e - 1); sub(/[ \t]+$/, "", cmd)
            if (tolower(cmd) ~ /<!--[ \t]*verify:/) { print "D\034" FILENAME "\034" substr(cmd, 1, 60); break }
            if (intbl) gsub(/\\\|/, "|", cmd)                   # a table cell escapes its pipes
-           if (cmd == "") print "E\034" FILENAME "\034" substr($0, 1, 60)
+           if (cmd == "") print "E\034" FILENAME "\034" substr($(0), 1, 60)
            else print "C\034" FILENAME "\034" cmd
            mask = substr(mask, p + e + 2); line = substr(line, p + e + 2)
          }
-         prev = $0
+         prev = $(0)
        }
        END { if (fch != "") print "U\034" curfile "\034" "a fence opened at line " openline " and never closed" }
      ' "$@"

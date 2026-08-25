@@ -21,6 +21,63 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 ## v1.26.2 (candidate, unreleased)
 
+### Skill arguments are substituted into the skill body, so `$0` in an embedded awk program was delivered as an argument word (closes #77)
+
+Invoking `/review-changes <args>` delivered `isdelim(worktree)` where the file on disk says `isdelim($0)` — `worktree` being the first word of the argument string. In `review-changes` Step 1.5 the consequence is silence: the program examines a constant, enters no table, and prints exactly what a clean run prints. In `curate` Step 0 sub-step 5 it is worse, because that runner **executes** what it extracts: with `intbl` never set, a table cell's escaped pipes are never un-escaped and the command runs mangled.
+
+**Every fixture extracts the program from the template and runs it directly**, so nothing exercised the invocation path and the suite stayed green while the delivered artifact was broken.
+
+**The substitution grammar, measured** — `/review-changes worktree probe alpha`, six probe forms on separate lines in the skill body:
+
+| written in the body | delivered | substituted? |
+|---|---|---|
+| `$0` | `worktree` | **yes** — first argument word |
+| `$1` | `probe` | **yes** — second argument word |
+| `$(0)` | `$(0)` | no |
+| `${0}` | `${0}` | no |
+| `$@` | `$@` | no |
+| `\$0` | `$0` | no — the backslash escapes it |
+
+**The fix is `$(0)`, and the reason it beats `\$0` is the second path.** Both survive substitution, but the fixtures extract the program and run it with no substitution at all — where `\$0` is not valid awk. `$(0)` is correct on **both** paths: it is `$` applied to the expression `(0)`, measured equivalent to `$0` on **mawk 1.3.4** and **busybox awk**. *gawk was not available on this machine, so that is two awks, not three.*
+
+Applied to all occurrences in `templates/curate.md`, `templates/review-changes.md` and both reference installs, with a short comment at each program saying why — the full measurement lives here rather than in the body, because a skill body is paid on every invocation (#46).
+
+**Three things the change surfaced, all worth keeping.**
+
+1. **The fixture caught its own ablation going stale.** `A27-delim-pipe` matched `isdelim($0) && index($0, "|")` as literal text; once the runner changed, the ablation no longer targeted anything — and the harness reported *"the ablation changed nothing; it no longer targets the runner"* rather than passing. A guard that notices it has stopped guarding is the property these ablations were built for. A27 and the `$0` that `A17-table-detect` injects are both updated.
+2. **The apostrophe rake, hit again while fixing this.** The first draft of the new comment contained `the fixture's extraction path`; the awk program is single-quoted, so the apostrophe closed it and every claim stopped being extracted — 20 seeded cases failing at once. The file already carries `NB no apostrophe anywhere in this block`, and the v1.26.1 changelog already records the same defect shipping as `Step 1's` inside `${BASE:?…}`. Third occurrence, second one caught by a test rather than by a reader.
+3. **What remains unmeasured**: whether a *no-argument* invocation substitutes anything. This entry does not settle it. `memory/gotcha-log.md` claims it was measured clean but names no command, and `memory/MEMORY.md` records it as unmeasured; the contradiction stands, and `$(0)` makes it moot for these two programs rather than resolving it.
+
+⚠️ **No new check guards this class.** A lint rule forbidding a bare `$0`–`$9` in a skill template would, and is the obvious next step; it is not in this change, so nothing stops the next edit reintroducing one.
+
+**PATCH** — a shipped artifact made to survive its own delivery path. ⚠️ **Adopter action**: both skills changed. `curate` is user-global — refresh via `scripts/install-global-skills.sh` after the tag. `review-changes` is project-local and must be re-copied by hand.
+
+### Rule 8: both templates grow, recorded rather than waived
+
+`templates/curate.md` +414 bytes, `templates/review-changes.md` +247 — the `$(0)` forms plus a short comment at each program. The first draft of those comments cost 1,480 bytes and was cut by two thirds after rule 8 fired: the measurement belongs in this file, which is read when someone asks why, not in a body that is paid on every invocation.
+
+
+### The verify-runner fixture's `m01` was a false FAIL on any long `$TMPDIR`, and the hostile length is now permanent (closes #80)
+
+`tests/fixtures/verify-runner/run.sh` reported `FAIL m01 — not reported MALFORMED` on master and on every open branch — but only when `$TMPDIR` was long. Measured, real runs: default `/tmp` → `PASS`; a ~100-char scratch path → `FAIL`. Nothing about the runner differed between them, so "6 fixtures, all green" was true only for a short `$TMPDIR`.
+
+**Mechanism**, measured rather than inferred: the MALFORMED row prints `substr(rest, 1, 60)` of the annotation body; `malformed_is()` greps that printed text for the marker; and the marker sat at the **end** of `touch "$CANARY/m01"`, where `$CANARY` is rooted in `$TMPDIR`. The assertion's subject was therefore positioned by the environment.
+
+| canary length | body length | marker inside first 60 chars |
+|---|---|---|
+| 26 | 39 | yes |
+| 135 | 148 | **no** |
+
+**Two changes, both ablation-confirmed.**
+
+1. **The marker moves to the front**: the annotation now leads with `: m01;`, a no-op that still runs the `touch` if the command is ever wrongly executed — so the *"it was executed"* guard beside it keeps its teeth rather than being quietly disarmed by the fix.
+2. **`$WORK` is now created with a deliberately long prefix**, so every run is at least as hostile as the environment that exposed this. This converts an environment accident into a fixed test condition. It is the seeded-true-positives rule applied to a test harness: a condition that only sometimes holds cannot tell a fixed check from a lucky one.
+
+**Ablation**: with the long path kept and the marker moved back to the end, `m01` fails — so the long path is a real hostile condition and the marker position is what carries the fix. The pre-existing `A8-unclosed` ablation still passes, so the assertion remains load-bearing against the runner's own guard.
+
+⚠️ **The macOS case remains unmeasured.** Its default `/var/folders/<2>/<~30>/T/` is ~49 characters and was the motivating prediction; no macOS was available. What ships is a permanent long path here, which covers that length by construction — not a measurement on that platform.
+
+**PATCH** — a test harness made deterministic across environments. No adopter action; the fixture is not copied into adopter trees.
 ### `docs/verification-rationale.md` gains its first external citation, scoped to the premise only
 
 The three principles were derived from this framework's own artifacts, and every reference under them is internal or cross-repo. [arXiv:2607.12113](https://arxiv.org/abs/2607.12113) (*Toward Trustworthy Autonomous Science: A Two-Year Community Roadmap*, ~25 authors, July 2026) states the same premise from a different field — *"producing a candidate discovery is no longer the hard part, but verifying it is, and this asymmetry now limits autonomous science more than raw model capability"* — and makes the same structural move, elevating trust/verification/reproducibility from cross-cutting concerns to first-class dimensions.
