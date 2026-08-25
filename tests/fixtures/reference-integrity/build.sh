@@ -11,9 +11,9 @@ DEST="${1:-$(mktemp -d)}"
 mkdir -p "$DEST"
 cd "$DEST"
 
-rm -rf repo sibling-repo docs
-mkdir -p repo/{src/utils,src/models,src/lib,packages/api/config,packages/worker/config,docs,memory,data,.claude/skills,infra,analysis}
-mkdir -p sibling-repo/{scripts,deploy} docs/runbooks
+rm -rf repo sibling-repo docs dupname
+mkdir -p repo/{src/utils,src/models,src/lib,packages/api/config,packages/worker/config,docs,memory,data,.claude/skills,infra,analysis,config}
+mkdir -p sibling-repo/{scripts,deploy,data,shared,docs} docs/runbooks docs/shared
 
 for d in repo sibling-repo docs; do (cd "$d" && git init -q . && git config user.email f@x && git config user.name f); done
 
@@ -21,10 +21,19 @@ cd repo
 printf 'data/*\n!data/.gitkeep\n.claude/\n' > .gitignore
 touch src/utils/redaction.py src/utils/time_utils.py src/models/temporal.py \
       src/utils/helpers.py src/lib/helpers.py data/.gitkeep docs/ARCHITECTURE.md \
-      packages/worker/config/settings.py infra/main.tf analysis/index.qmd
+      packages/worker/config/settings.py infra/main.tf analysis/index.qmd config/live.env
 echo '{}' > .claude/settings.json
-touch ../sibling-repo/scripts/main.py ../sibling-repo/scripts/deploy_thing.sh \
+touch ../sibling-repo/deploy/rung4_only.sh \
+      ../sibling-repo/scripts/main.py ../sibling-repo/scripts/deploy_thing.sh \
       ../sibling-repo/deploy/main.py ../docs/runbooks/DEPLOY.md
+# Rung-4 stale-marker material (#73 follow-ups). bare_named.sh and orphan_note.md
+# are the same SHAPE — a bare basename next door — and differ only in whether the
+# prose names the repo, which is the whole question B3 turns on. The two copies of
+# shared/ambiguous_note.md make "which neighbour" unanswerable on purpose.
+touch ../sibling-repo/docs/RUNBOOK.md ../docs/runbooks/RUNBOOK.md \
+      ../sibling-repo/scripts/bare_named.sh ../docs/runbooks/orphan_note.md \
+      ../sibling-repo/data/pipeline_state.json ../sibling-repo/data/marked_state.json \
+      ../sibling-repo/shared/ambiguous_note.md ../docs/shared/ambiguous_note.md
 
 cat > CLAUDE.md <<'EOF'
 # Fixture — fragment-convention document
@@ -127,6 +136,87 @@ is `.qmd` got a clean audit that had examined none of it.
 
 `analysis/index.qmd` exists. It must stay silent: widening the whitelist must
 add coverage, not turn every real Quarto source into a phantom reference.
+
+# T17 / N15 — `env` is filename-shaped, not extension-shaped (#70)
+`config/missing.env` is a genuine broken reference and must stay reported:
+the fix for the phantom below must not cost the path form its coverage.
+`config/live.env` exists and must stay silent.
+`process.env` is a code identifier, not a file. It can never resolve at any
+rung, and reporting it is the phantom-reference failure the whitelist exists
+to prevent, arriving through the whitelist rather than around it.
+
+# T18 — the marker must reach PAST an identifier to the real path
+`config/absent.env` and `process.env` <!-- placeholder -->
+The marker is span-scoped and takes the nearest ELIGIBLE path before it. If the
+identifier filter is applied only where findings are emitted and not where the
+eligible list is built, the marker lands on `process.env`, and the real broken
+path beside it silently stays a finding — the two filters must agree.
+
+# T19 — a marker on a path that lives in a SIBLING repo is stale (#73)
+# Its own file, NOT T4's `scripts/deploy_thing.sh`: sharing that needle made T4
+# satisfied by T19's finding line, so T4 went from live to vacuous. Keep the
+# needles of any two cases disjoint.
+# EVERY candidate sibling must be named in prose. A draft exempted qualified
+# paths on the argument that a `/` "carries its own evidence"; measured false —
+# 544 qualified relative paths occur in >1 neighbour across 30 repos, headed by
+# memory/gotcha-log.md (21) and docs/RUNBOOK.md (8), files this framework tells every
+# adopter to create. N22 below pins that regression.
+The sibling-repo checkout still carries it and ours was never written:
+`deploy/rung4_only.sh` <!-- placeholder -->
+It resolves nowhere locally, so rungs 1-2 excuse it and it leaves the checked
+set forever. The remedy is to qualify the reference, not to mark it.
+
+# N17 — a marker on a path that resolves NOWHERE must stay excused
+`src/aggregators/never_anywhere.py` <!-- placeholder -->
+EOF
+
+cat > docs/RUNG4.md <<'EOF'
+# Cases the unconditional rung-4 walk newly permits (#73 follow-ups)
+
+# T21 — a marked bare basename whose repo IS named must still be reported
+The sibling-repo copy is the live one and ours was never written.
+`bare_named.sh` <!-- placeholder -->
+Naming the neighbour is what makes the claim checkable, so the arm must keep
+firing here. This case passes today; its job is to fail if the fix for N18
+disables the arm instead of gating it.
+
+# N18 — the same shape with no neighbour named must stay excused
+Nothing in these three lines names a checkout next door, so a bare filename
+`orphan_note.md` <!-- placeholder -->
+is far too weak a token to pin on any one of them. A confident wrong provenance
+is worse than a miss: the finding tells the author to qualify the reference
+against a repository that has nothing to do with it.
+
+# N19 — a marked path resolving in TWO neighbours must not assert one of them
+Both sibling-repo and docs keep a copy in step, and picking whichever sorts first
+`shared/ambiguous_note.md` <!-- placeholder -->
+is a guess wearing the costume of a fact. Rung 4 already reports a COLLISION
+when one neighbour holds two matches; two neighbours holding one each is the
+same ambiguity and must not resolve to a single name.
+
+# N22 — a marked QUALIFIED path with no neighbour named must stay excused
+This is the shape an adopter writes before creating a file the framework tells
+them to create, and the path is common across repos rather than owned by one:
+`docs/RUNBOOK.md` <!-- placeholder -->
+Nothing here names a checkout, so no neighbour may claim it. Measured on the
+real estate, the ungated version reported this in 27 places at once.
+
+# N20 / T22 — rung 3 still comes before rung 4 when the path is MARKED
+`data/pipeline_state.json` is this project's own runtime state. A neighbour
+holding a copy does not make the file theirs, and the resolver's own comment
+says so: letting a neighbour claim it first produces a provenance that is
+simply false. Marked and unmarked must agree about who owns it.
+Marked:   `data/marked_state.json` <!-- placeholder -->
+# Its OWN path, not the unmarked one above. Sharing it made the counted-section
+# assertion satisfiable by the two unmarked occurrences, which are rung-3
+# resolutions — so the marked entry could be dropped entirely and nothing failed.
+Unmarked: `data/pipeline_state.json`
+
+# N21 — a marker on a dropped identifier must say WHY it covers no path (#70)
+We read `process.env` <!-- placeholder --> at startup.
+Marking it is the reflex the old phantom taught, so the ineffective-marker
+message must name the identifier case. Without that, the reader is sent to hunt
+a whitelist gap that is not there.
 EOF
 
 cat > memory/MEMORY.md <<'EOF'
@@ -146,4 +236,24 @@ cat > memory/gotcha-log.md <<'EOF'
 EOF
 
 git add -A >/dev/null && git commit -qm fixture
+
+# --- D1: a self-contained tree where two REACHABLE siblings share a basename.
+# Kept out of the main fixture on purpose: with the listing cache keyed on the
+# name, seeding the collision in the shared tree would make T4/T9/T19 flake too,
+# and a suite that fails at random teaches people to re-run it. Its own root is
+# two levels inside $DEST so the sibling glob never reaches the system temp dir.
+cd "$DEST"
+mkdir -p dupname/shared/b dupname/mid/repo dupname/mid/shared/a
+for d in dupname/shared dupname/mid/repo dupname/mid/shared; do
+  (cd "$d" && git init -q . && git config user.email f@x && git config user.name f)
+done
+touch dupname/mid/shared/a/wanted.py dupname/shared/b/unrelated.py
+cat > dupname/mid/repo/CLAUDE.md <<'EOF'
+# D1 — two reachable neighbours share the basename `shared`
+The scorer in the shared checkout is `a/wanted.py`, and we call it every run.
+Only one of the two holds it. A listing cache keyed on the neighbour's NAME
+collapses them, and because ties in the sort land in hash order the survivor
+changes from process to process — so the verdict here changes from run to run.
+EOF
+
 echo "$DEST"

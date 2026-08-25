@@ -73,6 +73,100 @@ discovering it on merge: the `review-changes` scope fix carries its own
 independent; whichever lands second becomes `v1.26.2` and its heading needs
 renumbering, nothing more.*
 
+### `refcheck`'s own whitelist admitted the phantom class it exists to exclude (closes #70)
+
+`audit-context` Step 4 warns that a permissive suffix rule turns every dotted identifier into a phantom reference, and the extension whitelist is the defence against it. But several whitelist entries are **filename-shaped rather than extension-shaped**, and the rule matches the tail of any dotted token — so `env` captured `process.env`, which is not a file, was never meant to be one, and can never resolve at any rung.
+
+**Measured**, one line of prose and nothing else (`we read \`process.env\` at startup`):
+
+| | findings |
+|---|---|
+| before | **1** — `process.env` UNRESOLVED |
+| after | **0** |
+
+The fix keeps such a token only when it still looks like a path: it contains a `/`, or it starts with a `.` (`.env.example`). A bare `.env` never matched anyway — `PATH_RE` needs a dot with something before it.
+
+**The cost is stated rather than hidden.** This is a tightening, so the risk is a false negative, and there is one: a bare `settings.env` written with no directory is no longer extracted. **T17** seeds the shape that must survive (`config/missing.env` still reported) so the coverage loss is bounded to the identifier form and not the path form. Only `env` is listed — `example`, `gitignore` and `dockerfile` are the same shape and are deliberately left alone, because no collision has been measured for them and tightening on argument rather than evidence is how a check loses sensitivity nobody notices.
+
+**Two call sites, and the fixture initially could not tell them apart.** The predicate has to run both where findings are emitted and where the placeholder marker's *eligible* list is built. Patching only the first passed every seeded case — so the second was untested, which is the cross-step-contract shape. **T18/N16** closes it: a marker after an identifier must reach *past* it to the real broken path beside it. Ablated to the findings-loop-only patch, N16 now fails twice — once as a finding that should not be, once as a path missing from the counted skip section.
+
+Ablation confirms both directions: neutering the predicate fails **N15** and exits 1; the fixture was not passing vacuously.
+
+`templates/audit-context.md` gains the rule, because **the prose is the spec** — an adopter implementing Step 4 from it would have reproduced the bug. Rule 8: +689 bytes, recorded here and the baseline re-run with `--update`.
+
+**PATCH** — a shipped checker made to honour a contract it already documented, on the `v1.25.1` precedent. Adopters using `audit-context` should re-copy `templates/audit-context.md`; it is user-global, so refresh via `scripts/install-global-skills.sh` after the release tag is pushed and verified.
+
+### The stale-marker check was local-only, so a marker on a sibling-repo path was excused forever (closes #73)
+
+`audit-context` Step 4 reports a marker on a path that *does* resolve as a **stale marker** — the guard against the failure the placeholder skip newly permits. Both arms of that test were **local**: rung 1 (as written) and rung 2 (suffix in the working tree). Rung 4, the sibling-repo walk, was never consulted.
+
+So a marker on a path that lives in a sibling repo was not a stale marker, not a finding, and not resolvable. It landed in `SKIPPED as declared-placeholder` and **left the checked set permanently** — if that sibling file later moved or was deleted, nothing would report it. The blind spot sat exactly where the convention gets used most: cross-repo references are the population most likely to be marked, because they are the ones that legitimately do not resolve locally.
+
+The **class** was found in an adopter audit (`NexusMind`, 2026-08-17) over 34 marker-form paths. *An earlier draft of this entry said the fix catches the mislabel that motivated it. A non-author review checked, and it does not:* that instance was qualified by hand in the same session that filed #73, so it resolves on `master` today and the new arm never sees it. What the arm does fire on is **17 other paths of the same shape** in that repo, plus the *narration* of the original mislabel. The claim as first written was checkable and false, which is why it is corrected here rather than softened.
+
+The fix runs rung 4 for marked paths against **every reachable sibling**, not only prose-named ones — a marked reference typically does not name its repo, which is why the normal rung-4 gate could never fire on it. The finding names the rung and the remedy: qualify the reference instead, because a qualified reference is checked on every run and a marker is never checked again.
+
+**Sensitivity, and a positive that had to be rewritten.** T19 seeds the sibling-resolving marker; N17 holds the other direction. The first T19 asserted only that the path appeared in findings — and it **passed with the fix reverted**, because the marker then failed to attach and the path was reported `UNRESOLVED`: a finding, for the wrong reason. Caught by ablation, not by review. The needle now asserts the reason string, and ablating the rung-4 arm fails T19 and exits 1. A positive that cannot distinguish *why* it fired is not a test.
+
+### A pre-existing per-reference re-walk made Step 4 close to unusable on a large memory tree
+
+Caching the sibling listings was written to pay for the new arm and turned out to be the larger user-visible change. Rung 4 had been re-walking every sibling tree for **every reference**. Measured by a non-author reviewer on real repositories: **NexusMind 19.7s → 7.8s** (24 docs, 38 siblings), and **ovr.news from over four minutes — killed, not completed — to 5.8s** (100 docs). The cache is lazy, so a repo with no rung-4 traffic pays nothing for it.
+
+It is keyed on the **path**, not the repository name. A name-keyed cache silently drops one of any two siblings sharing a basename, and `sorted(set(...))` breaks the tie in set-iteration order — hash order, randomized per process. The checker's findings then **varied between two runs of the same command**: the reviewer reproduced eight seeds giving two different verdicts on identical input. An oracle that is not reproducible is worse than the gap it closes. No such collision exists on this machine today; it is one `git init` away, and it fails silently in both directions.
+
+### `templates/audit-context.md` said the placeholder marker is line-scoped; it is span-scoped
+
+One sentence in Step 4 described the marker as **line-scoped**, two paragraphs above another sentence calling it **span-scoped**, and against a shipped implementation that is span-scoped. Line-scoping was the first draft and it relabelled a co-located genuine break as intentional — the defect seeded as T15. The normative surface carried the refuted version; corrected in both copies.
+
+### The reference-integrity fixture was never hermetic, and the leak source was itself
+
+Found by the same review, and it is **not about this PR**. `WORK="$(mktemp -d)"` puts the fixture root at `/tmp/tmp.X/repo`, so `root.parent.parent` is `/tmp` — every git repository sitting in the system temp directory became a sibling. `run.sh`'s trap does not fire on SIGKILL or a CI timeout, so an interrupted run leaves a fixture behind and **the next run adopts it**.
+
+Consequences, both measured rather than argued: with one leftover fixture present, **T19 failed on 1 seed in 8** — same command, same disk, same code. And a newly written negative (N18) **passed for that reason alone**, because a stray fixture supplied a second repo named `docs`; it was caught only because a single-doc run disagreed with the suite run.
+
+So every number this fixture has ever produced was a function of what else was in `/tmp`. `refcheck.py` gains `--sibling-root` — six lines; `check()` had always accepted `sibling_roots` and nothing could pass them — and `run.sh` pins the search to `$WORK`. Independent of everything else here and worth landing on its own.
+
+### Round 4: the widened arm fired on this method's own canonical paths, so it is narrowed
+
+A fourth review, run against a real 30-repo estate rather than the fixture, found the arm produced **false findings on the files this framework instructs every adopter to create**. Marking `memory/gotcha-log.md` before writing it — exactly what the placeholder convention is for — reported *"resolves in 27 places"*; `docs/RUNBOOK.md` reported 8. On `master` both are silently and correctly excused. That is a **regression**, and it is the re-triage cost the placeholder skip exists to remove, landing on the method's own canonical paths.
+
+The cause was a rule that read plausibly and was never measured: *"a qualified path carries its own evidence, so it may be matched against any reachable sibling."* Measured on that estate, **544** qualified relative paths occur in more than one neighbouring repo. The bare-basename half of the same rule got a 207-path measurement in round 3; the qualified half sat beside it unmeasured for two rounds and shipped as a plain assertion.
+
+**Now every candidate sibling must be named in prose, qualified or not.** Seeded as **N22**, which fails when the exemption is restored.
+
+⚠️ **This narrows what #73 delivers, and the entry above overstated it.** A marked cross-repo reference whose prose does *not* name the repo — the population #73 was filed for — is still never checked. What the arm now catches is the case where a marker and a naming coexist. Naming the repo remains the remedy and the step says so, but nothing detects the omission. That belongs with #76's *intent is unreadable* family rather than being claimed as fixed here.
+
+**Known debt, recorded rather than left to be discovered.** The same review found that four of round 3's code fixes are real but **unarmed** — ablating each leaves the suite green, because the fixture has no probe for a duplicate-named sibling pair, an unnamed head-strip, a tie-broken sort, or a self-nesting sibling. It also found that round 3's sort fix **disarmed D1**, the case round 2 added: two defended behaviours now share one test, which passes if either is present. And two more needle collisions (T9's `main.py`, T4's `scripts/deploy_thing.sh` appearing in three seeded findings), bringing the count in this branch to five. None of these is a shipping defect; all are test-coverage debt on a fixture whose whole purpose is sensitivity, and they are listed here so the next session does not have to rediscover them.
+
+### Round 3: the fix for the nondeterminism was half a fix, and two more defects were the same bug one function lower
+
+A second non-author review — this one a subagent, run after the first reviewer's cases landed — found the suite genuinely alive (all five prescribed ablations armed) and then found three blockers anyway.
+
+**The name-versus-path bug survived eleven lines below its own fix.** `_sibling_hit` deduplicated on `s.name`, so two distinct repositories sharing a basename collapsed to one entry, `len(uniq)` stayed 1, and the AMBIGUOUS branch never fired — the finding named one repo and told the author to qualify against it. That refutes this step's own sentence, *"the finding names a repo and a file … that sentence has to be true."* Deterministically wrong, which is why the hash-seed case could not see it.
+
+**And the order was never fixed, only the listing.** `sorted(set(siblings), key=lambda p: p.name)` is stable, so same-named siblings kept hash order and the *unmarked* rung-4 loop — which every ordinary reference goes through — broke its tie nondeterministically: 4 of 8 seeds each way. The entry above claimed this was fixed. It was fixed for the arm this change added and for nothing else. Now sorted on the full path.
+
+**The qualified-path exemption reintroduced the failure it was written to prevent.** Letting a qualified path match any reachable sibling also let the head-strip run unnamed, so `docs/ARCHITECTURE.md` resolved inside a neighbour called `docs` — rung 4's own *a reference may not mark itself* rule, violated by the paragraph fixing a different violation, ~55 lines from the bullet stating it. Two drafts got it wrong in opposite directions: the exemption, and then gating the whole sibling on naming, which killed the actual #73 case. The gate belongs on the **head-strip**, not on the sibling: an unnamed sibling is searched with the whole fragment only.
+
+**Third vacuous case, same lesson as the first two.** N20 asserted a marked runtime-state path appears in a counted section, by grepping a union of two sections for a bare path — and `build.sh` wrote that same path twice more, unmarked, where it resolves at rung 3. Deleting the marked entry entirely failed nothing. It now has its own path and the assertion is scoped to the section and the reason. That is three needle collisions in one change: T19/T4, `process.env`/N15, and this.
+
+**Also:** the unmarked arm double-counted one file as `COLLISION (2 matches)` when a sibling nested a directory repeating its own name — a count inside a finding message is a measurement. And hoisting `named` out of the reference loop cost a measured **5.69s against 0.11s** on 60k lines with 38 siblings and no references, in the change whose headline is a speed-up; it is lazy again.
+
+### What the non-author review changed, recorded because the first draft shipped none of it
+
+`nexusmind-a9` reviewed this by running it against the repository the class was found in, and returned six defects. Three were blockers: the nondeterministic cache above; rung 4 running **before** rung 3 in the marked arm, which the same file forbids two hundred lines below (marking a runtime-state path flipped its provenance to another repo); and an unrestricted sibling search that told `ovr.news` to qualify its own `principes.md` against a house-renovation repo — a confident wrong answer, produced live, on real data.
+
+⚠️ **And one the author had asked about and got the direction wrong on.** T19 reused `scripts/deploy_thing.sh`, which is T4's needle, so T4 became satisfied by T19's finding: a new case turned an existing one **vacuous**, in the same commit whose own T19 had just been rewritten for exactly that weakness. T19 now has its own file. Ablating the prose-naming gate fails T4, T7 and T8 again, matching `master`.
+
+*Then it happened once more, immediately.* Naming `process.env` inside the improved `COVERS NO PATH` message made that string collide with N15's needle and disarm it. The message now names no literal identifier and says why; the example lives in the template prose.
+
+The review also supplied its probes as fixture cases rather than prose: **T21, T22, N18, N19, N20, N21, D1 and E1**. Three are worth naming for their shape. **T21** is the other side of N18's gate — same bare basename living next door, differing only in whether the prose names the neighbour — so that "make N18 pass" cannot be solved by turning the arm off. **N19** asserts the *shape of the wrong answer* (neither single-provenance form, and the path still reported) so it survives whatever wording the ambiguous case gets. **D1** asserts invariance across eight `PYTHONHASHSEED` values, because a single run cannot see the nondeterminism at all, and lives in its own sub-fixture so the collision does not make T4/T9/T19 flake.
+
+On the branch before these fixes: **46 pass, 6 fail**, one intended failure per defect, stable across three runs. After: **51 pass, 0 fail**.
+
+Rule 8: `templates/audit-context.md` +4232 bytes across all entries, recorded here and the baseline re-run with `--update`. The prose grew because three of the review's findings were **spec** defects, not code defects — an adopter implementing Step 4 from the text would have reproduced them.
+
+*The conflict predicted here happened and was resolved by hand on merge, as v1.26.0's note describes — but not the way the prediction assumed. The prediction said whichever landed later would be renumbered to `v1.26.2`; in fact the version heading was **common context, not conflicted**, so the three entries merged into a single unreleased `v1.26.1` candidate. That is the better outcome — all three are PATCH, none has been tagged, and one release note is what an adopter actually wants — but it is worth recording that the predicted resolution and the real one differed. PR #67 is still open with a block at this same point and will merge into this block too, not into a new version.*
 ### `curate`'s verify runner had the same missing `\r` strip as #52 — but here CRLF corrupts verdicts instead of silencing them (closes #58)
 
 `templates/curate.md`'s canonical verify runner carries the same `isdelim()` as `review-changes` Step 1.5, copied — the two bodies are identical modulo whitespace, layout and the local variable name (`x` here, `t` there) — including the missing `\r` strip that #52 fixed in v1.25.1. *An earlier draft of this line said "character-identical", which is false: the two are formatted differently. An absolute in a description is a measurement.*
