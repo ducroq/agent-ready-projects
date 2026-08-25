@@ -78,6 +78,15 @@ Applied to all occurrences in `templates/curate.md`, `templates/review-changes.m
 ⚠️ **The macOS case remains unmeasured.** Its default `/var/folders/<2>/<~30>/T/` is ~49 characters and was the motivating prediction; no macOS was available. What ships is a permanent long path here, which covers that length by construction — not a measurement on that platform.
 
 **PATCH** — a test harness made deterministic across environments. No adopter action; the fixture is not copied into adopter trees.
+### `docs/verification-rationale.md` gains its first external citation, scoped to the premise only
+
+The three principles were derived from this framework's own artifacts, and every reference under them is internal or cross-repo. [arXiv:2607.12113](https://arxiv.org/abs/2607.12113) (*Toward Trustworthy Autonomous Science: A Two-Year Community Roadmap*, ~25 authors, July 2026) states the same premise from a different field — *"producing a candidate discovery is no longer the hard part, but verifying it is, and this asymmetry now limits autonomous science more than raw model capability"* — and makes the same structural move, elevating trust/verification/reproducibility from cross-cutting concerns to first-class dimensions.
+
+**The scope limit ships with the citation, in the document itself**: it corroborates the *premise*, and says nothing about whether these three principles are the right decomposition, whether they hold outside this repo, or whether any adopter has benefited. Two groups reaching the same problem statement is not evidence that either solved it. Cite it for the premise, not for the method.
+
+Recorded because it is a change in kind: this is the first time an adopter-facing document here points outside the `agent-ready-*` family.
+
+**PATCH** — documentation only, on the v1.10.1 precedent. No adopter action.
 
 ## v1.26.1 (2026-08-25)
 

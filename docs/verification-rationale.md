@@ -1,7 +1,7 @@
 # Verification Rationale
 
 **Status:** Reference
-**Last updated:** 2026-05-29
+**Last updated:** 2026-08-25
 **Issue:** #15
 
 This framework's verification patterns — the QA checklist's multi-layer gate, the anti-hallucination tier discipline, the writing-guide language calibration, the self-verifying memory mechanism — share three structural principles. Naming them once here lets every template and every downstream consumer cite one rule instead of restating several. It also makes future decisions about adding, skipping, or composing verification layers decidable rather than ad-hoc.
@@ -44,6 +44,18 @@ This is the principle that organizes the layered memory system. `memory/MEMORY.m
 
 The decision rule: when designing a new verification surface, the question is *what decomposition makes the surface auditable*. Asking "does this look right?" is not a verification. Asking "what specific commands prove each component is in the claimed state?" is the compositional rephrasing.
 
+## External corroboration — for the problem, not for the solution
+
+The three principles above are derived from this framework's own artifacts, and every reference below them is internal or cross-repo. One external statement of the *problem* is worth recording, because it is the first evidence that the asymmetry these principles respond to is not an artefact of how this repo works.
+
+*Toward Trustworthy Autonomous Science: A Two-Year Community Roadmap* ([arXiv:2607.12113](https://arxiv.org/abs/2607.12113), ~25 authors across national laboratories and universities, July 2026) revises a prior roadmap for autonomous scientific discovery and reports:
+
+> Producing a candidate discovery is no longer the hard part, but verifying it is, and this asymmetry now limits autonomous science more than raw model capability.
+
+Acting on that reading, the roadmap **elevates trust, verification, and reproducibility from cross-cutting concerns to first-class dimensions** — the same structural move this document makes for a much smaller artifact. Their counter-evidence is domain-specific and worth naming rather than paraphrasing: a corrected flagship discovery result, benchmarks on which agents that rival experts at closed-ended questions complete only a fraction of open-ended research, and fabricated citations surfacing at leading venues.
+
+**What this citation does and does not support.** It corroborates the *premise* — that generation has outrun verification, and that verification therefore deserves first-class structure. It says **nothing** about whether the three principles below are the right decomposition, whether they hold outside this repo, or whether any adopter has benefited from them. Two independent groups reaching the same problem statement is not evidence that either solved it. Cite this line for the premise; do not cite it for the method.
+
 ## Where this framing does not apply
 
 The framing belongs in design rationale. It does not belong in templates, slash commands, or user-facing guidance. The framework patterns it does *not* organize:
@@ -64,3 +76,4 @@ Reaching for the framing in these places is the failure mode the anchor doc warn
 - `templates/checklists/qa-checklist.md` — principle 1 in operational use.
 - `docs/self-verifying-memory.md` — principle 3 in operational use.
 - `docs/decisions/ADR-001-in-repo-memory-over-auto-memory.md` — composition decision for the memory system; principle 3 in operational use.
+- [arXiv:2607.12113](https://arxiv.org/abs/2607.12113) — *Toward Trustworthy Autonomous Science: A Two-Year Community Roadmap*. External corroboration for the premise only; see the section above for the scope limit. **The first external citation in this document** — every other reference here is internal or cross-repo.
