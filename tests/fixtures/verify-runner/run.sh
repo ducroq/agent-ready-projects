@@ -19,7 +19,16 @@ ROOT="$(cd ../../.. && pwd)"
 TEMPLATE="$ROOT/templates/curate.md"
 [ -f "$TEMPLATE" ] || { echo "cannot find $TEMPLATE" >&2; exit 2; }
 
-WORK="$(mktemp -d)"
+# Deliberately LONG, and that is the point (#80). The MALFORMED row prints
+# `substr(rest, 1, 60)` of the annotation body, so any assertion that greps that
+# text for a marker sitting at the END of an absolute $CANARY path passes on a
+# short $TMPDIR and fails on a long one. m01 did exactly that: PASS on /tmp,
+# FAIL on a ~100-char scratch path, on master and on every open branch. Making
+# the hostile length permanent turns an environment accident into a fixed test
+# condition, so the class cannot come back unnoticed on somebody else's machine.
+# macOS's default TMPDIR (/var/folders/<2>/<~30>/T/) is ~49 chars and was the
+# motivating unmeasured case; this makes every run at least that hostile.
+WORK="$(mktemp -d "${TMPDIR:-/tmp}/verify-runner-deliberately-long-path-for-truncation-XXXXXX")"
 trap 'rm -rf "$WORK"' EXIT
 CANARY="$WORK/canary"
 mkdir -p "$CANARY"
@@ -128,7 +137,7 @@ so does a double-backtick one, which is how you write a span holding a backtick:
 Some entries carry no annotation at all and only say verify: in running text,
 which is a mention (n03) and not a command.
 
-An annotation that was never closed, <!-- verify: touch "$CANARY/m01"
+An annotation that was never closed, <!-- verify: : m01; touch "$CANARY/m01"
 runs off the end of the line: MALFORMED, not silently skipped.
 
 ~~~
@@ -253,6 +262,10 @@ row_is p34 PASS           # `---` with no pipe is a rule, even when the next lin
 
 echo
 echo "malformed — a broken annotation must be loud, never silently dropped:"
+# The marker must appear EARLY in the annotation body, because the MALFORMED row
+# carries only substr(rest, 1, 60) — see the $WORK comment above. m01 leads with
+# `: m01;`, a no-op that still executes the touch if the command is ever wrongly
+# run, so the "it was executed" guard below keeps its teeth.
 malformed_is() {  # malformed_is <marker> <why>
   if printf '%s\n' "$OUT" | grep '^MALFORMED' | grep -qF -- "$1"; then printf '  PASS  %-4s %s\n' "$1" "$2"
   else printf '  FAIL  %s — not reported MALFORMED (%s)\n' "$1" "$2"; FAIL=1; fi

@@ -19,6 +19,30 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.26.2 (candidate, unreleased)
+
+### The verify-runner fixture's `m01` was a false FAIL on any long `$TMPDIR`, and the hostile length is now permanent (closes #80)
+
+`tests/fixtures/verify-runner/run.sh` reported `FAIL m01 — not reported MALFORMED` on master and on every open branch — but only when `$TMPDIR` was long. Measured, real runs: default `/tmp` → `PASS`; a ~100-char scratch path → `FAIL`. Nothing about the runner differed between them, so "6 fixtures, all green" was true only for a short `$TMPDIR`.
+
+**Mechanism**, measured rather than inferred: the MALFORMED row prints `substr(rest, 1, 60)` of the annotation body; `malformed_is()` greps that printed text for the marker; and the marker sat at the **end** of `touch "$CANARY/m01"`, where `$CANARY` is rooted in `$TMPDIR`. The assertion's subject was therefore positioned by the environment.
+
+| canary length | body length | marker inside first 60 chars |
+|---|---|---|
+| 26 | 39 | yes |
+| 135 | 148 | **no** |
+
+**Two changes, both ablation-confirmed.**
+
+1. **The marker moves to the front**: the annotation now leads with `: m01;`, a no-op that still runs the `touch` if the command is ever wrongly executed — so the *"it was executed"* guard beside it keeps its teeth rather than being quietly disarmed by the fix.
+2. **`$WORK` is now created with a deliberately long prefix**, so every run is at least as hostile as the environment that exposed this. This converts an environment accident into a fixed test condition. It is the seeded-true-positives rule applied to a test harness: a condition that only sometimes holds cannot tell a fixed check from a lucky one.
+
+**Ablation**: with the long path kept and the marker moved back to the end, `m01` fails — so the long path is a real hostile condition and the marker position is what carries the fix. The pre-existing `A8-unclosed` ablation still passes, so the assertion remains load-bearing against the runner's own guard.
+
+⚠️ **The macOS case remains unmeasured.** Its default `/var/folders/<2>/<~30>/T/` is ~49 characters and was the motivating prediction; no macOS was available. What ships is a permanent long path here, which covers that length by construction — not a measurement on that platform.
+
+**PATCH** — a test harness made deterministic across environments. No adopter action; the fixture is not copied into adopter trees.
+
 ## v1.26.1 (2026-08-25)
 
 ### `install-global-skills.sh --check` failed daily on a healthy install (closes #49)
