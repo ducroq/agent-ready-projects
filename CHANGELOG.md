@@ -21,6 +21,42 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 ## v1.26.2 (candidate, unreleased)
 
+### Skill arguments are substituted into the skill body, so `$0` in an embedded awk program was delivered as an argument word (closes #77)
+
+Invoking `/review-changes <args>` delivered `isdelim(worktree)` where the file on disk says `isdelim($0)` — `worktree` being the first word of the argument string. In `review-changes` Step 1.5 the consequence is silence: the program examines a constant, enters no table, and prints exactly what a clean run prints. In `curate` Step 0 sub-step 5 it is worse, because that runner **executes** what it extracts: with `intbl` never set, a table cell's escaped pipes are never un-escaped and the command runs mangled.
+
+**Every fixture extracts the program from the template and runs it directly**, so nothing exercised the invocation path and the suite stayed green while the delivered artifact was broken.
+
+**The substitution grammar, measured** — `/review-changes worktree probe alpha`, six probe forms on separate lines in the skill body:
+
+| written in the body | delivered | substituted? |
+|---|---|---|
+| `$0` | `worktree` | **yes** — first argument word |
+| `$1` | `probe` | **yes** — second argument word |
+| `$(0)` | `$(0)` | no |
+| `${0}` | `${0}` | no |
+| `$@` | `$@` | no |
+| `\$0` | `$0` | no — the backslash escapes it |
+
+**The fix is `$(0)`, and the reason it beats `\$0` is the second path.** Both survive substitution, but the fixtures extract the program and run it with no substitution at all — where `\$0` is not valid awk. `$(0)` is correct on **both** paths: it is `$` applied to the expression `(0)`, measured equivalent to `$0` on **mawk 1.3.4** and **busybox awk**. *gawk was not available on this machine, so that is two awks, not three.*
+
+Applied to all occurrences in `templates/curate.md`, `templates/review-changes.md` and both reference installs, with a short comment at each program saying why — the full measurement lives here rather than in the body, because a skill body is paid on every invocation (#46).
+
+**Three things the change surfaced, all worth keeping.**
+
+1. **The fixture caught its own ablation going stale.** `A27-delim-pipe` matched `isdelim($0) && index($0, "|")` as literal text; once the runner changed, the ablation no longer targeted anything — and the harness reported *"the ablation changed nothing; it no longer targets the runner"* rather than passing. A guard that notices it has stopped guarding is the property these ablations were built for. A27 and the `$0` that `A17-table-detect` injects are both updated.
+2. **The apostrophe rake, hit again while fixing this.** The first draft of the new comment contained `the fixture's extraction path`; the awk program is single-quoted, so the apostrophe closed it and every claim stopped being extracted — 20 seeded cases failing at once. The file already carries `NB no apostrophe anywhere in this block`, and the v1.26.1 changelog already records the same defect shipping as `Step 1's` inside `${BASE:?…}`. Third occurrence, second one caught by a test rather than by a reader.
+3. **What remains unmeasured**: whether a *no-argument* invocation substitutes anything. This entry does not settle it. `memory/gotcha-log.md` claims it was measured clean but names no command, and `memory/MEMORY.md` records it as unmeasured; the contradiction stands, and `$(0)` makes it moot for these two programs rather than resolving it.
+
+⚠️ **No new check guards this class.** A lint rule forbidding a bare `$0`–`$9` in a skill template would, and is the obvious next step; it is not in this change, so nothing stops the next edit reintroducing one.
+
+**PATCH** — a shipped artifact made to survive its own delivery path. ⚠️ **Adopter action**: both skills changed. `curate` is user-global — refresh via `scripts/install-global-skills.sh` after the tag. `review-changes` is project-local and must be re-copied by hand.
+
+### Rule 8: both templates grow, recorded rather than waived
+
+`templates/curate.md` +414 bytes, `templates/review-changes.md` +247 — the `$(0)` forms plus a short comment at each program. The first draft of those comments cost 1,480 bytes and was cut by two thirds after rule 8 fired: the measurement belongs in this file, which is read when someone asks why, not in a body that is paid on every invocation.
+
+
 ### The verify-runner fixture's `m01` was a false FAIL on any long `$TMPDIR`, and the hostile length is now permanent (closes #80)
 
 `tests/fixtures/verify-runner/run.sh` reported `FAIL m01 — not reported MALFORMED` on master and on every open branch — but only when `$TMPDIR` was long. Measured, real runs: default `/tmp` → `PASS`; a ~100-char scratch path → `FAIL`. Nothing about the runner differed between them, so "6 fixtures, all green" was true only for a short `$TMPDIR`.
