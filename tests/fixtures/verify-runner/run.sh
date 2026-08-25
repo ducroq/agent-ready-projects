@@ -19,7 +19,16 @@ ROOT="$(cd ../../.. && pwd)"
 TEMPLATE="$ROOT/templates/curate.md"
 [ -f "$TEMPLATE" ] || { echo "cannot find $TEMPLATE" >&2; exit 2; }
 
-WORK="$(mktemp -d)"
+# Deliberately LONG, and that is the point (#80). The MALFORMED row prints
+# `substr(rest, 1, 60)` of the annotation body, so any assertion that greps that
+# text for a marker sitting at the END of an absolute $CANARY path passes on a
+# short $TMPDIR and fails on a long one. m01 did exactly that: PASS on /tmp,
+# FAIL on a ~100-char scratch path, on master and on every open branch. Making
+# the hostile length permanent turns an environment accident into a fixed test
+# condition, so the class cannot come back unnoticed on somebody else's machine.
+# macOS's default TMPDIR (/var/folders/<2>/<~30>/T/) is ~49 chars and was the
+# motivating unmeasured case; this makes every run at least that hostile.
+WORK="$(mktemp -d "${TMPDIR:-/tmp}/verify-runner-deliberately-long-path-for-truncation-XXXXXX")"
 trap 'rm -rf "$WORK"' EXIT
 CANARY="$WORK/canary"
 mkdir -p "$CANARY"
@@ -128,7 +137,7 @@ so does a double-backtick one, which is how you write a span holding a backtick:
 Some entries carry no annotation at all and only say verify: in running text,
 which is a mention (n03) and not a command.
 
-An annotation that was never closed, <!-- verify: touch "$CANARY/m01"
+An annotation that was never closed, <!-- verify: : m01; touch "$CANARY/m01"
 runs off the end of the line: MALFORMED, not silently skipped.
 
 ~~~
@@ -253,6 +262,10 @@ row_is p34 PASS           # `---` with no pipe is a rule, even when the next lin
 
 echo
 echo "malformed — a broken annotation must be loud, never silently dropped:"
+# The marker must appear EARLY in the annotation body, because the MALFORMED row
+# carries only substr(rest, 1, 60) — see the $WORK comment above. m01 leads with
+# `: m01;`, a no-op that still executes the touch if the command is ever wrongly
+# run, so the "it was executed" guard below keeps its teeth.
 malformed_is() {  # malformed_is <marker> <why>
   if printf '%s\n' "$OUT" | grep '^MALFORMED' | grep -qF -- "$1"; then printf '  PASS  %-4s %s\n' "$1" "$2"
   else printf '  FAIL  %s — not reported MALFORMED (%s)\n' "$1" "$2"; FAIL=1; fi
@@ -544,7 +557,7 @@ ablate A13-stderr-split  "capturing stderr separately"     's|2>"\$ERRF"; rc=\$?
 ablate A14-manual-gate   "the manual short-circuit"        '/manual=\$((manual + 1))/d'          row:p09=ERROR
 ablate A15-cannot-gate   "the CANNOT VERIFY prefix"        's|"CANNOT VERIFY"\|"CANNOT VERIFY"\[!A-Za-z0-9\]\*)|"NO-SUCH-PREFIX")|' row:p03=FAIL
 ablate A16-notfound      "scoring 127 as ERROR"            '/rc" -eq 127/d'                     row:p08=FAIL
-ablate A17-table-detect  "detecting pipe-less tables"      's|if (intbl) gsub|if (intbl \&\& $0 ~ /^[ \\t]*\\\|/) gsub|' row:p28=ERROR
+ablate A17-table-detect  "detecting pipe-less tables"      's|if (intbl) gsub|if (intbl \&\& $(0) ~ /^[ \\t]*\\\|/) gsub|' row:p28=ERROR
 # Everything below closes a hole the second review battery proved: each was a
 # guard that did not exist, or one the fixture could not have noticed missing.
 ablate A18-nested-fence  "closing a fence only on its own char" 's|else if (c == fch \&\& k >= flen) fch = ""|else fch = ""|' canary:n08
@@ -555,7 +568,7 @@ ablate A22-caseless      "matching the marker case-insensitively" 's|maskspans(t
 ablate A23-span-swallow  "reporting an annotation a span swallowed" 's|if (tolower(span) ~ /<!--\[ \\t\]\*verify:/ \&\& index(span, "-->") == 0)|if (0)|' norow:m03
 ablate A25-empty-annotation "reporting an empty annotation" 's|if (cmd == "") print "E\\034"|if (0) print "E\\034"|' norow:m04
 ablate A26-indented-fence "recognising an indented fence"  's|sub(/\^\[ \\t\]\*/, "", bare)|sub(/^ ? ? ?/, "", bare)|' canary:n10
-ablate A27-delim-pipe    "requiring a pipe in the delimiter row" 's|isdelim(\$0) \&\& index(\$0, "\|")|isdelim($0)|' notrow:p34=PASS
+ablate A27-delim-pipe    "requiring a pipe in the delimiter row" 's|isdelim(\$(0)) \&\& index(\$(0), "\|")|isdelim($(0))|' notrow:p34=PASS
 ablate A29-table-end     "ending a table at its last row"   '/a table ends at its last row/d'    notrow:p33=PASS
 ablate A30-unterminated  "reporting an unterminated fence"  '/and never closed/d' 'norow:a fence opened'
 ablate A28-fail-exact    "matching the legacy word exactly" '/this framework taught/s|FAIL)|FAIL*)|' row:p31=FAIL
