@@ -10,8 +10,11 @@ WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 bash build.sh "$WORK" >/dev/null
 
-DOCS="CLAUDE.md docs/ADVERSARIAL.md docs/MONOREPO.md docs/EXOTIC.md docs/PLACEHOLDERS.md memory/MEMORY.md memory/gotcha-log.md"
-OUT="$(python3 refcheck.py "$WORK/repo" $DOCS || true)"
+DOCS="CLAUDE.md docs/ADVERSARIAL.md docs/MONOREPO.md docs/EXOTIC.md docs/PLACEHOLDERS.md docs/RUNG4.md memory/MEMORY.md memory/gotcha-log.md"
+# --sibling-root pins the search to the fixture. Without it the search
+# reaches the system temp dir and adopts stray repos, including fixtures
+# left behind by an interrupted run of this harness.
+OUT="$(python3 refcheck.py --sibling-root "$WORK" "$WORK/repo" $DOCS || true)"
 FINDINGS="$(printf '%s' "$OUT" | sed -n '/== FINDINGS/,/^  total:/p')"
 
 # Each seeded break, and the substring that proves it was reported.
@@ -31,6 +34,23 @@ declare -a CASES=(
   # is missing gets a clean audit having extracted nothing, and the instrument's
   # own "extensions not extracted" line reads as trivia under a zero.
   "T16 fabricated .qmd is caught|analysis/missing.qmd"
+  # #70 — the loss this tightening could cause. `env` keeps its coverage for
+  # the path form; only the identifier shape is dropped.
+  "T17 broken .env with a directory is still caught|config/missing.env"
+  # #73 — the stale-marker arm was rung 1-2 only, so a marker on a path that
+  # exists in a SIBLING repo could never be reported and was excused forever.
+  # The needle is the REASON, not the path. Asserting only the path passed with
+  # the rung-4 arm reverted, because the marker then failed to attach and the
+  # path was reported UNRESOLVED — a finding, for the wrong reason. Caught by
+  # ablation; a positive that cannot distinguish why it fired is not a test.
+  "T19 stale marker resolving at rung 4|STALE PLACEHOLDER MARKER (resolves at rung 4: sibling sibling-repo -> deploy/rung4_only.sh)"
+  # The other direction of N18's gate. Same shape — a bare basename living next
+  # door — but the prose NAMES the neighbour, so the claim is checkable and must
+  # still be reported. Passes today; it exists to fail if the fix for N18 turns
+  # the arm off rather than gating it.
+  # Needle is the REASON, per T19's lesson: asserting the path alone would also
+  # be satisfied by an UNRESOLVED finding if the marker failed to attach.
+  "T21 marked bare basename WITH the neighbour named|STALE PLACEHOLDER MARKER (resolves at rung 4: sibling sibling-repo -> scripts/bare_named.sh)"
   # #45 — the failure the placeholder skip newly permits: a marker on a path
   # that resolves. Mislabelling must not become a way to hide a real break.
   "T12 stale placeholder marker on a resolving path|src/models/temporal.py"
@@ -55,6 +75,28 @@ declare -a NEG=(
   # The failure #69's widening newly permits: every real .qmd becoming a
   # phantom. Adding an extension must buy coverage, not noise.
   "N14 a resolving .qmd stays silent|analysis/index.qmd"
+  # #70 — the phantom itself. No rung can resolve `process.env`; it is not a file.
+  "N15 process.env is an identifier, not a path|process.env"
+  "N15b a resolving .env with a directory stays silent|config/live.env"
+  # #70/T18 — with the marker correctly reaching past the identifier, this is
+  # placeheld rather than reported. Fails if only the findings loop is filtered.
+  "N16 marker reaches past an identifier to the real path|config/absent.env"
+  # #73's other direction: extending the arm to rung 4 must not start reporting
+  # markers on paths that genuinely resolve nowhere.
+  "N17 marker on a path absent everywhere stays excused|src/aggregators/never_anywhere.py"
+  # N22 — the regression the qualified-path exemption caused. A marked path that
+  # is common across repos, with no neighbour named, must not be claimed by one.
+  "N22 marked qualified path, no neighbour named, stays excused|docs/RUNBOOK.md"
+  # #73 — the unconditional walk drops rung 4's prose-naming gate, so a bare
+  # basename gets pinned on whichever neighbour sorts first. Measured on an
+  # adopter: ovr.news's own `principes.md` was attributed to an unrelated
+  # house-renovation repo, with instructions to qualify the reference against
+  # it. A confident wrong provenance is worse than a miss.
+  "N18 marked bare basename with NO neighbour named stays excused|orphan_note.md"
+  # #73 — the marked arm runs before rung 3, so a file THIS repo's runtime
+  # writes gets claimed by a neighbour that happens to hold a copy. The
+  # resolver's own comment forbids exactly this ordering.
+  "N20 marked runtime state is not a neighbour's file|data/marked_state.json"
 )
 
 FAIL=0
@@ -77,21 +119,59 @@ if printf '%s' "$OUT" | grep -q "old_thing.py.*asserted-absent"; then
 else printf '  FAIL  N7 strikethrough handling\n'; FAIL=1; fi
 
 # N13 cannot be a needle test: T14 legitimately emits the same string, so
-# "absent" is unassertable. Count instead — exactly one ineffective marker is
-# seeded, and a marker MENTIONED inside backticks (any doc explaining the
-# convention, including the shipped step itself) must not add a second.
+# "absent" is unassertable. Count instead. TWO ineffective markers are seeded and
+# both are meant to be reported — T14, a marker with no path at all, and N21, a
+# marker whose only neighbour is a token the extractor deliberately drops — so a
+# marker MENTIONED inside backticks (any doc explaining the convention, including
+# the shipped step itself) must not make it three.
 N_INEFFECTIVE="$(printf '%s' "$FINDINGS" | grep -c 'COVERS NO PATH' || true)"
-if [ "$N_INEFFECTIVE" -eq 1 ]; then
-  printf '  PASS  N13 a mentioned marker is not a used one (1 ineffective marker, not 2)\n'
+if [ "$N_INEFFECTIVE" -eq 2 ]; then
+  printf '  PASS  N13 a mentioned marker is not a used one (2 ineffective markers, not 3)\n'
 else
-  printf '  FAIL  N13 expected exactly 1 COVERS NO PATH finding, got %s — a marker inside backticks is being read as a marker in use\n' "$N_INEFFECTIVE"; FAIL=1
+  printf '  FAIL  N13 expected exactly 2 COVERS NO PATH findings, got %s — a marker inside backticks is being read as a marker in use\n' "$N_INEFFECTIVE"; FAIL=1
+fi
+
+# N21 — #70's phantom returns in a new costume for the population most likely to
+# have marked `process.env` to silence it: the marker now covers nothing, and the
+# message lists four causes, none of them the real one. Naming the cause is the
+# whole value of an ineffective-marker report; without it the reader hunts a
+# whitelist gap that is not there.
+if printf '%s' "$FINDINGS" | grep -F 'COVERS NO PATH' | grep -qi 'identifier'; then
+  printf '  PASS  N21 the ineffective-marker message names the identifier cause\n'
+else
+  printf '  FAIL  N21 no COVERS NO PATH finding mentions an identifier — the reader is sent to hunt a whitelist gap that is not there\n'; FAIL=1
+fi
+
+# N19 — two neighbours hold the same path, so "which one" has no answer. Rung 4
+# already reports a COLLISION when ONE neighbour holds two matches; two holding
+# one each is the same ambiguity. Assert the shape of the wrong answer rather
+# than the right one, so this survives a rewording of the ambiguous case.
+for wrong in "sibling sibling-repo -> shared/ambiguous_note.md" \
+             "sibling docs -> shared/ambiguous_note.md"; do
+  if printf '%s' "$FINDINGS" | grep -qF -- "$wrong"; then
+    printf '  FAIL  N19 a two-neighbour match resolved to a single provenance: %s\n' "$wrong"; FAIL=1
+  fi
+done
+if printf '%s' "$FINDINGS" | grep -qF -- "shared/ambiguous_note.md"; then
+  printf '  PASS  N19 ambiguous cross-repo marker is reported without asserting one neighbour\n'
+else
+  printf '  FAIL  N19 shared/ambiguous_note.md is not reported at all — an ambiguity that vanishes is worse than one resolved wrongly\n'; FAIL=1
+fi
+
+# T22 — N20's control, and the reason N20 cannot pass by never being extracted:
+# the SAME path unmarked must still be explained as this repo's runtime state.
+if printf '%s' "$OUT" | grep -q 'data/pipeline_state.json.*runtime state'; then
+  printf '  PASS  T22 unmarked runtime state still resolves at rung 3\n'
+else
+  printf '  FAIL  T22 data/pipeline_state.json unmarked is no longer explained as runtime state\n'; FAIL=1
 fi
 
 # The negatives above only prove a path is not a FINDING. A path that was never
 # extracted also is not a finding — which is the silent-skip failure this whole
 # step is built against. Assert the counted section names them.
 PLACEHELD="$(printf '%s' "$OUT" | sed -n '/== SKIPPED as declared-placeholder/,/^  total:/p')"
-for want in "src/aggregators/my_new_aggregator.py" "docs/work-items/<slug>.md" \
+for want in "docs/RUNBOOK.md" "config/absent.env" "src/aggregators/never_anywhere.py" "orphan_note.md" \
+            "src/aggregators/my_new_aggregator.py" "docs/work-items/<slug>.md" \
             "filters/<name>/<version>/config.yaml" "<slug>.md" "<root>/memory/MEMORY.md"; do
   if printf '%s' "$PLACEHELD" | grep -qF -- "$want"; then
     printf '  PASS  counted as declared-placeholder: %s\n' "$want"
@@ -99,6 +179,49 @@ for want in "src/aggregators/my_new_aggregator.py" "docs/work-items/<slug>.md" \
     printf '  FAIL  %s is not in the counted skip section — skipped and never-extracted are indistinguishable\n' "$want"; FAIL=1
   fi
 done
+
+# N20's other half, and deliberately decision-NEUTRAL: whether a marked runtime
+# state path belongs in the placeholder skip or in the rung-3 enumeration is a
+# call this harness should not make. What it must not be is absent from both,
+# which is the silent-skip failure and the only way N20 could pass vacuously.
+COUNTED="$(printf '%s' "$OUT" | sed -n '/== RESOLVED BELOW RUNG 1/,/^  total:/p;/== SKIPPED as declared-placeholder/,/^  total:/p')"
+if printf '%s' "$COUNTED" | grep -qE "data/marked_state\.json .*(declared-placeholder|runtime state)"; then
+  printf '  PASS  N20 marked runtime state is counted, not silently dropped\n'
+else
+  printf '  FAIL  N20 data/marked_state.json is in no counted section — excused and never-extracted are indistinguishable\n'; FAIL=1
+fi
+
+# D1 — the listing cache is keyed on the neighbour's NAME, so two reachable
+# siblings sharing a basename collapse to one, and the survivor is decided by
+# set-iteration order, i.e. by the per-process string hash seed. An oracle whose
+# findings list changes between two runs of the same command is worse than the
+# bug it fixes, and this is not exotic: run.sh's own fixture root sits two levels
+# under the system temp dir, so a fixture left behind by an interrupted run — the
+# before/after comparison this harness's header prescribes — supplies the
+# collision. Measured: T19 failed on 1 seed in 8 with a stray fixture present.
+#
+# Assert INVARIANCE, not a verdict. A single run cannot see this at all.
+D1_REF="$(PYTHONHASHSEED=1 python3 refcheck.py --sibling-root "$WORK/dupname" --sibling-root "$WORK/dupname/mid" "$WORK/dupname/mid/repo" CLAUDE.md 2>&1 || true)"
+D1_OK=1
+for seed in 2 3 4 5 6 7 8; do
+  if [ "$(PYTHONHASHSEED=$seed python3 refcheck.py --sibling-root "$WORK/dupname" --sibling-root "$WORK/dupname/mid" "$WORK/dupname/mid/repo" CLAUDE.md 2>&1 || true)" != "$D1_REF" ]; then
+    D1_OK=0; break
+  fi
+done
+if [ "$D1_OK" -eq 1 ]; then
+  printf '  PASS  D1 same-named neighbours give the same verdict on every run\n'
+else
+  printf '  FAIL  D1 the verdict changed with the hash seed — the sibling listing cache is keyed on the name, so same-named neighbours collapse nondeterministically\n'; FAIL=1
+fi
+
+# The extractor's own contract, table-driven. Cheap insurance against someone
+# "tidying" the leading-dot clause (which no realistic shape reaches) and taking
+# `config/live.env` down with it.
+if bash -c 'python3 envshapes.py'; then
+  printf '  PASS  E1 .env extraction/drop table matches the documented contract\n'
+else
+  printf '  FAIL  E1 .env extraction/drop table changed — see envshapes.py\n'; FAIL=1
+fi
 
 echo
 [ "$FAIL" -eq 0 ] && echo "All seeded cases behaved correctly." || echo "SENSITIVITY REGRESSION — do not ship."
