@@ -21,6 +21,30 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 ## v1.26.1 (candidate, unreleased)
 
+### `curate` sub-step 8 named an agent it had not identified, and its verification ran from the wrong cwd (adopter report, #78)
+
+Reported by an adopter (RenkumSpot, pinned v1.18.0) who ran the sub-step by hand and then checked its two prescriptions instead of trusting them. Both were shakier than they read.
+
+**It named the re-padding agent without identifying one.** The step said to exempt the file from the formatter "otherwise the pre-commit hook re-pads it on the very next commit". The adopter patched `lint-staged`, then ran a control with the patch removed — and found the hook had never touched the file: `lint-staged` applies a config only to files beneath that config's own directory, and theirs lived in `frontend/`, so the root project file had never been in its reach. The control is the only reason a decorative fix did not ship. An unverified mechanism claim in a normative surface is the class the absolutes-in-descriptions constraint targets, and it named a specific agent that a whole family of adopter layouts does not have. The step now says to identify which agent re-pads before claiming one does.
+
+**Its prescribed check certifies nothing for a common layout.** Prettier resolves its default ignore file relative to the **cwd**, not by walking up from the file. Measured on **3.8.1** (adopter) and reproduced here on **3.9.4**, with a root `.prettierignore` naming the project file:
+
+| run from | command | exit |
+|---|---|---|
+| repo root | `prettier --check CLAUDE.md` | 0 — ignored |
+| repo root | `prettier --check --ignore-path /dev/null CLAUDE.md` | 1 — it does want to re-pad |
+| `frontend/` | `prettier --check ../CLAUDE.md` | 1 — the ignore file is never found |
+
+So the prescribed verification passes from the root while the exemption is inert for any invocation starting elsewhere — project file at the root, toolchain in a subdirectory. The step now says to verify from the cwd the formatter actually runs in. *Two versions, measured independently on two machines: this repo has been wrong about prettier from a single-version test before (v1.25.0, refuted by an adopter on 3.8.1), and that is why the second measurement was taken before the wording shipped.*
+
+**And the headline measurement generalises worse than one number suggested — in the adopter's favour.** The step quoted 12,685 chars, 35% of a 36.3k file. A second project measured **21,030 chars — 61% of 34,706**, content-identical after de-padding. The cause is the delimiter rows rather than the cells: one paragraph-length cell widens its whole column and its delimiter row, so the task-triggered pointer index this method prescribes is the idiom hit hardest. The cost and the idiom are correlated by construction, which is worth stating because it predicts *which* project files are worst affected. Both figures now ship, with the mechanism.
+
+Also recorded: the adopter's de-pad script reported 13,676 while `wc -c` reported 13,765 — 89 multi-byte characters, chars versus bytes. That is #48's units problem surfacing inside the very sub-step #48 is about; the step now says to measure in the budget's own units.
+
+Rule 8: `templates/curate.md` grows, baseline re-run with `--update`.
+
+**PATCH** — corrections to a shipped step's prose and its verification command, no new behaviour. ⚠️ **Adopter action**: `curate` is user-global; refresh via `scripts/install-global-skills.sh` after the release tag is pushed and verified.
+
 ### `audit-context` Step 4 was blind to whole repositories, and had been saying so in a line that reads as trivia (closes #69)
 
 `refcheck.py`'s extension whitelist decides which paths are extracted *at all*,
@@ -1109,6 +1133,10 @@ Because this makes the step **more permissive**, and the evidence for that is a 
 - **Zero is not the target.** Instructional placeholders and files a runbook tells you to create are meant not to resolve; a change driving the count to zero has disabled the check.
 
 ## v1.15.0 (2026-08-06)
+
+> **Added retroactively 2026-08-25 (#78).** `curate` sub-step 8's formatter-padding check shipped in this release (`7002a26`, 2026-08-06) and was never given a changelog entry. It is present in every tag from `v1.15.0` onward, so adopters pinned at or above this version already have it — but the project file tells every session to triage drift against this file, and `/update-drift` does exactly that, so the change was unreachable by the route the framework prescribes. An adopter found it only by reading the installed skill body after a human asked whether it had been solved upstream. Logged here so the CHANGELOG route reaches it.
+>
+> **What it does**: before proposing any content cut for a project file over budget, measure the de-padded size. A markdown formatter pads table cells to align columns; the budget is counted in characters, so that padding is charged in full against it every session. Two projects measured: 12,685 chars (35% of 36.3k) and 21,030 chars (61% of 34.7k), both content-identical after de-padding.
 
 Skill **scope** becomes a framework decision rather than an adopter guess: `curate` and `audit-context` install user-globally, `review-changes` and `release` stay project-local, and the reference installs in `.claude/skills/` become tracked so a global install can be derived from something versioned. Plus the `audit-context` step that closes the loop `adopt.md` §3 opened. MINOR — new artifact (`scripts/install-global-skills.sh`), new lint rule, new skill step; nothing existing breaks, but adopters have real work to do.
 
