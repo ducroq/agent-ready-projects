@@ -4,7 +4,7 @@ The source framework that teaches the layered memory method for AI coding agents
 
 - **Type**: Public methodology repo (guide + templates + skills)
 - **License**: MIT
-- **agent-ready-projects** (this repo): v1.26.0 (`curate` Step 0 sub-step 5 now takes the project file and says to run from the repo root — a probe in a file never passed to the runner reads as a checked claim and is never checked. A claim audit over 28 live surfaces sampled 20 of ~514 unsupported claim-lines and found 2 real defects, both fixed; the sample is committed, the denominators are not reproducible and say so. New behaviour = MINOR.)
+- **agent-ready-projects** (this repo): v1.26.1 (five fixes to shipped checkers and their prose, all PATCH: `refcheck`'s whitelist admitted the phantom class it exists to exclude; `curate`'s verify runner had #52's missing `\r` strip, where CRLF corrupts verdicts rather than silencing them; `review-changes` defined the change set as `@{u}`, so a pushed PR branch reviewed nothing; `--check` exited 1 on a healthy install whose tree was merely ahead of the release; and sub-step 8 named a re-padding agent nobody had identified while verifying from the wrong cwd. Four of the five came from outside this repo — two adopter reports and two review rounds that refuted their own predecessors.)
 
 > Live project state (current threads, deferred items, surfaced patterns) lives in `memory/MEMORY.md` (maintainer-local — see *What is intentionally not shipped* below). Release notes live in `CHANGELOG.md`.
 

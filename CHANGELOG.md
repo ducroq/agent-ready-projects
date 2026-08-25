@@ -19,7 +19,24 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.26.1 (candidate, unreleased)
+## v1.26.1 (2026-08-25)
+
+### `install-global-skills.sh --check` failed daily on a healthy install (closes #49)
+
+`--check` reported an issue and exited **1** whenever a global install matched the **latest release** while the tracked copy had moved past it. On this repo's own machine that is true on any day with an unreleased skill edit — most days during active development — so a correct install failed every time it was checked. The exit code is what a hook or wrapper reads; prose is not available to it, so the machine-readable half has to agree with the human-readable half. Reported by an adopter (ovr.news) during v1.24.0 triage. This is the cries-wolf class that v1.15.1 and v1.23.0 each spent a release removing.
+
+| state | verdict | exit |
+|---|---|---|
+| install != latest release | genuinely stale — act | 1 |
+| install == latest release, tree ahead | correct — nothing to do | 0 |
+
+Keyed on `$unreleased`, **not** on `$REFUSED`: `REFUSED` is set only on the install path, so under `--check` it stays 0 and a guard keyed on it could never fire in the mode the defect was reported in. Both blobs must be real before a match is believed — `[ "$relblob" = "$instblob" ]` alone is satisfied by *both* being empty, which would make a skill absent from the tag plus an unhashable install read as healthy.
+
+The summary line does not claim they match the tracked source, because they do not: they match the *release*, and the tracked copy has moved on. Both are healthy; they are not the same statement, and the summary is the line most likely to be the only one read.
+
+**Seeded both directions**: **P19** (`check-at-release-tree-ahead` — RELEASE state, exit 0) and **P20** (`check-install-stale` — STALE state, exit 1), ablation-confirmed. P20 is the seeded true positive that keeps P19 from being a disabled check. Verified on the real machine as well as the fixture: with the tree ahead of `v1.26.0`, `--check` now exits 0 and names the tag it matches.
+
+**PATCH** — a shipped script made to honour a distinction it already documented. No adopter action: `scripts/install-global-skills.sh` is run from a clone, not copied into an adopter tree.
 
 ### `curate` sub-step 8 named an agent it had not identified, and its verification ran from the wrong cwd (adopter report, #78)
 
