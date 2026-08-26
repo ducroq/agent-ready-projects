@@ -42,7 +42,7 @@ This means your project file (CLAUDE.md, AGENTS.md, whatever your tool calls it)
 
 The implication for documentation design:
 
-1. **Keep the project file short.** Every line competes for attention. ~100 lines is a practical ceiling. If you're over 200, the agent is skimming, not reading.
+1. **Keep the project file short.** Every character competes for attention. ~35,000 characters is the practical ceiling the skills enforce, and Claude Code warns at 40,000. Measure characters rather than lines: a markdown line has no length limit, so a line count says nothing about what the file costs to load.
 2. **Push detail below the cliff.** Operational procedures, historical context, architectural decisions — all belong in separate files. The project file points to them.
 3. **Use task-triggered pointers, not descriptive links.** The "Before You Start" table in your project file should map tasks to docs, not topics to docs.
 

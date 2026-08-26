@@ -266,7 +266,13 @@ Two shapes need one, and they are the same failure from two sides:
 Report it as one. Do not attempt to register it here: this lens reports, it does
 not write, and a hypothesis needs a Method and a Revisit trigger that the
 reviewer of a diff is not placed to supply. `templates/hypothesis-log.md` says
-what an entry requires and `curate` is where one gets written.
+what an entry requires, and it is written **by the author, at the time of the
+claim** — not deferred to `/curate`, which runs at end of session and so
+reinstates exactly the delay the log exists to remove. `/curate` Step 0 sub-step 7
+keeps the entries that exist honest, reviewing open ones for staleness and due
+dates;
+it does **not** detect a claim that never got an entry, so writing it at claim
+time is the only thing that does.
 
 This is not a step to perform; it is the sentence to write. A separate
 "verify your claims" step is skippable in exactly the cases where it matters.

@@ -8,7 +8,7 @@ block-beta
 
     space label1["Auto-loaded?"] label2["Growth"]
 
-    L1["Layer 1: Project File<br/>Identity, constraints, pointers"]:1 auto1["✅ Yes"]:1 g1["Bounded ~100 lines"]:1
+    L1["Layer 1: Project File<br/>Identity, constraints, pointers"]:1 auto1["✅ Yes"]:1 g1["Bounded ~35k chars"]:1
     L2["Layer 2: Runbook<br/>Operational detail, procedures"]:1 auto2["❌ Triggered"]:1 g2["Grows with operations"]:1
     L3["Layer 3: Memory<br/>Index + topic files"]:1 auto3["❌ Triggered"]:1 g3["Grows with complexity"]:1
     L4["Layer 4: Gotcha Log<br/>Problem → Root Cause → Fix"]:1 auto4["❌ Triggered"]:1 g4["Append-only"]:1
@@ -33,7 +33,7 @@ block-beta
 - Key file paths (10-15 most needed)
 - How to work here (test, build, deploy commands)
 
-**Keep it under ~100 lines.** Every line competes for attention.
+**Keep it under ~35,000 characters** (the soft budget `/curate` and `/audit-context` both use; Claude Code warns at 40,000). Measure characters, not lines — a markdown line has no length limit, and a prose-and-tables project file runs 140–165 characters per line. Every character competes for attention.
 
 ```mermaid
 graph LR

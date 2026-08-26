@@ -10,7 +10,7 @@ WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 bash build.sh "$WORK" >/dev/null
 
-DOCS="CLAUDE.md docs/ADVERSARIAL.md docs/MONOREPO.md docs/EXOTIC.md docs/PLACEHOLDERS.md docs/RUNG4.md memory/MEMORY.md memory/gotcha-log.md"
+DOCS="CLAUDE.md docs/ADVERSARIAL.md docs/MONOREPO.md docs/EXOTIC.md docs/PLACEHOLDERS.md docs/RUNG4.md docs/guides/LINKS.md templates/TEMPLATE_CLAUDE.md memory/MEMORY.md memory/gotcha-log.md"
 # --sibling-root pins the search to the fixture. Without it the search
 # reaches the system temp dir and adopts stray repos, including fixtures
 # left behind by an interrupted run of this harness.
@@ -60,6 +60,20 @@ declare -a CASES=(
   # co-located genuine break as intentional. The marker is span-scoped, so this
   # must stay a finding.
   "T15 unmarked break sharing a marked line|src/registry/wire_up.py"
+  # #55 — the loss the label-masking could cause. Before the fix, a broken link
+  # URL was covered only BY ACCIDENT, because the label happened to name the
+  # same missing file and was reported UNRESOLVED. Masking the label without
+  # extracting the URL would have removed that coverage silently, which is the
+  # seeded-true-positives rule applied to a change that is a loosening on one
+  # side and a widening on the other.
+  "T23 a broken markdown link URL is still reported|docs/does_not_exist_anywhere.md"
+  # #55 over-reach guard: a backticked path that merely SITS NEAR a link is
+  # still a reference. Only the span inside the brackets is a label.
+  # DELIBERATELY INERT against the unfixed checker — it passes before and after,
+  # because it is a CONTROL, not a regression test: its job is to go red if the
+  # masking ever widens past the brackets. Measured alongside the other four,
+  # which do each fail against the pre-fix oracle.
+  "T24 a broken path outside the brackets is still extracted|src/utils/outside_the_brackets.py"
 )
 # Must NOT appear in findings.
 declare -a NEG=(
@@ -97,6 +111,27 @@ declare -a NEG=(
   # writes gets claimed by a neighbour that happens to hold a copy. The
   # resolver's own comment forbids exactly this ordering.
   "N20 marked runtime state is not a neighbour's file|data/marked_state.json"
+  # #55 — the phantom itself. The better a document follows this framework's own
+  # recommended link style, the more of these it used to generate.
+  "N23 a markdown link label is not a reference|writing-guide.md"
+  # #54 — 41% of the findings on one adopter repo were this: a correct
+  # doc-relative reference downgraded to a collision against a same-named file
+  # elsewhere in the tree.
+  "N24 a doc-relative reference resolves|backlog.md"
+  # #56 — a template placeholder in a repo that also ships instances of the
+  # template. With the suffix arm in the stale test, marked reported STALE and
+  # unmarked reported COLLISION: two findings, no defect, and no correct move
+  # available to the author. Its own basename, not shared with N23/N24, because
+  # this fixture has been bitten three times by one case being satisfied by
+  # another case's output.
+  "N25 a template placeholder with a suffix twin stays excused|review-prompt.md"
+  # #55 round 2 — the three regressions label-masking caused, found by a review
+  # running the change against seeded spans rather than by the suite, which was
+  # green throughout. Masking removed the only backticked token from a marked
+  # span, so all three span-scoped skips stopped covering a markdown link.
+  "N26 a STRUCK markdown link stays suppressed|link_gone.py"
+  "N27 a **Deleted** markdown link stays suppressed|dlink_gone.md"
+  "N28 a placeholder on a markdown link covers it|futuredoc.md"
 )
 
 FAIL=0
@@ -112,6 +147,35 @@ for c in "${NEG[@]}"; do
     printf '  FAIL  %s (must NOT be a finding: %s)\n' "$name" "$needle"; FAIL=1
   else printf '  PASS  %s\n' "$name"; fi
 done
+
+# N28b — the other half of N28: the same marker used to emit a skip AND a
+# `COVERS NO PATH` finding in one run. It cannot be a plain NEG entry, because
+# T14 seeds a LEGITIMATE `COVERS NO PATH` and the bare string would be satisfied
+# by T14's output — a needle collision, the failure this fixture has hit three
+# times before. Scope it to the file the covered link lives in.
+if printf '%s' "$FINDINGS" | grep -F 'COVERS NO PATH' | grep -qF 'LINKS.md'; then
+  printf '  FAIL  N28b — a placeholder that DOES cover a link still reported COVERS NO PATH\n'; FAIL=1
+else printf '  PASS  N28b no phantom COVERS NO PATH on a covered link\n'; fi
+
+# T25 — a declined link URL must be REPORTED, not dropped. It is not a FINDING
+# (the checker did not resolve it, so it cannot claim it is broken); it is a
+# stated non-check, and the whole point is that it is visible. Asserted against
+# its own section rather than against FINDINGS, and the REASON is the needle:
+# the path alone would also match a run that reported it for the wrong cause.
+if printf '%s' "$OUT" | sed -n '/== LINK URLs NOT CHECKED/,/^  total:/p' \
+     | grep -qF 'extension outside the whitelist: .pdf'; then
+  printf '  PASS  T25 a declined link URL is reported with its reason\n'
+else printf '  FAIL  T25 — a link URL outside the whitelist was dropped silently\n'; FAIL=1; fi
+
+# T26/T27 — the two shapes the second review round found dropped or misdiagnosed.
+# Needles are the REASONS, per T19's lesson: the path alone would also be
+# satisfied by a report for the wrong cause.
+if printf '%s' "$OUT" | sed -n '/== LINK URLs NOT CHECKED/,/^  total:/p' | grep -q 'root-relative'; then
+  printf '  PASS  T26 a root-relative link is declined for the right reason\n'
+else printf '  FAIL  T26 — a root-relative link was misdiagnosed as a whitelist gap\n'; FAIL=1; fi
+if printf '%s' "$OUT" | sed -n '/== LINK URLs NOT CHECKED/,/^  total:/p' | grep -q 'NOT PARSED'; then
+  printf '  PASS  T27 an unparseable link-shaped construct is counted, not dropped\n'
+else printf '  FAIL  T27 — a link the parser cannot read vanished silently\n'; FAIL=1; fi
 
 # N7's live successor must survive the strikethrough on the same line.
 if printf '%s' "$OUT" | grep -q "old_thing.py.*asserted-absent"; then

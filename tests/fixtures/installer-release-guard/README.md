@@ -138,6 +138,40 @@ hypothetical: it happened during the review of this change, which committed to
 Each arm was disabled in a scratch copy and the whole fixture re-run. Measured on
 the shipped code, not reasoned from it:
 
+**Measured against the silence-death class #90 found in
+`tests/fixtures/verify-runner/`, where nine ablations were satisfied by a runner
+that still executed everything and merely stopped *reporting*.** The mutant:
+every report site in `scripts/install-global-skills.sh` prefixed with `:`,
+including the ones inside `fail()` and `list_detail()` — 24 sites, `bash -n`
+clean, exit codes and every filesystem effect intact.
+
+| | before | after |
+|---|---|---|
+| cases passing against the silence-mutant | **1** | **0** |
+| cases failing (catching it) | 33 | 34 |
+
+**The first draft of this paragraph claimed the fixture was "structurally
+immune" and could "not pass anything vacuously". That was an absolute in a
+description, asserted from reading `judge` rather than from running anything,
+and it was wrong.** `judge` *is* immune, for the reason the draft gave —
+`REFUSE` asserts exit 2 **and** an untouched destination, `INSTALL` asserts exit
+0 **and** an installed copy that `cmp`s equal to its source, so both rest on a
+filesystem side-effect outside the output. But **`N12-unwritable-destination`
+does not go through `judge`.** It is hand-rolled, and its only positive test was
+the *absence* of `': installed'` from the transcript. A silenced installer
+prints nothing, so the absence holds; `cp` still fails, so `rc` stays non-zero;
+the case passed having demonstrated nothing. #90's own scope line said this
+fixture was "not measured — same audit needed", and the first draft did the
+audit by reading. It now carries a positive needle (`could not copy to`), which
+is what `N13` had all along and is why `N13` was never vulnerable.
+
+Two lessons for anyone adding a case here. **An assertion that reads only the
+transcript imports the hole** — pair every absence with something the mutant
+must still produce. And **a mutant that leaves any report path alive measures
+nothing**: an intermediate draft of this measurement missed the `printf` inside
+`list_detail()` and reported 9 positives passing, which looked like nine vacuous
+cases and was really one incomplete mutant.
+
 | Ablation | Cases that fail |
 |---|---|
 | `git hash-object` id comparison → raw `git show \| cmp` | P8, N10 |

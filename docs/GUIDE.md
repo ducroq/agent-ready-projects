@@ -696,7 +696,7 @@ You know the system is working when:
 You know it's failing when:
 - You're explaining the same thing every session
 - You keep saying "go read X first"
-- Your project file or memory index is over 150 lines of mixed concerns
+- Your project file is over ~35,000 characters, or your memory index is over ~60 lines, of mixed concerns
 - Same problem appears 3+ times without being promoted
 
 **Common fixes:**

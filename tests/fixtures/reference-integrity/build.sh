@@ -22,6 +22,15 @@ printf 'data/*\n!data/.gitkeep\n.claude/\n' > .gitignore
 touch src/utils/redaction.py src/utils/time_utils.py src/models/temporal.py \
       src/utils/helpers.py src/lib/helpers.py data/.gitkeep docs/ARCHITECTURE.md \
       packages/worker/config/settings.py infra/main.tf analysis/index.qmd config/live.env
+# #54/#55/#56 material. `backlog.md` exists in THREE places on purpose: next to
+# the doc that references it bare (docs/guides/), in templates/, and under
+# packages/ — so a bare basename collides at rung 2 unless the doc-relative rung
+# resolves it first, and so a template's placeholder has a suffix twin to be
+# wrongly convicted by.
+mkdir -p docs/guides templates
+touch docs/guides/backlog.md templates/backlog.md packages/api/backlog.md \
+      templates/writing-guide.md docs/writing-guide.md \
+      docs/guides/review-prompt.md packages/api/review-prompt.md
 echo '{}' > .claude/settings.json
 touch ../sibling-repo/deploy/rung4_only.sh \
       ../sibling-repo/scripts/main.py ../sibling-repo/scripts/deploy_thing.sh \
@@ -233,6 +242,68 @@ cat > memory/gotcha-log.md <<'EOF'
 ### A wrapped cross-repo reference (N4)
 **Problem**: sibling-repo's entrypoint moved when
 `scripts/main.py` changed. Marked on the line above, so rung 3 applies.
+EOF
+
+cat > docs/guides/LINKS.md <<'EOF'
+# T23/T24/N23/N24 — markdown links, and doc-relative references
+
+N24: a bare `backlog.md` written here means the file NEXT TO THIS ONE, which is
+how the rendered link resolves. Three files in this tree share the basename, so
+without a doc-relative rung this is a COLLISION — a defect requiring a decision
+when there is nothing to decide.
+
+N23: the house style puts a backticked filename in the link TEXT and the real
+path in the URL — [`writing-guide.md`](templates/writing-guide.md). The URL is
+the reference; the label is presentation, and extracting it manufactures a
+phantom collision. The TWIN at `docs/writing-guide.md` is what makes this case
+load-bearing: with only one file of that basename the extracted label resolves
+at rung 2 and the case passes against the unfixed checker — measured, and the
+first draft of this case did exactly that.
+
+T23: a link whose URL is genuinely broken must still be reported, or masking the
+label has removed coverage rather than noise —
+[`phantom.md`](docs/does_not_exist_anywhere.md).
+
+T24: a broken path OUTSIDE the brackets must still be extracted, even on a line
+that also carries a link: `src/utils/outside_the_brackets.py` next to
+[`backlog.md`](templates/backlog.md).
+
+N26 — the regression the first draft of #55 caused, in the direction that hurts
+most. Masking the label removed the only backticked token from a struck span, so
+the span-scoped skip collector found nothing and a DELIBERATE retirement was
+reported as a break. Measured against HEAD, both directions:
+~~[`link_gone.py`](src/utils/link_gone.py)~~ was removed; use `src/utils/redaction.py` instead.
+
+N27 — the same regression through the other marker:
+**Deleted**: [`dlink_gone.md`](docs/dlink_gone.md)
+
+N28 — and through the third. A placeholder on a link used to produce BOTH a skip
+and a `COVERS NO PATH` finding in the same run, which is self-contradictory
+output: [`futuredoc.md`](docs/aspirational/futuredoc.md) <!-- placeholder -->
+
+T26 — a ROOT-RELATIVE link must be declined for the right REASON. It used to
+report "extension outside the whitelist: .md", and `.md` is whitelisted; the
+rejection is the leading slash. Root-relative is the standard GitHub link form,
+so it is a wrong message an adopter meets early: [`GUIDE.md`](/docs/ARCHITECTURE.md).
+
+T27 — a link-shaped construct the parser cannot handle drops BOTH label and URL,
+so it must at least be counted: [[`nested.md`]](docs/nested.md).
+
+T25 — a link URL the whitelist declines is REPORTED, never dropped. Before this,
+the label gave it accidental coverage and masking removed that silently: an
+extension outside the whitelist on a file that does not exist appears in neither
+the findings nor the extensions-in-tree trailer, which only names extensions the
+tree actually holds. [`the report`](out/nonexistent_report.pdf).
+EOF
+
+cat > templates/TEMPLATE_CLAUDE.md <<'EOF'
+# N25 — a template placeholder in a repo that also ships instances (#56)
+
+Read `review-prompt.md` <!-- placeholder --> — YOUR project's review prompt,
+which does not exist here and is not meant to. The path does not resolve AS
+WRITTEN from the repo root; it only suffix-matches two unrelated files. Convicting it of being
+a stale marker on that evidence left the author no correct move — marked
+reported STALE, unmarked reported COLLISION — so the stale test is rung 1 only.
 EOF
 
 git add -A >/dev/null && git commit -qm fixture

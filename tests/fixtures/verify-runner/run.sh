@@ -77,6 +77,12 @@ seed() {
   cat > "$d/a-unclosed.md" <<EOF
 # A file whose fence is never closed
 
+- The ABLATION CONTROL (c00), and its position is the whole of its design: the
+  file passed FIRST, above every fence, in plain prose, lower-case marker, no
+  pipe, no code span, no table. Every mutation the ablations below apply leaves
+  it reportable, so a mutant that stops reporting it has died rather than lost
+  the guard under test. <!-- verify: echo c00-control-alive -->
+
 A gotcha entry that pasted a traceback and forgot the closing fence:
 
 \`\`\`
@@ -175,6 +181,14 @@ Item | Status
 Mirror | synced <!-- verify: false \\|\\| echo p16-recovered -->
 synced <!-- verify: false \\|\\| echo p28-firstcell --> | Mirror
 - A bullet straight after the last row, with no blank line between. <!-- verify: awk 'BEGIN { if ("e" ~ /^e\|/) { print "p33-bad"; exit 1 } else print "p33-ok" }' -->
+- The SECOND ablation control (z99), and its position is the mirror of c00's: the
+  LAST seeded file, so "the mutant is still alive" means alive at both ends of
+  the file list. c00 must sit in the first file above every fence, because A10
+  removes the per-file state reset and an open fence legitimately blanks every
+  later file — and that same placement makes c00 blind to any death that spares
+  file 1. Measured: truncating the runner's file list to its first operand left
+  46 of 47 annotations unchecked while five ablations still passed on c00 alone.
+  <!-- verify: echo z99-control-alive -->
 
 Prose mentioning the \`a | b\` operator, then a rule, then a line that has a pipe:
 ---
@@ -210,6 +224,10 @@ row_is() {  # row_is <marker> <expected-disposition>
 }
 
 echo "positives — each must be extracted and classified:"
+row_is c00 PASS           # ablation control 1 — see the seed comment; a real case
+                          # too: the first file, above every fence
+row_is z99 PASS           # ablation control 2, in the LAST file: together they
+                          # mean "alive at both ends of the file list"
 row_is p01 PASS           # plain command printing evidence
 row_is p02 PASS           # table cell: `\|` must be un-escaped before running
 row_is p03 CANNOT-VERIFY  # prefix wins over a non-zero exit
@@ -318,10 +336,10 @@ echo "reconciliation and exit status:"
 # shortfall becomes visible. The denominator counts `<!--`-shaped annotations,
 # not every occurrence of the word — a bare mention in prose is not a candidate,
 # and `CANNOT VERIFY:` in a command is not one either.
-if printf '%s\n' "$OUT" | grep -q 'ran 30 of 46 annotations'; then
-  printf '  PASS  ran 30 of 46\n'
+if printf '%s\n' "$OUT" | grep -q 'ran 32 of 48 annotations'; then
+  printf '  PASS  ran 32 of 48\n'
 else
-  printf '  FAIL  expected "ran 30 of 46", got: %s\n' \
+  printf '  FAIL  expected "ran 32 of 48", got: %s\n' \
     "$(printf '%s\n' "$OUT" | grep ' annotations —' || echo '<no summary line — the run died mid-loop>')"
   FAIL=1
 fi
@@ -484,14 +502,73 @@ fi
 # differently.
 echo
 echo "ablations — every guard must be load-bearing:"
-ablate() {  # ablate <id> <what it defends> <sed-expr> <consequence>
-  local id="$1" what="$2" expr="$3" want="$4"
+# CONTROLS, and why the absence-shaped consequences cannot mean anything without
+# them (issue #90). `norow:` and `notrow:` assert that a row DISAPPEARED. Their
+# only aliveness guard was the summary line — and a runner neutered into SILENCE
+# still prints its summary. Measured on this fixture: suppressing the four
+# per-row report sites (`MALFORMED`, `MANUAL`, `CANNOT-VERIFY` and the `%-14s`
+# verdict row) with a `:` prefix, leaving extraction, execution, counting, the
+# summary and the exit status intact, made 9 of these ablations PASS while
+# proving nothing. That is silence-death, not crash-death, and it is the same
+# hole #86 closed in tests/fixtures/dollar-digit/.
+#
+# The fix is a co-seeded control: a row the mutant must STILL report correctly.
+# `ctl:c00` requires the verdict site alive; `ctl:c00,m02` requires the
+# MALFORMED site alive as well, and is used wherever the vanished row is itself
+# a MALFORMED one — otherwise a mutant that silences only MALFORMED satisfies
+# the consequence with a live verdict site. m02 reports through the double-open
+# branch, which none of these ablations touch.
+#
+# The other consequence shapes need no control and say so here rather than by
+# omission: `canary:` asserts a filesystem side-effect OUTSIDE the report, which
+# is structurally immune; `row:` asserts a row IS PRESENT with a named wrong
+# disposition, which a silent runner cannot produce; `nosummary:` and `drain:`
+# assert the summary's absence or presence directly.
+ctl_check() {  # ctl_check <id> <spec> <output>; 0 = every control still reported
+  local id="$1" spec="$2" out="$3" c
+  # An EMPTY spec must not pass. `ablate`'s guard tests only the `ctl:` prefix,
+  # so a bare `ctl:` — one typo — satisfies it, yields an empty spec, iterates
+  # zero times and returns 0. Measured: A22 with `ctl:` instead of `ctl:c00`
+  # PASSES under full silencing. A loop over an empty list is the same
+  # absence-satisfies-the-assertion shape this whole mechanism exists to close,
+  # arriving inside the closer.
+  [ -n "$spec" ] || {
+    printf '  FAIL  %s — empty ctl: spec; an absence-shaped consequence needs a real control (see #90)\n' "$id"
+    return 1; }
+  for c in ${spec//,/ }; do
+    case "$c" in
+      c00|z99)
+        printf '%s\n' "$out" | grep -F -- " :: " | grep -F -- "$c" | grep -q '^PASS' && continue
+        printf '  FAIL  %s — mutant stopped reporting control %s as PASS; it is dead, so this ablation proves nothing\n' "$id" "$c"
+        return 1 ;;
+      m02)
+        printf '%s\n' "$out" | grep '^MALFORMED' | grep -qF -- m02 && continue
+        printf '  FAIL  %s — mutant stopped reporting control m02 as MALFORMED; the MALFORMED site is dead, so this ablation proves nothing\n' "$id"
+        return 1 ;;
+      *) printf '  FAIL  %s — unknown control %s\n' "$id" "$c"; return 1 ;;
+    esac
+  done
+  return 0
+}
+
+ablate() {  # ablate <id> <what it defends> <sed-expr> <consequence> [ctl:<controls>]
+  local id="$1" what="$2" expr="$3" want="$4" ctl="${5:-}"
   local mut="$WORK/$id.sh"
   sed "$expr" "$RUNNER" > "$mut"
   if cmp -s "$mut" "$RUNNER"; then
     printf '  FAIL  %s — the ablation changed nothing; it no longer targets the runner (%s)\n' "$id" "$what"
     FAIL=1; return
   fi
+  # An absence-shaped consequence with no control is the #90 hole reopening, so
+  # it is a fixture failure rather than a silent default.
+  case "$want" in
+    norow:*|notrow:*)
+      case "$ctl" in
+        ctl:*) ;;
+        *) printf '  FAIL  %s — an absence-shaped consequence needs a ctl: control (see #90)\n' "$id"
+           FAIL=1; return ;;
+      esac ;;
+  esac
   rm -rf "$CANARY"; mkdir -p "$CANARY"
   local mout ok=0 detail=""
   run_runner "$mut" "$WORK/$id.out"; mout="$(cat "$WORK/$id.out")"
@@ -509,12 +586,16 @@ ablate() {  # ablate <id> <what it defends> <sed-expr> <consequence>
       detail="expected p05 to run, p07 to be swallowed, and the summary to survive" ;;
     notrow:*)  # for a consequence whose exact shape is implementation-dependent
       # (both branches also require the summary line: a mutant that dies outright
-      # satisfies "the row is gone" without demonstrating anything)
+      # satisfies "the row is gone" without demonstrating anything — and, since
+      # #90, a co-seeded control, because the summary line does not survive-test
+      # a runner that was silenced rather than killed)
+      ctl_check "$id" "${ctl#ctl:}" "$mout" || { FAIL=1; return; }
       local m2="${want#notrow:}"; local mk2="${m2%%=*}" bad2="${m2#*=}"
       local l2; l2="$(printf '%s\n' "$mout" | grep -F -- " :: " | grep -F -- "$mk2" | head -n1)"
       printf '%s\n' "$mout" | grep -q ' annotations —' && [ "${l2%% *}" != "$bad2" ] && ok=1
       detail="expected $mk2 to stop being $bad2, it is still ${l2%% *}" ;;
     norow:*)
+      ctl_check "$id" "${ctl#ctl:}" "$mout" || { FAIL=1; return; }
       printf '%s\n' "$mout" | grep -q ' annotations —' \
         && ! printf '%s\n' "$mout" | grep -F -- " :: " | grep -qF -- "${want#norow:}" && ok=1
       detail="expected ${want#norow:} to disappear from the report" ;;
@@ -542,15 +623,21 @@ ablate A6-empty-error    "scoring silence as ERROR"        '/no output — it pr
 # asserted is the fragment that runs in its place: a bare `test -f`, silent and
 # therefore ERROR, where the whole command was a PASS.
 ablate A7-comment-close  'requiring a closing `-->`'       's|index(rest, "-->")|index(rest, ">")|' row:p10-target=ERROR
-ablate A8-unclosed       "reporting an unclosed annotation" 's|if (e == 0) { print "M\\034" FILENAME "\\034" substr(rest, 1, 60); break }|if (e == 0) break|' norow:m01
+ablate A8-unclosed       "reporting an unclosed annotation" 's|if (e == 0) { print "M\\034" FILENAME "\\034" substr(rest, 1, 60); break }|if (e == 0) break|' norow:m01 ctl:c00,z99,m02
 # The guard the hostile-repo run added: un-escaping everywhere, not only in
 # tables. Separate from A3 because it fails in the opposite direction — A3 leaves
 # table cells broken, A9 breaks everything else. p13's bad branch exits non-zero,
 # and the consequence is "stops being PASS" rather than a named disposition,
 # because which one it becomes depends on whether the local awk rejects an empty
 # alternation (mawk) or accepts it (busybox awk).
-ablate A9-table-only     "restricting un-escaping to tables" 's|if (intbl) gsub|gsub|'          notrow:p13=PASS
-ablate A10-fence-perfile "resetting all state per file"    '/no state may cross a file/d'       norow:p01
+ablate A9-table-only     "restricting un-escaping to tables" 's|if (intbl) gsub|gsub|'          notrow:p13=PASS ctl:c00,z99
+# A10 is the ONE ablation that cannot use z99, and the reason is the reason z99
+# exists. Removing the per-file state reset lets a-unclosed.md's open fence blank
+# every later file, so losing z99 in table.md is the guard failing exactly as
+# designed — not the mutant dying. c00 alone here, and that asymmetry is the
+# honest shape: no single control covers every mutation, which is why the spec
+# is per-ablation rather than global.
+ablate A10-fence-perfile "resetting all state per file"    '/no state may cross a file/d'       norow:p01 ctl:c00
 ablate A11-tilde-fence   "treating ~~~ as a fence"         's/ || bare ~ \/\^~~~\///'           canary:n07
 ablate A12-mask-offsets  "extracting from the original line" 's|rest = substr(line, p)|rest = substr(mask, p)|' row:p14=ERROR
 ablate A13-stderr-split  "capturing stderr separately"     's|2>"\$ERRF"; rc=\$?|2>\&1; rc=\$?|' row:p15=PASS
@@ -564,13 +651,13 @@ ablate A18-nested-fence  "closing a fence only on its own char" 's|else if (c ==
 ablate A19-double-open   "rejecting a second opener on one line" '/print "D\\034" FILENAME/s|tolower(cmd) ~ /<!--\[ \\t\]\*verify:/|0|' row:m02=ERROR
 ablate A20-legacy-fail   "rescoring the legacy verdict word" 's|{ rc=1; note="  ! legacy|{ note="  ! legacy|' row:p20=PASS
 ablate A21-manual-glob   "requiring a word break after manual" 's|manual\[\[:space:\]:\]\*|manual*|' row:p21=MANUAL
-ablate A22-caseless      "matching the marker case-insensitively" 's|maskspans(tolower(line), line)|maskspans(line, line)|' norow:p22
-ablate A23-span-swallow  "reporting an annotation a span swallowed" 's|if (tolower(span) ~ /<!--\[ \\t\]\*verify:/ \&\& index(span, "-->") == 0)|if (0)|' norow:m03
-ablate A25-empty-annotation "reporting an empty annotation" 's|if (cmd == "") print "E\\034"|if (0) print "E\\034"|' norow:m04
+ablate A22-caseless      "matching the marker case-insensitively" 's|maskspans(tolower(line), line)|maskspans(line, line)|' norow:p22 ctl:c00,z99
+ablate A23-span-swallow  "reporting an annotation a span swallowed" 's|if (tolower(span) ~ /<!--\[ \\t\]\*verify:/ \&\& index(span, "-->") == 0)|if (0)|' norow:m03 ctl:c00,z99,m02
+ablate A25-empty-annotation "reporting an empty annotation" 's|if (cmd == "") print "E\\034"|if (0) print "E\\034"|' norow:m04 ctl:c00,z99,m02
 ablate A26-indented-fence "recognising an indented fence"  's|sub(/\^\[ \\t\]\*/, "", bare)|sub(/^ ? ? ?/, "", bare)|' canary:n10
-ablate A27-delim-pipe    "requiring a pipe in the delimiter row" 's|isdelim(\$(0)) \&\& index(\$(0), "\|")|isdelim($(0))|' notrow:p34=PASS
-ablate A29-table-end     "ending a table at its last row"   '/a table ends at its last row/d'    notrow:p33=PASS
-ablate A30-unterminated  "reporting an unterminated fence"  '/and never closed/d' 'norow:a fence opened'
+ablate A27-delim-pipe    "requiring a pipe in the delimiter row" 's|isdelim(\$(0)) \&\& index(\$(0), "\|")|isdelim($(0))|' notrow:p34=PASS ctl:c00,z99
+ablate A29-table-end     "ending a table at its last row"   '/a table ends at its last row/d'    notrow:p33=PASS ctl:c00,z99
+ablate A30-unterminated  "reporting an unterminated fence"  '/and never closed/d' 'norow:a fence opened' ctl:c00,z99,m02
 ablate A28-fail-exact    "matching the legacy word exactly" '/this framework taught/s|FAIL)|FAIL*)|' row:p31=FAIL
 
 echo

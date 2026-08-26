@@ -154,7 +154,7 @@ flowchart TD
 | Warning sign | Meaning |
 |-------------|---------|
 | Explaining the same thing every session | Something is below the cliff that shouldn't be |
-| Project file exceeds 150 lines | Time to split into layers |
+| Project file exceeds ~35,000 characters | Time to split into layers |
 | Same gotcha appears 3+ times | Promotion isn't happening |
 | Memory only grows, never shrinks | Retirement isn't happening |
 | References point to files that no longer exist | Freshness check isn't running |

@@ -586,6 +586,18 @@ else
   if printf '%s' "$out" | grep -q ': installed'; then
     bad "$id" "reported a skill as installed when the copy failed:
 $out"
+  # ALIVENESS, and it is the whole reason this case means anything (#90). The
+  # two tests above are an ABSENCE and an exit code, and an installer neutered
+  # into silence satisfies both: it prints no ': installed' because it prints
+  # nothing, and `cp` still fails so rc stays non-zero. Measured — with every
+  # report site in the installer prefixed with `:`, this case PASSED having
+  # demonstrated nothing, while 33 others failed. It is the one case in this
+  # file that reads only the transcript, so it is the one that needed a
+  # positive. N13 below already had one (`could not create`).
+  elif ! printf '%s' "$out" | grep -q 'could not copy to'; then
+    bad "$id" "did not report the failed copy — a silent installer satisfies the
+absence test above without demonstrating anything:
+$out"
   elif [ "$rc" -eq 0 ]; then bad "$id" "exited 0 with nothing installed:
 $out"
   else pass "$id"; fi

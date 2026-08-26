@@ -19,6 +19,155 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.28.0 (candidate, unreleased)
+
+Nine open issues closed in one batch: one measured hole in the repo's own sensitivity harness, two defects in `update-drift`'s stamp finder, three in `audit-context`'s reference checker, a timing contradiction between two shipped surfaces, a unit disagreement between two shipped surfaces, and the missing pre-commit trigger in the artifact every adopter copies. MINOR: new checker behaviour and new template rows, no adopter action required.
+
+### 9 of 29 ablations in `verify-runner` proved nothing, and a silence-mutant is what showed it (closes #90)
+
+`norow:` and `notrow:` assert that a row **disappeared** from the report. Their only aliveness guard was the summary line — on the reasoning that a runner which died mid-loop never prints one. That closes the **crash** form of a dead runner and not the **silence** form.
+
+Measured on the shipped fixture. The mutant suppresses the four per-row report sites (`MALFORMED`, `MANUAL`, `CANNOT-VERIFY`, and the `%-14s` verdict row) with a `:` prefix. Everything else is intact: it still extracts, still **executes every command**, still counts, still prints its summary line and its exit status.
+
+| | before | after |
+|---|---|---|
+| ablations passing against the silence-mutant | **15** | **6** |
+| of those, legitimate | 6 | 6 |
+| of those, **vacuous** | **9** | **0** |
+
+The six legitimate passes are the five `canary:` ablations, which assert a filesystem side-effect the mutant deliberately preserves, and `A5-subshell`, whose mutation genuinely kills the run before its summary. The nine vacuous ones were `A8`, `A9`, `A10`, `A22`, `A23`, `A25`, `A27`, `A29`, `A30`.
+
+The fix is a co-seeded control — `c00`, a claim the mutant must **still** report as PASS. Its position is its whole design: the file passed **first**, above every fence, plain prose, lower-case marker, no pipe, no code span, no table, because every mutation these ablations apply must leave it reportable. `A10` is why it must live in the first file: that ablation removes the per-file state reset, so an open fence legitimately blanks every later file, and a control in `claims.md` would fail for a reason that is not death.
+
+Four of the nine assert the disappearance of a **MALFORMED** row, and `c00` alone does not cover them — a mutant silencing only the MALFORMED site satisfies the consequence with a live verdict site. Those four carry `ctl:c00,m02` and require the MALFORMED site alive too; `m02` reports through the double-open branch, which none of these ablations touch.
+
+**An absence-shaped consequence declared with no control is now a fixture failure, not a silent default** — otherwise the next ablation added reopens the hole.
+
+This is the same hole #86 closed in `tests/fixtures/dollar-digit/` **earlier the same day**, in v1.27.0 — a fixture written *by the change that found it*, which then found it here. Reconciliation line moves `ran 30 of 46` → `ran 31 of 47`.
+
+**`tests/fixtures/installer-release-guard/` was the second half of #90's scope, and the first draft got it wrong in the most instructive way available.** That draft called the fixture *"structurally immune"* and said it *"cannot pass anything vacuously"* — an absolute in a description, derived by reading `judge` rather than by running the experiment #90's scope line explicitly asked for (*"has ablations, not measured. Same audit needed"*). A reviewer ran it.
+
+| | before | after |
+|---|---|---|
+| cases passing against a full silence-mutant | **1** | **0** |
+
+`judge` really is immune, for the stated reason — both its dispositions rest on a filesystem side-effect. But **`N12-unwritable-destination` does not go through `judge`**: it is hand-rolled, and its only positive test was the *absence* of `': installed'` from the transcript. A silenced installer prints nothing, `cp` still fails so `rc` stays non-zero, and the case passed having demonstrated nothing — the #90 shape, sitting inside the fixture the change had just declared immune to it. It now requires the `could not copy to` line, which `N13` had all along.
+
+Getting the mutant right took two tries as well, and that is worth recording next to it: an intermediate version missed the `printf` inside `list_detail()`, reported 9 positives passing, and looked like nine vacuous cases. **A mutant that leaves any report path alive measures nothing.**
+
+### `update-drift` Step 0 could not see two whole classes of pin, and reported the partial find as a complete one (closes #88, #72)
+
+Two adopter reports, one step.
+
+**#88 — the separator class.** ``Adopted from `agent-ready-projects` `templates/review-changes.md` (v1.18.0`` puts **33** characters between the framework name and the version. The shipped bound was `{0,24}`, so that stamp was invisible for a whole adoption while two others in the same repo were found — the file carried v1.25.x/v1.26.x content under a v1.18.0 provenance line throughout. Widened to `{0,60}`, one bound away from the step's own sentence warning that a matcher keyed too narrowly "reports an **unstamped project** when the stamp is merely written differently".
+
+**#72 — a pin that is not a version.** A project may pin a **commit hash**. The matcher requires `[0-9]+\.[0-9]+`, two dot-separated numeric groups, so no separator width reaches a hash. A second matcher now runs for it, with a separator class that excludes letters or a hex run matches inside an ordinary word.
+
+**Two matchers, because the two separator classes are incompatible.** Matcher 1 allows letters between the name and the version, since a provenance line puts a filename there; matcher 2 must exclude them, or a 7-character hex run matches inside an ordinary word. One pattern cannot hold both rules. Combining them as `(a|b)` works fine on GNU grep 3.12 and busybox, and the template says so — adopters may combine them.
+
+⚠️ **The first draft justified the split with a measurement that was an artifact of the reviewing agent's own tooling, and this is the finding worth carrying out of this release.** It claimed the alternation is *"rejected by ugrep 7.8.4 with `exceeds complexity limits`"*, and that *"ugrep ships as `grep` on some systems, this one included."* The failure reproduced on demand and looked solid. It was not the machine. `type grep` in that shell resolves to a **wrapper function installed by the agent harness**, which re-invokes ugrep with `-G` (basic-regex mode) and a set of injected flags; the ERE alternation blows the complexity limit only under that combination. `/usr/bin/grep` on the same machine is **GNU grep 3.12**, and it accepts the pattern at rc 0. So a normative instruction shipped into an adopter-facing template on the strength of a measurement of the reviewing tool rather than of the adopter's environment.
+
+The hostile-environment rule this repo already carries says to run a command where it will be punished. This adds the other half: **establish what your instrument is before you quote it.** `grep --version` was never run against the `grep` the shell actually resolved — `type grep` is what would have shown it, and no rule here asked for that.
+
+⚠️ **This may contaminate an earlier release.** The v1.21.0 entry records *"`grep -v -- '-'` … measured to fail outright on **ugrep**, which is a real `grep` on a real machine — this maintainer's"*, which is the same claim with the same likely cause. It is **not** re-measured here and the entry is left standing; it needs checking against `/usr/bin/grep` before it is relied on again. The `sed '/-/d'` filter it justified is harmless either way.
+
+**The shared half of both issues is the reconciliation.** Step 0's guard fires only on **zero** hits, so finding two stamps of three reports two real stamps and proceeds — partial success is indistinguishable from complete success, which is what the step's own opening warning is about. It now states the denominator: every file that *mentions* a framework, minus every file a stamp was found in, with each file in the difference given a disposition out loud (a stamp the matcher missed, or a mention that is not a pin). `LC_ALL=C` on both sorts is load-bearing and not decoration — `comm` compares bytes, a default locale sorts punctuation differently, and the mismatch hands back a **wrong difference** with only a stderr warning. Measured here on a dotfile path.
+
+**And a pin that resolves to no version now has an outcome.** A hash, branch name or date is a pin but not a version, so Step 1 cannot list the releases after it. Resolve it with `git describe --tags --contains` where possible; otherwise report `unresolvable pin` explicitly rather than substituting the latest version or treating the framework as un-pinned.
+
+### `audit-context` Step 4 reported three classes of correct reference as defects (closes #54, #55, #56)
+
+All three were filed from adopter runs, all three reproduced here before being touched, and all three now carry seeded cases that fail against the pre-fix checker.
+
+**#54 — no doc-relative rung.** Markdown link semantics *are* doc-relative: a bare `` `backlog.md` `` in `papers/one/CLAUDE.md` means the file next to it. The ladder went repo-root → tree-suffix → runtime → sibling, with no rung for it, so a correct reference either missed rung 1 outright or was downgraded to a **COLLISION** against a same-named file elsewhere. The collision path is the damaging one: it is reported as a defect requiring a decision when there is nothing to decide. On one adopter repo, **42 of 102 findings — 41% — were this**. Added as rung 1b, above rung 2 or the collision fires first, and enumerated rather than silent so a reader can see how much of a tree resolves that way.
+
+**#55 — the link label extracted as a reference.** In ``[`writing-guide.md`](templates/writing-guide.md)`` the URL is the reference and the label is presentation. Extracting the label manufactures a phantom collision, so *the better a document follows this framework's own recommended link style, the more phantom findings it generates* — and the pressure is to stop backticking link text, which makes the docs worse. Labels are now masked with offsets preserved, so the span-scoped placeholder arithmetic is untouched, and the URL is extracted in the label's place.
+
+**Masking alone would have been a silent loss, and that is the part worth recording.** Before the fix a broken link URL was covered *by accident*: the label named the same missing file and was reported UNRESOLVED. Masking the label without extracting the URL would have removed that coverage while looking like a pure noise reduction. Seeded as `T23`.
+
+**#56 — a template placeholder could not be marked in a repo that also ships instances.** The stale-marker test was `(root / frag).exists() or _suffix_matches(...)`. The suffix arm meant that in a repo shipping `templates/CLAUDE.md` *and* `papers/*/CLAUDE.md`, a placeholder on the template's `` `backlog.md` `` had no correct move — **marked reported STALE, unmarked reported COLLISION**, both findings, no defect, re-triaged on every audit, which is the exact cost the placeholder marker was created to remove. Three references were left knowingly unfixed on that adopter for this reason. Narrowed to **rung 1 only**: a marker whose path resolves *as written* is unambiguously mislabelled; one that merely shares a suffix with some file elsewhere is not evidence of mislabelling at all, and the suffix rung was built to *resolve references*, not to *adjudicate intent*. The rung-4 arm from #73 is unchanged.
+
+**Five seeded cases, and four are load-bearing.** `T23`, `N23`, `N24` and `N25` each fail against the pre-fix checker — measured by running the fixture against `HEAD`'s `refcheck.py`. `T24` (a broken path *outside* the brackets on a line that also carries a link) passes in both states **by design**: it is a control against the masking over-reaching, not a regression test, and the fixture says so at the case rather than leaving it to look load-bearing. `N23`'s first draft was **inert** — with only one `writing-guide.md` in the tree the extracted label resolved at rung 2 and the case passed unfixed; it needed the twin, and the build script now records why.
+
+### The hypothesis log said "not at end of session"; `review-changes` routed the entry to the end-of-session skill (closes #89)
+
+`templates/hypothesis-log.md`: *"Write it at the moment the claim is made, not at end-of-session."* `templates/review-changes.md`: *"`curate` is where one gets written."* `curate`'s own frontmatter: *"End-of-session curation."* All three could not hold, and both sentences had been adopted verbatim into a second repo, so the contradiction travelled.
+
+v1.25.0's rationale is that reconstructing the alternatives and the refutation criterion hours later loses exactly the part worth keeping — routing the entry to `curate` reinstates the delay the bullet was written to remove. The lens stays **report-only**, which was already correct and for a good reason: a reviewer of a diff is not placed to supply a Method or a Revisit trigger. What changed is where it points: the entry is written by the author at the time of the claim.
+
+**The first draft of this fix reproduced the defect it was fixing.** It said `/curate` is "the backstop: it sweeps for claims that never got an entry" — and `curate` does no such thing. Step 7 scans an existing log's `## Open` entries for due dates and staleness; nothing anywhere sweeps the session for a claim that should have had an entry and doesn't. That is a normative pointer to behaviour that does not exist, which is #89's own shape, introduced in the sentence closing #89. It now says what Step 7 actually does, and says plainly that writing the entry at claim time is the only thing that catches the gap.
+
+### Two shipped steps measured the same file in different units and disagreed (closes #48)
+
+`audit-context` Step 1 counted **lines** and flagged this repo's project file at 173 lines, *73% over*. `curate` sub-step 8 counted **characters** and found the same file *comfortably under* at 24,633. Neither was wrong about its own number; they cannot both be right about the file.
+
+A markdown source line has no length limit, so a line count says nothing about load cost — **142 characters per line**, measured 2026-08-12 on this framework's own project file, which is prose and wide table rows rather than code. (Re-measured 2026-08-26 for this entry: 179 lines / 28,915 characters / 162 per line. The pair in #48 is a correct historical measurement and the shipped template now dates it rather than asserting it in the present tense.) The character threshold is also the one tied to something real, Claude Code's own performance warning, where ~100 lines is a heuristic with no stated derivation. And the weaker instrument was driving the more expensive action: `curate` runs every session and reports clean, `audit-context` runs monthly and proposes restructuring work.
+
+Step 1 now measures characters for the project file and cites the same 35k/40k numbers `curate` uses. **The memory index deliberately keeps its line heuristic** — an index is a list, so a line is a unit of content there in a way it is not for prose — and no character threshold is invented for it, because none has been derived. It reports both numbers and says which one it acted on. Same defect v1.25.0 removed from the gotcha-log entry-size rule, one artifact over.
+
+### The project-file template implemented the Before-committing moment nowhere, and named none of the five skills (closes #68)
+
+`docs/GUIDE.md` prescribes an eight-row documentation rhythm. `templates/project-file.md` — the artifact an adopter copies to become `CLAUDE.md`, and the only one loaded into every session — carried a row for three of those moments, described the *activity* in each, and named **zero** of the five shipped skills. `grep -o "curate\|audit-context\|update-drift\|review-changes\|release" templates/project-file.md` returned one hit, and it was the word *released* inside "behind the latest released version".
+
+So the pre-commit review fired only in repos where someone hand-wrote a trigger row the framework never told them to write. That gap is survivable for `curate` and `audit-context`, which a user types at a moment they already recognise. **Pre-commit review has no such felt moment** — the agent is mid-flow and about to commit, which is exactly when nothing prompts either party.
+
+Added: a **Before committing** row naming `/review-changes`, a **Periodic** row naming `/audit-context` and `/release`, plus `/curate` on the end-of-session row and `/update-drift` on the drift row. All five skills are now named, and the table stays at **8 rows** — `docs/GUIDE.md` tells adopters to group once a Before-You-Start table exceeds ~8, so the monthly and release moments share one row rather than breaking the guide's own budget in the file it ships as the default.
+
+**Tool-agnostic, which the first draft was not.** `/name` is the Claude Code form; `templates/README.md` and `docs/GUIDE.md` both pair every skill with "paste the template as a prompt" for tools without skills, and the first draft shipped the Claude Code half alone — four instructions to invoke commands a Codex, Cursor, Windsurf, Copilot or Aider adopter does not have, in a file whose own SAVE AS comment lists all six tools. One comment above the table now carries the fallback and the delete-if-you-did-not-adopt-it rule for every row, instead of repeating either per row.
+
+### Review round 2: four lenses found eleven defects a green suite did not, and five were created by round 1's own fixes
+
+The base rate held. `bash tests/lint/run.sh` was 9/9 and every fixture was green at the moment the lenses started; none of the below came from the suite.
+
+**Created by the fixes in this very entry:**
+
+1. **Label-masking broke all three span-scoped skips** (`refcheck.py`). `covered` is built by running `PATH_RE` over the inside of a `~~struck~~` or `**Deleted**:` span. Masking the link label removed the only backticked token from such a span, so `~~[`old.py`](src/old.py)~~ was removed` stopped being suppressed and **a deliberate retirement was reported as a break**. That is v1.15.0's line-scoped-skip defect running in the opposite direction. Measured against `HEAD`, both directions. A placeholder on a link was worse: the same run excused the path *and* reported `PLACEHOLDER MARKER COVERS NO PATH` for the marker excusing it — self-contradictory output. Fixed by one `_candidates()` extractor that the skip collectors, the placeholder arithmetic and the rung ladder all share, because they must agree on what a candidate *is*. Seeded as `N26`, `N27`, `N28`, `N28b`.
+2. **`**Deleted**:` never knew the link form at all** — `DELETED_RE` required a backtick immediately after the colon. Pre-existing, exposed by (1), fixed with it.
+3. **The loosening was bigger than its compensating check, and unmeasured.** Five broken-link shapes where the label had been the only coverage went from **5 findings to 1** — an anchor-only target, an external URL, a directory, and `out/report.pdf`. The `.pdf` is the sharp one: an extension outside the whitelist, on a file that does not exist, appears in neither the findings nor the `EXTENSIONS IN TREE NOT EXTRACTED` trailer, because that trailer only names extensions the tree actually holds. A silent skip arriving *through* the whitelist rather than around it — the class `#45` exists to prevent. A declined link URL is now listed under `LINK URLs NOT CHECKED` with its reason. Seeded as `T25`.
+4. **`ctl_check` passed vacuously on an empty spec.** `ablate`'s guard tests only the `ctl:` prefix, so a bare `ctl:` — one typo — yields an empty spec, iterates zero controls and returns success. Measured: `A22` with `ctl:` instead of `ctl:c00` **passed under full silencing**. Absence satisfying an assertion, inside the mechanism built to stop absence satisfying assertions.
+5. **A whole paragraph of `update-drift` guidance was deleted** by an index-slice edit and reported nowhere — the one telling adopters to check the templates directory, where a stamp releases habitually miss lives. The `+2,545` net figure hid it. Restored.
+
+**Pre-existing, found while checking the above:**
+
+6. The `update-drift` reconciliation used `sort` on one side and `sort -u` on the other. With overlapping operands — a project file *inside* the template dir, or `CLAUDE.md .` — the left side lists a file twice and `comm -23` reports **a correctly stamped file as unstamped**. Measured. Both sides are `sort -u` now; it is a set difference.
+7. That same block printed only the difference, while the prose beneath said to report both counts. With mistyped operands both sides come out empty and `comm` prints nothing at rc 0 — indistinguishable from a clean reconciliation, which is the section's own failure one layer up. The counts and an explicit `EMPTY` warning are now part of the command, not an instruction to the reader.
+8. It also wrote to fixed `/tmp` paths (collision between concurrent runs; a same-owner symlink is followed even under `fs.protected_symlinks`) and would abort under `set -eo pipefail` *after* truncating the stamped list. `mktemp` with a trap, and `|| :` on each grep.
+9. **`#48` was closed on three artifacts and left four contradicting it.** `docs/GUIDE.md` still listed "over 150 lines" as the split signal, `docs/guide/02-the-layers.md` said "keep it under ~100 lines" in both its prose and its layer diagram, `docs/guide/04-the-rhythm.md` had a 150-line trigger row, and `docs/the-auto-loading-cliff.md` called ~100 lines a practical ceiling. An issue about a unit disagreement that fixes it in two places and leaves four is not closed. All four now state the character budget. *(`templates/RUNBOOK.md`'s ~150-line note is deliberately untouched — it is about any document's navigability, not the auto-loaded budget.)*
+10. **`wc -c` counts bytes, not characters** — 29,479 against 28,915 on this repo's own project file. `curate` sub-step 8 already carried that caveat; the new `audit-context` text dropped it while claiming to use the same two numbers. Restored, with the direction of the error stated: budgeting in bytes errs safe.
+11. The `refcheck.py` module docstring still said **"Only backticked paths are extracted"** — false as of this change, and it is the paragraph telling a reader how to interpret an empty report.
+
+Plus four wrong numbers and a wrong release heading in this entry's own first draft, listed here because the count is the argument: "three weeks earlier" (it was the same day), "each row says where the skill comes from" (one row did), "cut roughly in half" (44% and 19%), a "seven-moment" rhythm that has eight rows, and a dated `## v1.28.0 (2026-08-26)` heading on an untagged tree where this repo's protocol requires `(candidate, unreleased)` until the release commit. A verification command written *into the fixture README* — `grep -c 'ctl:c00,m02' run.sh`, claimed to return 4 — returns **5**, because the explanatory comment names the spec too; it is anchored now.
+
+### Review round 3: three blockers, and the sharpest one is that two of the three refcheck fixes had not shipped
+
+A second adversarial pass, run against the tree round 2 produced.
+
+**B1 — `#54`, `#55` and `#56` were fixed only in the oracle, not in the normative surface.** All three arrived from adopter runs of the **skill**, and all three fixes landed in `tests/fixtures/reference-integrity/refcheck.py` — whose own header says *"The skill text is normative; this is one faithful reading of it. **If they disagree, the skill is right and this file is the bug**"*, and *"the installer ships only SKILL.md, so the script never reaches an adopter repo."* `git diff -- templates/audit-context.md | grep -c "rung\|doc-relative\|link"` returned **0**: Step 4's ladder still had four rungs and no doc-relative one, no link-label rule, and a stale test that still said "does resolve means at *any* rung". The entry announced three adopter-facing fixes and nothing an adopter installs had changed. Step 4 now carries rung 1b, the label-versus-URL rule with its never-drop clause, and the rung-1-only narrowing, in both the template and the reference install — and the sensitivity enumeration lists the new cases rather than the pre-#54 set.
+
+**B2 — the ugrep measurement was an artifact of the reviewing agent's own tooling.** Detailed above. `type grep` was the check nobody ran.
+
+**B3 — "structurally immune" was refuted by the experiment #90 asked for.** Detailed above; `N12` was the case, and it now carries a positive needle.
+
+**Warnings, all fixed:**
+
+- **`templates/project-file.md` added five permanent broken references to the artifact loaded every session.** The new rows name `templates/*.md`, which exist in the *framework* repo and not in an adopter's. Measured on a synthetic adopter tree with this repo's own checker: 6 findings → **11**. That is the `#45` class — a template naming a file outside the adopter's repo — added unmarked, in the same commit as `#56`, which is about that class. Marked now, and back to the pre-existing 6. The explanatory comment then tripped the checker itself by writing the marker bare in prose, so it names it in backticks; the mask exempts a code span, and the comment says why.
+- **`c00` alone left five ablations vacuous against a *truncation* mutant.** `c00` must sit in the first seeded file — `A10` removes the per-file state reset, so an open fence legitimately blanks every later file — and that same placement makes it blind to any death sparing file 1. A second control `z99` now sits in the **last** file, so "still alive" means alive at both ends. `A10` keeps `ctl:c00` alone, because losing `z99` there *is* the guard working; that asymmetry is the honest shape, and no single control covers every mutation. Reconciliation moves to `ran 32 of 48`. *(`z99` is verified enforced — `A10` failed on it before being scoped. The full truncation-mutant re-measurement was not completed inside this session's time budget and is not claimed.)*
+- **The reconciliation was file-scoped and could not see #72's own worked example.** One `CLAUDE.md` pinning two frameworks, one by hash and one by tag: the file counts as "stamped" because the *other* framework matched, so the missing pin never reaches the difference. Measured on exactly that shape. The unit is now `(file, framework)`, which surfaces `CLAUDE.md:agent-ready-alpha` where the file-scoped version reported clean.
+- **`LINK_RE` misdiagnosed root-relative links and dropped five shapes silently.** `/docs/GUIDE.md` reported *"extension outside the whitelist: .md"* — and `.md` **is** whitelisted; the rejection is the leading slash, and root-relative is the standard GitHub form. It is now declined with the real reason. Nested brackets, a `]` in the label, parens in the URL, angle-bracket URLs and reference-style links drop **both** label and URL, so the reference vanishes entirely; they are counted now. The section header's absolute — *"stated, **never dropped**"* — was false and is now *"every URL `LINK_RE` matched, plus a count of those it could not"*. Seeded as `T26`, `T27`.
+- **`/curate` Step 7 does not exist** — the hypothesis-log surface is Step 0 sub-step 7. The behavioural claim was right; the pointer sent the reader to the gotcha-log review.
+- **`LC_ALL=C` on `comm` as well as the sorts.** `comm` compares bytes in the implementation measured here (uutils 0.8.0), but GNU `comm` collates by locale when the locale is "hard" — in which case C-sorted input under a UTF-8 locale is the exact failure the bullet warns about, *caused by the recipe*. GNU `comm` was not available to test, and the template says so.
+
+### Size ratchet: +11,951 bytes across four adopter-facing templates, recorded per rule 8
+
+| file | change | what it bought |
+|---|---|---|
+| `templates/update-drift.md` | 9,096 → 14,699 (**+5,603**) | a second matcher, the pair-scoped reconciliation with its five measured details, the restored templates-dir paragraph, the unresolvable-pin outcome (#88, #72) |
+| `templates/audit-context.md` | 33,619 → 38,037 (**+4,418**) | the character budget and its derivation (#48), **and rung 1b, the link-label rule and the rung-1-only stale test — the #54/#55/#56 fixes that round 3 found had never reached the normative surface at all** |
+| `templates/project-file.md` | 4,436 → 5,994 (**+1,558**) | three rhythm rows, five skill names, the tool-agnostic fallback, and the placeholder markers that stop it shipping five broken references (#68) |
+| `templates/review-changes.md` | 29,163 → 29,535 (**+372**) | the hypothesis-timing correction (#89) |
+
+**The ratchet fired three times and moved the text every time, in both directions, which is the argument for having it.** Round 1's drafts were cut 44% and 19% purely because the check went red. Rounds 2 and 3 then *added* net bytes to three of the four — a restored paragraph, nine measured justifications, a caveat, a tool-agnostic fallback, four placeholder markers, and an entire ported ruleset. Every one of those is something the first firing had helped hide, because the reflex response to a size gate is to cut prose rather than to ask which prose was load-bearing. `audit-context` is now the largest adopter-facing template at 38k; that is a real cost and it is recorded here rather than absorbed, because the alternative was three fixes that shipped in a file adopters never receive.
+
 ## v1.27.0 (2026-08-26)
 
 ### Skill arguments are substituted into the skill body, so `$0` in an embedded awk program was delivered as an argument word (closes #77)

@@ -39,13 +39,59 @@ Framework version X.Y.Z (prose)
 
 The versions above are placeholders on purpose. What varies between the shapes is the **separator** — emphasis before or after the colon, a parenthetical, the word `framework`, or no colon at all — not the number. Real versions here would go stale and would be returned by every future release sweep as hits to re-triage.
 
-A matcher keyed to one of these reports an **unstamped project** when the stamp is merely written differently — which reads identically to "no framework adopted here" and is the wrong conclusion. Use a wide separator class:
+A matcher keyed to one of these reports an **unstamped project** when the stamp is merely written differently — which reads identically to "no framework adopted here" and is the wrong conclusion. Use a wide separator class, and a **second** matcher for a pin that is not a version:
 
 ```bash
-grep -rnE "agent-ready-[a-z]+[^0-9]{0,24}v?[0-9]+\.[0-9]+" <project file> <template dir>
+# 1. version-shaped pins
+grep -rnE "agent-ready-[a-z]+[^0-9]{0,60}v?[0-9]+\.[0-9]+[0-9.]*" <project file> <template dir>
+# 2. commit-hash pins
+grep -rnE "agent-ready-[a-z]+[^A-Za-z0-9]{0,24}[0-9a-f]{7,40}" <project file> <template dir>
 ```
 
+- **`{0,60}`, not `{0,24}`** — ``Adopted from `agent-ready-projects` `templates/review-changes.md` (v1.18.0`` puts **33** characters between name and version. At `{0,24}` that stamp was invisible for a whole adoption while two others in the same repo were found.
+- **Matcher 2** exists because matcher 1 needs two dot-separated numeric groups, which no separator width reaches on a hash.
+- **The two separator classes differ, and that is why these are two matchers rather than one alternation.** Matcher 1 allows letters between the name and the version, because a provenance line puts a filename there. Matcher 2 must *exclude* them, or a 7-character hex run matches inside an ordinary word. One pattern cannot hold both rules. Combining them as `(a|b)` also works on every implementation tried here — GNU grep 3.12 and busybox — so combine them if you prefer; the reason for two is the classes, not the tool.
+
+Neither matcher is exhaustive — a branch name, a date or a `main` pin is a pin they cannot see — which is why the reconciliation below is not optional.
+
 **Report the stamps you found, by file and line, before continuing.** If you find none, say "no stamp found" and stop — do not assume the project is unadopted, and do not add a stamp yourself.
+
+### Reconcile: a partial find reads exactly like a complete one
+
+That guard only fires on **zero** hits. Find two stamps of three and the step reports two real stamps and proceeds — the miss is invisible, and that framework is then triaged against the wrong baseline or not at all. It has happened twice: to a 33-character separator, and to a commit-hash pin.
+
+So state the denominator:
+
+```bash
+M=$(mktemp); S=$(mktemp); trap 'rm -f "$M" "$S"' EXIT
+# every (file, framework) PAIR that is mentioned...
+grep -rnoE "agent-ready-[a-z]+" <project file> <template dir> 2>/dev/null |
+  sed -E 's/:[0-9]+:/:/' | LC_ALL=C sort -u > "$M" || :
+# ...against every pair a stamp was actually found for
+{ grep -roE "agent-ready-[a-z]+[^0-9]{0,60}v?[0-9]+\.[0-9]+[0-9.]*" <project file> <template dir> 2>/dev/null || :
+  grep -roE "agent-ready-[a-z]+[^A-Za-z0-9]{0,24}[0-9a-f]{7,40}"     <project file> <template dir> 2>/dev/null || :
+} | sed -E 's/^(.*):(agent-ready-[a-z]+).*/\1:\2/' | LC_ALL=C sort -u > "$S"
+printf 'mentioned pairs: %s  stamped pairs: %s\n' "$(wc -l < "$M")" "$(wc -l < "$S")"
+[ -s "$M" ] || echo 'EMPTY — the mention grep matched nothing. Check the operands before reading this as clean.'
+LC_ALL=C comm -23 "$M" "$S"
+```
+
+Five details in that block are load-bearing, and each was measured rather than reasoned:
+
+- **The unit is `(file, framework)`, not `file`.** A file-scoped difference cannot see the failure this section exists for. #72's own repro is one `CLAUDE.md` pinning two frameworks, one by hash and one by tag: with only the version matcher running, that file is "stamped" because the *other* framework matched, and the missing hash pin never appears in the difference. Measured on exactly that shape — file-scoped reported a clean reconciliation while a pin was invisible.
+- **The counts are printed by the command, not left to the reader.** With mistyped operands both files come out empty, `comm` prints nothing and exits 0 — indistinguishable from a clean reconciliation. That is this section's own failure one layer up: an instrument that cannot report its blind spot. The `printf` and the `[ -s ]` line are what make a zero denominator visible.
+- **`sort -u` on BOTH sides.** This is a set difference. With `sort` on the left and `sort -u` on the right, an operand pair that overlaps — a project file *inside* the template dir, or `CLAUDE.md .` — emits the file twice on the left and once on the right, and `comm -23` reports a correctly stamped file as unstamped. Measured.
+- **`LC_ALL=C` on both sorts *and on `comm`*.** `comm` compares bytes in the implementation measured here, but GNU `comm` collates by locale when the locale is "hard" — in which case C-sorted input under a UTF-8 locale is the "not in sorted order, wrong difference" failure this bullet is about, *caused by the recipe*. Putting `LC_ALL=C` on all three costs nothing and removes the question. (Measured on uutils coreutils 0.8.0; GNU `comm` not available here to test.)
+- **`|| :` on each grep.** A grep that matches nothing exits 1. Under `set -eo pipefail` that kills the block *after* the redirect has already truncated the stamped list, so a later `comm` reports every mention as a miss.
+
+**Report both counts and every file in the difference.** Each one gets a disposition out loud: *a stamp the matcher missed* (read the line, name the shape, use it) or *a mention that is not a pin*. A difference nobody looked at is the same failure one layer up.
+
+### A pin that resolves to no version
+
+A commit hash, branch name or date is a pin but **not** a version, so Step 1 cannot list the releases after it. Give it its own outcome:
+
+- Resolve it if you can — `git -C ~/repos/<framework> describe --tags --contains <hash>` names the first release containing that commit, and that release is the pin.
+- Otherwise report **`unresolvable pin: <what was found>, in <file>:<line>`** and carry it to the report as an explicit outcome. Do not substitute the latest version, and do not treat the framework as un-pinned.
 
 Then check the templates directory too, if the project ships one. A scaffolding template that stamps a framework version is the file releases habitually miss: nobody edits it during a normal release, so it never appears in a current-version grep, and a new adopter inherits a stamp that misdescribes the files they just got. A template with **no** stamp at all is the stronger version of the same defect — the drift check it tells the adopter to run has nothing to read, and passes.
 
@@ -57,7 +103,7 @@ Prefer a local clone if one exists (`~/repos/<framework>/CHANGELOG.md`) — it i
 
 If the project is current, say so and stop. "Reviewed and declined" from a previous session counts as current — check the changelog or memory for a recorded decline before reporting drift on something already decided.
 
-## Step 2 — Triage each release into one of four outcomes
+## Step 2 — Triage each release into one of four outcomes, plus one for a framework whose pin never resolved
 
 Not "does this apply?" — which invites a yes/no and loses the reasoning. Every release gets exactly one of:
 
@@ -67,6 +113,7 @@ Not "does this apply?" — which invites a yes/no and loses the reasoning. Every
 | **Decline** | Applies, but this project shouldn't take it | **The reason.** This is the load-bearing one |
 | **Not applicable** | No counterpart surface in this project | Which surface is missing |
 | **Already in force** | The behaviour is present but undocumented here | What to correct in the docs |
+| **Unresolvable pin** | The stamp is not a version, and Step 0 could not resolve it to one | What was found, and where — this outcome applies to the *framework*, not to one release, and it means the release list below it could not be built |
 
 **"Already in force" is the outcome people forget, and it produces real corrections.** A user-global skill updated outside this repo is current here without anything in this repo changing — and the project file may still describe it as project-local, which has quietly been false since whenever the scope changed. Check the actual installed artifact (`diff` it against the framework's tracked copy), not the project file's description of it.
 

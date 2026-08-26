@@ -21,12 +21,26 @@ framework: agent-ready-projects v1.27.0
 
 | When | Read |
 |------|------|
+<!-- The skill rows below name the five shipped skills. `/name` is the Claude Code
+     form; other tools have their own, and every one of them also works as
+     "paste the framework's template for it as a prompt". Delete any row whose
+     skill you did not adopt rather than leaving a pointer to nothing.
+
+     The template paths below carry a `placeholder` marker because they live in
+     the FRAMEWORK repo, not in yours: unmarked, this file's own reference check
+     reports five permanent broken references in the one artifact that is loaded
+     every session. (The marker is named in backticks here on purpose — written
+     bare, this sentence would itself be read as a marker in use and reported as
+     covering no path. Measured on this very comment.) -->
+
 | Picking up where the last session left off | `memory/MEMORY.md` — **the index itself, not the topic files it lists**; those stay on demand, or Layer 3 collapses back into always-loaded context. Nothing loads this file on its own: since ADR-001 it sits below the cliff, so if this row is missing it is simply never read. Keep it near the top — an open handoff is worthless one session late. |
-| Starting any session (framework drift) | Compare the `framework: agent-ready-projects vX.Y.Z` line in this file's header against https://github.com/ducroq/agent-ready-projects/blob/master/CHANGELOG.md (or local clone if present). If the project is behind the latest released version, briefly surface the drift to the user before starting work. Don't auto-update — adopting changes is the engineer's call. |
+| Starting any session (framework drift) | Compare the `framework: agent-ready-projects vX.Y.Z` line in this file's header against https://github.com/ducroq/agent-ready-projects/blob/master/CHANGELOG.md (or local clone if present). If the project is behind the latest released version, briefly surface the drift to the user before starting work. `/update-drift`, or `templates/update-drift.md` <!-- placeholder --> pasted as a prompt, does this triage. Don't auto-update — adopting changes is the engineer's call. |
 | Making architectural decisions | `docs/adr/README.md` — decision index |
 | Changing deployment or infra | `docs/RUNBOOK.md` — operational how-to |
 | Stuck or debugging something weird | `memory/gotcha-log.md` — problem-fix archive |
-| Ending a session | `memory/gotcha-log.md` — review, promote patterns, retire stale entries |
+| **Before committing** | Diff-driven review, lenses chosen by what changed — `/review-changes` where your tool has skills, otherwise paste `templates/review-changes.md` <!-- placeholder --> as a prompt. This row is what fires it: nothing else prompts either party mid-flow. |
+| Ending a session | `memory/gotcha-log.md` — review, promote patterns, retire stale entries. Then `/curate`, or paste `templates/curate.md` <!-- placeholder -->. |
+| Periodic — monthly, after restructuring, and when cutting a release | `/audit-context` (structural health across the layers) and `/release` (bump classification, preconditions, changelog draft; stops before tagging), or paste `templates/audit-context.md` <!-- placeholder --> / `templates/release.md` <!-- placeholder --> |
 <!-- Optional: add if you're using the workflow checklists from templates/checklists/
 | Finishing architecture/design | `docs/checklists/architect-checklist.md` — definition-of-done |
 | Writing or reviewing tests | `docs/checklists/test-checklist.md` — definition-of-done |

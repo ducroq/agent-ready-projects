@@ -22,10 +22,12 @@ RUNG 1 (enumerated, not defects), SKIPPED as asserted-absent, extensions in the
 tree the extractor misses, and — only when they apply — DOCUMENTS NOT READ and
 a RUNG 4 COVERAGE line.
 
-**Only backticked paths are extracted.** A markdown link or a bare prose path is
-invisible here, so an all-empty report is not by itself proof of a clean
-document — check the document's style, and check that DOCUMENTS NOT READ is
-absent, before reading empty as passing.
+**Backticked paths and markdown-link URLs are extracted; a bare prose path is
+not.** A link's *label* is a display name and is masked before extraction, while
+its URL is checked in the label's place (#55); a URL the whitelist declines is
+listed under LINK URLs NOT CHECKED rather than dropped. An all-empty report is
+still not by itself proof of a clean document — check the document's style, and
+check that DOCUMENTS NOT READ is absent, before reading empty as passing.
 """
 
 import re
@@ -46,6 +48,7 @@ EXT = (
 # reached the checker, so it could be neither reported nor counted, which is
 # the silent-skip failure this file exists to prevent (#45).
 PATH_RE = re.compile(r'`([A-Za-z0-9_.<][A-Za-z0-9_./*<>-]*\.(?:' + EXT + r'))`')
+URLPATH_RE = re.compile(r'^[A-Za-z0-9_.<][A-Za-z0-9_./*<>-]*\.(?:' + EXT + r')$')
 
 # Some EXT entries are FILENAME-shaped, not extension-shaped, and the rule
 # matches the tail of any dotted token — so `env` captures `process.env`, a
@@ -88,11 +91,111 @@ PRUNE = {'.git', 'venv', '.venv', 'node_modules', '__pycache__', 'target', 'dist
 # Span-scoped, NOT line-scoped. A line may retire one path and name its live
 # replacement in the same sentence; skipping the line loses the replacement.
 STRIKE_RE = re.compile(r'~~(.+?)~~')
-DELETED_RE = re.compile(r'\*\*Deleted\*\*:?\s*(`[^`]+`)')
+# The retired path may be written as a backticked span or as a markdown link;
+# before #55 only the first form existed here, and masking the link label made
+# the second form stop being covered at all — a deliberate deletion reported as
+# a break. Seeded as N27.
+DELETED_RE = re.compile(r'\*\*Deleted\*\*:?\s*(\[[^\]\[]*\]\([^()\s]+\)|`[^`]+`)')
 # `<!-- placeholder -->` mirrors the file's existing `<!-- verify: -->` idiom:
 # invisible when rendered, greppable, machine-readable.
 PLACEHOLDER_RE = re.compile(r'<!--\s*placeholder\s*-->')
 SPAN_RE = re.compile(r'`[^`]*`')
+# A markdown link's TEXT is a display label, not a reference (#55). The house
+# style this framework recommends is exactly ``[`writing-guide.md`](templates/writing-guide.md)``
+# — a backticked filename as the label with the real path in the URL — so the
+# better a document follows the convention, the more phantom collisions the
+# label generates, and the pressure is to stop backticking link text, which
+# makes the docs worse. Mask the label, then extract the URL, which is the
+# reference. Masking ALONE would be a loosening with no compensating check: the
+# label used to give a broken URL accidental coverage, since a label matching
+# its own target reported UNRESOLVED when the target was missing.
+LINK_RE = re.compile(r'\[([^\]\[]*)\]\(([^()\s]+)(?:\s+"[^"]*")?\)')
+
+
+def _mask_link_labels(line):
+    """Blank the TEXT of every markdown link, preserving offsets, so the label
+    is not extracted as a path. The URL is left in place; it is extracted
+    separately by _link_urls()."""
+    def sub(m):
+        whole = m.group(0)
+        label = m.group(1)
+        i = whole.index('[')
+        return whole[:i + 1] + ' ' * len(label) + whole[i + 1 + len(label):]
+    return LINK_RE.sub(sub, line)
+
+
+def _link_urls(line):
+    """Markdown-link URLs on this line, as (start, end, url, why).
+
+    `why` is None when the URL is a checkable path. Otherwise it names the
+    reason it is not, and the caller must REPORT that rather than drop it: the
+    label used to give these accidental coverage, so silently declining them
+    would trade a phantom for a silent skip — the class this whole file exists
+    to prevent (#45). Measured on five broken-link shapes where the label was
+    the only coverage, dropping them silently took the findings from 5 to 1."""
+    out = []
+    for m in LINK_RE.finditer(line):
+        raw = m.group(2)
+        st, en = m.start(2), m.end(2)
+        url = raw.split('#', 1)[0].strip()
+        if not url:
+            out.append((st, en, raw, 'an in-page anchor, no file named'))
+        elif URLISH.match(url) or ':' in url.split('/', 1)[0]:
+            out.append((st, en, url, 'an external URL, not a path in this tree'))
+        # Root-relative BEFORE the whitelist test, or the reason printed is
+        # simply wrong: `/docs/GUIDE.md` failed URLPATH_RE on its leading slash
+        # and was reported as "extension outside the whitelist: .md" — and `.md`
+        # is whitelisted. Root-relative is the standard GitHub link form, so it
+        # is a message an adopter meets early and is misled by. Declined rather
+        # than resolved because "root" is ambiguous here: a docs site's root and
+        # the repo root are frequently not the same directory.
+        elif url.startswith('/'):
+            out.append((st, en, url,
+                        'root-relative; this checker resolves from the repo root '
+                        'and cannot tell that apart from a docs-site root'))
+        elif URLPATH_RE.match(url):
+            out.append((st, en, url, None))
+        elif url.endswith('/'):
+            out.append((st, en, url, 'a directory, not a file'))
+        else:
+            ext = url.rsplit('.', 1)[-1] if '.' in url.rsplit('/', 1)[-1] else ''
+            out.append((st, en, url,
+                        'extension outside the whitelist: .%s' % ext if ext
+                        else 'no extension, so no whitelist entry can match it'))
+    return out
+
+
+# A link-shaped construct LINK_RE cannot parse: nested brackets, a `]` inside the
+# label, parentheses inside the URL, an angle-bracket URL, a reference-style
+# `[text][ref]`. Each one drops BOTH the label and the URL, so the reference
+# vanishes entirely — no finding, no enumeration. Counting them is what keeps
+# "never dropped" from being a false absolute.
+LINKISH_RE = re.compile(r'\]\s*[\(\[]')
+
+
+def _unparsed_links(raw_line):
+    """How many link-shaped constructs LINK_RE failed to parse on this line."""
+    return max(0, len(LINKISH_RE.findall(raw_line)) - len(LINK_RE.findall(raw_line)))
+
+
+def _candidates(raw_line):
+    """Every path-shaped candidate on the line, as (start, end, frag), in source
+    order: backticked spans with markdown-link LABELS masked out, plus the URL
+    of each markdown link that is a checkable path.
+
+    One extractor for all three consumers — the strikethrough/`**Deleted**`
+    skip collectors, the span-scoped placeholder arithmetic, and the rung
+    ladder — because they must agree on what a candidate IS. They did not on
+    the first draft of #55: masking the label removed the only backticked token
+    from a struck span, so `~~[`old.py`](src/old.py)~~ was removed` stopped
+    being suppressed and a deliberate retirement was reported as a break, while
+    a placeholder on a link reported COVERS NO PATH *and* excused the path in
+    the same run. Measured against HEAD, both directions."""
+    masked = _mask_link_labels(raw_line)
+    out = [(m.start(1), m.end(1), m.group(1)) for m in PATH_RE.finditer(masked)]
+    out += [(st, en, u) for st, en, u, why in _link_urls(raw_line) if why is None]
+    out.sort()
+    return out
 
 
 def _mask_spans(line):
@@ -306,6 +409,7 @@ def check(root, sources, sibling_roots=None):
 
     rel = [str(p.relative_to(root)) for p in _tree(root)]
     findings, resolved_weak, skipped, placeheld = [], [], [], []
+    unchecked = []   # link URLs declined with a stated reason (#55)
 
     missing = []
     for src in sources:
@@ -314,13 +418,46 @@ def check(root, sources, sibling_roots=None):
             missing.append(src)   # e.g. an optional Layer-4 gotcha log
             continue
         lines = text.split('\n')
-        for i, line in enumerate(lines):
-            # Span-scoped skips: collect only the paths the markers cover.
+        for i, raw_line in enumerate(lines):
+            # #55: the label of a markdown link is masked out before ANY
+            # extraction on this line — offsets are preserved, so the
+            # span-scoped placeholder arithmetic further down is unaffected —
+            # and the link's URL becomes a candidate in its place. It is done
+            # here rather than lower so the strikethrough and deleted-span
+            # collectors below see the same masked line.
+            line = _mask_link_labels(raw_line)
+            cands = _candidates(raw_line)
+            # A link URL this checker declines to resolve is REPORTED rather
+            # than dropped — every URL `LINK_RE` matches, plus a count of the
+            # link-shaped constructs it could not parse at all. Before #55 the label gave these accidental coverage;
+            # masking the label without saying so would trade a phantom finding
+            # for a silent skip, and a silent skip is the failure class this
+            # file exists to prevent. Measured: five broken-link shapes where
+            # the label was the only coverage went from 5 findings to 1 when
+            # they were dropped quietly. `.pdf` is the sharp one — an extension
+            # outside the whitelist on a file that does NOT exist appears in
+            # neither the findings nor the "extensions in tree" trailer, which
+            # only names extensions the tree actually holds.
+            for _st, _en, _u, _why in _link_urls(raw_line):
+                if _why is not None:
+                    unchecked.append((src, _u, 'LINK URL NOT CHECKED (%s)' % _why))
+            _n = _unparsed_links(raw_line)
+            if _n:
+                unchecked.append((src, '(line %d)' % (i + 1),
+                                  'LINK-SHAPED CONSTRUCT NOT PARSED x%d — nested brackets, a '
+                                  '`]` in the label, parens in the URL, an angle-bracket URL '
+                                  'or a reference-style link. Both label and URL are dropped, '
+                                  'so the reference is invisible to every rung' % _n))
+
+            # Span-scoped skips: collect only the paths the markers cover. These
+            # run over _candidates() rather than PATH_RE so a struck or deleted
+            # markdown LINK is suppressed like a struck backticked path — see
+            # the _candidates docstring for the regression that forced it.
             covered = set()
-            for m in STRIKE_RE.finditer(line):
-                covered |= set(PATH_RE.findall(m.group(1)))
-            for m in DELETED_RE.finditer(line):
-                covered |= set(PATH_RE.findall(m.group(1)))
+            for m in STRIKE_RE.finditer(raw_line):
+                covered |= {c[2] for c in _candidates(m.group(1))}
+            for m in DELETED_RE.finditer(raw_line):
+                covered |= {c[2] for c in _candidates(m.group(1))}
             for m in NEGATED_RE.finditer(line):
                 covered.add(m.group(1))
 
@@ -334,13 +471,13 @@ def check(root, sources, sibling_roots=None):
             # co-located genuine break as intentional — the defect this step
             # already measured once for strikethrough.
             placeheld_frags = set()
-            eligible = [m for m in PATH_RE.finditer(line)
-                        if '*' not in m.group(1) and not URLISH.match(m.group(1))
-                        and not _is_identifier_not_path(m.group(1))]
+            eligible = [c for c in cands
+                        if '*' not in c[2] and not URLISH.match(c[2])
+                        and not _is_identifier_not_path(c[2])]
             for pm in PLACEHOLDER_RE.finditer(_mask_spans(line)):
-                before = [m for m in eligible if m.end() <= pm.start()]
+                before = [c for c in eligible if c[1] <= pm.start()]
                 if before:
-                    placeheld_frags.add(before[-1].group(1))
+                    placeheld_frags.add(before[-1][2])
                 else:
                     findings.append((src, '(line %d)' % (i + 1),
                                      'PLACEHOLDER MARKER COVERS NO PATH — it is span-scoped and '
@@ -369,7 +506,7 @@ def check(root, sources, sibling_roots=None):
                     named_cache[0] = _marked_siblings(para, siblings)
                 return named_cache[0]
 
-            for frag in PATH_RE.findall(line):
+            for frag in [c[2] for c in cands]:
                 if '*' in frag or URLISH.match(frag):
                     continue  # a hostname is not a path
                 if _is_identifier_not_path(frag):
@@ -383,9 +520,24 @@ def check(root, sources, sibling_roots=None):
                     # A marker on a path that DOES resolve is the failure this
                     # skip newly permits: mislabelling is how a real break gets
                     # hidden. Report it instead of skipping it.
-                    if (root / frag).exists() or _suffix_matches(rel, frag):
+                    #
+                    # RUNG 1 ONLY, and the suffix arm is deliberately not here
+                    # (#56). A marker whose path resolves *as written* is
+                    # unambiguously mislabelled. A marker whose path merely
+                    # shares a SUFFIX with some file elsewhere is not evidence of
+                    # mislabelling at all — it is the bare-basename ambiguity
+                    # #54 is about, and the suffix rung was built to RESOLVE
+                    # references, not to ADJUDICATE INTENT. With the suffix arm
+                    # in, any repo that ships a template *and* instances of it
+                    # left the author no correct move: marked reported STALE,
+                    # unmarked reported COLLISION, and both are findings on a
+                    # reference that is doing exactly what it should. Measured on
+                    # an adopter that ships `templates/CLAUDE.md` beside
+                    # `papers/*/CLAUDE.md`; three references were left knowingly
+                    # unfixed there because neither move was correct.
+                    if (root / frag).exists():
                         findings.append((src, frag,
-                                         'STALE PLACEHOLDER MARKER (resolves at rung 1-2, locally)'))
+                                         'STALE PLACEHOLDER MARKER (resolves at rung 1, as written)'))
                         continue
                     # rung 3 (runtime state) BEFORE rung 4, for the same reason the
                     # unmarked path does it in that order two hundred lines below: a
@@ -423,6 +575,28 @@ def check(root, sources, sibling_roots=None):
 
                 # rung 1 — as written
                 if (root / frag).exists():
+                    continue
+
+                # rung 1b — DOC-RELATIVE, which is not a courtesy rung: markdown
+                # link semantics ARE doc-relative, so a bare `backlog.md` in
+                # `papers/one/CLAUDE.md` means the file next to it, and that is
+                # how the rendered link resolves. Without this rung such a
+                # reference either misses rung 1 outright or gets downgraded to a
+                # COLLISION against a same-named file elsewhere in the tree — and
+                # a collision is reported as a defect requiring a decision when
+                # there is nothing to decide. Measured on one adopter: 42 of 102
+                # findings, 41%, were correct doc-relative references (#54).
+                # It must sit ABOVE rung 2, or the collision fires first.
+                # Enumerated rather than silent: it is not a defect, but a reader
+                # comparing two repos should be able to see how much of the tree
+                # resolves this way.
+                docrel = (root / src).parent / frag
+                if docrel.exists() and docrel.is_file():
+                    try:
+                        shown = docrel.resolve().relative_to(root.resolve())
+                    except ValueError:
+                        shown = docrel
+                    resolved_weak.append((src, frag, f'doc-relative -> {shown}'))
                     continue
 
                 # rung 2 — suffix in the working tree; collisions are findings
@@ -480,7 +654,7 @@ def check(root, sources, sibling_roots=None):
     tree_ext = {p.suffix.lstrip('.').lower() for p in _tree(root) if p.suffix}
     known = set(EXT.split('|'))
     unknown = sorted(e for e in tree_ext - known if e and len(e) <= 12)
-    return findings, resolved_weak, skipped, placeheld, unknown, missing, len(siblings)
+    return findings, resolved_weak, skipped, placeheld, unknown, missing, len(siblings), unchecked
 
 
 def main():
@@ -519,7 +693,7 @@ def main():
         print(f"  TOTAL ITEMS PUT TO A HUMAN: {len(reports) + len(stale)}")
         return 0
 
-    findings, weak, skipped, placeheld, unknown, missing, n_siblings = check(
+    findings, weak, skipped, placeheld, unknown, missing, n_siblings, unchecked = check(
         root, sources, sibling_roots)
 
     # State rung 4's coverage as a fact rather than inferring a verdict per
@@ -556,6 +730,11 @@ def main():
     for s, p, v in placeheld:
         print(f"  {s:24s} {p:44s} {v}")
     print(f"  total: {len(placeheld)}")
+
+    print("\n== LINK URLs NOT CHECKED (every URL LINK_RE matched, plus a count of those it could not) ==")
+    for s, p, v in unchecked:
+        print(f"  {s:24s} {p:44s} {v}")
+    print(f"  total: {len(unchecked)}")
 
     print("\n== SKIPPED as asserted-absent ==")
     for s, p, v in skipped:

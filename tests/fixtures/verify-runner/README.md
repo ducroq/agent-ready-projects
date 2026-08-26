@@ -42,7 +42,7 @@ fixture, because it reports green about something nobody runs.
 
 ## What the cases assert
 
-- **32 positives** (`p01`–`p34`) — each must be extracted *and* classified as the
+- **33 positives** (`c00`, `p01`–`p34`) — each must be extracted *and* classified as the
   named disposition. A positive that vanishes from the report fails just as
   loudly as one that is misclassified.
 - **4 malformed cases** (`m01`–`m04`) plus `u01` — no closing `-->`, a second
@@ -66,7 +66,7 @@ fixture, because it reports green about something nobody runs.
   per-command output file, each with its own mutant. They run against two-line
   inputs rather than the main tree, because seeding them there would cost several
   seconds on every one of the 29 ablation runs.
-- **The reconciliation line** — `ran 30 of 46 annotations`. Both numbers are
+- **The reconciliation line** — `ran 32 of 48 annotations`. Both numbers are
   asserted. An extractor that silently yields fewer commands still prints a
   summary, and that line is the only place the shortfall is visible.
 - **29 ablations** — each removes one guard and must produce *its own specific
@@ -74,6 +74,63 @@ fixture, because it reports green about something nobody runs.
   summary. "The output changed" was the first draft and is too weak: a mutation
   that breaks the runner in some unrelated way also changes the output, so it
   passes without ever demonstrating the defect the guard prevents.
+- **The ablation control `c00`** — the nine absence-shaped ablations
+  (`norow:`/`notrow:`) additionally require a row the mutant must *still* report
+  correctly. See the next section: without it those nine proved nothing.
+
+## The control, and the measurement that forced it (#90)
+
+An absence-shaped consequence — "row `p22` is gone" — was guarded only by the
+summary line, on the reasoning that a runner which died mid-loop never prints
+one. That closes the **crash** form of a dead runner and not the **silence**
+form. Measured on the shipped fixture: suppressing the four per-row report sites
+(`MALFORMED`, `MANUAL`, `CANNOT-VERIFY`, and the `%-14s` verdict row) with a `:`
+prefix — leaving extraction, execution, counting, the summary line and the exit
+status intact — produced this:
+
+| | before the control | with the control |
+|---|---|---|
+| ablations that PASS against the silence-mutant | **15** | **6** |
+| of those, legitimate | 6 | 6 |
+| of those, **vacuous** | **9** | **0** |
+
+The six legitimate passes are the five `canary:` ablations, which assert a
+filesystem side-effect the mutant deliberately preserves, and `A5-subshell`,
+whose mutation genuinely kills the run before its summary. The nine vacuous ones
+were `A8`, `A9`, `A10`, `A22`, `A23`, `A25`, `A27`, `A29` and `A30`.
+
+`c00` is seeded in the file passed **first**, above every fence, in plain prose,
+lower-case marker, no pipe, no code span, no table — the position is the design,
+because every mutation these ablations apply must leave it reportable. `A10`
+is why it must be in the first file at all: that ablation removes the per-file
+state reset, so an open fence legitimately blanks every later file, and any
+control living in `claims.md` would fail for a reason that is not death.
+
+**Four** of the nine assert the disappearance of a **MALFORMED** row, and for
+those `c00` alone is not enough — a mutant silencing only the MALFORMED site
+satisfies the consequence with a live verdict site. Those four — `A8`, `A23`,
+`A25` and `A30`, whose `a fence opened … and never closed` row is a MALFORMED
+row too — carry `ctl:c00,m02` and require the MALFORMED site alive as well.
+`m02` reports through the double-open branch, which none of these ablations
+touch. (`grep -c '^ablate .*ctl:c00,m02' run.sh` is the check, and it returns 4. The
+anchor matters: without it the count is 5, because the explanatory comment above
+the ablations names the spec too — a needle that matches its own documentation.)
+
+An **empty** `ctl:` spec is refused as loudly as a missing one. `ablate`'s guard
+tests only the prefix, so a bare `ctl:` would otherwise iterate zero controls
+and return success — absence satisfying the assertion, inside the mechanism
+built to stop exactly that. Measured: `A22` with `ctl:` instead of `ctl:c00`
+passed under full silencing before the guard existed.
+
+An absence-shaped consequence declared with **no** control is a fixture failure,
+not a silent default — otherwise the next ablation added reopens the hole.
+
+The sibling fixture `tests/fixtures/installer-release-guard/` was audited for the
+same class and is **structurally immune**: both of its dispositions assert a
+filesystem side-effect (`REFUSE` requires the destination to be untouched;
+`INSTALL` requires the installed copy to exist and `cmp` equal) alongside an exit
+code, so no case there is satisfied by a report that went quiet. That is the
+`canary:` shape, which is why it is the right answer wherever it is available.
 
 The suite takes about 90 seconds — the slowest check in this repo. Nearly all of
 it is 29 ablations each running the full seed.
