@@ -4,7 +4,7 @@ The source framework that teaches the layered memory method for AI coding agents
 
 - **Type**: Public methodology repo (guide + templates + skills)
 - **License**: MIT
-- **agent-ready-projects** (this repo): v1.27.0 (lint rule 9: a bare `$0`–`$9` in a skill body is an argument word, not a variable — skill *arguments* are substituted into the skill *body*, so an embedded awk program's `$0` ships as the first argument word (#77). MINOR, on the rule-7/rule-8 precedent. Its first four true positives were the #77 fix's own warning comments, delivered as "never `worktree`" — which is why there is no prose exemption. The safe form is context-dependent and measured: `$(N)` in awk, `${N}` in shell, `\$N` in prose. Two review rounds found eight defects and **both round-2 findings were created by round-1's fixes** — a discarded `find` status one layer outside a discarded `awk` status, and an ablation set that a silence-neutered checker passed six of nine times. Also carries three PATCH entries from the unreleased v1.26.2 block it renumbers.)
+- **agent-ready-projects** (this repo): v1.28.0 (nine issues closed in one batch — #90 fixture ablation controls, #88/#72 `update-drift` stamp matching, #89 hypothesis-timing contradiction, #48 size units, #68 the project file's missing pre-commit trigger, and #54/#55/#56 `audit-context` Step 4 reporting correct references as defects. MINOR. **Three review rounds; rounds 2 and 3 each found defects the previous round's fixes had created, and the suite was 9/9 lint and every fixture green at the start of round 2 (measured).** Round 3's finding is the one to carry: #54/#55/#56 had been fixed *only* in `tests/fixtures/reference-integrity/refcheck.py`, which is not normative and never reaches an adopter — three adopter-filed issues announced as closed with nothing an adopter installs changed. Also: a ugrep measurement that justified a normative instruction turned out to be an artifact of the reviewing agent's own `grep` wrapper, and the same claim may contaminate the v1.21.0 entry (#91).)
 
 > Live project state (current threads, deferred items, surfaced patterns) lives in `memory/MEMORY.md` (maintainer-local — see *What is intentionally not shipped* below). Release notes live in `CHANGELOG.md`.
 
@@ -89,7 +89,8 @@ agent-ready-projects/
 │   │   ├── skill-sync.sh      <- Rule 6: templates/<name>.md vs .claude/skills/<name>/SKILL.md
 │   │   └── dollar-digit.sh    <- Rule 9: a bare $0-$9 in a skill body is an argument word (#77)
 │   └── fixtures/              <- Seeded-defect fixtures: a check that finds nothing here is failing
-│       ├── reference-integrity/  <- Seeded breaks for audit-context Step 4; refcheck.py is its oracle
+│       ├── reference-integrity/  <- Seeded breaks for audit-context Step 4. refcheck.py is an ORACLE,
+│       │                          NOT normative and never installed — fix Step 4 too (#92)
 │       ├── skill-template-sync/  <- Seeded drift for lint rule 6 (17 positives, 7 negatives)
 │       ├── provisioning-quote/  <- Seeded drift for lint rule 7 (9 positives, 4 negatives)
 │       ├── size-ratchet/       <- Seeded growth for lint rule 8 (4 positives, 4 negatives)
@@ -97,7 +98,7 @@ agent-ready-projects/
 │       │                          12 negatives, 7 structural, 5 truth-table, 10 ablations;
 │       │                          every ablation co-seeds a control the mutant must keep)
 │       ├── verify-runner/       <- Seeded claims + prose for curate's verify runner
-│       │                           (32 positives, 10 negatives, 4 malformed, 7 structural,
+│       │                           (34 positives, 10 negatives, 4 malformed, 7 structural,
 │       │                            4 timing, 29 ablations)
 │       └── installer-release-guard/
 │                              <- Seeded git states for the installer's release guard

@@ -19,9 +19,9 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.28.0 (candidate, unreleased)
+## v1.28.0 (2026-08-26)
 
-Nine open issues closed in one batch: one measured hole in the repo's own sensitivity harness, two defects in `update-drift`'s stamp finder, three in `audit-context`'s reference checker, a timing contradiction between two shipped surfaces, a unit disagreement between two shipped surfaces, and the missing pre-commit trigger in the artifact every adopter copies. MINOR: new checker behaviour and new template rows, no adopter action required.
+Nine open issues closed in one batch: one measured hole in the repo's own sensitivity harness, two defects in `update-drift`'s stamp finder, three in `audit-context`'s reference checker, a timing contradiction between two shipped surfaces, a unit disagreement between two shipped surfaces, and the missing pre-commit trigger in the artifact every adopter copies. MINOR: new checker behaviour and new template rows. ⚠️ **Adopter action**: three skills changed. `audit-context` and `update-drift` are user-global — refresh via `scripts/install-global-skills.sh` after the release tag is pushed **and verified**. `review-changes` is project-local and must be re-copied by hand. Nothing breaks if you do neither; the old `audit-context` still runs, it just keeps reporting the correct references #54/#55/#56 are about.
 
 ### 9 of 29 ablations in `verify-runner` proved nothing, and a silence-mutant is what showed it (closes #90)
 
@@ -43,7 +43,7 @@ Four of the nine assert the disappearance of a **MALFORMED** row, and `c00` alon
 
 **An absence-shaped consequence declared with no control is now a fixture failure, not a silent default** — otherwise the next ablation added reopens the hole.
 
-This is the same hole #86 closed in `tests/fixtures/dollar-digit/` **earlier the same day**, in v1.27.0 — a fixture written *by the change that found it*, which then found it here. Reconciliation line moves `ran 30 of 46` → `ran 31 of 47`.
+This is the same hole #86 closed in `tests/fixtures/dollar-digit/` **earlier the same day**, in v1.27.0 — a fixture written *by the change that found it*, which then found it here. Reconciliation line moves `ran 30 of 46` → `ran 31 of 47`, and again to **`ran 32 of 48`** when round 3 adds the second control `z99`; the shipped assertion is the latter.
 
 **`tests/fixtures/installer-release-guard/` was the second half of #90's scope, and the first draft got it wrong in the most instructive way available.** That draft called the fixture *"structurally immune"* and said it *"cannot pass anything vacuously"* — an absolute in a description, derived by reading `judge` rather than by running the experiment #90's scope line explicitly asked for (*"has ablations, not measured. Same audit needed"*). A reviewer ran it.
 
