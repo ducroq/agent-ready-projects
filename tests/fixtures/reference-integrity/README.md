@@ -10,7 +10,9 @@ half is testable.
 
 ## What it seeds
 
-Eleven genuine breaks that must be reported:
+**Case counts, measured 2026-08-26** (`grep -oE '\bT[0-9]+[a-z]?\b' run.sh | sort -u | wc -l`, and the same for `N`): **25 T-cases** — T1–T27 with no T6 or T20 — and **27 N-cases**, N2–N28b. The enumeration below is the original eleven and is kept for the reasoning, not as a census; it went four releases without being re-counted, so treat any number in prose here as dated unless it carries a command.
+
+The original eleven genuine breaks that must be reported:
 
 | case | what it proves |
 |---|---|

@@ -42,7 +42,7 @@ fixture, because it reports green about something nobody runs.
 
 ## What the cases assert
 
-- **33 positives** (`c00`, `p01`–`p34`) — each must be extracted *and* classified as the
+- **34 positives** (`c00`, `z99`, `p01`–`p34`) — each must be extracted *and* classified as the
   named disposition. A positive that vanishes from the report fails just as
   loudly as one that is misclassified.
 - **4 malformed cases** (`m01`–`m04`) plus `u01` — no closing `-->`, a second
@@ -112,7 +112,7 @@ satisfies the consequence with a live verdict site. Those four — `A8`, `A23`,
 `A25` and `A30`, whose `a fence opened … and never closed` row is a MALFORMED
 row too — carry `ctl:c00,m02` and require the MALFORMED site alive as well.
 `m02` reports through the double-open branch, which none of these ablations
-touch. (`grep -c '^ablate .*ctl:c00,m02' run.sh` is the check, and it returns 4. The
+touch. (`grep -c '^ablate .*ctl:c00,z99,m02' run.sh` is the check, and it returns 4 — re-anchored in round 3, when the second control `z99` was added to every absence-shaped spec and the old pattern silently began returning 0. The
 anchor matters: without it the count is 5, because the explanatory comment above
 the ablations names the spec too — a needle that matches its own documentation.)
 
@@ -125,12 +125,19 @@ passed under full silencing before the guard existed.
 An absence-shaped consequence declared with **no** control is a fixture failure,
 not a silent default — otherwise the next ablation added reopens the hole.
 
-The sibling fixture `tests/fixtures/installer-release-guard/` was audited for the
-same class and is **structurally immune**: both of its dispositions assert a
-filesystem side-effect (`REFUSE` requires the destination to be untouched;
-`INSTALL` requires the installed copy to exist and `cmp` equal) alongside an exit
-code, so no case there is satisfied by a report that went quiet. That is the
-`canary:` shape, which is why it is the right answer wherever it is available.
+⚠️ **The sibling fixture `tests/fixtures/installer-release-guard/` was first
+described here as "structurally immune". That was an absolute in a description,
+asserted from reading its `judge` rather than from running anything, and a
+reviewer refuted it by running the experiment #90's own scope line had asked
+for: 33 FAIL / **1 PASS**.** `judge` really is immune — both its dispositions
+assert a filesystem side-effect (`REFUSE` requires the destination untouched;
+`INSTALL` requires the installed copy to exist and `cmp` equal) alongside an
+exit code. But `N12-unwritable-destination` does not go through `judge`: it is
+hand-rolled and tested only the *absence* of `': installed'`, which a silenced
+installer satisfies. It carries a positive needle now, and the count is 34/0.
+See that fixture's own README for the measurement. The `canary:` shape is still
+the right answer wherever it is available — the lesson is that having it is not
+the same as every case using it.
 
 The suite takes about 90 seconds — the slowest check in this repo. Nearly all of
 it is 29 ablations each running the full seed.
