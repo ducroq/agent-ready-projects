@@ -4,7 +4,7 @@ The source framework that teaches the layered memory method for AI coding agents
 
 - **Type**: Public methodology repo (guide + templates + skills)
 - **License**: MIT
-- **agent-ready-projects** (this repo): v1.28.0 (nine issues closed in one batch — #90 fixture ablation controls, #88/#72 `update-drift` stamp matching, #89 hypothesis-timing contradiction, #48 size units, #68 the project file's missing pre-commit trigger, and #54/#55/#56 `audit-context` Step 4 reporting correct references as defects. MINOR. **Three review rounds; rounds 2 and 3 each found defects the previous round's fixes had created, and the suite was 9/9 lint and every fixture green at the start of round 2 (measured).** Round 3's finding is the one to carry: #54/#55/#56 had been fixed *only* in `tests/fixtures/reference-integrity/refcheck.py`, which is not normative and never reaches an adopter — three adopter-filed issues announced as closed with nothing an adopter installs changed. Also: a ugrep measurement that justified a normative instruction turned out to be an artifact of the reviewing agent's own `grep` wrapper, and the same claim may contaminate the v1.21.0 entry (#91).)
+- **agent-ready-projects** (this repo): v1.29.0 (`audit-context` Step 4 gets a third outcome — *coverage incomplete*, exit 2 — because its status fired on **where the audit ran** rather than on what it audited: a reference resolvable through a neighbouring repo came back a confirmed break wherever the neighbours were not checked out. MINOR. **Four review rounds, every one finding defects the previous round's fixes had created**, and the suite was green at the start of each. Two to carry: (1) the gate had never been asserted at all — 54 named cases deep into asserting what the report *says*, all three oracle call sites discarded the status with `|| true`; (2) **five of ten ablation kill-sets were wrong when written and were corrected by running them** — an ablation's kill set is a measurement of the mutant, not a property of the row it was written for. ⚠️ **Round 4's fixes shipped unreviewed** — round 5 was launched and stopped before it reported.)
 
 > Live project state (current threads, deferred items, surfaced patterns) lives in `memory/MEMORY.md` (maintainer-local — see *What is intentionally not shipped* below). Release notes live in `CHANGELOG.md`.
 
@@ -91,7 +91,9 @@ agent-ready-projects/
 │   │   └── dollar-digit.sh    <- Rule 9: a bare $0-$9 in a skill body is an argument word (#77)
 │   └── fixtures/              <- Seeded-defect fixtures: a check that finds nothing here is failing
 │       ├── reference-integrity/  <- Seeded breaks for audit-context Step 4. refcheck.py is an ORACLE,
-│       │                          NOT normative and never installed — fix Step 4 too (#92)
+│       │                          NOT normative and never installed — fix Step 4 too (#92).
+│       │                          25 T, 27 N, D1, E1, plus 14 exit-status rows, an isolation
+│       │                          guard, an enumeration guard and 10 ablations (#93)
 │       ├── skill-template-sync/  <- Seeded drift for lint rule 6 (17 positives, 7 negatives)
 │       ├── provisioning-quote/  <- Seeded drift for lint rule 7 (9 positives, 4 negatives)
 │       ├── size-ratchet/       <- Seeded growth for lint rule 8 (4 positives, 4 negatives)

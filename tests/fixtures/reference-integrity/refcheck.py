@@ -18,9 +18,21 @@ reproduced the v1.15.0 defect it was meant to replace. The idea is sound; the
 packaging is not. Do not re-attempt without solving distribution first.
 
 Output sections: FINDINGS (broken or ambiguous — the defects), RESOLVED BELOW
-RUNG 1 (enumerated, not defects), SKIPPED as asserted-absent, extensions in the
-tree the extractor misses, and — only when they apply — DOCUMENTS NOT READ and
-a RUNG 4 COVERAGE line.
+RUNG 1 (enumerated, not defects), SKIPPED as asserted-absent, UNCONFIRMED (what
+this run could not decide), extensions in the tree the extractor misses, and —
+only when they apply — DOCUMENTS NOT READ and
+a RUNG 4 COVERAGE line. On the default path a VERDICT line closes the report and
+names the exit status, so the two cannot drift apart unnoticed; `--legacy` is a
+re-derivation of the v1.15.0 numbers and prints no verdict; it returns 0 on any
+run that reaches it, which a usage error does not.
+
+Exit (default path): 0 clean; 1 something was ruled on — a finding a rung
+actually decided, or a document that could not be read; 2 nothing was ruled on
+but something was left undecided, because rung 4 had no neighbouring repo to run
+against (#93). **2 is still non-zero** — a gate written as `refcheck.py ... && ...`
+behaves exactly as it did before, and only a caller that opts in
+(`|| [ $? -eq 2 ]`) accepts an undecided run. A usage error exits **64**
+(`EX_USAGE`), so a typo'd flag cannot be read as either verdict.
 
 **Backticked paths and markdown-link URLs are extracted; a bare prose path is
 not.** A link's *label* is a display name and is masked before extraction, while
@@ -33,6 +45,15 @@ check that DOCUMENTS NOT READ is absent, before reading empty as passing.
 import re
 import sys
 import pathlib
+
+# The verdict a reference gets when every rung that could run has run and none
+# of them could rule on it, because rung 4 needs a neighbouring repo on disk and
+# none was reachable. It is deliberately a distinct string from a plain
+# `UNRESOLVED`: the two look identical to a reader and exited identically to a
+# gate, which made the exit status a property of WHERE the audit ran rather than
+# of what it audited (#93). A correct repo whose neighbours are simply not
+# checked out — CI, a fresh clone, a container — failed on its environment.
+UNCONFIRMED = 'UNRESOLVED (unconfirmed: rung 4 did not run)'
 
 # Extensions the extractor recognises. NOT a closed world: `unknown_extensions`
 # below reports what the tree contains that this list misses, so a repo whose
@@ -385,8 +406,10 @@ def check(root, sources, sibling_roots=None):
     # rung-4 loop below breaks on the FIRST hit. Re-keying the listing cache fixed
     # which listing a name maps to; it did not fix the order they are tried in.
     siblings = sorted(set(siblings), key=lambda p: (p.name, str(p)))
-    # If no sibling repo is reachable, rung 4 cannot run. Findings are then
-    # annotated to say so, rather than presented as confirmed breaks.
+    # If no sibling repo is reachable, rung 4 cannot run, and an unresolved
+    # reference carries that on its own verdict rather than only in the run's
+    # coverage header — see UNCONFIRMED above. (This flag was assigned and never
+    # read until #93, while the comment above it claimed the annotation existed.)
     rung4_runnable = bool(siblings)
     # Walked once per sibling, not once per reference, and LAZILY: a repo with
     # no rung-4 traffic pays nothing. Measured by a reviewer on real trees —
@@ -409,6 +432,9 @@ def check(root, sources, sibling_roots=None):
 
     rel = [str(p.relative_to(root)) for p in _tree(root)]
     findings, resolved_weak, skipped, placeheld = [], [], [], []
+    # Marked references the rung-4 stale test could not run against (R1). Counted,
+    # not reported as defects: nothing here is known to be wrong, only unchecked.
+    undecided_markers = []
     unchecked = []   # link URLs declined with a stated reason (#55)
 
     missing = []
@@ -567,10 +593,38 @@ def check(root, sources, sibling_roots=None):
                     elif sib:
                         findings.append((src, frag,
                                          f'STALE PLACEHOLDER MARKER ({sib[1]})'))
-                    else:
+                    elif rung4_runnable:
                         placeheld.append((src, frag,
                                           'declared-placeholder'
                                           if frag in placeheld_frags else 'angle-bracket segment'))
+                    elif ANGLE_SEG_RE.search(frag):
+                        # An angle-bracket segment is decided by a regex over the
+                        # fragment, consulting nothing on disk — rung 4 declines it
+                        # with every neighbour reachable (measured) — so its verdict
+                        # cannot depend on whether one is. This arm is tested FIRST,
+                        # and adding a redundant `<!-- placeholder -->` marker to such
+                        # a path must not change that: round 3 tested the marker first
+                        # and a both-forms reference went exit 0 -> exit 2 on where it
+                        # ran, which is the defect this whole change is about.
+                        placeheld.append((src, frag,
+                                          'declared-placeholder'
+                                          if frag in placeheld_frags else 'angle-bracket segment'))
+                    else:
+                        # A `<!-- placeholder -->` marker is rung-4 traffic, and
+                        # without a neighbour this arm cannot tell a legitimate
+                        # placeholder (N17) from a stale marker whose path lives next
+                        # door (T19). Excusing it silently exits 0 on a repo that a
+                        # reachable neighbour would have reported.
+                        #
+                        # An ANGLE-BRACKET segment is NOT in this class, and putting
+                        # it here reproduced #93 one bucket over: `<name>` is decided
+                        # by a regex over the fragment, consulting nothing on disk, and
+                        # rung 4 declines it with every neighbour reachable (measured).
+                        # A repo whose only references are angle-bracket placeholders
+                        # — this one — went from exit 0 to exit 2 in a fresh clone.
+                        undecided_markers.append(
+                            (src, frag, 'declared-placeholder — NOT rung-4 tested '
+                                        '(no neighbouring repo reachable)'))
                     continue
 
                 # rung 1 — as written
@@ -649,12 +703,22 @@ def check(root, sources, sibling_roots=None):
                 # every unresolved reference, and when rung 4 could not run say so on
                 # each one, so no finding is presented as a confirmed break on the
                 # strength of a check that never executed.
-                findings.append((src, frag, 'UNRESOLVED'))
+                findings.append((src, frag,
+                                 'UNRESOLVED' if rung4_runnable else UNCONFIRMED))
 
     tree_ext = {p.suffix.lstrip('.').lower() for p in _tree(root) if p.suffix}
     known = set(EXT.split('|'))
     unknown = sorted(e for e in tree_ext - known if e and len(e) <= 12)
-    return findings, resolved_weak, skipped, placeheld, unknown, missing, len(siblings), unchecked
+    return (findings, resolved_weak, skipped, placeheld, unknown, missing,
+            len(siblings), unchecked, undecided_markers)
+
+
+def _usage(msg):
+    # 64 is EX_USAGE. It matters here because #93 gave exit 1 a meaning — "a rung
+    # ruled on something" — and a mistyped flag is not that. Returned rather than
+    # printed-and-exited so `sys.exit` keeps one exit path.
+    print(msg, file=sys.stderr)
+    return 64
 
 
 def main():
@@ -675,12 +739,13 @@ def main():
             # A traceback is not a usage error. This harness pins the search
             # with this flag, so a typo that drops its value must say so rather
             # than crash into an IndexError a caller has to decode.
-            sys.exit('--sibling-root needs a directory')
+            sys.exit(_usage('--sibling-root needs a directory'))
         sibling_roots = (sibling_roots or []) + [argv[i + 1]]
         del argv[i:i + 2]
     if len(argv) < 2:
-        sys.exit('usage: refcheck.py [--legacy] [--sibling-root DIR] <repo-root> <doc> [<doc> ...]\n'
-                 '  e.g. refcheck.py . CLAUDE.md memory/MEMORY.md')
+        sys.exit(_usage(
+            'usage: refcheck.py [--legacy] [--sibling-root DIR] <repo-root> <doc> [<doc> ...]\n'
+            '  e.g. refcheck.py . CLAUDE.md memory/MEMORY.md'))
     root, sources = argv[0], argv[1:]
 
     if legacy:
@@ -693,8 +758,8 @@ def main():
         print(f"  TOTAL ITEMS PUT TO A HUMAN: {len(reports) + len(stale)}")
         return 0
 
-    findings, weak, skipped, placeheld, unknown, missing, n_siblings, unchecked = check(
-        root, sources, sibling_roots)
+    (findings, weak, skipped, placeheld, unknown, missing, n_siblings, unchecked,
+     undecided_markers) = check(root, sources, sibling_roots)
 
     # State rung 4's coverage as a fact rather than inferring a verdict per
     # reference. We cannot tell which unresolved paths a sibling would have
@@ -705,7 +770,12 @@ def main():
     if n_siblings == 0:
         print("   No sibling repo was reachable, so rung 4 did not run. A reference\n"
               "   that lives in another repo cannot be distinguished from a broken one\n"
-              "   here — treat every finding below as unconfirmed.")
+              "   here, so every finding marked UNCONFIRMED below is undecided rather\n"
+              "   than broken, and so is every `<!-- placeholder -->` reference the\n"
+              "   rung-4 stale test could not be run against. An angle-bracket segment\n"
+              "   is decided by its shape and is excused here as anywhere. Findings a LOCAL rung ruled on — a\n"
+              "   collision, a marker on a path that resolves as written — stand\n"
+              "   regardless, and this line does not excuse them.")
     print()
 
     if missing:
@@ -716,10 +786,11 @@ def main():
             print(f"  {m}")
         print(f"  total: {len(missing)}\n")
 
+    confirmed_findings = [f for f in findings if f[2] != UNCONFIRMED]
     print("== FINDINGS (broken or ambiguous) ==")
-    for s, p, v in findings:
+    for s, p, v in confirmed_findings:
         print(f"  {s:24s} {p:44s} {v}")
-    print(f"  total: {len(findings)}")
+    print(f"  total: {len(confirmed_findings)}")
 
     print("\n== RESOLVED BELOW RUNG 1 (enumerated, not defects) ==")
     for s, p, v in weak:
@@ -741,9 +812,51 @@ def main():
         print(f"  {s:24s} {p:44s} {v}")
     print(f"  total: {len(skipped)}")
 
+    print("\n== UNCONFIRMED (this run could not decide these) ==")
+    for s_, p_, v_ in ([f for f in findings if f[2] == UNCONFIRMED] + undecided_markers):
+        print(f"  {s_:24s} {p_:44s} {v_}")
+    print(f"  total: {len([f for f in findings if f[2] == UNCONFIRMED]) + len(undecided_markers)}")
+
     print(f"\n== EXTENSIONS IN TREE NOT EXTRACTED: {', '.join(unknown) if unknown else '(none)'} ==")
-    # Unread documents are a failure of the run, not a clean result.
-    return 1 if (findings or missing) else 0
+
+    # Three outcomes, not two (#93). `curate` Step 0 sub-step 5 is the precedent
+    # for the DISPOSITION — a thing that is neither a pass nor a failure gets its
+    # own state and its own status — and NOT for the trigger: curate exits 2 only
+    # when *nothing* produced a verdict, while this exits 2 on a single undecided
+    # reference in an otherwise fully decided run. Measured, so the citation is
+    # scoped rather than borrowed whole.
+    #
+    # ⚠️ This does NOT make the status a function of the repo alone, and nothing
+    # can. Rung 4 gates on a repo name in prose, and a name is only recognisable
+    # as a repo name when that repo is on disk, so per-reference decidability is
+    # not computable. `bool(siblings)` is a coarse proxy for it in both
+    # directions: one unrelated clone next door is enough to make this call rung 4
+    # "runnable" for a reference naming a repo that is absent, and that reference
+    # is then reported as a defect. What the third state buys is narrower and
+    # still worth having — an undecided run now SAYS it is undecided instead of
+    # picking one of the two verdicts it has not earned.
+    unconfirmed = [f for f in findings if f[2] == UNCONFIRMED] + undecided_markers
+    confirmed = [f for f in findings if f[2] != UNCONFIRMED]
+    if confirmed or missing:
+        parts = []
+        if confirmed:
+            parts.append('%d finding(s)' % len(confirmed))
+        if missing:
+            # No rung ran on a document that could not be read, so this count may
+            # not sit under a "ruled out by a rung" label. The file's own rule: a
+            # count inside a finding message is a measurement, and it has to be true.
+            parts.append('%d unreadable document(s)' % len(missing))
+        if unconfirmed:
+            parts.append('%d left undecided' % len(unconfirmed))
+        rc, verdict = 1, 'DEFECTS — ' + ', '.join(parts)
+    elif unconfirmed:
+        rc, verdict = 2, ('COVERAGE INCOMPLETE — rung 4 did not run (no neighbouring '
+                          'repo reachable) and %d reference(s) needed it; none of them '
+                          'is ruled on either way' % len(unconfirmed))
+    else:
+        rc, verdict = 0, 'CLEAN — no findings'
+    print(f"\n== VERDICT: {verdict} (exit {rc}) ==")
+    return rc
 
 
 if __name__ == '__main__':

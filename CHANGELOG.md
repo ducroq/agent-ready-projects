@@ -19,6 +19,81 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.29.0 (2026-08-26)
+
+`audit-context` Step 4 has three outcomes instead of two. MINOR: new behaviour on a shipped skill, per the v1.10.1 precedent. ⚠️ **Adopter action**: `audit-context` is user-global — refresh via `scripts/install-global-skills.sh` after the release tag is pushed **and verified**. `adopt.md` also changed, and is read from the URL rather than installed. Nothing breaks if you skip the refresh; the old step keeps reporting an undecidable reference as a confirmed break.
+
+### An exit status that fires on where the audit ran, not on what it audited (closes #93)
+
+Rung 4 resolves a reference inside a neighbouring repo. A repo checked out on its own — CI, a fresh clone, a container — has no neighbour reachable, so a reference that resolves perfectly well on the maintainer's machine came back unresolved there, and unresolved was a defect. You cannot wire that into a gate without it failing for a reason that is not a defect, and a gate that fires on its environment trains its reader to ignore it.
+
+Step 4 already required naming the rungs you could not run, per-reference, in prose. What it had no shape for was the **verdict**: an undecided run had to be reported as one of the two verdicts it had not earned.
+
+| outcome | when | exit, if you automate it |
+|---|---|---|
+| defects | a rung that actually **ran** ruled a reference out or ambiguous; or a document could not be read | 1 |
+| coverage incomplete | nothing was ruled on, and something was left undecided because rung 4 had no neighbour to run against | **2** |
+| clean | nothing found | 0 |
+
+**The third state is deliberately not exit 0**, which is what the issue sketched. With no neighbour reachable, nothing can say *which* unresolved references a neighbour would have rescued — so a genuine break is in that bucket too, and exit 0 would be a loosening certified by a run that found nothing. 2 stays non-zero: a caller written as `check && …` behaves exactly as before, and only one that opts in (`|| [ $? -eq 2 ]`) accepts an undecided run.
+
+⚠️ **This does not make the status a property of the repo, and the first draft of this entry claimed it did.** Rung 4's gate is a repo *name in the prose*, and a name is only recognisable as a repo name when that repo is on disk — so per-reference decidability is not computable, and *was any neighbour reachable* is a coarse stand-in in both directions. **Measured**: with one *unrelated* clone next door, a reference naming an absent repo is reported as a confirmed break, because rung 4 counts as having run. A repo with unmarked cross-repo residue in a neighbourless checkout moves from permanently exit 1 to permanently exit 2 — the status still varies with where it ran, it just no longer claims a verdict it has not earned. **A repo carrying `<!-- placeholder -->` markers moves 0 → 2 there**, which is a real change in kind and not only in number: a caller written as `check && …` used to run its right-hand side on that repo and now short-circuits. Running the audit where the neighbours are reachable is the only move that restores a decided verdict; marking is not, and a draft of the step said it was. That is the whole of what this buys, and the step says so inline.
+
+Step 8 gains a verdict line and a fourth bucket, and `adopt.md`'s update prompt — whose three severity bullets are a verbatim copy of Step 8's — gains them too: **Unconfirmed**, which is not a severity. Telling someone to fix a reference that was merely unchecked is how a report stops being read. Nothing lints the duplication between those two lists; a review found it.
+
+**The `curate` precedent is cited for the disposition, not the trigger.** Measured: `curate` Step 0 sub-step 5 reserves 2 for *the run itself cannot be trusted* — its own summary names four conditions (no files given, an unreadable operand, nothing extracted, nothing that produced a verdict), so a run with 200 passes and one `CANNOT VERIFY` exits 0. Step 4 reaches *coverage incomplete* on a single undecided reference in an otherwise decided run. The shared part is that a thing which is neither a pass nor a failure gets its own state; the trigger is not shared, and the first draft cited it as though it were, in three places.
+
+### Three defects the review found in the first draft, listed because the count is the argument
+
+**A marker is rung-4 traffic too, and the first draft excused it.** A `<!-- placeholder -->` on a cross-repo path is tested against the neighbours (the #73 arm). With no neighbour that test cannot run, and the draft dropped the reference silently into the placeholder skip: measured, the same repo and the same bytes gave `DEFECTS (exit 1)` with the neighbour on disk and `CLEAN — no findings (exit 0)` without it. Exit 0 on a repo a reachable neighbour would have reported — the direction the same draft's own prose called the worse one. It is now undecided, seeded as X8/X9, and armed by ablation A7.
+
+**The verdict line printed counts under a label that did not describe them.** `DEFECTS — 1 finding(s) ruled out by a rung that ran` over `FINDINGS total: 0`, for a document that could not be read — no rung ran on it. And on the main fixture with no neighbour, `5 finding(s)` while 37 references sat undecided with no line saying where they went. Both fixed; the undecided now have their own enumerated section, and the file's own rule applies to its verdict — a count inside a message is a measurement and has to be true.
+
+**The new fixture tree leaked into the old one.** `exitcodes/repo` sits at `*/*` from the fixture root, which is the main run's `--sibling-root`, so `git init`-ing it made the main fixture scan a fourth neighbour **named `repo`** — a token `_marked_siblings` finds in 13 lines of that fixture's prose — 6 of them because a hyphen is a token boundary, so an unbackticked `sibling-repo` names it, and the other 7 just ordinary English (*"this repo's file"*, *"from the repo root"*). It sorted first into a loop that breaks on the first hit. **The suite stayed green, and none of the fixture's own documents changed verdict** — a probe document written for the test is what flipped, from a reported break to a clean rung-4 resolution. That is the shape of the hazard: nothing was wrong yet, and the next file added under that tree decides whether something is. This is the class `refcheck.py`'s own header records as history, reintroduced by the change that cites `--sibling-root` as the cure. The audited root needs no `.git` at all; X10 now asserts the neighbour count so the next tree cannot leak silently.
+
+### The gate was untested, 54 named cases deep into the report it prints
+
+`tests/fixtures/reference-integrity/run.sh` captured the oracle's output with `|| true` at all three call sites, so **no case had ever asserted `refcheck.py`'s exit status** (`git show origin/master:…/run.sh | grep -nE '\$\?|rc=|if python3'` → no matches; a positive would have been a `$?` comparison or an `if python3 refcheck.py; then`). Case E1 did assert an exit status, of the *other* oracle — `envshapes.py` — which is why the claim is scoped to the file the change is about rather than to the harness.
+
+Fourteen rows now assert the table (X1–X9, X11–X15), against a tree with two sibling roots — one holding a neighbour, one holding none. Each asserts the exit **status** and the verdict **label**: a review swapped all three labels while leaving every `rc` untouched and every row stayed green, which is this fixture's own T19 lesson one layer up. X10 is not one of them — it is an isolation guard reading the *main* run's neighbour count.
+
+**The ablations are committed rather than described.** The first draft asserted "six mutants, each failing exactly one row" in prose, with the mutants nowhere in the tree; two reviewers reconstructed them and got different row counts under equally natural readings of two of them. `ablate()` now pins the exact replacement text, fails if the site has moved or the mutation is a no-op, and asserts the exact set of rows that must go red:
+
+| ablation | rows it must kill |
+|---|---|
+| A1 revert the split | X4 |
+| A2 exit 0 when only unconfirmed — the issue's own sketch | X4, X9 |
+| A3 mark every unresolved reference unconfirmed | X3 |
+| A4 drop the unread-document arm | X7 |
+| A5 treat "no neighbour" as "nothing is decidable" | X6, X15 |
+| A6 make the whole **run** indeterminate when no neighbour is reachable | X2, X12, X14 |
+| A7 excuse a marker the rung-4 test could not run against | X9, X15 |
+| A8 treat an angle-bracket segment as undecided too | X12, X14 |
+| A9 let the marker win over the shape | X14 |
+| A10 drop the mixed-verdict clause | X15 |
+
+**Five of the ten expected sets in that table were wrong when written and were corrected by running them** — A1 (predicted X4+X9, kills X4 alone, because an untested marker never enters `findings`), and A5/A6/A7, each of which silently widened when a later row was added. An ablation's kill set is a measurement of the mutant, not a property of the row it was written for. That is the argument for committing mutants rather than describing them, measured four times on this change's own drafts. ⚠️ **X1, X5, X8, X11 and X13 are killed by none of the ten** and are recorded as shape coverage rather than guards.
+
+### Round 4: three more, two of them holes in round 3's own tests
+
+**The angle-bracket exclusion was on the wrong discriminator.** Round 3 tested `frag in placeheld_frags` before the shape, so a path that is *both* angle-bracket-shaped **and** `<!-- placeholder -->`-marked took the marker branch and went exit 0 → exit 2 on where it ran — the defect round 3 had just fixed for the unmarked form. Not a corner: the step tells authors both markers are needed, and `templates/project-file.md`, which every adopter copies, already ships four such markers. The shape decides first now; X13/X14 seed it and ablations A8/A9 hold the ordering from both sides.
+
+**Deleting the whole `UNCONFIRMED` section left the suite green**, with 33 references then appearing in no counted section at all — the silent-skip failure this fixture exists to prevent, in a section newer than the loop that guards it. X16 asserts the enumeration and the total, not just the verdict's count.
+
+**Deleting the `N left undecided` clause also left it green**, because no row produced a confirmed finding *and* an undecided reference in the same run. `mixed.md` and X15 do; A10 is its guard. Adding it also caught a `set -e` abort in the new block — under `pipefail`, an expected non-zero status aborted the harness and silently skipped every later assertion, which is the same failure class the block was written to close.
+
+Two normative claims were false for one of the two marker forms they govern: *"a marker is rung-4 traffic too"* is true of `<!-- placeholder -->` and false of an angle-bracket segment, and an adopter implementing it literally rebuilds the defect above. Also corrected: *"checked only for mislabelling — that it does not resolve after all"* stated the inverse of the condition the check fires on, and Step 8 and `adopt.md` both said "open with the verdict, before the severities" while printing that instruction *after* the severity list.
+
+### Smaller corrections found on the way
+
+- `rung4_runnable` had been assigned and never read since it was introduced, under a comment claiming findings were "annotated to say so". They were not; the annotation now exists and the comment is true.
+- The rung-4 coverage header said *"treat every finding below as unconfirmed"*, which over-claimed — a finding a **local** rung ruled on stands whether or not a neighbour is present.
+- `--legacy` prints no verdict line and always returns 0, which falsified two absolutes in the new module docstring. Scoped to the default path rather than hedged away.
+- A usage error exited **1**, which this change has just given the meaning "a rung ruled on something". Usage now exits **64** (`EX_USAGE`), so a mistyped flag cannot be read as either verdict.
+- The **new** assertions use here-strings rather than `printf | grep -q`: under `pipefail`, a `-q` that matches early can SIGPIPE the writer and score 141 as a miss — harmless on a 1 KB report, loud and wrong on a large one. ⚠️ The 13 pre-existing sites in that file were left alone and still carry it; this is a hazard recorded, not a migration completed.
+
+`templates/audit-context.md` grows 38037 → 43352 bytes (+5315), recorded here for lint rule 8.
+
 ## v1.28.0 (2026-08-26)
 
 Nine open issues closed in one batch: one measured hole in the repo's own sensitivity harness, two defects in `update-drift`'s stamp finder, three in `audit-context`'s reference checker, a timing contradiction between two shipped surfaces, a unit disagreement between two shipped surfaces, and the missing pre-commit trigger in the artifact every adopter copies. MINOR: new checker behaviour and new template rows. ⚠️ **Adopter action**: three skills changed. `audit-context` and `update-drift` are user-global — refresh via `scripts/install-global-skills.sh` after the release tag is pushed **and verified**. `review-changes` is project-local and must be re-copied by hand. Nothing breaks if you do neither; the old `audit-context` still runs, it just keeps reporting the correct references #54/#55/#56 are about.
