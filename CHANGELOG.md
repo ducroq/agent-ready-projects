@@ -19,7 +19,7 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.27.0 (candidate, unreleased)
+## v1.27.0 (2026-08-26)
 
 ### Skill arguments are substituted into the skill body, so `$0` in an embedded awk program was delivered as an argument word (closes #77)
 
