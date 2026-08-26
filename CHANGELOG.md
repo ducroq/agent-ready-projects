@@ -19,7 +19,7 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.29.0 (candidate, unreleased)
+## v1.29.0 (2026-08-26)
 
 `audit-context` Step 4 has three outcomes instead of two. MINOR: new behaviour on a shipped skill, per the v1.10.1 precedent. ⚠️ **Adopter action**: `audit-context` is user-global — refresh via `scripts/install-global-skills.sh` after the release tag is pushed **and verified**. `adopt.md` also changed, and is read from the URL rather than installed. Nothing breaks if you skip the refresh; the old step keeps reporting an undecidable reference as a confirmed break.
 
