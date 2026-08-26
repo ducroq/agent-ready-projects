@@ -131,10 +131,12 @@ PART 2 — STRUCTURAL HEALTH
 
 Whether or not the version changed, audit the quality of the current adoption by running the /audit-context skill (or, if not installed, follow the audit-context template at https://github.com/ducroq/agent-ready-projects/blob/master/templates/audit-context.md).
 
-Report all findings before making changes. Group by severity:
+Report all findings before making changes. Open with the verdict — *defects*, *clean*, or *coverage incomplete* — so the first line cannot mistake an undecided run for a clean one. Then group by severity:
 - **Fix now**: broken references, misplaced secrets/credentials, orphaned files
 - **Fix soon**: duplication, bloated auto-loaded files, passive pointer language
 - **Consider**: minor size optimizations, optional restructuring
+
+And separately, not as a severity: **Unconfirmed** — what the audit could not decide, naming the check that could not run. A reference this run was unable to check is not a broken one, and filing it under "fix now" is how a report stops being read. **State an empty unconfirmed bucket too**: it is the difference between "everything was checked" and "everything checkable was checked".
 
 Don't make changes without showing me the plan first.
 ```

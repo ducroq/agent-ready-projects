@@ -11,7 +11,7 @@ DEST="${1:-$(mktemp -d)}"
 mkdir -p "$DEST"
 cd "$DEST"
 
-rm -rf repo sibling-repo docs dupname
+rm -rf repo sibling-repo docs dupname exitcodes
 mkdir -p repo/{src/utils,src/models,src/lib,packages/api/config,packages/worker/config,docs,memory,data,.claude/skills,infra,analysis,config}
 mkdir -p sibling-repo/{scripts,deploy,data,shared,docs} docs/runbooks docs/shared
 
@@ -325,6 +325,90 @@ The scorer in the shared checkout is `a/wanted.py`, and we call it every run.
 Only one of the two holds it. A listing cache keyed on the neighbour's NAME
 collapses them, and because ties in the sort land in hash order the survivor
 changes from process to process — so the verdict here changes from run to run.
+EOF
+
+# --- X: the exit-status truth table (#93). Self-contained for the same reason
+# D1 is: it needs a sibling root that holds NOTHING, and pointing the main
+# fixture at one would disarm every rung-4 case in the suite.
+#
+# The point of the table is that no single row can carry the change. Exit 2 says
+# "this run could not decide", and the two ways to get it wrong pull in opposite
+# directions — collapse it into 1 and a correct repo fails on its environment;
+# collapse it into 0 and a genuine break passes wherever the neighbours happen to
+# be absent. Each row below is the other rows' control.
+cd "$DEST"
+mkdir -p exitcodes/repo/src/dup exitcodes/neighbours/sibling-repo/scripts exitcodes/empty
+# ⚠️ `exitcodes/repo` is the audited ROOT and is deliberately NOT `git init`ed.
+# It sits at `*/*` from $DEST, which is the main run's --sibling-root, so a .git
+# here makes it a fourth neighbour of the MAIN fixture — named `repo`, a token
+# `_marked_siblings` then finds in 13 lines of that fixture's prose (every
+# mention of `sibling-repo`, since a hyphen is a token boundary), sorting ahead
+# of the real neighbour in a loop that breaks on the first hit. Measured: the
+# main run went from 3 neighbours to 4, and a probe document flipped from a
+# reported break to a clean rung-4 resolution. That is the class this file's own
+# header records as history. `check()` never requires the root to be a repo.
+# The neighbour below is three levels down, which the `*` and `*/*` globs from
+# $DEST do not reach.
+(cd exitcodes/neighbours/sibling-repo && git init -q . \
+   && git config user.email f@x && git config user.name f)
+touch exitcodes/repo/src/present.py exitcodes/repo/src/helpers.py \
+      exitcodes/repo/src/dup/helpers.py exitcodes/neighbours/sibling-repo/scripts/over_there.sh
+cat > exitcodes/repo/clean.md <<'EOF'
+# clean.md — rows X1/X2
+The entry point is `src/present.py` and it resolves as written, at rung 1.
+EOF
+cat > exitcodes/repo/unresolved.md <<'EOF'
+# unresolved.md — rows X3/X4
+Nothing on disk answers to `src/nothing_here.py`. Because no repo is named
+anywhere near it, rung 4 would decline this reference even with every neighbour
+checked out — so with neighbours reachable the verdict is a confirmed break, and
+without them it is a reference this run could not decide. Same document, same
+byte, two different things to say.
+EOF
+cat > exitcodes/repo/collision.md <<'EOF'
+# collision.md — rows X5/X6
+Two files answer to `helpers.py`, so rung 2 reports a collision. Rung 4 has no
+bearing on that: the collision is decided inside this repo, and it must keep its
+exit status whether or not a neighbour is reachable.
+EOF
+cat > exitcodes/repo/angle.md <<'EOF'
+# angle.md — rows X11/X12
+Work items live at `docs/work-items/<slug>.md`, one per initiative. The angle
+bracket announces the path as a shape rather than a file, and deciding that
+takes a regex over the fragment and nothing on disk — so rung 4 declines it with
+every neighbour reachable, and its verdict does not depend on whether any is.
+Counting it as undecided sent a repo whose only references are placeholders of
+this form from exit 0 to exit 2 in a fresh clone, which is the defect this whole
+step is about, one bucket over.
+EOF
+cat > exitcodes/repo/both.md <<'EOF'
+# both.md — rows X13/X14
+Work items live at `docs/work-items/<slug>.md` <!-- placeholder -->, one per
+initiative. The step says the two marker forms are both needed, so a path
+carrying both is the documented case and not a corner — and `templates/`
+project-file.md, the file every adopter copies, already ships four such markers.
+The angle bracket decides this reference by its shape, so a redundant marker
+must not turn it into rung-4 traffic. Round 3 tested the marker first and this
+went exit 0 with a neighbour and exit 2 without one.
+EOF
+cat > exitcodes/repo/mixed.md <<'EOF'
+# mixed.md — row X15
+Two references, deliberately of different kinds. Nothing answers to
+`src/absent_for_sure.py`, and it names no neighbour. The deploy script
+`scripts/over_there.sh` <!-- placeholder --> lives next door. Two files answer to
+`helpers.py`, which rung 2 rules a collision here and now — so with no neighbour
+this run has a confirmed defect AND something it could not decide, and the
+verdict has to say both. No other row mixes them, so without this one the
+undecided half of that sentence can be deleted with the suite still green.
+EOF
+cat > exitcodes/repo/marked.md <<'EOF'
+# marked.md — rows X8/X9
+The deploy script lives over in sibling-repo, not in this tree, so it carries a
+marker: `scripts/over_there.sh` <!-- placeholder --> is invoked there. With the
+neighbour on disk the marker is STALE and reporting it is the whole of #73. With
+no neighbour, the rung-4 stale test cannot run — and excusing the reference then
+exits 0 on a repo a reachable neighbour would have reported, which is the
+direction Step 4 calls the worse one.
 EOF
 
 echo "$DEST"

@@ -287,6 +287,199 @@ else
   printf '  FAIL  E1 .env extraction/drop table changed — see envshapes.py\n'; FAIL=1
 fi
 
+# X1-X9 — the exit-status truth table (#93). Everything above asserts what the
+# report SAYS; nothing asserted what the run RETURNS, and `OUT=` at the top of
+# this file discards the status with `|| true`, so the gate was untested here.
+#
+# Read the table as a whole, because no row can carry it alone. Exit 2 means
+# "this run could not decide", and it is wrong in two opposite directions: fold
+# it into 1 and a correct repo fails wherever its neighbours are not checked out
+# (the defect #93 was filed for); fold it into 0 and a genuine break passes in
+# exactly that environment. X4 and X9 are the rows only the right answer
+# satisfies. The others forbid the cheap routes to them: X3 forbids "every
+# unresolved reference is undecidable", X5/X6 forbid "no neighbour means nothing
+# is decidable" for a collision ruled inside this repo, X7 keeps an unreadable
+# document a failure of the run, and X1/X2 forbid a constant.
+#
+# X8/X9 are the pair a review found missing. A `<!-- placeholder -->` on a
+# cross-repo path is rung-4 traffic too: with the neighbour on disk it is a STALE
+# MARKER finding, and without one the stale test cannot run — so excusing it
+# silently exited 0 on a repo a reachable neighbour would have reported. Same
+# repo, same bytes, and in the direction the step itself calls the worse one.
+#
+# Each row asserts the exit STATUS and the VERDICT LABEL. The status alone is not
+# enough: swapping all three labels while leaving every `rc` untouched kept every
+# row of the then-7-row table green, which is this fixture's own T19 lesson — a
+# positive that cannot distinguish why it fired is not a test.
+#
+# X11/X12 are round 3's control. An angle-bracket segment is decided by a regex
+# over the fragment and nothing on disk, so its verdict does not depend on a
+# neighbour at all; round 2 called it undecided anyway and moved a repo whose only
+# references are placeholders of that shape from exit 0 to exit 2 in a fresh
+# clone — this repo, measured.
+declare -a XCASES=(
+  "X1 clean, neighbours reachable|clean.md|neighbours|0|VERDICT: CLEAN — no findings"
+  "X2 clean, no neighbour reachable|clean.md|empty|0|VERDICT: CLEAN — no findings"
+  "X3 unresolved, neighbours reachable — rung 4 RAN and declined it|unresolved.md|neighbours|1|VERDICT: DEFECTS — 1 finding(s)"
+  "X4 unresolved, no neighbour — undecided, and still non-zero|unresolved.md|empty|2|VERDICT: COVERAGE INCOMPLETE — rung 4 did not run"
+  "X5 local collision, neighbours reachable|collision.md|neighbours|1|VERDICT: DEFECTS — 1 finding(s)"
+  "X6 local collision, no neighbour — a rung that ran still ruled|collision.md|empty|1|VERDICT: DEFECTS — 1 finding(s)"
+  "X7 a document that cannot be read is a failure of the run|absent.md|empty|1|VERDICT: DEFECTS — 1 unreadable document(s)"
+  "X8 marked cross-repo path, neighbour on disk — STALE MARKER|marked.md|neighbours|1|VERDICT: DEFECTS — 1 finding(s)"
+  "X9 marked cross-repo path, no neighbour — undecided, not excused|marked.md|empty|2|VERDICT: COVERAGE INCOMPLETE — rung 4 did not run"
+  "X11 angle-bracket placeholder, neighbours reachable|angle.md|neighbours|0|VERDICT: CLEAN — no findings"
+  "X12 angle-bracket placeholder, no neighbour — still decided|angle.md|empty|0|VERDICT: CLEAN — no findings"
+  "X13 BOTH marker forms on one path, neighbours reachable|both.md|neighbours|0|VERDICT: CLEAN — no findings"
+  "X14 BOTH marker forms, no neighbour — the shape still decides|both.md|empty|0|VERDICT: CLEAN — no findings"
+  "X15 a confirmed defect AND an undecided reference in one run|mixed.md|empty|1|VERDICT: DEFECTS — 1 finding(s), 2 left undecided"
+)
+
+# Runs the table against an arbitrary oracle and prints the names of the failing
+# rows, one per line. Used twice: once against the real file, then once per
+# ablation below. `$1` is the oracle to run.
+xrun() {
+  local oracle="$1" x xname xdoc xroot xwant xlabel xgot XOUT
+  for x in "${XCASES[@]}"; do
+    IFS='|' read -r xname xdoc xroot xwant xlabel <<<"$x"
+    # `set -e` would abort on the non-zero statuses this table is built to
+    # assert, so run inside `if`, which is exempt.
+    if XOUT="$(python3 "$oracle" --sibling-root "$WORK/exitcodes/$xroot" \
+                                 "$WORK/exitcodes/repo" "$xdoc" 2>&1)"; then xgot=0; else xgot=$?; fi
+    # Here-strings rather than `printf | grep -q`: with `pipefail` a `-q` that
+    # matches early can SIGPIPE the writer and score 141 as a miss. Harmless on a
+    # 1 KB report, loud and wrong on a large one.
+    if [ "$xgot" -ne "$xwant" ]; then printf '%s\n' "$xname"
+    elif ! grep -qF -- "(exit $xwant) ==" <<<"$XOUT"; then printf '%s\n' "$xname"
+    elif ! grep -qF -- "$xlabel" <<<"$XOUT"; then printf '%s\n' "$xname"
+    fi
+  done
+}
+
+XBAD="$(xrun refcheck.py)"
+for x in "${XCASES[@]}"; do
+  xname="${x%%|*}"
+  if grep -qxF -- "$xname" <<<"$XBAD"; then
+    printf '  FAIL  %s (wrong exit status or wrong verdict label)\n' "$xname"; FAIL=1
+  else printf '  PASS  %s\n' "$xname"; fi
+done
+
+# X16 — the undecided must be ENUMERATED, not merely counted in a verdict. The X
+# rows above assert the exit status and the verdict label; deleting the whole
+# UNCONFIRMED print block left all of them green while 33 references on the main
+# fixture appeared in NO counted section at all — the silent-skip failure this
+# fixture exists to prevent, one section newer than the loop that guards it.
+# `|| true` because mixed.md exits 1 by design and `pipefail` would otherwise
+# abort the harness here under `set -e` — silently skipping every later
+# assertion, which is the failure this block is itself about. X15 above is what
+# asserts that status; this block only reads the section.
+XU="$( { python3 refcheck.py --sibling-root "$WORK/exitcodes/empty" \
+           "$WORK/exitcodes/repo" mixed.md 2>&1 || true; } | sed -n '/== UNCONFIRMED/,/^  total:/p')"
+XU_OK=1
+for want in "src/absent_for_sure.py" "scripts/over_there.sh"; do
+  grep -qF -- "$want" <<<"$XU" || { XU_OK=0; printf '  FAIL  X16 %s is undecided but is not enumerated in the UNCONFIRMED section\n' "$want"; FAIL=1; }
+done
+grep -qF -- "  total: 2" <<<"$XU" || { XU_OK=0; printf '  FAIL  X16 the UNCONFIRMED section does not carry a total of 2\n'; FAIL=1; }
+[ "$XU_OK" -eq 1 ] && printf '  PASS  X16 the undecided are enumerated and counted, not just totalled in the verdict\n'
+
+# X10 — the isolation guard, and it is here because this change broke it once.
+# `exitcodes/repo` sits at `*/*` from $WORK, which is the MAIN run's sibling
+# root, so a `.git` in it made the main fixture scan a fourth neighbour named
+# `repo` — a token that appears in 13 lines of this fixture's prose, since a
+# hyphen is a token boundary and every mention of `sibling-repo` contains it.
+# It sorted first and the rung-4 loop breaks on the first hit. Nothing failed;
+# a probe document flipped from a reported break to a clean rung-4 resolution.
+# Assert the count so the next tree added here cannot leak silently.
+N_SIB="$(sed -n 's/^== RUNG 4 COVERAGE: scanned \([0-9]*\) sibling.*/\1/p' <<<"$OUT")"
+if [ "$N_SIB" = "3" ]; then
+  printf '  PASS  X10 the exit-code tree does not leak into the main fixture (3 neighbours)\n'
+else
+  printf '  FAIL  X10 the main run scanned %s neighbours, not 3 — a fixture tree is leaking into the rung-4 search\n' "$N_SIB"; FAIL=1
+fi
+
+# --- Ablations. Committed rather than described, because the prose form of this
+# claim was refuted twice by reviewers who reconstructed the mutants and got a
+# different row count under an equally natural reading. A mutant's exact text is
+# the measurement; prose about it is not.
+#
+# Each row: label | python replacement applied to a COPY of the oracle | the rows
+# that must fail. A mutation that changes nothing is itself a failure — a no-op
+# ablation certifies whatever the suite already did.
+ABL_DIR="$WORK/ablate"; mkdir -p "$ABL_DIR"
+ablate() {
+  local label="$1" old="$2" new="$3" want="$4" got
+  cp refcheck.py "$ABL_DIR/refcheck.py"
+  if ! OLD="$old" NEW="$new" python3 - "$ABL_DIR/refcheck.py" <<'EOF'
+import os, sys, pathlib
+p = pathlib.Path(sys.argv[1]); s = p.read_text()
+old, new = os.environ['OLD'], os.environ['NEW']
+if s.count(old) != 1:
+    sys.exit('mutation site occurs %d times, not once' % s.count(old))
+p.write_text(s.replace(old, new))
+EOF
+  then printf '  FAIL  ablation %s could not be applied — its site has moved\n' "$label"; FAIL=1; return; fi
+  got="$(cd "$ABL_DIR" && xrun refcheck.py | sort | paste -sd, -)"
+  if [ "$got" = "$want" ]; then
+    printf '  PASS  ablation %s fails exactly [%s]\n' "$label" "$want"
+  else
+    printf '  FAIL  ablation %s should fail [%s], failed [%s]\n' "$label" "$want" "$got"; FAIL=1
+  fi
+}
+# `xrun` prints row NAMES; these are the leading tokens, so compare on the whole
+# name. Written out rather than derived, so a renamed row fails loudly here.
+X3N="X3 unresolved, neighbours reachable — rung 4 RAN and declined it"
+X4N="X4 unresolved, no neighbour — undecided, and still non-zero"
+X6N="X6 local collision, no neighbour — a rung that ran still ruled"
+X9N_="X9 marked cross-repo path, no neighbour — undecided, not excused"
+X7N="X7 a document that cannot be read is a failure of the run"
+X9N="X9 marked cross-repo path, no neighbour — undecided, not excused"
+X2N="X2 clean, no neighbour reachable"
+X12N="X12 angle-bracket placeholder, no neighbour — still decided"
+X14N="X14 BOTH marker forms, no neighbour — the shape still decides"
+X15N="X15 a confirmed defect AND an undecided reference in one run"
+
+# A1 kills X4 alone, not X4+X9: an untested marker never enters `findings`,
+# so reverting the split there cannot reach it. Measured — the first draft of
+# this row predicted both and was wrong, which is the argument for committing
+# the mutants instead of describing them.
+ablate "A1 revert the split"        "if confirmed or missing:" "if findings or missing:"      "$X4N"
+ablate "A2 exit 0 when unconfirmed" "rc, verdict = 2, ('COVERAGE" "rc, verdict = 0, ('COVERAGE" "$X4N,$X9N"
+ablate "A3 everything unconfirmed"  "'UNRESOLVED' if rung4_runnable else UNCONFIRMED" "UNCONFIRMED" "$X3N"
+ablate "A4 drop the unread arm"     "if confirmed or missing:" "if confirmed:"                "$X7N"
+# A5, A6 and A7 each widened when a row was added below them. Recorded rather
+# than trimmed: an ablation's kill set is a measurement of the mutant, not a
+# property of the row it was written for, and three of these expectations have
+# now been corrected by running them rather than by reasoning about them.
+ablate "A5 no neighbour, nothing decidable" \
+       "confirmed = [f for f in findings if f[2] != UNCONFIRMED]" \
+       "confirmed = [] if n_siblings == 0 else list(findings)"                                "$X15N,$X6N"
+# A6 kills both clean-with-no-neighbour rows, which is the point of it: the
+# mutation is "the RUN is indeterminate", so every row where nothing was found
+# and no neighbour was reachable must go red. Adding X12 changed this set, and
+# the ablation is what noticed — a prose claim would not have.
+ablate "A6 whole RUN indeterminate" "elif unconfirmed:" "elif unconfirmed or n_siblings == 0:" "$X12N,$X14N,$X2N"
+ablate "A7 excuse an untested marker" "elif rung4_runnable:" "elif True:"                      "$X15N,$X9N_"
+# A8 is X12's guard, and X12 exists because round 2 shipped this mutation as the
+# real thing: sending an angle-bracket segment to the undecided bucket moved a
+# repo whose only references are placeholders of that shape — this one — from
+# exit 0 to exit 2 in a fresh clone. Deciding `<slug>` takes a regex over the
+# fragment and nothing on disk, so it is decidable with no neighbour at all.
+ablate "A8 angle brackets undecided too" "elif ANGLE_SEG_RE.search(frag):" "elif False:"      "$X12N,$X14N"
+# A9 is X14's own guard: round 3 tested the marker BEFORE the shape, so a path
+# carrying both forms took the marker branch and went 0 -> 2 on where it ran.
+# Restoring that order must go red, and X12 must stay green while it does —
+# otherwise the two rows are one test wearing two names.
+ablate "A9 marker wins over the shape" \
+       "elif ANGLE_SEG_RE.search(frag):" "elif frag in placeheld_frags and False or ANGLE_SEG_RE.search(frag) and frag not in placeheld_frags:" \
+       "$X14N"
+# A10 is X15's guard. The mixed verdict clause is the only thing that reports an
+# undecided reference on an exit-1 run, and no other row produces both kinds at
+# once — so without X15 this deletion is invisible.
+ablate "A10 drop the mixed-verdict clause" \
+       "        if unconfirmed:" "        if False:"                                              "$X15N"
+# ⚠️ X1, X5 and X8 are killed by none of the seven. They are shape coverage, not
+# guards: each pins the neighbours-reachable half of a pair so that its twin's
+# PASS cannot be read as environment-independent by accident.
+
 echo
 [ "$FAIL" -eq 0 ] && echo "All seeded cases behaved correctly." || echo "SENSITIVITY REGRESSION — do not ship."
 exit "$FAIL"

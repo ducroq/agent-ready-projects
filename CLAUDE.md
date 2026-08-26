@@ -91,7 +91,9 @@ agent-ready-projects/
 │   │   └── dollar-digit.sh    <- Rule 9: a bare $0-$9 in a skill body is an argument word (#77)
 │   └── fixtures/              <- Seeded-defect fixtures: a check that finds nothing here is failing
 │       ├── reference-integrity/  <- Seeded breaks for audit-context Step 4. refcheck.py is an ORACLE,
-│       │                          NOT normative and never installed — fix Step 4 too (#92)
+│       │                          NOT normative and never installed — fix Step 4 too (#92).
+│       │                          25 T, 27 N, D1, E1, plus 14 exit-status rows, an isolation
+│       │                          guard, an enumeration guard and 10 ablations (#93)
 │       ├── skill-template-sync/  <- Seeded drift for lint rule 6 (17 positives, 7 negatives)
 │       ├── provisioning-quote/  <- Seeded drift for lint rule 7 (9 positives, 4 negatives)
 │       ├── size-ratchet/       <- Seeded growth for lint rule 8 (4 positives, 4 negatives)
