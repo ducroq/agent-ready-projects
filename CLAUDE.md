@@ -15,11 +15,11 @@ The source framework that teaches the layered memory method for AI coding agents
 | Starting any session (self drift) | Compare the `agent-ready-projects: vX.Y.Z` line in this file's header against `CHANGELOG.md`. If a newer version has shipped since you last worked here, surface the drift before starting. |
 | Installing, moving, or removing a skill | `docs/GUIDE.md` § "Where a skill lives" — global shadows local, so scope is exclusive. Run `bash scripts/install-global-skills.sh --check ~/repos` to verify the global install matches the tracked source and no inert local copies remain. **The install path refuses when the bytes it would copy are not what the highest release tag reachable from HEAD holds** (#33): refresh globals after the tag is pushed *and verified*, per `templates/release.md` Step 7 — a local tag satisfies the guard, so tagging alone is not the safe point. `--force` overrides it and is the right call only when you mean to run an unreleased skill knowingly. |
 | Editing a skill — either `templates/<name>.md` or `.claude/skills/<name>/SKILL.md` | **Edit both.** They are one artifact in two files; an edit to one is drift until the other matches. `install-global-skills.sh --check` cannot see this — it compares the global install to the tracked one, so both read as current while diverging from the template. `bash tests/lint/run.sh` rule 6 is what catches it. |
-| Before committing structural changes (CLAUDE.md, `memory/`, `templates/`) | Run `bash tests/lint/run.sh` — deterministic structural check, eight rules. Catches stale `CLAUDE.md` path references, `memory/MEMORY.md` orphans, broken skill-template frontmatter, a reference install that cannot register, unclosed YAML frontmatter, template↔install drift, a skill that provisions a canonical row without quoting it, and adopter-facing templates growing unmeasured. See `tests/lint/README.md` for the rule catalog. Then run `/review-changes` for diff-driven LLM review — picks review lenses from what changed *and* how big it is (templates touched → full battery, unless the diff is small and hits no carve-out; docs-only → adversarial + doc-accuracy). |
+| Before committing structural changes (CLAUDE.md, `memory/`, `templates/`) | Run `bash tests/lint/run.sh` — deterministic structural check, nine rules. Catches stale `CLAUDE.md` path references, `memory/MEMORY.md` orphans, broken skill-template frontmatter, a reference install that cannot register, unclosed YAML frontmatter, template↔install drift, a skill that provisions a canonical row without quoting it, adopter-facing templates growing unmeasured, and a bare `$0`–`$9` in a skill body (which the argument substituter eats — #77). See `tests/lint/README.md` for the rule catalog. Then run `/review-changes` for diff-driven LLM review — picks review lenses from what changed *and* how big it is (templates touched → full battery, unless the diff is small and hits no carve-out; docs-only → adversarial + doc-accuracy). |
 | Picking up where the last session left off — **including a bare "continue", "carry on" or "pick up where we left off", which is the maintainer's normal way to start** | `memory/MEMORY.md` — the index itself. **Read it before doing anything else, and before asking what to work on: the answer is in there.** Nothing loads it automatically; this row is what reaches it. Its Current State section names the open branches, what each review found, and the next steps in order. Topic files in `memory/` stay on demand, per the index's own table. |
 | Editing templates | `templates/README.md` for the tool-agnostic naming map. Templates are the adopter-facing surface; changes ripple to every downstream consumer. |
 | Editing the guide | `docs/GUIDE.md` is the full reference; `README.md` is the on-ramp. Keep them in sync — when you change one, ask whether the other needs the same change. |
-| Working with the verification rationale | `docs/verification-rationale.md` (principles from v1.10.1; external-corroboration section added v1.26.2) — the three structural principles, each with a decision rule. Cite the rationale doc rather than re-deriving. **Its one external citation is scoped to the premise**: it says nothing about whether the principles are right, and the doc says so inline. |
+| Working with the verification rationale | `docs/verification-rationale.md` (principles from v1.10.1; external-corroboration section added v1.27.0) — the three structural principles, each with a decision rule. Cite the rationale doc rather than re-deriving. **Its one external citation is scoped to the premise**: it says nothing about whether the principles are right, and the doc says so inline. |
 | Considering reviving landscape / positioning docs | `memory/project_framework_pivot.md` — 2026-04-14 wrapper-archive decision still stands for positioning. Don't re-promote without explicit user signal. |
 | Considering the dead-end log pattern | `memory/project_dead_end_pattern_rollout.md` — **CLOSED 2026-08-03** as silent-abandonment-confirmed (#16). Gate 4 stayed at 0/2 for two months: no unrelated session ever reached for a seeded entry. The idea isn't refuted, the validation evidence was. Don't re-open on enthusiasm — only on an actual session reaching for an entry and acting on it. |
 | Cutting a release | Run `/release` if installed locally, per `templates/release.md` — it classifies the bump, runs the preconditions, drafts the changelog entry, and stops before tagging. Background: `CHANGELOG.md` header — maintainer release process (#14) + tag-and-push protocol. v1.10.1 set the precedent that doc-only changes are PATCH; new templates/patterns/behaviors are MINOR. |
@@ -86,12 +86,16 @@ agent-ready-projects/
 │                                 Refuses to install from a tree that is not at a release tag (#33)
 ├── tests/                     <- Self-tests for this repo (Phase A: structural lint)
 │   ├── lint/                  <- Deterministic structural checks (no LLM)
-│   │   └── skill-sync.sh      <- Rule 6: templates/<name>.md vs .claude/skills/<name>/SKILL.md
+│   │   ├── skill-sync.sh      <- Rule 6: templates/<name>.md vs .claude/skills/<name>/SKILL.md
+│   │   └── dollar-digit.sh    <- Rule 9: a bare $0-$9 in a skill body is an argument word (#77)
 │   └── fixtures/              <- Seeded-defect fixtures: a check that finds nothing here is failing
 │       ├── reference-integrity/  <- Seeded breaks for audit-context Step 4; refcheck.py is its oracle
 │       ├── skill-template-sync/  <- Seeded drift for lint rule 6 (17 positives, 7 negatives)
 │       ├── provisioning-quote/  <- Seeded drift for lint rule 7 (9 positives, 4 negatives)
 │       ├── size-ratchet/       <- Seeded growth for lint rule 8 (4 positives, 4 negatives)
+│       ├── dollar-digit/       <- Seeded `$N` forms for lint rule 9 (13 positives,
+│       │                          12 negatives, 7 structural, 5 truth-table, 10 ablations;
+│       │                          every ablation co-seeds a control the mutant must keep)
 │       ├── verify-runner/       <- Seeded claims + prose for curate's verify runner
 │       │                           (32 positives, 10 negatives, 4 malformed, 7 structural,
 │       │                            4 timing, 29 ablations)
@@ -136,6 +140,7 @@ Listed here so the architecture diagram above is honest about what an adopter se
 | `.claude/skills/` | Reference installs (tracked) — the frontmatter-correct source a global install is derived from |
 | `tests/lint/skill-sync.sh` | Lint rule 6 — template↔reference-install drift; fixture at `tests/fixtures/skill-template-sync/` |
 | `tests/lint/size-ratchet.sh` | Lint rule 8 — a ratchet on adopter-facing template sizes; baseline in `size-baseline.tsv`, fixture at `tests/fixtures/size-ratchet/`. **Measures the smaller of the two costs**: a skill body is paid once per invocation and is prompt-cached, while the *read surface* a run consumes is fresh tokens every time and is 4–25× larger. See #46 |
+| `tests/lint/dollar-digit.sh` | Lint rule 9 — a bare `$0`–`$9` in a skill body. Skill *arguments* are substituted into the skill *body*, so a bare `$0` in an embedded awk program ships as the first argument word (#77). The one class no runtime check here can reach: rule 6 compares two files carrying the same `$0`, and every fixture runs the extracted program with substitution nowhere on the path. **The safe form is context-dependent** — `$(N)` in awk, `${N}` in shell, `\$N` in prose; `${0}` and `\$0` are awk syntax errors and shell `$(1)` fails silently at rc 0, all five measured by the fixture's T-cases. Fixture at `tests/fixtures/dollar-digit/` |
 | `tests/lint/provision-quote.sh` | Lint rule 7 — the #42 class: a file that *provisions* a canonical row must quote it, not describe it by category. Rule 6 cannot see it, because the two `audit-context` copies agree with each other while contradicting `templates/project-file.md`. Fixture at `tests/fixtures/provisioning-quote/` |
 | `tests/fixtures/installer-release-guard/` | Seeded git states for the installer's release guard (#33). Its README carries the two rejected predicates and why — read before changing the comparison |
 | `tests/fixtures/verify-runner/` | Seeded claims and prose for `curate` Step 0 sub-step 5's runner (#34). It extracts the runner from `templates/curate.md` rather than copying it, so it cannot drift. ~90s — the slowest check here, and the only one with timing cases. Its README carries the rejected `\|` predicate and the three review rounds that produced the rest — read before touching the extraction |
@@ -152,13 +157,14 @@ git push --tags
 git diff vX.Y.Z..vX.Y+1.0 -- templates/
 
 # Self-tests, before committing structural changes
-bash tests/lint/run.sh                              # eight structural rules
+bash tests/lint/run.sh                              # nine structural rules
 bash tests/fixtures/skill-template-sync/run.sh      # sensitivity of lint rule 6
 bash tests/fixtures/reference-integrity/run.sh      # sensitivity of audit-context Step 4
 bash tests/fixtures/installer-release-guard/run.sh  # sensitivity of the installer's release guard
 bash tests/fixtures/verify-runner/run.sh            # sensitivity of curate's verify runner
 bash tests/fixtures/provisioning-quote/run.sh       # sensitivity of lint rule 7
 bash tests/fixtures/size-ratchet/run.sh             # sensitivity of lint rule 8
+bash tests/fixtures/dollar-digit/run.sh             # sensitivity of lint rule 9
 
 # End a session
 /curate     # if installed locally from templates/curate.md

@@ -142,8 +142,8 @@ The lenses below all read *content*: does this path exist, is this flag right, w
       t = s; gsub(/\\\|/, "", t); gsub(/[ \t]/, "", t)
       return (t ~ /-/ && t ~ /^[|:-]+$/)
     }
-    # `$(0)`, never `$0`: skill ARGUMENTS are substituted into the skill BODY, so a
-    # bare `$0` arrives as the first argument word and this program examines a
+    # `$(0)`, never `\$0`: skill ARGUMENTS are substituted into the skill BODY, so a
+    # bare `\$0` arrives as the first argument word and this program examines a
     # constant while printing what a clean run prints. See #77.
     { sub(/\r$/, "") }               # CRLF: strip before anything reads the line,
                                      # or isdelim() never matches and no table in
