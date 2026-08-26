@@ -109,11 +109,11 @@ Check for context rot from *previous* sessions. This catches what the session-fo
                                                               # here, because this runner EXECUTES.
                                                               # NB no apostrophe anywhere in this block:
                                                               # the awk program is single-quoted.
-       # `$(0)`, never `$0`: skill ARGUMENTS are substituted into the skill BODY,
-       # so a bare `$0` is delivered as the first argument word and this program
+       # `$(0)`, never `\$0`: skill ARGUMENTS are substituted into the skill BODY,
+       # so a bare `\$0` is delivered as the first argument word and this program
        # then reads a constant — no table entered, escaped pipes EXECUTED mangled.
        # `$(0)` is the only form correct on both that path and the extraction
-       # path the fixture uses. Measured; see #77 and the v1.26.2 changelog entry.
+       # path the fixture uses. Measured; see #77 and the v1.27.0 changelog entry.
        FNR == 1 {
          if (fch != "") print "U\034" curfile "\034" "a fence opened at line " openline " and never closed"
          fch = ""; intbl = 0; prev = ""; curfile = FILENAME    # no state may cross a file

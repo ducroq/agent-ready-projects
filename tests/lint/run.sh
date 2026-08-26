@@ -9,7 +9,7 @@ cd "$(dirname "$0")/../.."
 ISSUES=0
 fail() { printf 'FAIL  %s\n' "$1"; ISSUES=$((ISSUES + 1)); }
 
-echo "[1/8] CLAUDE.md path references resolve on disk"
+echo "[1/9] CLAUDE.md path references resolve on disk"
 while IFS= read -r path; do
   [ -e "$path" ] || fail "CLAUDE.md references \`$path\` but it does not exist"
 done < <(grep -oE '`[A-Za-z0-9_./-]+\.(md|yml|yaml|json|sh)`' CLAUDE.md | tr -d '`' | sort -u)
@@ -27,7 +27,7 @@ while IFS= read -r path; do
   fail "CLAUDE.md references directory \`$path\` but it does not exist"
 done < <(grep -oE '`[A-Za-z0-9_./-]+/`' CLAUDE.md | tr -d '`' | sort -u)
 
-echo "[2/8] memory/MEMORY.md index integrity"
+echo "[2/9] memory/MEMORY.md index integrity"
 while IFS= read -r name; do
   [ -e "memory/$name" ] || fail "memory/MEMORY.md references \`$name\` but it does not exist"
 done < <(grep -oE '`project_[a-z_]+\.md`' memory/MEMORY.md | tr -d '`' | sort -u)
@@ -38,7 +38,7 @@ for f in memory/project_*.md; do
   grep -qF "$name" memory/MEMORY.md || fail "memory/$name exists but is not referenced in MEMORY.md"
 done
 
-echo "[3/8] skill template embedded SKILL.md frontmatter"
+echo "[3/9] skill template embedded SKILL.md frontmatter"
 for f in templates/*.md; do
   grep -q 'SAVE AS:.*\.claude/skills/' "$f" || continue
   block=$(awk '/<!--/{c=1} c{print} /-->/{c=0}' "$f")
@@ -48,7 +48,7 @@ for f in templates/*.md; do
     || fail "$f: skill template missing \`description:\` in SAVE AS comment"
 done
 
-echo "[4/8] installed skills are loadable"
+echo "[4/9] installed skills are loadable"
 # Rule 3 checks that each template CARRIES installable frontmatter in its SAVE AS
 # comment. It cannot check that an install CONVERTED it. That gap is not theoretical:
 # an adopter repo was found holding all three skills copied verbatim, SAVE AS comment
@@ -81,7 +81,7 @@ for d in .claude/skills/*/; do
     || fail "$f: frontmatter has no non-empty \`description:\` — the agent is never told when to use it"
 done
 
-echo "[5/8] top-level YAML frontmatter closure"
+echo "[5/9] top-level YAML frontmatter closure"
 for f in templates/*.md templates/checklists/*.md templates/physics-tests/*.md memory/*.md; do
   [ -f "$f" ] || continue
   [ "$(head -1 "$f")" = '---' ] || continue
@@ -89,7 +89,7 @@ for f in templates/*.md templates/checklists/*.md templates/physics-tests/*.md m
     || fail "$f: opens with \`---\` but no closing \`---\` within first 30 lines"
 done
 
-echo "[6/8] skill templates and reference installs agree"
+echo "[6/9] skill templates and reference installs agree"
 # Rules 3 and 4 check each side in isolation; neither compares them. Factored into
 # its own script so tests/fixtures/skill-template-sync/ can drive it against seeded
 # drift — a run over this repo finds nothing, which is also what a broken check
@@ -123,7 +123,7 @@ else
 fi
 rm -f "$sync_out" "$sync_err"
 
-echo "[7/8] a skill that provisions a canonical row must quote it"
+echo "[7/9] a skill that provisions a canonical row must quote it"
 # Factored out for the same reason rule 6 is: the check needs a fixture with
 # seeded true positives, and tests/lint/README.md's own "adding a rule" checklist
 # says so. The first draft of this rule was inline, had no fixture, and shipped a
@@ -142,7 +142,7 @@ else
 fi
 rm -f "$pq_out" "$pq_err"
 
-echo "[8/8] adopter-facing templates have not grown"
+echo "[8/9] adopter-facing templates have not grown"
 # The surface nobody measured. curate.md went 11,358 -> 37,971 bytes across
 # eight releases, more than half of it in one session, and the framework had no
 # instrument that would have said so. A ratchet rather than a budget: no
@@ -160,6 +160,34 @@ else
   done < "$sz_out"
 fi
 rm -f "$sz_out" "$sz_err"
+
+# Single-quoted deliberately: in double quotes bash expands the very thing this
+# rule forbids. The first draft died on `$9: unbound variable` under set -u —
+# and printed NOTHING, because the expansion fails before echo emits anything.
+# (`$0` had already expanded to the script path.)
+echo '[9/9] no bare $0-$9 in a skill body'
+# The one class no runtime check in this repo can reach. Skill ARGUMENTS are
+# substituted into the skill BODY between the file and the model, so a bare
+# `$0` in an embedded awk program ships as the first argument word: #77, where
+# review-changes' Step 1.5 examined nothing and printed what a clean run prints,
+# and curate's verify runner EXECUTED mangled commands. Rule 6 could not see it
+# (both copies carried the same `$0` and agreed) and no fixture could (all of
+# them extract the program and run it directly, with substitution nowhere on the
+# path). Lexical is the only instrument available. Fixture at
+# tests/fixtures/dollar-digit/.
+dd_out=$(mktemp); dd_err=$(mktemp)
+bash tests/lint/dollar-digit.sh . >"$dd_out" 2>"$dd_err"; dd_rc=$?
+cat "$dd_err"
+if [ $dd_rc -gt 1 ]; then
+  fail "rule 9 checker could not run (exit $dd_rc) — this rule scanned nothing"
+elif ! grep -q 'skill body(ies) scanned' "$dd_err"; then
+  fail "rule 9 checker produced no coverage line — this rule scanned nothing"
+else
+  while IFS= read -r line; do
+    [ -n "$line" ] && fail "$line"
+  done < "$dd_out"
+fi
+rm -f "$dd_out" "$dd_err"
 
 echo
 if [ $ISSUES -eq 0 ]; then

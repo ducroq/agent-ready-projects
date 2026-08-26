@@ -19,7 +19,7 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.26.2 (candidate, unreleased)
+## v1.27.0 (candidate, unreleased)
 
 ### Skill arguments are substituted into the skill body, so `$0` in an embedded awk program was delivered as an argument word (closes #77)
 
@@ -48,14 +48,59 @@ Applied to all occurrences in `templates/curate.md`, `templates/review-changes.m
 2. **The apostrophe rake, hit again while fixing this.** The first draft of the new comment contained `the fixture's extraction path`; the awk program is single-quoted, so the apostrophe closed it and every claim stopped being extracted — 20 seeded cases failing at once. The file already carries `NB no apostrophe anywhere in this block`, and the v1.26.1 changelog already records the same defect shipping as `Step 1's` inside `${BASE:?…}`. Third occurrence, second one caught by a test rather than by a reader.
 3. **What remains unmeasured**: whether a *no-argument* invocation substitutes anything. This entry does not settle it. `memory/gotcha-log.md` claims it was measured clean but names no command, and `memory/MEMORY.md` records it as unmeasured; the contradiction stands, and `$(0)` makes it moot for these two programs rather than resolving it.
 
-⚠️ **No new check guards this class.** A lint rule forbidding a bare `$0`–`$9` in a skill template would, and is the obvious next step; it is not in this change, so nothing stops the next edit reintroducing one.
+~~⚠️ **No new check guards this class.**~~ **Lint rule 9 now does — see below (#86).** It was written after this entry, in the same release, and its first four true positives were the comments *in this fix*.
 
 **PATCH** — a shipped artifact made to survive its own delivery path. ⚠️ **Adopter action**: both skills changed. `curate` is user-global — refresh via `scripts/install-global-skills.sh` after the tag. `review-changes` is project-local and must be re-copied by hand.
 
 ### Rule 8: both templates grow, recorded rather than waived
 
-`templates/curate.md` +414 bytes, `templates/review-changes.md` +247 — the `$(0)` forms plus a short comment at each program. The first draft of those comments cost 1,480 bytes and was cut by two thirds after rule 8 fired: the measurement belongs in this file, which is read when someone asks why, not in a body that is paid on every invocation.
+`templates/curate.md` 46,469 → 46,892 bytes (+423), `templates/review-changes.md` 28,914 → 29,163 (+249) — the `$(0)` forms plus a short comment at each program, and later +2 each for rule 9 (below). The first draft of those comments cost 1,480 bytes and was cut by two thirds after rule 8 fired: the measurement belongs in this file, which is read when someone asks why, not in a body that is paid on every invocation.
 
+**The `+414` in the first draft of this entry was wrong** — measured `git show v1.26.1:templates/curate.md | wc -c` against the file, the `$(0)` change alone was **+421**. The `review-changes` figure was right. A hand-carried number in a changelog has no instrument behind it; this one was off by seven for a day.
+
+
+### Lint rule 9: a bare `$0`–`$9` in a skill body is an argument word, and now fails the build (closes #86)
+
+The entry above ends by saying nothing stops the next edit reintroducing a bare `$0`. Something does now.
+
+**Why no existing rule could see #77.** Rule 6 compares `templates/<name>.md` against `.claude/skills/<name>/SKILL.md` — both carried the same bare `$0`, so they agreed. No fixture puts the substitution on the path. `grep -l 'curate\.md\|review-changes\.md' tests/fixtures/*/run.sh` returns two — `verify-runner`, which *extracts* curate's awk program from `templates/curate.md` (line 19) and runs it **directly**, and `size-ratchet`, whose only hit is a comment naming the file. The other five are not fixtures *of* a skill body; they name `SKILL.md` freely as test data, so the grep above — scoped to the two template filenames — is the measurement, not a claim that the word never appears. And the substitution happens *between the file and the model* — a boundary nothing inside the repo executes across, so no runtime check here reaches it. A lexical rule is not a second-best instrument; on the evidence available it is the only one.
+
+**The rule.** In a skill body, `$` followed by a single digit fails unless it is written `$(N)`, `${N}`, or escaped `\$N`. Implemented in `tests/lint/dollar-digit.sh`; fixture at `tests/fixtures/dollar-digit/` (13 positives, 12 negatives, 7 structural, 5 truth-table cases, 10 ablations).
+
+**The safe form is context-dependent, and the first draft of the error message got that wrong.** It offered all three interchangeably. Measured (mawk 1.3.4, bash 5), each is correct in exactly one place:
+
+| written | in an awk program | in a shell snippet |
+|---|---|---|
+| `$(N)` | correct | `$(1)` runs `1` as a command — empty output, **rc 0, silent** |
+| `${N}` | **syntax error, rc 2** | correct |
+| `\$N` | **syntax error, rc 2** | a literal `$1`, not the parameter |
+
+The message now reads *"`$(N)` in awk, `${N}` in shell, `\$N` in prose"*, and five fixture cases re-measure the table on every run so it cannot rot. The shell cell is the #41 shape — a wrong remedy that fails silently at rc 0. It also removes a contradiction the first draft created with `templates/curate.md`, which already said `$(0)` is the *only* form correct on both the delivery path and the extraction path.
+
+**Scope is derived, not listed.** A skill body is any `templates/**/*.md` carrying a `SAVE AS: … .claude/skills/` marker — rule 3's own predicate — or any `.claude/skills/**/SKILL.md`. 11 bodies today. **The recursion is a fix, not a flourish**: the first draft used a maxdepth-1 glob while claiming "a new skill cannot escape by being new", and `templates/skills/new.md` with a valid marker escaped it — the change asserted and contradicted itself in one commit. `tests/**` is deliberately out of scope (bash runs those directly, so nothing is substituted), and `templates/physics-tests/` is excluded by the `SAVE AS` predicate — *not* by depth, which is what the first draft's prose claimed while the glob did the work.
+
+**No prose exemption, and the evidence for that is this repo on the day the rule was written.** The only bare `$N` left anywhere in a skill body were the **four comment blocks explaining #77** — eight reported lines — so the warning against `$0` was itself delivered as *"`$(0)`, never `worktree`"*, destroyed exactly where it was meant to be read. Those are the rule's first true positives, fixed here with `\$0` (+2 bytes per template, which is why rule 8 fired again).
+
+**All eight sat inside a fenced ```` ```bash ```` block, as `#` comment lines — and that shape is now the fixture's first case.** It was not the first draft's: that seeded bare lines with no fence and no comments, so mutants adding either exemption passed the entire suite while silently un-fixing #77. Two ablations now *add* each exemption and require the real-shape positive to go quiet.
+
+⚠️ **What this rule does NOT establish.** Whether the substituter skips fenced blocks or code spans is **unmeasured** — the measurement in the entry above used six probe lines and did not vary that. Requiring the escaped form everywhere is chosen precisely so the rule does not depend on the answer and cannot rot if it changes. Equally, the fixture inherits #77's blind spot: it cannot substitute anything either, so it tests the lexical rule and nothing about delivery.
+
+**Three defects in this change were found by review, not by the author, and all three are the repo's own recurring shapes.**
+
+1. **The coverage line counted files *listed*, not files *scanned*.** awk ran inside `< <(…)`, which discards its exit status, so a stubbed `awk` on PATH — or a `chmod 000` reference install — produced zero hits, printed `4 skill body(ies) scanned`, and exited 0 with eight live `$0` in the tree. Rules 6 and 7 both exit non-zero under the same broken PATH; rule 9 was the one that went green. It now captures awk's status, refuses an unreadable candidate, and reports the *scanned* count. **This is the exact confusion the line was written to prevent, reintroduced in the check written to prevent its sibling.**
+2. **`ablate`'s CLEAN branch was satisfied by absence**, and did not assert the coverage line — so a completely dead checker PASSED two of the five ablations. Measured against a neutered scan loop. That is the "a negative cannot detect a dead harness" lesson `tests/lint/README.md` already records for rule 6, re-learned one fixture later.
+3. **A needle collision, while fixing (2).** The new readability ablation asserted the absence of the word `bare` — which appears in the coverage line `scanned for a bare $0-$9`. At least the sixth needle collision recorded in this repo — v1.26.1 alone logs five (T19/T4, `process.env`/N15, N20's decoys, T9, T4 again). Counted rather than asserted, because the first draft of this line said "third" and the changelog two hundred lines below already said five.
+
+**A second review round found two more, both created by the fixes above — which is this repo's documented base rate landing on schedule.**
+
+4. **`find`'s exit status and stderr were discarded by the pipe to `sort`.** Fixing awk's per-file status left the *reach of the sweep* unmeasured one layer out: a `chmod 000` subdirectory under `templates/` makes `find` skip it, warn, and exit 1, and the readability check added in (1) cannot help — it only ever sees candidates `find` **emitted**. Measured: a locked directory holding a live `$0` scanned green at rc 0. Now both `find`s write to a file, their status and stderr are checked, and `-H` is used so a symlinked `.claude/skills` is descended rather than silently dropped (also measured: rc 0, whole install tree unscanned).
+5. **The coverage-line assertion added to `ablate` in (2) closed the wrong half.** It catches a checker that *crashes*, not one that goes *silent* — and silence is the form the rule's own header warns about. Measured: mutating one `printf` to `if (0) printf` failed all 13 positives while **passing six of nine ablations, including every CLEAN-direction one**. Each ablation now co-seeds a **control defect** the mutant must still report; against the same silence-mutant all ten now fail, each naming the reason. `A8`/`A9`/`A10` run outside the helper and carry their own aliveness proof.
+
+⚠️ **`[ "$scanned" -eq "$found" ]` is a cheap structural pin, not a guard, and the comment beside it now says so** — `found` is derived from the list `scanned` iterates, so the two cannot diverge. The real guards against under-scanning are the `find` status check and the per-file awk status. The first draft's comment claimed otherwise.
+
+**Found while writing it, and kept as the entry's sharpest datum**: the rule's own header line in `run.sh` was `echo "[9/9] no bare $0-$9 …"` — double-quoted, so bash expanded `$0` to the script path and `set -u` killed the run on `$9: unbound variable`, printing nothing at all. The check that forbids the defect shipped with the defect in its announcement. It is single-quoted now, with a comment saying why.
+
+**MINOR, and it renumbers the release.** This block was `v1.26.2` — three PATCH entries — until this one landed in it. A new lint rule is a new behavior under the v1.10.1 precedent, and the precedent is two-for-two: rule 7 shipped in **v1.22.0**, rule 8 in **v1.24.0**, both MINOR. The heading is now `v1.27.0`, and the two `see the v1.27.0 changelog entry` pointers inside the skill bodies were updated with it. No adopter action: `tests/` is maintainer infrastructure and is not copied into adopter trees. Adopters who *have* copied the skills should know the class exists; the entry above is what to read.
 
 ### The verify-runner fixture's `m01` was a false FAIL on any long `$TMPDIR`, and the hostile length is now permanent (closes #80)
 
