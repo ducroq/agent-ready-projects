@@ -92,11 +92,19 @@ Diagnosis, four-lens review battery, and the discarded alternatives are in this 
 
 ## Outcome
 
-**Status**: [in progress]
-**Date**: —
+**Status**: [done — closed 2026-08-26, superseded rather than completed]
+**Date**: 2026-08-26
 
-**What happened**: —
+**What happened**: The item's title was *deterministic checks, gated fan-out, capability-aware reporting*. **The first third arrived, by a different route than this item planned**: lint rules 6–9 and six seeded fixtures were built across v1.20.0–v1.28.0, none of them through this work item, none of them referencing it. The other two thirds did not arrive and were not worked. Three consecutive savepoints (2026-08-13, 2026-08-25, 2026-08-26) each recorded "not advanced deliberately", which is the signal this file existed to make visible — and it worked, just slowly.
 
-**What remains**: —
+**What remains, and where it went**:
 
-**Related**: issue #23 (template↔install drift), H-002, H-003, `memory/hypothesis-log.md`
+- **The `UNVERIFIABLE`/unresolved exit-code question** → filed as **#93**. It was the only open question here with no other home.
+- **The runtime capability canary** → **H-003**, where it already lived; this item's own Open Questions said it was out of scope. Its motivating cost argument weakened when `curate`'s read surface fell 60–92% (predicted — H-006, open), so it should be decided on its merits rather than resurrected with this file.
+- **Counts-not-adjectives in the remaining Report steps** → **dropped, deliberately**. It was never scoped past "the remaining skills", no defect was ever attributed to its absence, and adding it now would be shipping on tidiness. Re-file it if a report is ever actually misread.
+- **#30 and #31** → both already **CLOSED**, which the 2026-08-25 savepoint did not notice and the 2026-08-26 one repeated. Worth recording: a work item can carry stale pointers to its own issues for months, because nothing re-checks them.
+- **Extending `tests/fixtures/reference-integrity/run.sh`** → done in v1.28.0 (nine new seeded cases), again without reference to this file.
+
+**Why closed rather than paused**: pausing preserves a file nobody reads against a day nobody has scheduled. Every live thread now has an issue or a hypothesis, both of which have review triggers; this file has none. The Decisions section below is the part worth keeping and is why the file is kept rather than deleted.
+
+**Related**: #93 (exit code), H-003 (runtime canary), H-006 (read-surface prediction), issue #23 (template↔install drift, closed), H-002 (resolved), `memory/hypothesis-log.md`
