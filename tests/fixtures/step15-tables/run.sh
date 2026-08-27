@@ -36,6 +36,17 @@ printf 'a | b\n--- | ---\n1 | 2 | 3\n'                                   > n3_fe
 printf '```\na | b\n--- | ---\n1 | 2 | 3\n```\n'                          > n3_fenced.md
 printf 'a | b\n--- | ---\n1 | 2 | | \n'                                   > t4_empty_excess.md
 printf 'a | b | c\n--- | ---\n1 | 2\n'                                     > t5_header_mismatch.md
+# #50 — emphasis. t6 is the observed break: two `**`-globs in one bolded phrase.
+# n4/n5 are the two shapes that must stay quiet, and n5 is what this repo itself
+# ships, so a rule that fires on it would report every template here.
+printf 'See **the `src/**` and `docs/**` trees** for detail.\n'             > t6_emphasis.md
+printf 'See `src/**` for detail, no bold on this line.\n'                   > n4_glob_no_bold.md
+printf 'A **bolded phrase** with a plain `src/lib.py` token.\n'             > n5_bold_and_code.md
+# Verbatim shape of this framework's own risk-tier rows: bold OPENS AND CLOSES in
+# one cell, and several **-globs sit in the next. Two risky tokens, so it survives
+# a count-based rule only because of the bold-nesting test — which is what A5
+# reverts. 15 lines of this exact shape were reported before that test existed.
+printf '| **HIGH** | `templates/**`, `tests/**`, `scripts/**` | Full battery |\n' > n6_tier_row.md
 
 run() { awk -v F="$1" -f "$WORK/check.awk" "$1"; }
 want_hit()   { if [ -n "$(run "$1")" ]; then printf '  PASS  %s %s\n' "$1" "$2"; else printf '  FAIL  %s reported nothing — %s\n' "$1" "$2"; FAIL=1; fi; }
@@ -66,6 +77,10 @@ want_hit   t4_empty_excess.md  "excess EMPTY cells still report — the step's d
 # nothing replaced it. So the branch that produced #52's own false positive
 # became the branch with no test. Stubbing its printf flipped nothing.
 want_hit   t5_header_mismatch.md "a genuine header/delimiter cell mismatch is reported" 
+want_hit   t6_emphasis.md       "two backticked **-globs inside one bolded phrase are reported (#50)"
+want_quiet n6_tier_row.md       "a risk-tier row: bold in one CELL, a **-glob in another — no adjacency, and 28 such lines exist in this repo"
+want_quiet n4_glob_no_bold.md   "a **-glob with no bold on the line is not an emphasis risk"
+want_quiet n5_bold_and_code.md  "ordinary bold beside an ordinary code span — the shape this repo ships everywhere" 
 
 # Ablations. Each reverts one guard; the kill sets are MEASURED by running them.
 ablate() {
@@ -78,7 +93,7 @@ if s.count(old) != 1: sys.exit('site occurs %d times, not once' % s.count(old))
 pathlib.Path(sys.argv[2]).write_text(s.replace(old, new))
 PY
   got=""
-  for f in t1_lf_lossy.md t2_crlf_lossy.md t3_fm_then_table.md t4_empty_excess.md t5_header_mismatch.md n1_crlf_clean.md n2_frontmatter.md n3_fenced.md; do
+  for f in t1_lf_lossy.md t2_crlf_lossy.md t3_fm_then_table.md t4_empty_excess.md t5_header_mismatch.md t6_emphasis.md n1_crlf_clean.md n2_frontmatter.md n3_fenced.md n4_glob_no_bold.md n5_bold_and_code.md n6_tier_row.md; do
     o="$(awk -v F="$f" -f "$WORK/mut.awk" "$f")"
     case "$f" in
       t*) [ -z "$o" ] && got="$got,$f" ;;
@@ -104,6 +119,12 @@ ablate "A2 never enter frontmatter"   'NR == 1 && $(0) ~ /^---[ \t]*$/' 'NR == 0
 # something, and `want_hit` only tests for non-empty output. A mutation that does
 # not change what the assertion measures kills nothing and reads as a pass.
 ablate "A3 silence the header report" 'if (cells(prev) != base)' 'if (0)' "t5_header_mismatch.md"
+ablate "A4 silence the emphasis check" 'if (nrisk > 1)' 'if (0)' "t6_emphasis.md"
+# A5 widens the emphasis rule to "any bold line with any code span" — the broad
+# form that was rejected. It must break the negatives, which is WHY it was rejected.
+# A5 reverts the >1 tightening to the >0 form that was actually written first.
+# It must break n6 — the risk-tier row — which is why the tightening exists.
+ablate "A5 emphasis rule ignores bold nesting" 'if (inb && substr(masked, i, 1) == "\001") nrisk++' 'if (substr(masked, i, 1) == "\001") nrisk++' "n6_tier_row.md"
 
 echo
 [ "$FAIL" -eq 0 ] && echo "All seeded cases behaved correctly." || echo "SENSITIVITY REGRESSION — do not ship."

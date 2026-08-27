@@ -155,6 +155,37 @@ The lenses below all read *content*: does this path exist, is this flag right, w
         intbl = 0; prev = ""; next
       }
       if (fch != "") next
+      # Emphasis spans — the third construct with Step 1.5's property: correct in
+      # the diff, wrong when rendered (#50). Deliberately NARROW. The table check
+      # reached a 39% false-positive rate before being anchored, so this reports
+      # only the shape actually observed to break: a backticked token whose
+      # content abuts `**`, sitting on a line that also carries bold OUTSIDE the
+      # backticks. A formatter can join the two runs and corrupt both. Broader
+      # rules (counting `**` per line, balancing across lines) were rejected —
+      # they fire on ordinary bold and on multi-line spans.
+      # Mask each code span to ONE character — \001 if its content abuts `**`,
+      # \002 otherwise — so bold runs can be paired positionally. Adjacency is
+      # the discriminator, and nothing weaker works: "a risky token anywhere on a
+      # bold line" reported 28 lines here, and "two of them" still reported 15 —
+      # every risk-tier row, where `**HIGH**` opens AND CLOSES in one cell and the
+      # globs sit in the next. Only a token INSIDE an open bold run can be joined.
+      { masked = ""; rest = $(0)
+        while (match(rest, /`[^`]*`/)) {
+          inner = substr(rest, RSTART + 1, RLENGTH - 2)
+          mark = "\002"
+          if (inner ~ /\*\*$/ || inner ~ /^\*\*/) mark = "\001"
+          masked = masked substr(rest, 1, RSTART - 1) mark
+          rest = substr(rest, RSTART + RLENGTH)
+        }
+        masked = masked rest
+        inb = 0; nrisk = 0
+        for (i = 1; i <= length(masked); i++) {
+          if (substr(masked, i, 2) == "**") { inb = 1 - inb; i++; continue }
+          if (inb && substr(masked, i, 1) == "\001") nrisk++
+        }
+        if (nrisk > 1)
+          printf "%s:%d: two backticked tokens abutting ** inside one bold span — a formatter can join the runs and corrupt both\n", F, NR
+      }
       if (isdelim($(0)) && prev != "" && (index($(0), "|") || index(prev, "|"))) {
         base = cells($(0)); intbl = 1
         if (cells(prev) != base)

@@ -467,7 +467,8 @@ fi
 
 # X16 — the undecided must be ENUMERATED, not merely counted in a verdict. The X
 # rows above assert the exit status and the verdict label; deleting the whole
-# UNCONFIRMED print block left all of them green while 33 references on the main
+# UNCONFIRMED print block left all of them green while 33 references on a
+# NO-NEIGHBOUR run of the main
 # fixture appeared in NO counted section at all — the silent-skip failure this
 # fixture exists to prevent, one section newer than the loop that guards it.
 # `|| true` because mixed.md exits 1 by design and `pipefail` would otherwise

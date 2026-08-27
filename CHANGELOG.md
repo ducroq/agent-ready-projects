@@ -39,6 +39,22 @@ The issue's second defect was live and is fixed: `isdelim()` accepts a bare `---
 
 **New fixture** `tests/fixtures/step15-tables/`: 4 positives, 3 negatives, 2 ablations, the program **extracted** from the template rather than copied so it cannot drift. ⚠️ **One seeded negative was wrong when written** — "excess empty cells lose nothing, so it must stay quiet" — contradicting the step's own text two screens up, which says that case reports and the human adjudicates. Reclassified to a positive. Written from reasoning, corrected by running it; the same lesson v1.30.0 recorded about ablation kill sets. ⚠️ **And one ablation killed nothing when written**: mutating `infm { next }` left the two rules that consume both `---` lines intact, so it read as a passing ablation over an unguarded rule. It now mutates the entry condition.
 
+### Step 1.5 gains a third construct: emphasis spans (closes #50)
+
+Step 1.5 exists for one property — *correct in the diff, wrong when rendered* — and checked two constructs. **Emphasis is a third with the same property**, reported by an adopter after a formatter joined two `**`-globs inside one bolded phrase and corrupted both.
+
+⚠️ **Three drafts, each refuted by running it over this repo rather than over its own fixture.** "A risky token anywhere on a bold line" reported **28** lines here. "Two of them" still reported **15**. Both were every risk-tier row in `review-changes` itself, where `**HIGH**` opens *and closes* inside one table cell and the globs sit in the next — co-located, never adjacent. Only the third draft is right: code spans are masked to one character each, bold runs are paired positionally, and a token counts only when it lies **inside an open bold run**. That reports **1** line in this repo, and it is a true positive — the CHANGELOG entry that quotes the original defect.
+
+`n6_tier_row.md` seeds that exact shape, and ablation A5 reverts the bold-nesting test to prove it is what holds those 15 lines back. #50 asked for seeded positives *and* negatives before shipping, citing the table check's own 39% false-positive history; that was the right instruction and each draft would have passed a fixture-only check.
+
+### Two more counts corrected (closes #97)
+
+*"33 references on the main fixture"* described a **no-neighbour** run; the run this harness performs pins three siblings, where that total is 0 by construction. The `RUNG 4 COVERAGE` line prints unconditionally — only its explanatory body is conditional. And the SIGPIPE hazard applies to **12** sites, not 13: the thirteenth is a `grep -c`, which drains stdin and cannot SIGPIPE.
+
+### The reference oracle's report body gets asserted (closes #95, #96, #98)
+
+Four rows, because five mutants printed a wrong report with the suite green. **X21** — an unrecognised `--` argument was consumed as `<repo-root>` and returned `DEFECTS (exit 1)`; measured, `--sibling-roots` (note the s) did exactly that, and `grep -nE '\b64\b|usage'` over the harness returned nothing beforehand. **X22** — the angle-bracket arm labelled its rows `declared-placeholder`, pointing the reader at a rung-4 sentence false for a row no rung decided. **X23** — the FINDINGS body on a no-neighbour run, which no assertion had ever read because the main run pins three siblings. **X24** — *one section or the other, never both*, which Step 4 states as a design rule and nothing checked. ⚠️ X24's first draft keyed on the path alone and reported two legitimately-different references as a violation.
+
 ### "Re-copy it by hand" is destructive advice for the adopters most likely to need the fix (closes #94)
 
 `review-changes` is project-local, so fixes propagate only by copying. Two release notes said *"project-local and must be re-copied by hand."* For an adopter who **re-mapped** the skill — rewrote its risk tiers for paths their repo actually has, which one adopter records as an operative rule because a verbatim install would tier everything LOW and quietly do nothing — following that instruction destroys the adaptation. Their copy is also the one that has diverged furthest, so they are the least able to eyeball a 577-line diff and the most likely to need the fix.
@@ -170,7 +186,7 @@ Two normative claims were false for one of the two marker forms they govern: *"a
 - The rung-4 coverage header said *"treat every finding below as unconfirmed"*, which over-claimed — a finding a **local** rung ruled on stands whether or not a neighbour is present.
 - `--legacy` prints no verdict line and always returns 0, which falsified two absolutes in the new module docstring. Scoped to the default path rather than hedged away.
 - A usage error exited **1**, which this change has just given the meaning "a rung ruled on something". Usage now exits **64** (`EX_USAGE`), so a mistyped flag cannot be read as either verdict.
-- The **new** assertions use here-strings rather than `printf | grep -q`: under `pipefail`, a `-q` that matches early can SIGPIPE the writer and score 141 as a miss — harmless on a 1 KB report, loud and wrong on a large one. ⚠️ The 13 pre-existing sites in that file were left alone and still carry it; this is a hazard recorded, not a migration completed.
+- The **new** assertions use here-strings rather than `printf | grep -q`: under `pipefail`, a `-q` that matches early can SIGPIPE the writer and score 141 as a miss — harmless on a 1 KB report, loud and wrong on a large one. ⚠️ The **12** pre-existing sites in that file were left alone and still carry it; this is a hazard recorded, not a migration completed. *(Said 13 until v1.31.0. `grep -c "printf '%s'.*| *grep"` returns 13, but the thirteenth is a `grep -c`, which drains stdin and cannot SIGPIPE — #97.)*
 
 `templates/audit-context.md` grows 38037 → 43352 bytes (+5315), recorded here for lint rule 8.
 

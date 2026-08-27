@@ -20,8 +20,9 @@ packaging is not. Do not re-attempt without solving distribution first.
 Output sections: FINDINGS (broken or ambiguous — the defects), RESOLVED BELOW
 RUNG 1 (enumerated, not defects), SKIPPED as asserted-absent, UNCONFIRMED (what
 this run could not decide), extensions in the tree the extractor misses, and —
-only when they apply — DOCUMENTS NOT READ and
-a RUNG 4 COVERAGE line. On the default path a VERDICT line closes the report and
+only when it applies — DOCUMENTS NOT READ.
+The RUNG 4 COVERAGE line always prints; only its explanatory body is conditional
+on there being no neighbour (#97). On the default path a VERDICT line closes the report and
 names the exit status, so the two cannot drift apart unnoticed; `--legacy` is a
 re-derivation of the v1.15.0 numbers and prints no verdict; it returns 0 on any
 run that reaches it, which a usage error does not.
