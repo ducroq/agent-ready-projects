@@ -19,6 +19,52 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.32.0 (2026-08-27)
+
+A lint rule for checks that cannot fail, a benchmark that measures the **review** rather than a checker, and three adopter-reported corrections. MINOR: a new lint rule is new behaviour under the v1.10.1 precedent, as rules 7, 8 and 9 were, and `update-drift` Step 3 gains a method rather than a clarification.
+
+### Lint rule 10 — an ablation that cannot kill anything
+
+The narrowest of the three shapes reviews here keep re-finding, and the only one decidable lexically. Two forms, both observed in this repo: a mutation whose replacement equals its target **modulo whitespace**, and an ablation declaring an **empty expected kill set**. Both apply cleanly, both report as passing guards, both constrain nothing.
+
+⚠️ **It shipped its first draft reporting `0 violations` while unable to fire at all.** A stray `while IFS= read -r f` blocked on stdin and hung it; once that was fixed the fixture scored **0 of 4 positives**, because it invoked a path built from `$OLDPWD` that every intervening `cd` had reassigned. A rule about checks that cannot run, that could not run, reporting clean. The fixture is the only thing that said so, and the sequence is now in the rule's own header.
+
+**Scope is a floor, not a ceiling**, and the header says so: a mutation that changes something real which no assertion happens to measure is the larger population, and it needs the mutant **run**, not a lexer. Fixture at `tests/fixtures/vacuous-guard/` — 4 positives, 3 negatives, and a bad-root case that must exit 2 rather than read as clean.
+
+### A benchmark that measures the review, not the checker (H-016)
+
+Every other fixture here measures a checker. `tests/fixtures/review-bench/` measures a **review configuration**: seven defect classes drawn from defects that actually bit this repo, a clean control, and a mechanical scorer. It exists because narrow-scope review had been adopted as the default on **one** run's evidence.
+
+First result, 6 runs:
+
+| config | recall on 6 seeded | findings outside the manifest |
+|---|---|---|
+| no-review (suite only) | **0 of 7** — silent, exit 0 on all three trees | — |
+| broad-cold ×3 | 6/6, 6/6, 6/6 | 17, 16, 21 |
+| narrow-cold ×3 | 6/6, 6/6, 6/6 | 5, 7, 8 |
+
+Parity on known classes; broad reported **3–4×** more outside the manifest. H-016's own predicted outcome, including the caveat.
+
+⚠️ **Two things it did NOT measure, stated because the number is useless without them.** It could not measure **precision**: the base tree turned out to carry unseeded real defects, so "outside the manifest" is mostly correct findings rather than noise. And it could not measure **cost**: both configs ran ~42k tokens on a three-file corpus, where the 2× gap on real work comes from re-deriving a large codebase. Cost stays sourced from the real runs.
+
+### `curate`'s new extractor reproduced a phantom the sibling step had already solved
+
+The first `/curate` to run the extractor shipped in v1.31.0 reported **`process.env` as a DEAD reference**. `templates/audit-context.md` documents that exact class and states the test — keep a filename-shaped token only when it still looks like a path. Fixed. Second time in one day that a checker written here reproduced a defect another surface in this repo had already fixed.
+
+The read-surface gate command is also corrected: `find | xargs wc -c | tail -1` word-split a spaced path (measured: 5,000 reported of 10,000) and `xargs` **batching** made `tail -1` report one batch (6,000 files: 105,600 of 600,000). Both silent, both reading LOW. Now `-print0 | xargs -0 cat | wc -m`, which also fixes bytes having been labelled characters.
+
+### Adopter report: the #94 marker rule failed in the release that wrote it
+
+Reported by **llm-distillery**, running `/update-drift` across v1.26.1→v1.31.0.
+
+⚠️ **v1.31.0 named marker strings for #52 and #77 and not for #50** — its other adopter-visible change to the same project-local skill. Verified: `nrisk` appears 3× in `templates/review-changes.md` and 0× in the changelog. Without markers, an adopter following `update-drift` Step 3 must record `not verified` for a change worth adopting, or eyeball a 577-line diff — precisely what #94 says a re-mapped adopter cannot do. `nrisk` and the `\001`/`\002` masking pair are now named; `n6_tier_row.md` is a *fixture* name and is not a marker. **This is v1.30.0's "a rule restated in many places, edited in one" one level up**: stated in the changelog and in `templates/release.md` Step 4, and not applied to the release stating it.
+
+**`update-drift` Step 3 gains their method.** A user-global install is never byte-identical to a tracked copy — the installer rewrites the header — so a single diff against HEAD returns *differs* for **both** "behind by four releases" and "current, plus the installer's transformation". The naive reading produces a false *not adopted* on a fully current repo, which is the reading that makes an adopter re-copy a skill they re-mapped. Diff against **every tag and read which one minimises**; the monotone fall to a floor is the signal and the floor is the installer's constant. Their measurements ship as the evidence.
+
+**Filed #99**: have `install-global-skills.sh` stamp its source tag, making that a one-line read instead of a tag sweep. It needs `--check` taught to expect the stamp, or every install reads as drifted.
+
+**Adopter action: none required.** `curate` and `update-drift` are user-global — refresh via `scripts/install-global-skills.sh` after the tag is pushed **and** verified. Nothing breaks if you skip it.
+
 ## v1.31.0 (2026-08-27)
 
 Three adopter-reported issues, all the same failure: **a check that reports nothing when it is broken, indistinguishable from reporting nothing because all is well.** MINOR — new checker behaviour in `curate`, new guidance in `release` and `update-drift`.
