@@ -137,6 +137,14 @@ The lenses below all read *content*: does this path exist, is this flag right, w
     { sub(/\r$/, "") }               # CRLF: strip before anything reads the line,
                                      # or isdelim() never matches and no table in
                                      # the file is examined. See #52.
+    # YAML frontmatter, skipped whole: `isdelim()` accepts a bare `---` and its
+    # guard is satisfied by a pipe in the PREVIOUS line, so a closing `---` under
+    # `description: Runs a | b` reported as a malformed table — and every SKILL.md
+    # here has a `description:`. Preferred over requiring a pipe in the delimiter
+    # row, which would reject the pipe-less rows GFM permits (#52).
+    NR == 1 && $(0) ~ /^---[ \t]*$/ { infm = 1; next }
+    infm && $(0) ~ /^(---|\.\.\.)[ \t]*$/ { infm = 0; prev = ""; next }
+    infm { next }
     {
       bare = $(0); sub(/^ ? ? ?/, "", bare)
       if (bare ~ /^```/ || bare ~ /^~~~/) {

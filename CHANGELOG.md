@@ -19,6 +19,34 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.31.0 (2026-08-27)
+
+Three adopter-reported issues, all the same failure: **a check that reports nothing when it is broken, indistinguishable from reporting nothing because all is well.** MINOR — new checker behaviour in `curate`, new guidance in `release` and `update-drift`.
+
+### `curate`'s dead-reference check ships an extractor instead of a rule (closes #51)
+
+Sub-step 1 said *"for every file path mentioned, verify it still exists"* and left the extraction to the model. Re-derived per run means re-derived wrong: one adopter run produced **25 `MISSING:` lines, essentially all false** — bare basenames living one directory down, systemd *unit names*, paths on other machines, a file in a sibling repo. It survived because every run reports something, so nothing looks broken. This is #34's shape one step earlier.
+
+It now ships a canonical extractor that **classifies rather than flags**: resolve as written → doc-relative → `memory/` → `docs/` → basename; quarantine absolute and `~` paths as `CANNOT VERIFY` (a claim about another machine, the same disposition a host-dependent probe gets); skip unit-name shapes and placeholder/glob shapes; and print `N dead / N unresolvable / N skipped / N resolved`, because `0 dead` alone cannot distinguish a clean index from an extractor that captured nothing.
+
+⚠️ **Its first run on this repo reported four of its own false positives** — `templates/<name>.md`, `docs/work-items/<slug>.md`, `.claude/settings*.json`, `memory/project_*.md` — all shapes, not paths, and all a class `audit-context` had already solved. Fixed before shipping, by running it rather than reading it.
+
+### `review-changes` Step 1.5: CRLF measured, YAML frontmatter fixed (closes #52)
+
+The CRLF strip landed earlier; what was missing was a **measurement**, and memory recorded that the earlier re-check used an unsound extraction, so nothing was claimed. Now measured on seeded input: a lossy row under CRLF is reported, a clean CRLF table stays quiet, and ablating the strip kills the CRLF case — without it *no table in the file is examined* and the run is byte-identical to clean.
+
+The issue's second defect was live and is fixed: `isdelim()` accepts a bare `---` and its guard is satisfied by a pipe in the **previous** line, so YAML frontmatter whose `description:` contains a pipe reported as a malformed table. Not exotic — every `SKILL.md` here has a `description:`. The frontmatter block is now skipped whole, which is preferred to requiring a pipe in the delimiter row (that would reject the pipe-less delimiter rows GFM permits). A setext heading containing a pipe still reports; rarer, and documented rather than fixed.
+
+**New fixture** `tests/fixtures/step15-tables/`: 4 positives, 3 negatives, 2 ablations, the program **extracted** from the template rather than copied so it cannot drift. ⚠️ **One seeded negative was wrong when written** — "excess empty cells lose nothing, so it must stay quiet" — contradicting the step's own text two screens up, which says that case reports and the human adjudicates. Reclassified to a positive. Written from reasoning, corrected by running it; the same lesson v1.30.0 recorded about ablation kill sets. ⚠️ **And one ablation killed nothing when written**: mutating `infm { next }` left the two rules that consume both `---` lines intact, so it read as a passing ablation over an unguarded rule. It now mutates the entry condition.
+
+### "Re-copy it by hand" is destructive advice for the adopters most likely to need the fix (closes #94)
+
+`review-changes` is project-local, so fixes propagate only by copying. Two release notes said *"project-local and must be re-copied by hand."* For an adopter who **re-mapped** the skill — rewrote its risk tiers for paths their repo actually has, which one adopter records as an operative rule because a verbatim install would tier everything LOW and quietly do nothing — following that instruction destroys the adaptation. Their copy is also the one that has diverged furthest, so they are the least able to eyeball a 577-line diff and the most likely to need the fix.
+
+Both changelog lines are **corrected in place** rather than rewritten, and now name marker strings (`isdelim($(0))`, `sub(/\r$/, "")`, `infm`) an adopter can grep however far their copy has drifted. `templates/release.md` Step 4 gains the general rule: for a copied artifact, name the surgical change and its markers, never only "re-copy it". `templates/update-drift.md` Step 3 gains the other half — a re-mapped project-local skill needs a **content** check, and a version stamp cannot answer for it, because a defensive fix looks like nothing: the framework shipped one where broken and fixed were semantically identical in isolation, with no error, no empty output and no non-zero status.
+
+**Size**: `curate` +2153, `update-drift` +735, `review-changes` +542, `release` +465. Three of the four buy a check where prose used to be; the fourth buys the rule that stops the bad advice recurring.
+
 ## v1.30.0 (2026-08-27)
 
 ### Marking a reference the local tree answers made the run undecided (round 5 on #93)
@@ -148,7 +176,7 @@ Two normative claims were false for one of the two marker forms they govern: *"a
 
 ## v1.28.0 (2026-08-26)
 
-Nine open issues closed in one batch: one measured hole in the repo's own sensitivity harness, two defects in `update-drift`'s stamp finder, three in `audit-context`'s reference checker, a timing contradiction between two shipped surfaces, a unit disagreement between two shipped surfaces, and the missing pre-commit trigger in the artifact every adopter copies. MINOR: new checker behaviour and new template rows. ⚠️ **Adopter action**: three skills changed. `audit-context` and `update-drift` are user-global — refresh via `scripts/install-global-skills.sh` after the release tag is pushed **and verified**. `review-changes` is project-local and must be re-copied by hand. Nothing breaks if you do neither; the old `audit-context` still runs, it just keeps reporting the correct references #54/#55/#56 are about.
+Nine open issues closed in one batch: one measured hole in the repo's own sensitivity harness, two defects in `update-drift`'s stamp finder, three in `audit-context`'s reference checker, a timing contradiction between two shipped surfaces, a unit disagreement between two shipped surfaces, and the missing pre-commit trigger in the artifact every adopter copies. MINOR: new checker behaviour and new template rows. ⚠️ **Adopter action**: three skills changed. `audit-context` and `update-drift` are user-global — refresh via `scripts/install-global-skills.sh` after the release tag is pushed **and verified**. `review-changes` is project-local and must be re-copied by hand. ⚠️ **Corrected in v1.31.0 — do not follow this literally if you RE-MAPPED the skill** (rewrote its tiers or paths for your own repo): re-copying destroys the adaptation, and the adopters most likely to need the fix are exactly the ones it would hurt (#94). Grep your copy for the marker strings instead — a current `review-changes` contains `isdelim($(0))`, `sub(/\r$/, "")` and `infm`. Missing markers name the surgical change to apply by hand. Nothing breaks if you do neither; the old `audit-context` still runs, it just keeps reporting the correct references #54/#55/#56 are about.
 
 ### 9 of 29 ablations in `verify-runner` proved nothing, and a silence-mutant is what showed it (closes #90)
 
@@ -326,7 +354,7 @@ Applied to all occurrences in `templates/curate.md`, `templates/review-changes.m
 
 ~~⚠️ **No new check guards this class.**~~ **Lint rule 9 now does — see below (#86).** It was written after this entry, in the same release, and its first four true positives were the comments *in this fix*.
 
-**PATCH** — a shipped artifact made to survive its own delivery path. ⚠️ **Adopter action**: both skills changed. `curate` is user-global — refresh via `scripts/install-global-skills.sh` after the tag. `review-changes` is project-local and must be re-copied by hand.
+**PATCH** — a shipped artifact made to survive its own delivery path. ⚠️ **Adopter action**: both skills changed. `curate` is user-global — refresh via `scripts/install-global-skills.sh` after the tag. `review-changes` is project-local and must be re-copied by hand. ⚠️ **Corrected in v1.31.0 — do not follow this literally if you RE-MAPPED the skill** (rewrote its tiers or paths for your own repo): re-copying destroys the adaptation, and the adopters most likely to need the fix are exactly the ones it would hurt (#94). Grep your copy for the marker strings instead — a current `review-changes` contains `isdelim($(0))`, `sub(/\r$/, "")` and `infm`. Missing markers name the surgical change to apply by hand.
 
 ### Rule 8: both templates grow, recorded rather than waived
 

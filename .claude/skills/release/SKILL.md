@@ -135,6 +135,7 @@ A complete entry has:
 - **Summary line** — what shipped and why, one or two sentences, ending with the bump and its justification
 - **Per-surface sections** — one per surface touched, each listing the specific files and what changed in them
 - **Consumer notes** — what new consumers get, and what existing consumers must do (say "no action required" explicitly when that's true)
+  - ⚠️ **For a copied artifact, name the surgical change and its marker strings — never only "re-copy it".** A consumer who *adapted* the copy cannot re-copy without destroying the adaptation, and theirs is the copy that has diverged furthest — the one most likely to need the fix. List a few strings a current copy must contain, so they can grep however far theirs has drifted, plus the edit that adds them. Shipped twice here before anyone noticed (#94).
 - **Versioning rationale** — one or two sentences naming which Step 2 rule fired and the precedent it follows
 
 Follow the *content* shape of recent entries, but don't inherit their structural defects — if the last two entries are missing version headings, that's drift to correct, not a pattern to copy.

@@ -14,7 +14,55 @@ Check for context rot from *previous* sessions. This catches what the session-fo
 
 **Read metadata, not documents.** Measured across 2,264 real sessions, an ordinary session reads a **median of 3** memory files — the layer works as designed. This step is the exception that reads everything, and it does not need to. A gotcha log's headers are ~6–7% of the file and carry most of what Step 0.3, Step 1 and Step 2 use; a verify probe is *run*, not read; staleness is `stat`, not content. Where a large artifact is involved, take its index first and fetch a body only when you are going to act on it. In one measured repo this is the difference between ~1,000,000 characters and ~35,000.
 
-1. **Dead references**: Read the memory index and project file. For every file path mentioned, verify it still exists. List any broken paths.
+1. **Dead references**: run the extractor below over the memory index and project file. **Do not improvise one.** A rule stated in prose and left to the model is re-derived per run, and re-derived wrong: one adopter run produced 25 `MISSING:` lines of which essentially all were false — bare basenames that exist one directory down, systemd *unit names*, paths on other machines, a file in a sibling repo. Every run reports something, so nothing looks broken, and the honest summary was "this produced noise, not findings" (#51). **Classify, do not flag**, and print the reconciliation line: `0 dead` and `0 dead / 14 unresolvable / 3 skipped` are different results.
+
+```bash
+python3 - memory/MEMORY.md CLAUDE.md <<'PY'
+import re, subprocess, sys
+from pathlib import Path
+EXT = r'md|py|sh|js|ts|tsx|jsx|json|yaml|yml|toml|ini|cfg|conf|txt|sql|rs|go|rb|java|c|h|cpp|css|html|env|lock|tsv|csv'
+UNIT = re.compile(r'\.(service|timer|socket|mount|path|target)$')
+PATH = re.compile(r'`([^`\s]+\.(?:' + EXT + r'))`')
+root = Path(subprocess.run(['git','rev-parse','--show-toplevel'], capture_output=True,
+                           text=True).stdout.strip() or '.')
+tree = {p.name: p for p in root.rglob('*') if p.is_file()}
+dead, unver, skip, ok = [], [], [], 0
+for doc in sys.argv[1:]:
+    d = root / doc
+    if not d.is_file():
+        print(f'CANNOT VERIFY: {doc} is not readable'); continue
+    for frag in dict.fromkeys(PATH.findall(d.read_text(errors='replace'))):
+        frag = frag.lstrip('@')          # `@file` is an inclusion sigil, not a name
+        # A SHAPE, not a file: `<slug>.md`, `settings*.json`, `project_*.md`. The
+        # sibling step already decides these by their shape and nothing on disk;
+        # reporting them dead is the loudest false positive this extractor can make,
+        # and four of them were in this framework's own project file on first run.
+        if '<' in frag or '*' in frag:
+            skip.append((doc, frag, 'placeholder or glob, not a literal path')); continue
+        # A claim about ANOTHER machine cannot be checked from here. Quarantined,
+        # not flagged — the same disposition a host-dependent verify probe gets.
+        if frag.startswith(('/', '~')):
+            unver.append((doc, frag, 'path on another host')); continue
+        # A systemd unit NAME is not a file reference unless it carries a directory.
+        if UNIT.search(frag) and '/' not in frag:
+            skip.append((doc, frag, 'unit name, not a path')); continue
+        # As written, then doc-relative, then the two directories this method puts
+        # things in, then the basename anywhere. A bare `gotcha-log.md` means
+        # `memory/gotcha-log.md`; calling it missing is the commonest false positive.
+        for cand in (root/frag, d.parent/frag, root/'memory'/frag, root/'docs'/frag):
+            if cand.is_file(): ok += 1; break
+        else:
+            hit = tree.get(Path(frag).name)
+            if hit and Path(frag).name == frag: ok += 1
+            elif hit: unver.append((doc, frag, f'basename only: {hit.relative_to(root)}'))
+            else: dead.append((doc, frag, 'resolves nowhere'))
+for label, rows in (('DEAD', dead), ('CANNOT VERIFY', unver), ('SKIPPED', skip)):
+    for doc, frag, why in rows: print(f'{label}: {doc} -> {frag} ({why})')
+print(f'{len(dead)} dead / {len(unver)} unresolvable / {len(skip)} skipped / {ok} resolved')
+PY
+```
+
+⚠️ **A `0 dead` line alone is not a result.** It cannot distinguish a clean index from an extractor that captured nothing — report all four counts, always.
 2. **Stale memory**: Check modification dates of memory files. Flag any not modified in 30+ days — they may be outdated. Read dates from the **filesystem**, e.g. `ls -l --time-style=+%Y-%m-%d memory/` or `stat -c '%y %n' memory/*.md`. **Look for the files before reading their dates, and say which set you read.** Where there is no `memory/` there is no Layer 3, and this project's equivalents are the ones the naming map gives for a tool without auto-memory — `docs/gotcha-log.md`, `docs/hypothesis-log.md`, `docs/work-items/` — plus the project file itself. Both example commands fail the same silent way on a directory that is not there: `stat` and `ls` each write to stderr and print nothing to stdout, which reads exactly like "nothing is stale".
 
    Do not use `git log -1 --format=%ci -- <file>` as the primary check. When the memory directory is gitignored — the recommended setup, and this framework's own — `git log` returns **empty with exit 0** for every file, so the check reports nothing stale while having examined nothing. Empty `git log` output here means "the check did not run", not "no files are stale".
