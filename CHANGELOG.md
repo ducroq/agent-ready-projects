@@ -19,6 +19,40 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.35.0 (2026-08-27)
+
+Two adopter issues closed, and one of them by **refuting its own premise** — including a piece of guidance this project shipped three releases ago on that same premise, unchecked. MINOR: `update-drift` Step 0's operands and Step 3's comparison both change what an adopter does.
+
+### Step 3 was comparing the wrong file (corrects v1.32.0; closes #99)
+
+v1.32.0 shipped an adopter's method — *diff the install against every tag and read which one minimises* — on their explanation that **the installer rewrites the header**. Measured, it does not:
+
+```
+grep 'cp "$src"' scripts/install-global-skills.sh     # a plain cp, no transform
+cmp -s .claude/skills/curate/SKILL.md ~/.claude/skills/curate/SKILL.md   # IDENTICAL
+```
+
+The `SAVE AS` comment becomes real frontmatter **between `templates/<name>.md` and `.claude/skills/<name>/SKILL.md`** — a maintainer-side edit, not an install-time one. So the residue is not an installer constant; it is what comparing an install against the **template** produces instead of against the **reference install**:
+
+| installed `curate` compared against | differing lines |
+|---|---|
+| `templates/curate.md` @ v1.34.2 | 24 |
+| `.claude/skills/curate/SKILL.md` @ v1.34.2 | **0** |
+
+**Exact zero, not a minimum.** Step 3 now says to compare against the reference install, with the tag-minimising sweep demoted to a `<details>` fallback for frameworks whose installers genuinely do transform — and a line telling the reader to check whether theirs does rather than assume it.
+
+**#99 (stamp the source tag into the install) is closed as not needed.** Provenance is already recoverable exactly; a stamp would add a byte the tracked source lacks — the `--check` problem the issue itself flagged — to buy information a correct `cmp` already gives.
+
+⚠️ **Third time in one day that a peer's mechanism was shipped or filed here without being run.** The other two were `--depth 1` and `--filter=blob:none`. All three arrived written as measurements; none was one; each cost under a minute to check. The rule *state the check before the claim* covers this and did not fire, three times, in the session that wrote it down.
+
+### Step 0's operands collapsed to one file and reconciled it against itself (closes #100)
+
+The block took `<project file> <template dir>`. An adopter shipping no `templates/` saw the operands collapse to the project file alone — so it reconciled that file against itself and reported clean. Now a named list with absent operands reported rather than silently dropped, and **a single-operand run called out as a finding**.
+
+**The adopter's distinction is the part neither existing guard could reach**: a missed *stamp* and a missed *framework* are different failures. The zero-hit guard and the difference-listing both catch a missed stamp; neither catches a framework named only *outside* the operands, because it never enters the mention set. On their estate, widening moved a self-consistent nothing to 33 mentioned against 14 stamped and surfaced a third framework named once in a war story.
+
+Dogfooded here: **five** framework names where the project file alone shows one.
+
 ## v1.34.2 (2026-08-27)
 
 **PATCH** — v1.34.1's correction table had an unmeasured row of its own. Folded into the v1.34.1 entry below rather than repeated here, because splitting a correction from the thing it corrects is how the pair drifts.
