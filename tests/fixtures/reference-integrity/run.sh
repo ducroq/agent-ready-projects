@@ -332,6 +332,10 @@ declare -a XCASES=(
   "X13 BOTH marker forms on one path, neighbours reachable|both.md|neighbours|0|VERDICT: CLEAN — no findings"
   "X14 BOTH marker forms, no neighbour — the shape still decides|both.md|empty|0|VERDICT: CLEAN — no findings"
   "X15 a confirmed defect AND an undecided reference in one run|mixed.md|empty|1|VERDICT: DEFECTS — 1 finding(s), 2 left undecided"
+  "X17 marked path the LOCAL tree answers, neighbours reachable|localmark.md|neighbours|0|VERDICT: CLEAN — no findings"
+  "X18 marked path the LOCAL tree answers, no neighbour — a rung that RAN decided it|localmark.md|empty|0|VERDICT: CLEAN — no findings"
+  "X19 marked path resolving doc-relative is MISLABELLED, neighbours reachable|docs/docrel.md|neighbours|1|VERDICT: DEFECTS — 1 finding(s)"
+  "X20 marked path resolving doc-relative is MISLABELLED, no neighbour|docs/docrel.md|empty|1|VERDICT: DEFECTS — 1 finding(s)"
 )
 
 # Runs the table against an arbitrary oracle and prints the names of the failing
@@ -436,6 +440,9 @@ X2N="X2 clean, no neighbour reachable"
 X12N="X12 angle-bracket placeholder, no neighbour — still decided"
 X14N="X14 BOTH marker forms, no neighbour — the shape still decides"
 X15N="X15 a confirmed defect AND an undecided reference in one run"
+X18N="X18 marked path the LOCAL tree answers, no neighbour — a rung that RAN decided it"
+X19N="X19 marked path resolving doc-relative is MISLABELLED, neighbours reachable"
+X20N="X20 marked path resolving doc-relative is MISLABELLED, no neighbour"
 
 # A1 kills X4 alone, not X4+X9: an untested marker never enters `findings`,
 # so reverting the split there cannot reach it. Measured — the first draft of
@@ -445,18 +452,19 @@ ablate "A1 revert the split"        "if confirmed or missing:" "if findings or m
 ablate "A2 exit 0 when unconfirmed" "rc, verdict = 2, ('COVERAGE" "rc, verdict = 0, ('COVERAGE" "$X4N,$X9N"
 ablate "A3 everything unconfirmed"  "'UNRESOLVED' if rung4_runnable else UNCONFIRMED" "UNCONFIRMED" "$X3N"
 ablate "A4 drop the unread arm"     "if confirmed or missing:" "if confirmed:"                "$X7N"
-# A5, A6 and A7 each widened when a row was added below them. Recorded rather
+# A5, A6 and A7 each widened when a row was added below them, and A5 and A6
+# widened AGAIN when round 5 added X17-X20 (A5 gains X20, A6 gains X18). Recorded rather
 # than trimmed: an ablation's kill set is a measurement of the mutant, not a
 # property of the row it was written for, and three of these expectations have
 # now been corrected by running them rather than by reasoning about them.
 ablate "A5 no neighbour, nothing decidable" \
        "confirmed = [f for f in findings if f[2] != UNCONFIRMED]" \
-       "confirmed = [] if n_siblings == 0 else list(findings)"                                "$X15N,$X6N"
+       "confirmed = [] if n_siblings == 0 else list(findings)"                        "$X15N,$X20N,$X6N"
 # A6 kills both clean-with-no-neighbour rows, which is the point of it: the
 # mutation is "the RUN is indeterminate", so every row where nothing was found
 # and no neighbour was reachable must go red. Adding X12 changed this set, and
 # the ablation is what noticed — a prose claim would not have.
-ablate "A6 whole RUN indeterminate" "elif unconfirmed:" "elif unconfirmed or n_siblings == 0:" "$X12N,$X14N,$X2N"
+ablate "A6 whole RUN indeterminate" "elif unconfirmed:" "elif unconfirmed or n_siblings == 0:" "$X12N,$X14N,$X18N,$X2N"
 ablate "A7 excuse an untested marker" "elif rung4_runnable:" "elif True:"                      "$X15N,$X9N_"
 # A8 is X12's guard, and X12 exists because round 2 shipped this mutation as the
 # real thing: sending an angle-bracket segment to the undecided bucket moved a
@@ -476,7 +484,18 @@ ablate "A9 marker wins over the shape" \
 # once — so without X15 this deletion is invisible.
 ablate "A10 drop the mixed-verdict clause" \
        "        if unconfirmed:" "        if False:"                                              "$X15N"
-# ⚠️ X1, X5 and X8 are killed by none of the seven. They are shape coverage, not
+# A11/A12 are round 5's, and they hold the two halves of the same fix apart. The
+# marked arm ran rungs 1, 3, 4 and skipped 1b and 2, so a marked reference the
+# LOCAL tree answers fell through to the undecided bucket — #93's own defect a
+# third time, and the one direction no row covered. A11 reverts the decidability
+# half, A12 the adjudication half. Kill sets MEASURED by running the mutants.
+ablate "A11 marked path skips the local suffix rung" \
+       "                    if mhits:" "                    if False:"                            "$X18N"
+ablate "A12 marked path skips the doc-relative rung" \
+       "if mdocrel.exists() and mdocrel.is_file():" "if False:"                                    "$X19N,$X20N"
+# ⚠️ X1, X5, X8, X11, X13 and X17 are killed by none of the twelve. Re-measured
+# 2026-08-27 by running every mutant, not by reading the rows — round 4 found
+# five of ten kill sets wrong when written, so this comment is a MEASUREMENT. They are shape coverage, not
 # guards: each pins the neighbours-reachable half of a pair so that its twin's
 # PASS cannot be read as environment-independent by accident.
 
