@@ -98,14 +98,19 @@ for doc in sys.argv[1:]:
         # the form the sibling step tells authors to WRITE, so the better an
         # adopter follows that advice the more phantom dead references a
         # repo-local check invents: measured on one adopter, 12 dead reported and
-        # 0 actually dead, 9 of them qualified sibling paths. Deliberately NOT
-        # resolved against the neighbours: that is the environment-dependence
-        # #93 took five review rounds to remove. It gets its own disposition,
+        # 0 actually dead, 9 of them qualified sibling paths. NOT resolved
+        # against the neighbours BY PROSE — that is the environment-dependence
+        # #93 took five review rounds to remove; a sibling named by the fragment
+        # itself is a different gate, and the rung below does use it. It gets its own disposition,
         # matching how the sibling step's ladder already treats these. ⚠️ COST,
-        # stated: a genuinely dead `oldpkg/foo.py` whose top-level directory was
-        # deleted also lands here rather than in DEAD. That is a real
-        # sensitivity loss, taken knowingly — a check with a 100% false-positive
-        # rate is not read at all, which costs more.
+        # stated, and CONDITIONAL — a draft of this comment wrote it flat. A
+        # genuinely dead `oldpkg/foo.py` whose top-level directory was deleted
+        # lands here rather than in DEAD **only when no sibling of that name is
+        # on disk**; where one is, the rung below decides it and reports DEAD.
+        # Measured both ways. The sensitivity loss is real and taken knowingly —
+        # a check with a 100% false-positive rate is not read at all — but it is
+        # narrower than the flat version claimed, and an adopter weighing the
+        # trade needs the condition.
         if '/' in frag and frag.split('/')[0] not in here:
             # A SIBLING ON DISK DECIDES IT. The fall-through below stays, but it
             # is a fall-through and not the whole answer: an adopter measured a

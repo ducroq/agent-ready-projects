@@ -101,7 +101,17 @@ if [ -d "$W/SparseRepo" ] && [ ! -e "$W/SparseRepo/scripts" ]; then
 else
   printf '  SKIP  SparseRepo — this git could not produce a sparse checkout, so the exposure case did not run\n'
 fi
-want "CANNOT VERIFY" "oldpkg/gone.py"  "same disposition, and the KNOWN COST: a deleted top-level dir lands here too"
+# ⚠️ CONDITIONAL, and the condition is the point — this passes only because no
+# `oldpkg` sibling exists beside the fixture repo. A review found the template
+# prose stating this cost FLAT while the sibling rung decides it whenever such
+# a sibling is on disk. Both halves are now asserted, so neither can be
+# restated unconditionally without a row going red.
+want "CANNOT VERIFY" "oldpkg/gone.py"  "KNOWN COST, and only while no sibling of that name is on disk"
+mkdir -p "$W/oldpkg"
+OUT="$(python3 "$W/deadref.py" CLAUDE.md 2>&1)"
+want DEAD "oldpkg/gone.py" "...and the SAME path is decided DEAD once that sibling exists — the cost is conditional"
+rmdir "$W/oldpkg"
+OUT="$(python3 "$W/deadref.py" CLAUDE.md 2>&1)"
 want SKIPPED "process.env"      "filename-shaped token, not a path"
 want SKIPPED "memory/project_*.md" "glob"
 want SKIPPED "docs/work-items/<slug>.md" "placeholder shape"

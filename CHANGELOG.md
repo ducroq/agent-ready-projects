@@ -19,6 +19,18 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.36.1 (2026-08-27)
+
+**PATCH** — three superseded sentences left standing beside the corrections that refuted them. Found by the session's wrap-up review; no behaviour change.
+
+**All three are one class**, and it is the class this session kept producing: a correction shipped while the text it supersedes stays in place, so the surface asserts both.
+
+- **`templates/curate.md`** stated the cross-repo cost **flat** — *"a genuinely dead `oldpkg/foo.py` … also lands here rather than in DEAD"* — while v1.34.0's sibling rung, forty lines below, decides exactly that case whenever a sibling of that name is on disk. Measured both ways: `../oldpkg` absent → `0 dead / 1 unresolvable`; present → `1 dead`. **The cost is real but conditional**, and it is the sentence an adopter reads to judge whether the sensitivity loss is acceptable. Its companion, *"deliberately NOT resolved against the neighbours"*, is now scoped to *by prose* — which is the gate #93 rejected, and not the one the fragment's own first segment provides.
+- **`templates/update-drift.md`** said *"there is no install-time transform"* and, thirteen lines later inside the `<details>` fallback, *"a user-global install is not byte-identical to any tracked copy — the installer rewrites the header."* The scope lived only in the collapsed summary, so expanding the fallback landed on the negation. Now scoped in the prose, and the adopter's measured table is labelled for what it is — **produced by comparing against the template, which v1.35.0 established is the wrong file**, so it illustrates the minimise *shape* rather than evidencing a transforming installer.
+- **`templates/review-changes.md`** told adopters *"Step 1.5 does not catch it — it checks tables and fences, not emphasis"*, in a release that added the emphasis check. Refuted on the exact shape the sentence describes.
+
+**The fixture assertion for the first one passed only by accident** and now asserts both halves: the temp dir happened to have no `oldpkg` sibling, so the flat claim went green. It now creates the sibling, asserts DEAD, removes it, and asserts CANNOT VERIFY — so neither half can be restated unconditionally without a row going red.
+
 ## v1.36.0 (2026-08-27)
 
 **MINOR** — a new rule on an adopter-facing surface, promoted on evidence from two independent estates in one day.
