@@ -39,6 +39,27 @@ The issue's second defect was live and is fixed: `isdelim()` accepts a bare `---
 
 **New fixture** `tests/fixtures/step15-tables/`: 4 positives, 3 negatives, 2 ablations, the program **extracted** from the template rather than copied so it cannot drift. ⚠️ **One seeded negative was wrong when written** — "excess empty cells lose nothing, so it must stay quiet" — contradicting the step's own text two screens up, which says that case reports and the human adjudicates. Reclassified to a positive. Written from reasoning, corrected by running it; the same lesson v1.30.0 recorded about ablation kill sets. ⚠️ **And one ablation killed nothing when written**: mutating `infm { next }` left the two rules that consume both `---` lines intact, so it read as a passing ablation over an unguarded rule. It now mutates the entry condition.
 
+### `curate` measures its own read surface before reading (closes #46)
+
+The skill *body* is ratcheted by lint rule 8. What a run **reads** was not, and it is 4–25× larger and fresh tokens every time. Measured on three real repos: 147k characters here, 222k in a sibling, **1,000,426 across 69 files** in a third — where the step could not read its own inputs in one context window and nothing said so.
+
+Step 0 now opens with the measurement and a threshold. Above ~300k characters, do not read the corpus: work from the runners, which take paths and report without pulling documents into context, curate the index and newest topic file only, and **say which files you did not open**. A run that silently reads a third of its inputs and reports as though it read all of them is this method's own failure mode one layer up. *(This repo measures 255,889 — under the line, and not by much.)*
+
+### Four ways a `verify:` annotation passes while its claim is false (closes #66, #62, #65, #61)
+
+Four separately-filed adopter observations turned out to be one failure seen four ways, so they ship as **one** rule in sub-step 5 rather than four — v1.30.0's lesson being that a rule restated in seven passages gets corrected in one and left wrong in six.
+
+- **The probe asserts a proxy.** `ls-remote | grep -q .` under *"v1.21.0 tagged and pushed"* proves *some* tag exists — greenest on the day it is most wrong.
+- **The check was never tight.** Seeded-true-positives fires on a *loosened* check; one that never caught anything looks identical to one that works. The tell is a deletion that fails to turn anything red.
+- **The count travels and the enumeration does not.**
+- **A state report decays; a claim does not.** Three instances here, two this week — including a changelog note announcing itself as *"Corrected in v1.31.0"* while v1.31.0 was still unreleased. The tense of the intended outcome, in a note about being wrong.
+
+### What to adopt, and what most people don't (closes #47)
+
+`docs/GUIDE.md` gains a measured section, and `README.md` a pointer to it. Across 58 repos: project file **58**, gotcha log 21, memory index 18, runbook 7, work items 6, ADRs 5, hypothesis log 5, **Layer 5 coordination doc 0**.
+
+⚠️ **Stated with its limit**: these are file-existence counts, not usage counts, so they measure *adoption* and cannot distinguish a bad artifact from a good one nobody has needed yet. It ships as an **ordering** — add each layer when you feel the problem it solves — because adopting one before you have that problem is ceremony, and ceremony is what gets a method abandoned. Layer 5 stays documented, and the guide now says plainly that nobody uses it.
+
 ### Step 1.5 gains a third construct: emphasis spans (closes #50)
 
 Step 1.5 exists for one property — *correct in the diff, wrong when rendered* — and checked two constructs. **Emphasis is a third with the same property**, reported by an adopter after a formatter joined two `**`-globs inside one bolded phrase and corrupted both.
