@@ -25,12 +25,22 @@ The versions above are placeholders on purpose. What varies between the shapes i
 
 A matcher keyed to one of these reports an **unstamped project** when the stamp is merely written differently — which reads identically to "no framework adopted here" and is the wrong conclusion. Use a wide separator class, and a **second** matcher for a pin that is not a version:
 
+⚠️ **Choose the operands before you run anything, and do NOT default to `<project file> <template dir>`.** An adopter who ships no `templates/` directory sees the operands collapse to the project file alone — the block then reconciles that file **against itself** and reports clean. Measured on one adopter: widening to `CLAUDE.md docs memory .claude` moved the count from a self-consistent nothing to **33 mentioned pairs against 14 stamped**, and one of the names in the difference was a **third framework the narrow sweep never saw at all**, mentioned once in a war story.
+
+**A missed *stamp* and a missed *framework* are different failures.** The zero-hit guard and the difference-listing below both catch a missed stamp. Neither can catch a framework that is only ever named outside the operands, because it never enters the mention set to begin with.
+
+**Use every directory the project actually writes prose into** — typically the project file plus `docs/`, `memory/`, `.claude/`, and `templates/` where it exists. Absent operands are not an error, so name them explicitly rather than relying on a default:
+
 ```bash
+OPERANDS="<project file> docs memory .claude templates"   # drop what you do not have, and SAY which
+for o in $OPERANDS; do [ -e "$o" ] || echo "operand absent, not searched: $o"; done
 # 1. version-shaped pins
-grep -rnE "agent-ready-[a-z]+[^0-9]{0,60}v?[0-9]+\.[0-9]+[0-9.]*" <project file> <template dir>
+grep -rnE "agent-ready-[a-z]+[^0-9]{0,60}v?[0-9]+\.[0-9]+[0-9.]*" $OPERANDS 2>/dev/null
 # 2. commit-hash pins
-grep -rnE "agent-ready-[a-z]+[^A-Za-z0-9]{0,24}[0-9a-f]{7,40}" <project file> <template dir>
+grep -rnE "agent-ready-[a-z]+[^A-Za-z0-9]{0,24}[0-9a-f]{7,40}" $OPERANDS 2>/dev/null
 ```
+
+⚠️ **A single-operand run is a finding, not a result.** If the list reduces to one file, say so in the report — a self-reconciliation always agrees.
 
 - **`{0,60}`, not `{0,24}`** — ``Adopted from `agent-ready-projects` `templates/review-changes.md` (v1.18.0`` puts **33** characters between name and version. At `{0,24}` that stamp was invisible for a whole adoption while two others in the same repo were found.
 - **Matcher 2** exists because matcher 1 needs two dot-separated numeric groups, which no separator width reaches on a hash.
@@ -49,11 +59,11 @@ So state the denominator:
 ```bash
 M=$(mktemp); S=$(mktemp); trap 'rm -f "$M" "$S"' EXIT
 # every (file, framework) PAIR that is mentioned...
-grep -rnoE "agent-ready-[a-z]+" <project file> <template dir> 2>/dev/null |
+grep -rnoE "agent-ready-[a-z]+" $OPERANDS 2>/dev/null |
   sed -E 's/:[0-9]+:/:/' | LC_ALL=C sort -u > "$M" || :
 # ...against every pair a stamp was actually found for
-{ grep -roE "agent-ready-[a-z]+[^0-9]{0,60}v?[0-9]+\.[0-9]+[0-9.]*" <project file> <template dir> 2>/dev/null || :
-  grep -roE "agent-ready-[a-z]+[^A-Za-z0-9]{0,24}[0-9a-f]{7,40}"     <project file> <template dir> 2>/dev/null || :
+{ grep -roE "agent-ready-[a-z]+[^0-9]{0,60}v?[0-9]+\.[0-9]+[0-9.]*" $OPERANDS 2>/dev/null || :
+  grep -roE "agent-ready-[a-z]+[^A-Za-z0-9]{0,24}[0-9a-f]{7,40}"     $OPERANDS 2>/dev/null || :
 } | sed -E 's/^(.*):(agent-ready-[a-z]+).*/\1:\2/' | LC_ALL=C sort -u > "$S"
 printf 'mentioned pairs: %s  stamped pairs: %s\n' "$(wc -l < "$M")" "$(wc -l < "$S")"
 [ -s "$M" ] || echo 'EMPTY — the mention grep matched nothing. Check the operands before reading this as clean.'
@@ -64,7 +74,7 @@ Five details in that block are load-bearing, and each was measured rather than r
 
 - **The unit is `(file, framework)`, not `file`.** A file-scoped difference cannot see the failure this section exists for. #72's own repro is one `CLAUDE.md` pinning two frameworks, one by hash and one by tag: with only the version matcher running, that file is "stamped" because the *other* framework matched, and the missing hash pin never appears in the difference. Measured on exactly that shape — file-scoped reported a clean reconciliation while a pin was invisible.
 - **The counts are printed by the command, not left to the reader.** With mistyped operands both files come out empty, `comm` prints nothing and exits 0 — indistinguishable from a clean reconciliation. That is this section's own failure one layer up: an instrument that cannot report its blind spot. The `printf` and the `[ -s ]` line are what make a zero denominator visible.
-- **`sort -u` on BOTH sides.** This is a set difference. With `sort` on the left and `sort -u` on the right, an operand pair that overlaps — a project file *inside* the template dir, or `CLAUDE.md .` — emits the file twice on the left and once on the right, and `comm -23` reports a correctly stamped file as unstamped. Measured.
+- **`sort -u` on BOTH sides.** This is a set difference. With `sort` on the left and `sort -u` on the right, an operand pair that overlaps — a project file *inside* the template dir, or `CLAUDE.md .` — emits the file twice on the left and once on the right, and `comm -23` reports a correctly stamped file as unstamped. Measured. ⚠️ **Overlap gets MORE likely once the operand list is widened**, which is the fix above: `docs memory .claude templates` plus a project file that lives at the root is fine, but adding `.` or a parent of any other operand re-creates it. Keep the operands disjoint, and `sort -u` both sides regardless.
 - **`LC_ALL=C` on both sorts *and on `comm`*.** `comm` compares bytes in the implementation measured here, but GNU `comm` collates by locale when the locale is "hard" — in which case C-sorted input under a UTF-8 locale is the "not in sorted order, wrong difference" failure this bullet is about, *caused by the recipe*. Putting `LC_ALL=C` on all three costs nothing and removes the question. (Measured on uutils coreutils 0.8.0; GNU `comm` not available here to test.)
 - **`|| :` on each grep.** A grep that matches nothing exits 1. Under `set -eo pipefail` that kills the block *after* the redirect has already truncated the stamped list, so a later `comm` reports every mention as a miss.
 
