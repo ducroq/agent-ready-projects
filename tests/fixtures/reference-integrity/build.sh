@@ -337,7 +337,8 @@ EOF
 # collapse it into 0 and a genuine break passes wherever the neighbours happen to
 # be absent. Each row below is the other rows' control.
 cd "$DEST"
-mkdir -p exitcodes/repo/src/dup exitcodes/neighbours/sibling-repo/scripts exitcodes/empty
+mkdir -p exitcodes/repo/src/dup exitcodes/repo/docs \
+         exitcodes/neighbours/sibling-repo/scripts exitcodes/empty
 # ⚠️ `exitcodes/repo` is the audited ROOT and is deliberately NOT `git init`ed.
 # It sits at `*/*` from $DEST, which is the main run's --sibling-root, so a .git
 # here makes it a fourth neighbour of the MAIN fixture — named `repo`, a token
@@ -352,7 +353,8 @@ mkdir -p exitcodes/repo/src/dup exitcodes/neighbours/sibling-repo/scripts exitco
 (cd exitcodes/neighbours/sibling-repo && git init -q . \
    && git config user.email f@x && git config user.name f)
 touch exitcodes/repo/src/present.py exitcodes/repo/src/helpers.py \
-      exitcodes/repo/src/dup/helpers.py exitcodes/neighbours/sibling-repo/scripts/over_there.sh
+      exitcodes/repo/src/dup/helpers.py exitcodes/neighbours/sibling-repo/scripts/over_there.sh \
+      exitcodes/repo/docs/next_door.md 'exitcodes/repo/docs/<shape>.md'
 cat > exitcodes/repo/clean.md <<'EOF'
 # clean.md — rows X1/X2
 The entry point is `src/present.py` and it resolves as written, at rung 1.
@@ -385,8 +387,13 @@ cat > exitcodes/repo/both.md <<'EOF'
 # both.md — rows X13/X14
 Work items live at `docs/work-items/<slug>.md` <!-- placeholder -->, one per
 initiative. The step says the two marker forms are both needed, so a path
-carrying both is the documented case and not a corner — and `templates/`
-project-file.md, the file every adopter copies, already ships four such markers.
+carrying both is the documented case and not a corner. (An earlier version of
+this paragraph cited the adopter project file as shipping four such markers;
+measured, it ships five markers on four lines and NONE is angle-bracket-shaped.
+The case is real, the evidence for it was not. The path is named in words here
+rather than written out: this document is INPUT to the extractor, so quoting a
+path adds a reference — which is what the first correction did, turning X13 and
+X14 red and cascading into every ablation.)
 The angle bracket decides this reference by its shape, so a redundant marker
 must not turn it into rung-4 traffic. Round 3 tested the marker first and this
 went exit 0 with a neighbour and exit 2 without one.
@@ -400,6 +407,36 @@ Two references, deliberately of different kinds. Nothing answers to
 this run has a confirmed defect AND something it could not decide, and the
 verdict has to say both. No other row mixes them, so without this one the
 undecided half of that sentence can be deleted with the suite still green.
+EOF
+cat > exitcodes/repo/localmark.md <<'EOF'
+# localmark.md — rows X17/X18
+The module `present.py` <!-- placeholder --> is marked, and rung 2 answers it
+inside this repo: one file in the working tree carries that suffix. A rung that
+RAN and resolved the reference decides it, so this row must return the same
+status with a neighbour on disk and without one. Round 5 found it returning exit
+2 without and exit 0 with, because the marked arm ran rungs 1, 3 and 4 and
+skipped 1b and 2 — #93's own defect a third time, in the one direction no row
+covered. Unmarked, the identical reference is `fragment -> src/present.py` at
+exit 0 in both environments; marking it must not make the run undecidable.
+
+Two files answer to `helpers.py` <!-- placeholder --> here, and that stays
+EXCUSED rather than reported: adjudicating a marker on a suffix match is #56,
+which left an author shipping a template AND instances of it no correct move.
+Deciding it and adjudicating it are different questions.
+EOF
+cat > exitcodes/repo/docs/docrel.md <<'EOF'
+# docs/docrel.md — rows X19/X20
+The companion note is `next_door.md` <!-- placeholder -->, and it sits beside
+this document. Markdown link semantics ARE doc-relative, so this path resolves
+AS WRITTEN and the marker is mislabelled in exactly the sense rung 1 means —
+a finding, at exit 1, whether or not a neighbour is reachable. This is the arm
+that adjudicates; the rung-2 pair in localmark.md is the arm that does not.
+
+A second reference, `<shape>.md`, carries NO marker and resolves the same way —
+a literal file of that name sits beside this document. It is a finding too, but
+the WORD has to differ: telling this author to remove a stale placeholder marker
+names something that is not in the document. Round 6 found the marker wording
+printed for exactly this path.
 EOF
 cat > exitcodes/repo/marked.md <<'EOF'
 # marked.md — rows X8/X9

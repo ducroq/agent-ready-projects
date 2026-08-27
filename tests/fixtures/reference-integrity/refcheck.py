@@ -561,9 +561,68 @@ def check(root, sources, sibling_roots=None):
                     # an adopter that ships `templates/CLAUDE.md` beside
                     # `papers/*/CLAUDE.md`; three references were left knowingly
                     # unfixed there because neither move was correct.
+                    # Which of the two forms excused it decides the WORD, and
+                    # round 6 found the marker wording being printed for a path
+                    # that carries no marker: `<slug>.md` with a literal
+                    # `docs/<slug>.md` on disk was reported as a STALE
+                    # PLACEHOLDER MARKER, prescribing the removal of something
+                    # not in the document. Both adjudicating arms use this.
+                    stale = ('STALE PLACEHOLDER MARKER' if frag in placeheld_frags
+                             else 'PLACEHOLDER SHAPE THAT RESOLVES')
                     if (root / frag).exists():
                         findings.append((src, frag,
-                                         'STALE PLACEHOLDER MARKER (resolves at rung 1, as written)'))
+                                         f'{stale} (resolves at rung 1, as written)'))
+                        continue
+                    # rung 1b and rung 2 — LOCAL, and they run here for
+                    # DECIDABILITY, which this arm had conflated with
+                    # ADJUDICATION. Two different questions:
+                    #
+                    #   is the reference decidable?  -> any rung that RAN and
+                    #                                   resolved it answers yes
+                    #   is the marker mislabelled?   -> rung 1 only (#56)
+                    #
+                    # Until round 5 this arm ran 1, 3, 4 and skipped 1b and 2.
+                    # That was harmless while the fall-through was `placeheld`
+                    # (exit 0). v1.29.0 made the fall-through `undecided_markers`
+                    # (exit 2), which turned the gap into #93's own defect a
+                    # third time: MARKING a reference the local tree answers made
+                    # the run undecided, so the same reference went exit 2 with no
+                    # neighbour on disk and exit 0 with one, while UNMARKED it was
+                    # `fragment -> src/helpers.py` at exit 0 in both. Measured on
+                    # v1.28.0: exit 0 in both, so this is a v1.29.0 regression.
+                    #
+                    # 1b ADJUDICATES, like rung 1: markdown link semantics ARE
+                    # doc-relative (see the rung list in the step), so a marked
+                    # path that resolves next to its own document resolves AS
+                    # WRITTEN — the marker is wrong in exactly the sense rung 1
+                    # means. 2 does NOT adjudicate: sharing a suffix with a file
+                    # elsewhere is not evidence of intent, which is #56, and that
+                    # rule is unchanged. It only decides.
+                    # Distinct names from the unmarked arm's `docrel`/`hits`
+                    # ON PURPOSE: `ablate` refuses a mutation site that occurs
+                    # more than once, so a shared name would make both arms
+                    # unablatable and the guard would read as a passing suite.
+                    mdocrel = (root / src).parent / frag
+                    if mdocrel.exists() and mdocrel.is_file():
+                        try:
+                            shown = mdocrel.resolve().relative_to(root.resolve())
+                        except ValueError:
+                            shown = mdocrel
+                        findings.append((src, frag,
+                                         f'{stale} (resolves at rung 1b, '
+                                         f'doc-relative: {shown})'))
+                        continue
+                    # Collisions are excused here rather than reported, and that is
+                    # #56 restated: a repo shipping a template AND instances of it
+                    # gave the author no correct move when marked reported STALE and
+                    # unmarked reported COLLISION. Any hit at all decides it.
+                    mhits = _suffix_matches(rel, frag)
+                    if mhits:
+                        placeheld.append((src, frag,
+                                          ('declared-placeholder' if frag in placeheld_frags
+                                           else 'angle-bracket segment')
+                                          + f' — decided at rung 2 ({len(mhits)} local match'
+                                          + ('es' if len(mhits) > 1 else '') + ')'))
                         continue
                     # rung 3 (runtime state) BEFORE rung 4, for the same reason the
                     # unmarked path does it in that order two hundred lines below: a

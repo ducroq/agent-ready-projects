@@ -236,7 +236,8 @@ fi
 PLACEHELD="$(printf '%s' "$OUT" | sed -n '/== SKIPPED as declared-placeholder/,/^  total:/p')"
 for want in "docs/RUNBOOK.md" "config/absent.env" "src/aggregators/never_anywhere.py" "orphan_note.md" \
             "src/aggregators/my_new_aggregator.py" "docs/work-items/<slug>.md" \
-            "filters/<name>/<version>/config.yaml" "<slug>.md" "<root>/memory/MEMORY.md"; do
+            "filters/<name>/<version>/config.yaml" "<slug>.md" "<root>/memory/MEMORY.md" \
+            "review-prompt.md"; do
   if printf '%s' "$PLACEHELD" | grep -qF -- "$want"; then
     printf '  PASS  counted as declared-placeholder: %s\n' "$want"
   else
@@ -332,6 +333,10 @@ declare -a XCASES=(
   "X13 BOTH marker forms on one path, neighbours reachable|both.md|neighbours|0|VERDICT: CLEAN — no findings"
   "X14 BOTH marker forms, no neighbour — the shape still decides|both.md|empty|0|VERDICT: CLEAN — no findings"
   "X15 a confirmed defect AND an undecided reference in one run|mixed.md|empty|1|VERDICT: DEFECTS — 1 finding(s), 2 left undecided"
+  "X17 marked path the LOCAL tree answers, neighbours reachable|localmark.md|neighbours|0|VERDICT: CLEAN — no findings"
+  "X18 marked path the LOCAL tree answers, no neighbour — a rung that RAN decided it|localmark.md|empty|0|VERDICT: CLEAN — no findings"
+  "X19 marked path resolving doc-relative is MISLABELLED, neighbours reachable|docs/docrel.md|neighbours|1|VERDICT: DEFECTS — 2 finding(s)"
+  "X20 marked path resolving doc-relative is MISLABELLED, no neighbour|docs/docrel.md|empty|1|VERDICT: DEFECTS — 2 finding(s)"
 )
 
 # Runs the table against an arbitrary oracle and prints the names of the failing
@@ -362,6 +367,49 @@ for x in "${XCASES[@]}"; do
     printf '  FAIL  %s (wrong exit status or wrong verdict label)\n' "$xname"; FAIL=1
   else printf '  PASS  %s\n' "$xname"; fi
 done
+
+# X17c — every EXCUSING arm in this oracle needs the N20 guard, and round 6 found
+# the rung-2 marked arm shipped without it. Measured: replacing the arm's
+# `placeheld.append(...)` with a bare `continue` dropped both of localmark.md's
+# paths from ALL SIX counted sections and the whole suite stayed green — X17/X18
+# assert `VERDICT: CLEAN`, which a silent drop satisfies perfectly. The identical
+# mutation one arm down (rung 3) is killed instantly by N20. A verdict row cannot
+# guard an excusing arm; only an enumeration can.
+XP="$( { python3 refcheck.py --sibling-root "$WORK/exitcodes/empty" \
+           "$WORK/exitcodes/repo" localmark.md 2>&1 || true; } \
+       | sed -n '/== SKIPPED as declared-placeholder/,/^  total:/p')"
+XP_OK=1
+for want in "present.py" "helpers.py"; do
+  grep -qF -- "$want" <<<"$XP" || { XP_OK=0; printf '  FAIL  X17c %s was excused at rung 2 but appears in NO counted section — excused and never-extracted are indistinguishable\n' "$want"; FAIL=1; }
+done
+grep -qF -- "  total: 2" <<<"$XP" || { XP_OK=0; printf '  FAIL  X17c the skip section does not carry a total of 2\n'; FAIL=1; }
+# The reason, not just the path — this fixture's own T19 rule. A row that says
+# only `declared-placeholder` cannot distinguish WHICH arm excused it, and the
+# collision count inside the message is a measurement that has to be true.
+grep -qF -- "decided at rung 2 (1 local match)"  <<<"$XP" || { XP_OK=0; printf '  FAIL  X17c present.py is excused without naming rung 2 and its single match\n'; FAIL=1; }
+grep -qF -- "decided at rung 2 (2 local matches)" <<<"$XP" || { XP_OK=0; printf '  FAIL  X17c helpers.py is excused without naming rung 2 and its TWO matches — a count inside a message is a measurement\n'; FAIL=1; }
+[ "$XP_OK" -eq 1 ] && printf '  PASS  X17c rung-2 excusals are enumerated, counted, and name the rung that decided them\n'
+
+# X19c — the REASON, not just that a finding fired. `docs/docrel.md` holds exactly
+# one reference, so `VERDICT: DEFECTS — 1 finding(s)` is satisfied by ANY finding:
+# three mutants of the rung-1b message survived the suite green — reporting it as
+# `UNRESOLVED`, reporting it as `resolves at rung 1, as written`, and printing the
+# raw fragment instead of the resolved path. The middle one is the substantive
+# one: it writes a FALSE PROVENANCE into the finding and sends the author to the
+# repo root, which is the same argument this file makes twice for ordering rung 3
+# before rung 4. This fixture's own T19 rule: a positive that cannot distinguish
+# why it fired is not a test.
+XD="$( { python3 refcheck.py --sibling-root "$WORK/exitcodes/empty" \
+           "$WORK/exitcodes/repo" docs/docrel.md 2>&1 || true; } \
+       | sed -n '/== FINDINGS/,/^  total:/p')"
+XD_OK=1
+grep -qF -- "STALE PLACEHOLDER MARKER (resolves at rung 1b, doc-relative: docs/next_door.md)" <<<"$XD" \
+  || { XD_OK=0; printf '  FAIL  X19c the rung-1b finding does not name its rung and resolved path — its provenance is unasserted\n'; FAIL=1; }
+# The markerless twin. Both are findings and both resolve at rung 1b; only the
+# WORD separates them, and a shared constant would be wrong for one of the two.
+grep -qF -- "PLACEHOLDER SHAPE THAT RESOLVES (resolves at rung 1b, doc-relative: docs/<shape>.md)" <<<"$XD" \
+  || { XD_OK=0; printf '  FAIL  X19c an angle-bracket path with no marker is reported as a STALE MARKER — the remedy names something not in the document\n'; FAIL=1; }
+[ "$XD_OK" -eq 1 ] && printf '  PASS  X19c both rung-1b findings name their rung, their resolved path, and the right form\n' 
 
 # X16 — the undecided must be ENUMERATED, not merely counted in a verdict. The X
 # rows above assert the exit status and the verdict label; deleting the whole
@@ -436,6 +484,9 @@ X2N="X2 clean, no neighbour reachable"
 X12N="X12 angle-bracket placeholder, no neighbour — still decided"
 X14N="X14 BOTH marker forms, no neighbour — the shape still decides"
 X15N="X15 a confirmed defect AND an undecided reference in one run"
+X18N="X18 marked path the LOCAL tree answers, no neighbour — a rung that RAN decided it"
+X19N="X19 marked path resolving doc-relative is MISLABELLED, neighbours reachable"
+X20N="X20 marked path resolving doc-relative is MISLABELLED, no neighbour"
 
 # A1 kills X4 alone, not X4+X9: an untested marker never enters `findings`,
 # so reverting the split there cannot reach it. Measured — the first draft of
@@ -445,18 +496,19 @@ ablate "A1 revert the split"        "if confirmed or missing:" "if findings or m
 ablate "A2 exit 0 when unconfirmed" "rc, verdict = 2, ('COVERAGE" "rc, verdict = 0, ('COVERAGE" "$X4N,$X9N"
 ablate "A3 everything unconfirmed"  "'UNRESOLVED' if rung4_runnable else UNCONFIRMED" "UNCONFIRMED" "$X3N"
 ablate "A4 drop the unread arm"     "if confirmed or missing:" "if confirmed:"                "$X7N"
-# A5, A6 and A7 each widened when a row was added below them. Recorded rather
+# A5, A6 and A7 each widened when a row was added below them, and A5 and A6
+# widened AGAIN when round 5 added X17-X20 (A5 gains X20, A6 gains X18). Recorded rather
 # than trimmed: an ablation's kill set is a measurement of the mutant, not a
 # property of the row it was written for, and three of these expectations have
 # now been corrected by running them rather than by reasoning about them.
 ablate "A5 no neighbour, nothing decidable" \
        "confirmed = [f for f in findings if f[2] != UNCONFIRMED]" \
-       "confirmed = [] if n_siblings == 0 else list(findings)"                                "$X15N,$X6N"
+       "confirmed = [] if n_siblings == 0 else list(findings)"                        "$X15N,$X20N,$X6N"
 # A6 kills both clean-with-no-neighbour rows, which is the point of it: the
 # mutation is "the RUN is indeterminate", so every row where nothing was found
 # and no neighbour was reachable must go red. Adding X12 changed this set, and
 # the ablation is what noticed — a prose claim would not have.
-ablate "A6 whole RUN indeterminate" "elif unconfirmed:" "elif unconfirmed or n_siblings == 0:" "$X12N,$X14N,$X2N"
+ablate "A6 whole RUN indeterminate" "elif unconfirmed:" "elif unconfirmed or n_siblings == 0:" "$X12N,$X14N,$X18N,$X2N"
 ablate "A7 excuse an untested marker" "elif rung4_runnable:" "elif True:"                      "$X15N,$X9N_"
 # A8 is X12's guard, and X12 exists because round 2 shipped this mutation as the
 # real thing: sending an angle-bracket segment to the undecided bucket moved a
@@ -476,7 +528,18 @@ ablate "A9 marker wins over the shape" \
 # once — so without X15 this deletion is invisible.
 ablate "A10 drop the mixed-verdict clause" \
        "        if unconfirmed:" "        if False:"                                              "$X15N"
-# ⚠️ X1, X5 and X8 are killed by none of the seven. They are shape coverage, not
+# A11/A12 are round 5's, and they hold the two halves of the same fix apart. The
+# marked arm ran rungs 1, 3, 4 and skipped 1b and 2, so a marked reference the
+# LOCAL tree answers fell through to the undecided bucket — #93's own defect a
+# third time, and the one direction no row covered. A11 reverts the decidability
+# half, A12 the adjudication half. Kill sets MEASURED by running the mutants.
+ablate "A11 marked path skips the local suffix rung" \
+       "                    if mhits:" "                    if False:"                            "$X18N"
+ablate "A12 marked path skips the doc-relative rung" \
+       "if mdocrel.exists() and mdocrel.is_file():" "if False:"                                    "$X19N,$X20N"
+# ⚠️ X1, X5, X8, X11, X13 and X17 are killed by none of the twelve. Re-measured
+# 2026-08-27 by running every mutant, not by reading the rows — round 4 found
+# five of ten kill sets wrong when written, so this comment is a MEASUREMENT. They are shape coverage, not
 # guards: each pins the neighbours-reachable half of a pair so that its twin's
 # PASS cannot be read as environment-independent by accident.
 

@@ -19,6 +19,58 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.30.0 (2026-08-27)
+
+### Marking a reference the local tree answers made the run undecided (round 5 on #93)
+
+Step 4's marked-path arm ran rungs 1, 3 and 4 and **skipped rungs 1b and 2**. While the fall-through was the placeholder skip, that was invisible. v1.29.0 made the fall-through *undecided* at exit 2, and the gap became #93's own defect a third time — in the one direction no seeded row covered.
+
+**Measured**, one reference, one repo, same bytes:
+
+| | no neighbour on disk | neighbour on disk |
+|---|---|---|
+| `` `helpers.py` `` **marked** — v1.29.0 | **exit 2**, COVERAGE INCOMPLETE | exit 0 |
+| the same reference **unmarked** — v1.29.0 | exit 0, `fragment -> src/helpers.py` | exit 0 |
+| `` `helpers.py` `` **marked** — v1.28.0 | exit 0 | exit 0 |
+
+So this is a v1.29.0 regression, and the verdict line was false on its own terms: it said rung 4 *was needed* for a reference rung 2 resolves.
+
+**The fix is a distinction the step had conflated.** *Is the reference decidable?* — any rung that **ran** and resolved it answers yes. *Is the marker mislabelled?* — only rung 1 and rung 1b answer that. The marked arm now runs 1, 1b, 2, 3, 4 in the same order an unmarked path does. Rung 2 **decides without adjudicating**: a marked path with a suffix match is excused, never reported, which is #56 unchanged and is why a repo shipping a template *and* instances of it still has a correct move.
+
+⚠️ **New behaviour, and the reason this is MINOR rather than PATCH: rung 1b now adjudicates.** A marked path that resolves *next to its own document* is reported as a stale marker, where before it was silently excused. Markdown link semantics **are** doc-relative, so such a path resolves as written in the only sense a reader's link obeys — but adopters will see findings they did not see before, and they are real ones.
+
+⚠️ **Two absolutes shipped in v1.29.0 are refuted by that same run**, both in the step's own text, both about behaviour and both unhedged: *"the marked and the unmarked reference land in the same undecided section and return the same status"* and *"marking changes the reason recorded against it, not the run's ability to decide it."* Each is true only for a path **no local rung resolves**; the scope is now stated. This is the absolutes-in-descriptions pattern again, on the surface the pattern governs.
+
+⚠️ **A third claim in v1.29.0's own entry was miscounted** and is corrected in place above: the both-forms case was justified by *"`templates/project-file.md` … already ships four such markers."* Measured, that file ships **five** markers on four lines and **none** is angle-bracket-shaped — zero of the class claimed. The case is real (the step tells authors to write both forms); the evidence cited for it was not.
+
+**Fixture** (`tests/fixtures/reference-integrity/`): rows **X17–X20** and two documents. X17/X18 pin a marked path the local tree answers — same status with and without a neighbour, which is the property the whole third state exists to give. X19/X20 pin the doc-relative adjudication in both environments. Ablations **A11** (skip the suffix rung) and **A12** (skip the doc-relative rung) revert each half; **A5 and A6 widened again** when the rows landed — A5 gains X20, A6 gains X18. Kill sets were **measured by running the mutants**, per v1.29.0's own lesson, and the stale `X1, X5 and X8 … none of the seven` comment beside the ablations is now the measured `X1, X5, X8, X11, X13 and X17 … none of the twelve`.
+
+**Size.** `templates/audit-context.md` grows 43352 → 45516 bytes (+2164) and the rule 8 baseline is updated deliberately. It buys a corrected rung order, the decidable/mislabelled distinction, the scope on two refuted absolutes, and a hedge on a third: *"rung 4 declines an angle-bracket segment wherever the audit runs"* is refuted by a neighbour holding a literal `<…>` filename, which suffix-matches (rare — illegal on NTFS — and real).
+
+### Round 7 — prose only, and it found the consolidation table wrong
+
+Scoped deliberately to prose consistency (the oracle's behaviour is held by rows X1–X20 and ablations A1–A12; re-deriving it costs more than it catches). Eight findings, all in text this release wrote:
+
+- **The table's row for *resolves nowhere, neighbour reachable* said `Findings`.** Measured: the oracle puts it in `Skipped as declared-placeholder` at exit 0, and three other passages in the same step say the same. That row is the correctly-marked placeholder — the case the marker exists for.
+- **The unhedged absolute the release claims to have hedged was re-created verbatim in the new paragraph**, one screen above its own hedge: *"excused wherever the audit runs"*, contradicted by the carve-out below it. The named defect of the release, reproduced inside the fix for it.
+- **The table had no row for an angle-bracket segment**, while the prose describes two outcomes for one. Added, as the fall-through it actually is.
+- `:73`'s *"a marker on a path that does resolve is reported"* — the pre-#56 wording, four lines above the corrected form at `:75`. Two orphaned sentences left by the rewrite (a dangling *"Only once nothing local has answered it"*, and a *"still"* whose antecedent was deleted). *"Split the output into three sections"* while the step now names five. Three CHANGELOG errors, including *"Three were mechanical"* over four bullets.
+
+### Round 6, and what it says about the shape of this document
+
+Round 6 ran on round 5's fix and found nine more defects. Four were mechanical and are fixed here:
+
+- **The new rung-2 arm had no counted-section guard, and the suite was green over the hole.** Replacing its `placeheld.append(...)` with a bare `continue` dropped both of `localmark.md`'s paths from **all six** counted sections and every case still passed — X17/X18 assert `VERDICT: CLEAN`, which a silent drop satisfies perfectly. Every *other* excusing arm in the oracle already had this guard; the identical mutation one arm down is killed instantly by N20. That is the silent-skip failure the fixture exists to prevent, in an arm added by the commit that was fixing a different instance of it. Now X17c, which also pins the collision count inside the message.
+- **`review-prompt.md` (N25) started flowing through the new arm and was not in the enumeration list.** Added.
+- **Three mutants of the rung-1b message survived green**, including one that reports `resolves at rung 1, as written` for a path that resolved doc-relative — a false provenance, which is the same objection this file makes twice for ordering rung 3 before rung 4. `docs/docrel.md` held one reference, so any finding satisfied `1 finding(s)`. Now X19c asserts the reason, per the fixture's own T19 rule.
+- **An angle-bracket segment with a literal file of that name on disk was reported as a `STALE PLACEHOLDER MARKER`** — prescribing the removal of a marker not in the document. The two adjudicating arms now pick the wording from the form that excused the path, seeded as the markerless twin in `docs/docrel.md`.
+
+⚠️ **The other five were all one shape: a rule restated in many places, edited in one.** A stale rung list ("at rung 1 or rung 4") four paragraphs above the new text; "a path a local rung answers stays in the skip section", true for rungs 2 and 3 and false for 1 and 1b; a correction written in the present tense about behaviour the same commit removed; "every rung-2, rung-3 and rung-4 resolution" in the reporting section, widened by the fix and not updated. **Step 4 stated the rung order and its consequences in at least seven separate passages** — the intro limit, the skip-section rule, the local-resolution rule, the qualify-instead advice, the marker/angle-bracket carve-out, the status paragraph and the reporting list — so every release corrected one and left the rest. That is a fair description of rounds 1 through 6 as a whole, not just this one.
+
+**So this release consolidates rather than adds.** One table states, once, what a marked path does at each rung: which rungs *adjudicate*, which only *decide*, and which counted section each outcome lands in. The other passages point at it instead of restating it. ⚠️ **It did not shrink the file: +2164 bytes.** The table costs more than the restatements it replaced, and round 7 then found the table's own fifth row *wrong* — it said `Findings` for a marked path resolving nowhere on a tree that could test it, which is the correctly-marked placeholder, the case the whole feature exists for. An adopter following that row would report every legitimate placeholder as a defect. The suite stayed green because the oracle agreed with the prose and not with the table. What consolidation bought is one place to correct, not fewer bytes; the honest claim is that the *next* contradiction has one home instead of seven.
+
+**Round 5 is the round that found this, and it ran only because the last session recorded that it had not.** Rounds 1–4 all ran on #93 and all found defects the previous round's fixes had created; round 4's fixes then shipped unreviewed. Round 5's other findings — unasserted mutants in the report body, an unrecognised flag returning a verdict instead of exit 64, three stale counts — are filed as issues rather than fixed here.
+
 ## v1.29.0 (2026-08-26)
 
 `audit-context` Step 4 has three outcomes instead of two. MINOR: new behaviour on a shipped skill, per the v1.10.1 precedent. ⚠️ **Adopter action**: `audit-context` is user-global — refresh via `scripts/install-global-skills.sh` after the release tag is pushed **and verified**. `adopt.md` also changed, and is read from the URL rather than installed. Nothing breaks if you skip the refresh; the old step keeps reporting an undecidable reference as a confirmed break.
@@ -76,7 +128,7 @@ Fourteen rows now assert the table (X1–X9, X11–X15), against a tree with two
 
 ### Round 4: three more, two of them holes in round 3's own tests
 
-**The angle-bracket exclusion was on the wrong discriminator.** Round 3 tested `frag in placeheld_frags` before the shape, so a path that is *both* angle-bracket-shaped **and** `<!-- placeholder -->`-marked took the marker branch and went exit 0 → exit 2 on where it ran — the defect round 3 had just fixed for the unmarked form. Not a corner: the step tells authors both markers are needed, and `templates/project-file.md`, which every adopter copies, already ships four such markers. The shape decides first now; X13/X14 seed it and ablations A8/A9 hold the ordering from both sides.
+**The angle-bracket exclusion was on the wrong discriminator.** Round 3 tested `frag in placeheld_frags` before the shape, so a path that is *both* angle-bracket-shaped **and** `<!-- placeholder -->`-marked took the marker branch and went exit 0 → exit 2 on where it ran — the defect round 3 had just fixed for the unmarked form. Not a corner: the step tells authors both markers are needed. ⚠️ **The evidence cited here was wrong and is corrected in v1.30.0** — `grep -n -- '<!-- placeholder -->' templates/project-file.md` returns 4 lines carrying 5 markers, and **none of them is angle-bracket-shaped**, so that file ships *zero* paths of the both-forms class this paragraph claimed four of. A positive would have read `` `docs/work-items/<slug>.md` <!-- placeholder --> ``. The shape decides first now; X13/X14 seed it and ablations A8/A9 hold the ordering from both sides.
 
 **Deleting the whole `UNCONFIRMED` section left the suite green**, with 33 references then appearing in no counted section at all — the silent-skip failure this fixture exists to prevent, in a section newer than the loop that guards it. X16 asserts the enumeration and the total, not just the verdict's count.
 
