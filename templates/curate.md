@@ -130,12 +130,21 @@ for doc in sys.argv[1:]:
             #
             # ⚠️ ONE way it does go wrong, and it is NARROWER than "a shallow or
             # partial checkout" — that phrasing shipped in v1.34.0 and was wrong.
-            # MEASURED: `--depth 1` truncates HISTORY, not the working tree, and
-            # `--filter=blob:none` fetches blobs at checkout, so both leave every
-            # file present and neither reproduces anything. **Sparse checkout is
-            # the only one that omits files from the working tree**, and there a
-            # file present upstream reads as a confirmed dead reference. Seeded
-            # in the fixture as a known, unfixed exposure.
+            # MEASURED: `--depth 1` truncates HISTORY, not the working tree —
+            # every file is present and it reproduces nothing. Sparse checkout
+            # DOES omit files, and there a file present upstream reads as a
+            # confirmed dead reference; seeded in the fixture as a known,
+            # unfixed exposure.
+            #
+            # ⚠️ `--filter=blob:none` is UNTESTED, and two drafts claimed it as
+            # measured. Both tested over a local `file://` remote, which answers
+            # `warning: filtering not recognized by server, ignoring` — while
+            # STILL writing `promisor=true` and `partialclonefilter=blob:none`
+            # into the config. So the clone looks partial by every flag anyone
+            # would check and has zero missing blobs. A filtered clone from a
+            # real server is not reproducible here; treat that mode as unknown,
+            # not as safe. The same trap makes a flag-based estate sweep report
+            # `partial` for a repo that is not one.
             sib = root.parent / frag.split('/')[0]
             if sib.is_dir():
                 if (root.parent / frag).is_file(): ok += 1

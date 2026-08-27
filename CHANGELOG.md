@@ -19,6 +19,10 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.34.2 (2026-08-27)
+
+**PATCH** — v1.34.1's correction table had an unmeasured row of its own. Folded into the v1.34.1 entry below rather than repeated here, because splitting a correction from the thing it corrects is how the pair drifts.
+
 ## v1.34.1 (2026-08-27)
 
 **PATCH** — a corrected claim and a seeded case; no behaviour change.
@@ -30,12 +34,14 @@ v1.34.0 said the sibling rung's one real exposure was *"a shallow or partial sib
 | clone mode | files in the working tree | reproduces it? |
 |---|---|---|
 | `git clone --depth 1` | **present** — depth truncates *history* | no |
-| `git clone --filter=blob:none` | **present** — blobs are fetched at checkout | no |
+| `git clone --filter=blob:none` | ⚠️ **UNTESTED** — see below | unknown |
 | **sparse checkout** | **absent** | **yes** |
 
 So the exposure is real but **one mode wide, not three**, and the two everyone reaches for first do not cause it. `tests/fixtures/dead-reference/` now seeds a genuine sparse-checkout sibling and asserts the **current, unfixed** behaviour — a file present upstream reading as dead. Seeding a defect you have decided not to fix is what makes it visible rather than theoretical: if someone closes it, that row turns red and says so. The case is guarded, so a git without cone-mode sparse-checkout reports SKIP rather than passing vacuously.
 
-The adopter's own estate sweep — 16 sibling repos, none shallow, promisor, partial or sparse — stands, and they were explicit that it describes one machine on one evening rather than a property. It is recorded that way.
+⚠️ **And the `blob:none` row above was not a measurement either — this is the third time in one thread that a claim was written as measured and was not, and the third instance is mine, inside the correction of the first two.** Both my test and the adopter's used a local `file://` remote, which answers `warning: filtering not recognized by server, ignoring` — while **still writing `promisor=true` and `partialclonefilter=blob:none` into the config**. So the clone looks partial by every flag anyone would check, and has **zero** missing blobs. My original run hid the warning behind `2>/dev/null`. A filtered clone from a real server is not reproducible here, so that mode is **unknown, not safe**. ⚠️ **The same trap makes a flag-based estate sweep report `partial` for a repo that is not one** — worth knowing for anyone auditing this.
+
+The adopter's estate sweep — 16 sibling repos, none shallow, promisor, partial or sparse — stands on the one mode that matters, because they happened to check `core.sparseCheckout` alongside the flags their (wrong) mechanism implied. They named that themselves: a superset check saved a correct answer they could not have defended. Recorded as a window with its re-run command, not as a property.
 
 ## v1.34.0 (2026-08-27)
 
