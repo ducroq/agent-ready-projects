@@ -49,6 +49,14 @@ echo '{}' > node_modules/lodash/package.json     # vendored
 # This case asserts the CURRENT behaviour. If someone fixes it, this row turns
 # red and tells them the exposure is closed — which is the point of seeding a
 # defect you have decided not to fix.
+#
+# ⚠️ REVISIT: 2027-02-27, or on the first sparse-checkout sibling observed in any
+# real estate, whichever is first. A diagnosis without a revisit date decays the
+# same way an undiagnosed finding does — an adopter put it best: *a finding that
+# survives many runs stops being read as a question, and the defence of keeping
+# it becomes the reason nobody asks what it is.* Measured on their side: 16
+# siblings, none sparse, so this exposure has no instance in the one estate that
+# has looked. That is a window, not a property.
 ( mkdir -p "$W/sparse-origin/scripts" "$W/sparse-origin/docs"
   cd "$W/sparse-origin" && git init -q . && git config user.email f@x && git config user.name f
   : > scripts/upstream_only.py; : > docs/keep.md
