@@ -74,6 +74,14 @@ for doc in sys.argv[1:]:
         # A systemd unit NAME is not a file reference unless it carries a directory.
         if UNIT.search(frag) and '/' not in frag:
             skip.append((doc, frag, 'unit name, not a path')); continue
+        # FILENAME-shaped, not extension-shaped: `env` in the whitelist captures
+        # `process.env`, a ubiquitous code identifier no rung can ever resolve.
+        # The sibling step solved this and states the test — keep such a token
+        # only when it still looks like a path: it contains a `/`, or it starts
+        # with a `.`. This extractor shipped without it and reported
+        # `process.env` as DEAD on the first /curate that ran it.
+        if frag.rsplit('.', 1)[-1] in ('env', 'lock') and '/' not in frag and not frag.startswith('.'):
+            skip.append((doc, frag, 'filename-shaped token, not a path')); continue
         # As written, then doc-relative, then the two directories this method puts
         # things in, then the basename anywhere. A bare `gotcha-log.md` means
         # `memory/gotcha-log.md`; calling it missing is the commonest false positive.
