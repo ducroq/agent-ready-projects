@@ -107,7 +107,35 @@ for doc in sys.argv[1:]:
         # sensitivity loss, taken knowingly — a check with a 100% false-positive
         # rate is not read at all, which costs more.
         if '/' in frag and frag.split('/')[0] not in here:
-            unver.append((doc, frag, 'cross-repo or removed top-level dir — not checkable from here')); continue
+            # A SIBLING ON DISK DECIDES IT. The fall-through below stays, but it
+            # is a fall-through and not the whole answer: an adopter measured a
+            # genuinely dead cross-repo reference — the sibling present, the file
+            # provably absent beside three of its neighbours — being reported
+            # `not checkable`, on the one reference their repo keeps unfixed on
+            # purpose as a control. Withholding a verdict it HAS is #93's
+            # sentence pointing the other way.
+            #
+            # ⚠️ This is NOT the rung-4 gate #93 rejected, and the difference is
+            # the whole argument: rung 4 reads a repo NAME OUT OF PROSE, which is
+            # only recognisable as a repo name when that repo is on disk, so
+            # per-reference decidability is not computable. Here the FRAGMENT
+            # QUALIFIES ITSELF — `NexusMind/scripts/x.py` names its repo in the
+            # path — so no prose is parsed and nothing is inferred.
+            #
+            # ⚠️ Residual environment-dependence, stated: which of `dead` /
+            # `undecided` you get still varies with whether the sibling is
+            # checked out. What cannot happen is a false `dead` from the
+            # environment, and a neighbourless CI checkout degrades to exactly
+            # the previous behaviour. The one way this DOES go wrong is a
+            # shallow or partial sibling checkout, where a file absent locally
+            # exists upstream — the same exposure the sibling step's own rung 4
+            # accepts.
+            sib = root.parent / frag.split('/')[0]
+            if sib.is_dir():
+                if (root.parent / frag).is_file(): ok += 1
+                else: dead.append((doc, frag, f'absent in the sibling {sib.name}, which IS on disk'))
+                continue
+            unver.append((doc, frag, 'cross-repo or removed top-level dir — no sibling on disk to decide it')); continue
         # A claim about ANOTHER machine cannot be checked from here. Quarantined,
         # not flagged — the same disposition a host-dependent verify probe gets.
         if frag.startswith(('/', '~')):

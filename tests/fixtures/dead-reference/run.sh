@@ -27,7 +27,7 @@ pathlib.Path(sys.argv[2]).write_text(prog)
 PY
 
 mkdir -p "$W/repo/docs" "$W/repo/data" "$W/repo/node_modules/lodash" "$W/repo/memory" \
-         "$W/repo/src/a" "$W/repo/src/b" "$W/NeighbourRepo/docs"
+         "$W/repo/src/a" "$W/repo/src/b" "$W/NeighbourRepo/docs" "$W/NeighbourRepo/scripts"
 cd "$W/repo" && git init -q . && git config user.email f@x && git config user.name f
 printf 'data/\nnode_modules/\n' > .gitignore
 : > docs/real.md; : > memory/notes.md
@@ -35,12 +35,18 @@ printf 'data/\nnode_modules/\n' > .gitignore
 echo '{}' > node_modules/lodash/package.json     # vendored
 : > src/a/helpers.py; : > src/b/helpers.py       # two answers
 : > "$W/NeighbourRepo/docs/OVER_THERE.md"
+# The four-cell matrix for a self-qualifying cross-repo fragment. `AbsentRepo`
+# is never created, so the neighbourless half is exercised in the SAME run.
+: > "$W/NeighbourRepo/scripts/present.py"
 cat > CLAUDE.md <<'EOF'
 Live at `docs/real.md`, and a bare `notes.md` one directory down.
 Dead: `docs/ghost.md`.
 The manifest is `package.json` at the root.
 Runtime data lives at `narrative_risk.json`.
 Sibling reference: `NeighbourRepo/docs/OVER_THERE.md`.
+Sibling, present there: `NeighbourRepo/scripts/present.py`.
+Sibling, PROVABLY absent there: `NeighbourRepo/scripts/ghost.py`.
+No such sibling on disk: `AbsentRepo/scripts/whatever.py`.
 Removed package: `oldpkg/gone.py`.
 Ambiguous: `helpers.py`.
 Identifier: `process.env`. Shape: `docs/work-items/<slug>.md`. Glob: `memory/project_*.md`.
@@ -62,7 +68,13 @@ resolves() { grep -qF -- "-> $1 " <<<"$OUT" && { printf '  FAIL  %-34s reported,
 want DEAD "docs/ghost.md"       "a dead path under a REAL top-level dir is still a defect"
 want DEAD "package.json"        "node_modules must not rescue a missing root manifest (#51's own false negative)"
 # THE TWO ADOPTER-REPORTED FALSE-POSITIVE CLASSES
-want "CANNOT VERIFY" "NeighbourRepo/docs/OVER_THERE.md" "a qualified cross-repo path is not checkable from here, not dead"
+# The four cells. A sibling ON DISK decides; only the neighbourless half falls
+# through to CANNOT VERIFY. Adopter-measured: withholding a verdict the run HAS
+# is #93's own sentence pointing the other way.
+resolves "NeighbourRepo/docs/OVER_THERE.md"
+resolves "NeighbourRepo/scripts/present.py"
+want DEAD "NeighbourRepo/scripts/ghost.py" "sibling IS on disk and the file is provably absent there — decidable, so decide it"
+want "CANNOT VERIFY" "AbsentRepo/scripts/whatever.py" "no sibling on disk — the fall-through, and the only environment-dependent cell"
 want "CANNOT VERIFY" "oldpkg/gone.py"  "same disposition, and the KNOWN COST: a deleted top-level dir lands here too"
 want SKIPPED "process.env"      "filename-shaped token, not a path"
 want SKIPPED "memory/project_*.md" "glob"

@@ -19,6 +19,35 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.34.0 (2026-08-27)
+
+v1.33.0 stopped reporting a false *dead* and started withholding a true one. MINOR: a decidable outcome where there was none.
+
+### A sibling on disk decides it (reopens and completes #101)
+
+The adopter who reported #101 measured the fix against the one reference their repo **keeps unfixed on purpose as a control**: a cross-repo path whose sibling *is* checked out, and whose file is provably absent there, beside three of its neighbours. v1.33.0 called it *not checkable*. It was checkable, and dead.
+
+**That is #93's own sentence pointing the other way** — the earlier bug claimed a verdict it had not earned; this one withheld one it had. v1.29.0 already settled the shape for `audit-context`: the answer to an undecidable case was never to drop the rung, it was a **third state** for the cases that are genuinely undecided.
+
+| | sibling on disk | sibling absent |
+|---|---|---|
+| file is there | resolved | undecided |
+| file is absent | **dead — provably** | undecided |
+
+The left column is decidable and is now decided; the right column falls through to v1.33.0's disposition unchanged.
+
+⚠️ **This is NOT the rung-4 gate #93 rejected, and the difference is the whole argument.** Rung 4 reads a repo name **out of prose**, which is only recognisable as a repo name when that repo is on disk — so per-reference decidability is not computable. Here the fragment **qualifies itself**: `NexusMind/scripts/x.py` names its repo in the path. No prose is parsed and nothing is inferred.
+
+⚠️ **Residual environment-dependence, stated rather than discovered**: which of *dead* / *undecided* you get still varies with whether the sibling is checked out. What cannot happen is a **false *dead*** from the environment, and a neighbourless CI checkout degrades to exactly v1.33.0's behaviour. The one way it does go wrong is a shallow or partial sibling checkout, where a file absent locally exists upstream — the same exposure the sibling step's own rung 4 accepts.
+
+The fixture seeds **all four cells in one run**, `AbsentRepo` being a sibling deliberately never created.
+
+### A version stamp is a number, not an adjective
+
+Same adopter: within **hours** of committing a correct `v1.31.0` stamp, the word *current* beside it was false, because v1.32.0 and v1.33.0 tagged the same evening. The stamp was right; the adjective was a state claim about a world that moves — and **the framework's own release cadence is what falsifies it**, which an adopter cannot see coming.
+
+`templates/release.md` Step 7 gains it as an instruction to release authors, and `templates/project-file.md`'s stamp line now says so inline. This is `curate` sub-step 5's *a state report decays; a claim does not*, landing on the one line in an always-loaded file that every session starts from.
+
 ## v1.33.0 (2026-08-27)
 
 `curate`'s dead-reference extractor reported **12 dead of which 0 were dead** on its first adopter run. MINOR: a new output disposition is new behaviour.

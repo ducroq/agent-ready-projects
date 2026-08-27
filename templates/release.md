@@ -217,9 +217,11 @@ Only once the engineer confirms the push:
    Do not use a substring grep. `grep v1.2.3` matches a months-old `v1.2.3-rc1`, so a failed or forgotten push reads as success — and every step below would then act on a release that does not exist: step 2 installs unreleased content into a copy that shadows every repo, and steps 3–5 record the release as shipped in project memory, on the issue tracker, and in the work item.
 
 2. **Refresh any copy of a skill or command installed outside the repo** — a user-level install is not covered by the tag, and refreshing it *before* the tag would have put content no release contains into the copy that shadows every repo. This is the point at which that refresh is safe.
-3. Update the memory index's current-state entry to the new version — and ⚠️ **rescope the probe on the line you just superseded.** A *current release* claim and a *previous release* claim are different claims: a probe reading "the highest tag equals vX.Y.Z" is true the day it is written and false the moment the next release ships, and it travels down with the line unless you change it. A historical line's probe asserts the tag **exists**. Measured here twice in one day, on three lines the first time — the release process regenerates this defect on every release that does not do it.
-4. Close any issue the release resolves
-5. If the project tracks work items, fill in the Outcome section of any work item this release completed
+3. ⚠️ **Tell consumers who stamp your version that the stamp is a *number*, not an adjective.** A pinned line reading "we are current with vX.Y.Z" is a state claim about a world that moves, and **your release cadence is what falsifies it** — an adopter cannot see the next tag coming. One adopter had the word *current* become false **within hours** of committing a correct stamp, because two more releases went out the same evening. The stamp was right; the adjective was not. This is `curate` sub-step 5's *a state report decays; a claim does not*, landing on the one line in an always-loaded file that every session of theirs starts from.
+
+4. Update the memory index's current-state entry to the new version — and ⚠️ **rescope the probe on the line you just superseded.** A *current release* claim and a *previous release* claim are different claims: a probe reading "the highest tag equals vX.Y.Z" is true the day it is written and false the moment the next release ships, and it travels down with the line unless you change it. A historical line's probe asserts the tag **exists**. Measured here twice in one day, on three lines the first time — the release process regenerates this defect on every release that does not do it.
+5. Close any issue the release resolves
+6. If the project tracks work items, fill in the Outcome section of any work item this release completed
 
 ## Do not
 

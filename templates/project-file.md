@@ -2,7 +2,7 @@
 stack: [e.g., Python 3.12, FastAPI, PostgreSQL]
 status: [Production | MVP | Prototype]
 repo: [e.g., github.com/org/project]
-framework: agent-ready-projects v1.33.0
+framework: agent-ready-projects v1.34.0   # a NUMBER, not a status — never write "current" here; the framework's release cadence falsifies the adjective, not the pin
 ---
 
 # [Project Name]
