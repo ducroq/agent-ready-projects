@@ -101,6 +101,8 @@ A gotcha logged in session 4 gets promoted to a topic file by session 8, reaches
 
 See the [full reference guide](docs/GUIDE.md#tool-specific-setup) for detailed setup instructions, multi-tool projects, and Cursor `.mdc` examples.
 
+> **Not sure how much to adopt?** Measured across 58 repos: every one has a project file, 21 have a gotcha log, 18 a memory index — and **zero** have the Layer 5 coordination doc. Start with Layer 1 and add each other layer when you feel the problem it solves. See [What to Adopt](docs/GUIDE.md#what-to-adopt-and-what-most-people-dont).
+
 ## Templates
 
 Ready-to-use starter files in [`templates/`](templates/). Tool-agnostic — rename for your agent (see [`templates/README.md`](templates/README.md) for the naming map).

@@ -20,8 +20,9 @@ packaging is not. Do not re-attempt without solving distribution first.
 Output sections: FINDINGS (broken or ambiguous — the defects), RESOLVED BELOW
 RUNG 1 (enumerated, not defects), SKIPPED as asserted-absent, UNCONFIRMED (what
 this run could not decide), extensions in the tree the extractor misses, and —
-only when they apply — DOCUMENTS NOT READ and
-a RUNG 4 COVERAGE line. On the default path a VERDICT line closes the report and
+only when it applies — DOCUMENTS NOT READ.
+The RUNG 4 COVERAGE line always prints; only its explanatory body is conditional
+on there being no neighbour (#97). On the default path a VERDICT line closes the report and
 names the exit status, so the two cannot drift apart unnoticed; `--legacy` is a
 re-derivation of the v1.15.0 numbers and prints no verdict; it returns 0 on any
 run that reaches it, which a usage error does not.
@@ -665,9 +666,13 @@ def check(root, sources, sibling_roots=None):
                         # a path must not change that: round 3 tested the marker first
                         # and a both-forms reference went exit 0 -> exit 2 on where it
                         # ran, which is the defect this whole change is about.
-                        placeheld.append((src, frag,
-                                          'declared-placeholder'
-                                          if frag in placeheld_frags else 'angle-bracket segment'))
+                        # #98: labelled by the reason that ACTUALLY excused it.
+                        # This arm exists because of the angle bracket, so a path
+                        # carrying a redundant marker too was printing
+                        # `declared-placeholder` — pointing its reader at the
+                        # rung-4 coverage sentence, which is false for a row
+                        # decided by shape and not by any rung.
+                        placeheld.append((src, frag, 'angle-bracket segment'))
                     else:
                         # A `<!-- placeholder -->` marker is rung-4 traffic, and
                         # without a neighbour this arm cannot tell a legitimate
@@ -801,6 +806,15 @@ def main():
             sys.exit(_usage('--sibling-root needs a directory'))
         sibling_roots = (sibling_roots or []) + [argv[i + 1]]
         del argv[i:i + 2]
+    # #96: an UNRECOGNISED `--` argument used to be consumed as <repo-root>, the
+    # real root became a source document, and the run returned `DEFECTS (exit 1)`
+    # — exit 1 being the status #93 gave the meaning "a rung ruled on something".
+    # Measured: `--sibling-roots /tmp . CLAUDE.md` (note the s) returned rc=1.
+    # This is what the module docstring's "a mistyped flag cannot be read as
+    # either verdict" claims, and it was false until this arm existed.
+    for a in argv:
+        if a.startswith('--'):
+            sys.exit(_usage('unrecognised option: %s' % a))
     if len(argv) < 2:
         sys.exit(_usage(
             'usage: refcheck.py [--legacy] [--sibling-root DIR] <repo-root> <doc> [<doc> ...]\n'

@@ -146,6 +146,27 @@ This is the project's home base. It's the only file guaranteed to be read every 
 **The "Before You Start" table** is the bridge across the auto-loading cliff. It maps task types to files:
 
 ```markdown
+## What to Adopt, and What Most People Don't
+
+Measured across 58 repositories using this method (`_archive/` excluded), counting artifacts that actually exist on disk:
+
+| artifact | repos | |
+|---|---|---|
+| project file (Layer 1) | **58** | everyone |
+| gotcha log (Layer 4) | **21** | |
+| memory index (Layer 3) | **18** | |
+| runbook (Layer 2) | 7 | |
+| work items | 6 | |
+| ADRs | 5 | |
+| hypothesis log | 5 | |
+| coordination doc (Layer 5) | **0** | nobody, in 58 repos |
+
+**State the check before the claim:** these are file-existence counts, not usage counts — a file can exist and never be read. So this measures *adoption*, not *value*, and it cannot tell a bad artifact from a good one nobody has needed yet.
+
+**Read it as an ordering, not a verdict.** Start with the project file; add the gotcha log when you catch yourself re-solving something; add the memory index when the project file starts carrying session state. The rest are answers to specific problems — a runbook when operations get hard to remember, ADRs when decisions get re-litigated, work items when work spans sessions. Adopting one before you have the problem it solves is ceremony, and ceremony is what makes a method get abandoned.
+
+**Layer 5 is documented because it completes the model, and it is honest to say nobody uses it.** A single maintainer working with agents will not need it.
+
 ## Before You Start
 
 | When | Read |

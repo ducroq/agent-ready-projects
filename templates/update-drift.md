@@ -125,6 +125,8 @@ Framework changes often land in paths that are gitignored in adopter repos: `.cl
 
 List the gitignored paths the framework touches and inspect each by eye. Say in the report when a behaviour changed only in an unshipped file — an adopter reading the diff cannot otherwise see it.
 
+⚠️ **A re-mapped project-local skill needs a CONTENT check; a version stamp cannot answer for it.** A user-global skill is covered — the installer compares bytes. A project-local one is a copy the adopter owns, and a *re-mapped* copy will never match the template again, so eyeballing a 577-line diff is not a method and the pin says nothing about the file. **Grep for the marker strings the release note names.** A defensive fix looks like nothing: the framework shipped one where broken and fixed were semantically identical in isolation — no error, no empty output, no non-zero status, the check simply examined a constant and printed what a clean run prints. If no markers are named, ask, and record `not verified` (#94).
+
 ## Step 4 — Verify by execution, not by reading
 
 Anything the framework's changelog *asserts* about behaviour is a claim, and adopting a claim is adopting whatever is wrong with it.

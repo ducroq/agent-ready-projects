@@ -64,7 +64,11 @@ the same thing. X13/X14 seed that path and A8/A9 hold the ordering from both
 sides. **X15/X16 are round 4's**: no row produced a confirmed finding and an
 undecided reference in one run, so the verdict's undecided clause could be
 deleted green; and nothing asserted the undecided were *enumerated*, so the whole
-section could be deleted green while 33 references vanished from every count.
+section could be deleted green while 33 references vanished from every count —
+33 being what a NO-NEIGHBOUR run of the main fixture leaves undecided. The run
+this harness performs pins `--sibling-root` to 3 siblings, where that total is 0
+by construction, so the deletion drops nothing there; X16 is the guard that
+actually bites, and it runs `mixed.md` against an empty sibling root (#97).
 
 **X8/X9 are the pair a review found missing.** A `<!-- placeholder -->` on a
 cross-repo path is rung-4 traffic too — with the neighbour on disk it is a stale

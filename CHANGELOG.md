@@ -19,6 +19,75 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.31.0 (2026-08-27)
+
+Three adopter-reported issues, all the same failure: **a check that reports nothing when it is broken, indistinguishable from reporting nothing because all is well.** MINOR — new checker behaviour in `curate`, new guidance in `release` and `update-drift`.
+
+### `curate`'s dead-reference check ships an extractor instead of a rule (closes #51)
+
+Sub-step 1 said *"for every file path mentioned, verify it still exists"* and left the extraction to the model. Re-derived per run means re-derived wrong: one adopter run produced **25 `MISSING:` lines, essentially all false** — bare basenames living one directory down, systemd *unit names*, paths on other machines, a file in a sibling repo. It survived because every run reports something, so nothing looks broken. This is #34's shape one step earlier.
+
+It now ships a canonical extractor that **classifies rather than flags**: resolve as written → doc-relative → `memory/` → `docs/` → basename; quarantine absolute and `~` paths as `CANNOT VERIFY` (a claim about another machine, the same disposition a host-dependent probe gets); skip unit-name shapes and placeholder/glob shapes; and print `N dead / N unresolvable / N skipped / N resolved`, because `0 dead` alone cannot distinguish a clean index from an extractor that captured nothing.
+
+⚠️ **Adopter-visible, and three of these changed after the first draft.** Resolution is against **tracked files** (`git ls-files`), not the whole tree: an `rglob` walk indexed `node_modules/`, `.venv/` and `.git/`, so a document naming a root `package.json` that does not exist resolved against `node_modules/lodash/package.json` — a false *negative* in the one check whose purpose is finding dead references. There is a **new output class**, `ambiguous: N files match …`, because a basename-keyed map kept one winner per name by iteration order and a bare `helpers.py` with two answers resolved silently, while `audit-context` reports that same input as a COLLISION. And a leading `@` is stripped by prefix, not by character class — `lstrip('@')` printed `types/node/index.d.ts` for `@types/node/index.d.ts`, text the document never contained.
+
+⚠️ **Its first run on this repo reported four of its own false positives** — `templates/<name>.md`, `docs/work-items/<slug>.md`, `.claude/settings*.json`, `memory/project_*.md` — all shapes, not paths, and all a class `audit-context` had already solved. Fixed before shipping, by running it rather than reading it.
+
+### `review-changes` Step 1.5: CRLF measured, YAML frontmatter fixed (closes #52)
+
+The CRLF strip landed earlier; what was missing was a **measurement**, and memory recorded that the earlier re-check used an unsound extraction, so nothing was claimed. Now measured on seeded input: a lossy row under CRLF is reported, a clean CRLF table stays quiet, and ablating the strip kills the CRLF case — without it *no table in the file is examined* and the run is byte-identical to clean.
+
+The issue's second defect was live and is fixed: `isdelim()` accepts a bare `---` and its guard is satisfied by a pipe in the **previous** line, so YAML frontmatter whose `description:` contains a pipe reported as a malformed table. Not exotic — every `SKILL.md` here has a `description:`. The frontmatter block is now skipped whole, which is preferred to requiring a pipe in the delimiter row (that would reject the pipe-less delimiter rows GFM permits). A setext heading containing a pipe still reports; rarer, and documented rather than fixed.
+
+**New fixture** `tests/fixtures/step15-tables/`: 4 positives, 3 negatives, 2 ablations, the program **extracted** from the template rather than copied so it cannot drift. ⚠️ **One seeded negative was wrong when written** — "excess empty cells lose nothing, so it must stay quiet" — contradicting the step's own text two screens up, which says that case reports and the human adjudicates. Reclassified to a positive. Written from reasoning, corrected by running it; the same lesson v1.30.0 recorded about ablation kill sets. ⚠️ **And one ablation killed nothing when written**: mutating `infm { next }` left the two rules that consume both `---` lines intact, so it read as a passing ablation over an unguarded rule. It now mutates the entry condition.
+
+### `curate` measures its own read surface before reading (closes #46)
+
+The skill *body* is ratcheted by lint rule 8. What a run **reads** was not, and it is 4–25× larger and fresh tokens every time. Measured on three real repos by #46's own scope (everything a `/curate` run opens): 147,209 characters here, 222,120 in a sibling, **1,000,426 across 69 files** in a third — where the step could not read its own inputs in one context window and nothing said so.
+
+Step 0 now opens with the measurement and a threshold. Above ~300k characters, do not read the corpus: work from the runners, which take paths and report without pulling documents into context, curate the index and newest topic file only, and **say which files you did not open**. A run that silently reads a third of its inputs and reports as though it read all of them is this method's own failure mode one layer up. *(This repo measures **254,252** by the gate's narrower scope — `memory/` and `docs/work-items/` only — against 147,209 by #46's wider one. Two different scopes, both real; the gate deliberately measures the corpus it would otherwise read whole.)*
+
+### Four ways a `verify:` annotation passes while its claim is false (closes #66, #62, #65, #61)
+
+Four separately-filed adopter observations turned out to be one failure seen four ways, so they ship as **one** rule in sub-step 5 rather than four — v1.30.0's lesson being that a rule restated in seven passages gets corrected in one and left wrong in six.
+
+- **The probe asserts a proxy.** `ls-remote | grep -q .` under *"v1.21.0 tagged and pushed"* proves *some* tag exists — greenest on the day it is most wrong.
+- **The check was never tight.** Seeded-true-positives fires on a *loosened* check; one that never caught anything looks identical to one that works. The tell is a deletion that fails to turn anything red.
+- **The count travels and the enumeration does not.**
+- **A state report decays; a claim does not.** Three instances here, two this week — including a changelog note announcing itself as *"Corrected in v1.31.0"* while v1.31.0 was still unreleased. The tense of the intended outcome, in a note about being wrong.
+
+### What to adopt, and what most people don't (closes #47)
+
+`docs/GUIDE.md` gains a measured section, and `README.md` a pointer to it. Across 58 repos: project file **58**, gotcha log 21, memory index 18, runbook 7, work items 6, ADRs 5, hypothesis log 5, **Layer 5 coordination doc 0**.
+
+⚠️ **Stated with its limit**: these are file-existence counts, not usage counts, so they measure *adoption* and cannot distinguish a bad artifact from a good one nobody has needed yet. It ships as an **ordering** — add each layer when you feel the problem it solves — because adopting one before you have that problem is ceremony, and ceremony is what gets a method abandoned. Layer 5 stays documented, and the guide now says plainly that nobody uses it.
+
+### Step 1.5 gains a third construct: emphasis spans (closes #50)
+
+Step 1.5 exists for one property — *correct in the diff, wrong when rendered* — and checked two constructs. **Emphasis is a third with the same property**, reported by an adopter after a formatter joined two `**`-globs inside one bolded phrase and corrupted both.
+
+⚠️ **Three drafts, each refuted by running it over this repo rather than over its own fixture.** "A risky token anywhere on a bold line" reported **28** lines here. "Two of them" still reported **15**. Both were every risk-tier row in `review-changes` itself, where `**HIGH**` opens *and closes* inside one table cell and the globs sit in the next — co-located, never adjacent. Only the third draft is right: code spans are masked to one character each, bold runs are paired positionally, and a token counts only when it lies **inside an open bold run**. That reports **1** line in this repo, and it is a true positive — the CHANGELOG entry that quotes the original defect.
+
+`n6_tier_row.md` seeds that exact shape, and ablation A5 reverts the bold-nesting test to prove it is what holds those 15 lines back. #50 asked for seeded positives *and* negatives before shipping, citing the table check's own 39% false-positive history; that was the right instruction and each draft would have passed a fixture-only check.
+
+**No adopter-installed file changed for #95, #96, #97 or #98**, and that is deliberate rather than the #92 shape: all four are oracle-scoped — CLI exit codes, fixture assertions, and a per-row report label no skill text prescribes. #98's other half, the coverage header's universal, already carries its carve-out from v1.29.0.
+
+### Two more counts corrected (closes #97)
+
+*"33 references on the main fixture"* described a **no-neighbour** run; the run this harness performs pins three siblings, where that total is 0 by construction. The `RUNG 4 COVERAGE` line prints unconditionally — only its explanatory body is conditional. And the SIGPIPE hazard applies to **12** sites, not 13: the thirteenth is a `grep -c`, which drains stdin and cannot SIGPIPE.
+
+### The reference oracle's report body gets asserted (closes #95, #96, #98)
+
+Four rows, because five mutants printed a wrong report with the suite green. **X21** — an unrecognised `--` argument was consumed as `<repo-root>` and returned `DEFECTS (exit 1)`; measured, `--sibling-roots` (note the s) did exactly that, and `grep -nE '\b64\b|usage'` over the harness returned nothing beforehand. **X22** — the angle-bracket arm labelled its rows `declared-placeholder`, pointing the reader at a rung-4 sentence false for a row no rung decided. **X23** — the FINDINGS body on a no-neighbour run, which no assertion had ever read because the main run pins three siblings. **X24** — *one section or the other, never both*, which Step 4 states as a design rule and nothing checked. ⚠️ X24's first draft keyed on the path alone and reported two legitimately-different references as a violation.
+
+### "Re-copy it by hand" is destructive advice for the adopters most likely to need the fix (closes #94)
+
+`review-changes` is project-local, so fixes propagate only by copying. Two release notes said *"project-local and must be re-copied by hand."* For an adopter who **re-mapped** the skill — rewrote its risk tiers for paths their repo actually has, which one adopter records as an operative rule because a verbatim install would tier everything LOW and quietly do nothing — following that instruction destroys the adaptation. Their copy is also the one that has diverged furthest, so they are the least able to eyeball a 577-line diff and the most likely to need the fix.
+
+Both changelog lines are **corrected in place** rather than rewritten, and now name marker strings (`isdelim($(0))`, `sub(/\r$/, "")`, `infm`) an adopter can grep however far their copy has drifted. `templates/release.md` Step 4 gains the general rule: for a copied artifact, name the surgical change and its markers, never only "re-copy it". `templates/update-drift.md` Step 3 gains the other half — a re-mapped project-local skill needs a **content** check, and a version stamp cannot answer for it, because a defensive fix looks like nothing: the framework shipped one where broken and fixed were semantically identical in isolation, with no error, no empty output and no non-zero status.
+
+**Size**: `curate` **+4709**, `update-drift` +735, `review-changes` +542, `release` +465. ⚠️ The `curate` figure was first written as **+2153** — understated by more than half, on the one file the entry is mostly about, and measured wrong rather than mistyped. `size-baseline.tsv` was right the whole time; only the prose was wrong, which is why rule 8 passed. Three of the four buy a check where prose used to be; the fourth buys the rule that stops the bad advice recurring.
+
 ## v1.30.0 (2026-08-27)
 
 ### Marking a reference the local tree answers made the run undecided (round 5 on #93)
@@ -142,13 +211,13 @@ Two normative claims were false for one of the two marker forms they govern: *"a
 - The rung-4 coverage header said *"treat every finding below as unconfirmed"*, which over-claimed — a finding a **local** rung ruled on stands whether or not a neighbour is present.
 - `--legacy` prints no verdict line and always returns 0, which falsified two absolutes in the new module docstring. Scoped to the default path rather than hedged away.
 - A usage error exited **1**, which this change has just given the meaning "a rung ruled on something". Usage now exits **64** (`EX_USAGE`), so a mistyped flag cannot be read as either verdict.
-- The **new** assertions use here-strings rather than `printf | grep -q`: under `pipefail`, a `-q` that matches early can SIGPIPE the writer and score 141 as a miss — harmless on a 1 KB report, loud and wrong on a large one. ⚠️ The 13 pre-existing sites in that file were left alone and still carry it; this is a hazard recorded, not a migration completed.
+- The **new** assertions use here-strings rather than `printf | grep -q`: under `pipefail`, a `-q` that matches early can SIGPIPE the writer and score 141 as a miss — harmless on a 1 KB report, loud and wrong on a large one. ⚠️ The **12** pre-existing sites in that file were left alone and still carry it; this is a hazard recorded, not a migration completed. *(Said 13 until v1.31.0. `grep -c "printf '%s'.*| *grep"` returns 13, but the thirteenth is a `grep -c`, which drains stdin and cannot SIGPIPE — #97.)*
 
 `templates/audit-context.md` grows 38037 → 43352 bytes (+5315), recorded here for lint rule 8.
 
 ## v1.28.0 (2026-08-26)
 
-Nine open issues closed in one batch: one measured hole in the repo's own sensitivity harness, two defects in `update-drift`'s stamp finder, three in `audit-context`'s reference checker, a timing contradiction between two shipped surfaces, a unit disagreement between two shipped surfaces, and the missing pre-commit trigger in the artifact every adopter copies. MINOR: new checker behaviour and new template rows. ⚠️ **Adopter action**: three skills changed. `audit-context` and `update-drift` are user-global — refresh via `scripts/install-global-skills.sh` after the release tag is pushed **and verified**. `review-changes` is project-local and must be re-copied by hand. Nothing breaks if you do neither; the old `audit-context` still runs, it just keeps reporting the correct references #54/#55/#56 are about.
+Nine open issues closed in one batch: one measured hole in the repo's own sensitivity harness, two defects in `update-drift`'s stamp finder, three in `audit-context`'s reference checker, a timing contradiction between two shipped surfaces, a unit disagreement between two shipped surfaces, and the missing pre-commit trigger in the artifact every adopter copies. MINOR: new checker behaviour and new template rows. ⚠️ **Adopter action**: three skills changed. `audit-context` and `update-drift` are user-global — refresh via `scripts/install-global-skills.sh` after the release tag is pushed **and verified**. `review-changes` is project-local and must be re-copied by hand. ⚠️ **Corrected below — do not follow this literally if you RE-MAPPED the skill** (rewrote its tiers or paths for your own repo): re-copying destroys the adaptation, and the adopters most likely to need the fix are exactly the ones it would hurt (#94). Grep your copy for the marker strings instead — a current `review-changes` contains `isdelim($(0))`, `sub(/\r$/, "")` and `infm`. Missing markers name the surgical change to apply by hand. Nothing breaks if you do neither; the old `audit-context` still runs, it just keeps reporting the correct references #54/#55/#56 are about.
 
 ### 9 of 29 ablations in `verify-runner` proved nothing, and a silence-mutant is what showed it (closes #90)
 
@@ -326,7 +395,7 @@ Applied to all occurrences in `templates/curate.md`, `templates/review-changes.m
 
 ~~⚠️ **No new check guards this class.**~~ **Lint rule 9 now does — see below (#86).** It was written after this entry, in the same release, and its first four true positives were the comments *in this fix*.
 
-**PATCH** — a shipped artifact made to survive its own delivery path. ⚠️ **Adopter action**: both skills changed. `curate` is user-global — refresh via `scripts/install-global-skills.sh` after the tag. `review-changes` is project-local and must be re-copied by hand.
+**PATCH** — a shipped artifact made to survive its own delivery path. ⚠️ **Adopter action**: both skills changed. `curate` is user-global — refresh via `scripts/install-global-skills.sh` after the tag. `review-changes` is project-local and must be re-copied by hand. ⚠️ **Corrected below — do not follow this literally if you RE-MAPPED the skill** (rewrote its tiers or paths for your own repo): re-copying destroys the adaptation, and the adopters most likely to need the fix are exactly the ones it would hurt (#94). Grep your copy for the marker strings instead — a current `review-changes` contains `isdelim($(0))`, `sub(/\r$/, "")` and `infm`. Missing markers name the surgical change to apply by hand.
 
 ### Rule 8: both templates grow, recorded rather than waived
 

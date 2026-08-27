@@ -10,11 +10,93 @@ Review the session's work and update the layered memory system:
 
 ## Step 0 — Freshness check
 
+⚠️ **Measure the read surface first, and say the number.** This step's *body* is paid once per invocation and is prompt-cached; what it **reads** is fresh tokens every run and is 4–25× larger. Measured across three real repos: 147k chars here, 222k in a sibling, and **1,000,426 chars across 69 files** in a third — where the step could not read its own inputs in one context window and nothing said so (#46).
+
+```bash
+# -print0/-0 because a single spaced path (`docs/work-items/my slug.md`) is
+# word-split into nonexistent paths and its bytes vanish from the total. `cat |
+# wc -m` rather than `xargs wc -c | tail -1` for two reasons: xargs BATCHES above
+# a few thousand files and `tail -1` then reports one batch's total (measured:
+# 6000 files reported 105,600 of 600,000), and `wc -m` counts characters, which
+# is what the threshold below is in. Both failures were silent and both read LOW.
+find memory docs/work-items -type f -name '*.md' -print0 2>/dev/null \
+  | xargs -0 cat | wc -m
+```
+
+**Above roughly 300k characters, do not read the corpus.** Work from metadata and the runners in this step, which are built to avoid the full read: the dead-reference extractor and the verify runner both take paths and report, and neither needs the documents in context. Then curate **the index and the newest topic file only**, and say in the report which files you did not open. A run that silently reads a third of its inputs and reports as though it read all of them is the failure this whole method exists to prevent, one layer up.
+
 Check for context rot from *previous* sessions. This catches what the session-focused steps below miss.
 
 **Read metadata, not documents.** Measured across 2,264 real sessions, an ordinary session reads a **median of 3** memory files — the layer works as designed. This step is the exception that reads everything, and it does not need to. A gotcha log's headers are ~6–7% of the file and carry most of what Step 0.3, Step 1 and Step 2 use; a verify probe is *run*, not read; staleness is `stat`, not content. Where a large artifact is involved, take its index first and fetch a body only when you are going to act on it. In one measured repo this is the difference between ~1,000,000 characters and ~35,000.
 
-1. **Dead references**: Read the memory index and project file. For every file path mentioned, verify it still exists. List any broken paths.
+1. **Dead references**: run the extractor below over the memory index and project file. **Do not improvise one.** A rule stated in prose and left to the model is re-derived per run, and re-derived wrong: one adopter run produced 25 `MISSING:` lines of which essentially all were false — bare basenames that exist one directory down, systemd *unit names*, paths on other machines, a file in a sibling repo. Every run reports something, so nothing looks broken, and the honest summary was "this produced noise, not findings" (#51). **Classify, do not flag**, and print the reconciliation line: `0 dead` and `0 dead / 14 unresolvable / 3 skipped` are different results.
+
+```bash
+python3 - memory/MEMORY.md CLAUDE.md <<'PY'
+import re, subprocess, sys
+from pathlib import Path
+EXT = r'md|py|sh|js|ts|tsx|jsx|json|yaml|yml|toml|ini|cfg|conf|txt|sql|rs|go|rb|java|c|h|cpp|css|html|env|lock|tsv|csv'
+UNIT = re.compile(r'\.(service|timer|socket|mount|path|target)$')
+PATH = re.compile(r'`([^`\s]+\.(?:' + EXT + r'))`')
+root = Path(subprocess.run(['git','rev-parse','--show-toplevel'], capture_output=True,
+                           text=True).stdout.strip() or '.')
+# TRACKED files, not rglob. rglob indexes `node_modules/`, `.venv/`, `vendor/`
+# and `.git/`, so a doc naming a root `package.json` that does not exist was
+# counted RESOLVED against `node_modules/lodash/package.json` — a false NEGATIVE
+# in the one check whose purpose is finding dead references. And a LIST per
+# basename, not one winner: `{p.name: p}` kept whichever of two same-named files
+# rglob happened to yield last, so a bare `helpers.py` with two answers resolved
+# silently while the sibling step reports that same input as a COLLISION.
+tree = {}
+for line in subprocess.run(['git','-C',str(root),'ls-files'], capture_output=True,
+                           text=True).stdout.splitlines():
+    tree.setdefault(Path(line).name, []).append(line)
+dead, unver, skip, ok = [], [], [], 0
+for doc in sys.argv[1:]:
+    d = root / doc
+    if not d.is_file():
+        print(f'CANNOT VERIFY: {doc} is not readable'); continue
+    for frag in dict.fromkeys(PATH.findall(d.read_text(errors='replace'))):
+        # `@file` is an inclusion sigil — but `lstrip` is a CHARACTER SET, so it also
+        # ate the `@` of a scoped npm path and printed `types/node/index.d.ts`, text
+        # the document never contained. Strip one leading `@`, and only as a fallback.
+        cand0 = frag[1:] if frag.startswith('@') else frag
+        # A SHAPE, not a file: `<slug>.md`, `settings*.json`, `project_*.md`. The
+        # sibling step already decides these by their shape and nothing on disk;
+        # reporting them dead is the loudest false positive this extractor can make,
+        # and four of them were in this framework's own project file on first run.
+        if '<' in frag or '*' in frag:
+            skip.append((doc, frag, 'placeholder or glob, not a literal path')); continue
+        # A claim about ANOTHER machine cannot be checked from here. Quarantined,
+        # not flagged — the same disposition a host-dependent verify probe gets.
+        if frag.startswith(('/', '~')):
+            unver.append((doc, frag, 'path on another host')); continue
+        # A systemd unit NAME is not a file reference unless it carries a directory.
+        if UNIT.search(frag) and '/' not in frag:
+            skip.append((doc, frag, 'unit name, not a path')); continue
+        # As written, then doc-relative, then the two directories this method puts
+        # things in, then the basename anywhere. A bare `gotcha-log.md` means
+        # `memory/gotcha-log.md`; calling it missing is the commonest false positive.
+        cands = [b/c for c in dict.fromkeys((frag, cand0))
+                 for b in (root, d.parent, root/'memory', root/'docs')]
+        if any(c.is_file() for c in cands):
+            ok += 1
+        else:
+            hits = tree.get(Path(cand0).name, [])
+            if len(hits) > 1:
+                # Two files answer to it. The sibling step calls this a COLLISION
+                # and reports it; silently picking one is how a deletion hides.
+                unver.append((doc, frag, f'ambiguous: {len(hits)} files match ' + ', '.join(hits[:3])))
+            elif hits and Path(cand0).name == cand0: ok += 1
+            elif hits: unver.append((doc, frag, f'basename only: {hits[0]}'))
+            else: dead.append((doc, frag, 'resolves nowhere'))
+for label, rows in (('DEAD', dead), ('CANNOT VERIFY', unver), ('SKIPPED', skip)):
+    for doc, frag, why in rows: print(f'{label}: {doc} -> {frag} ({why})')
+print(f'{len(dead)} dead / {len(unver)} unresolvable / {len(skip)} skipped / {ok} resolved')
+PY
+```
+
+⚠️ **A `0 dead` line alone is not a result.** It cannot distinguish a clean index from an extractor that captured nothing — report all four counts, always.
 2. **Stale memory**: Check modification dates of memory files. Flag any not modified in 30+ days — they may be outdated. Read dates from the **filesystem**, e.g. `ls -l --time-style=+%Y-%m-%d memory/` or `stat -c '%y %n' memory/*.md`. **Look for the files before reading their dates, and say which set you read.** Where there is no `memory/` there is no Layer 3, and this project's equivalents are the ones the naming map gives for a tool without auto-memory — `docs/gotcha-log.md`, `docs/hypothesis-log.md`, `docs/work-items/` — plus the project file itself. Both example commands fail the same silent way on a directory that is not there: `stat` and `ls` each write to stderr and print nothing to stdout, which reads exactly like "nothing is stale".
 
    Do not use `git log -1 --format=%ci -- <file>` as the primary check. When the memory directory is gitignored — the recommended setup, and this framework's own — `git log` returns **empty with exit 0** for every file, so the check reports nothing stale while having examined nothing. Empty `git log` output here means "the check did not run", not "no files are stale".
@@ -33,6 +115,13 @@ Check for context rot from *previous* sessions. This catches what the session-fo
    Flag any unresolved entry older than 14 days: it is either fixed (mark `[RESOLVED]`) or stuck (surface to the user). **The Promoted table is why this needs reading too** — in one measured log 11 entries are recorded resolved in the table and carry no marker in their header, so a header-only pass reports every one of them as lingering on every run, forever. Open a body only for an entry you are about to change.
 4. **Ground truth drift**: If the project file has a "Ground Truth Designations" table, verify each listed file exists and has been modified more recently than the artifacts that defer to it. Flag any where a downstream artifact is newer than its source of truth.
 5. **Unverified state claims**: Scan memory files **and the project file** for state claims ("shipped," "deployed," "live," "running," "working in production") and for counts about this repo that decay silently. The project file is in scope because that is where version lines, adopter counts and occurrence tallies live, and an always-loaded wrong number misleads every session that starts — a count with no probe is a claim, not a fact. Claims carrying a `<!-- verify: ... -->` annotation are run by the runner below. **Do not read the memory files to do this** — the runner extracts and executes the annotations itself, and its report is what you read. Pulling the files into context to find annotations costs the whole corpus to obtain what a grep already returned. A claim with no annotation is **UNVERIFIED** — those decay immediately after the session that wrote them, so suggest adding an annotation or requalifying the claim as a session observation.
+
+⚠️ **An annotation is not automatically a check. Four ways one passes while its claim is false** — each observed, and each invisible in a green run:
+
+- **The probe asserts a PROXY.** `ls-remote | grep -q .` under *"v1.21.0 tagged and pushed"* proves *some* tag exists, so it stays green after the claim rots and is greenest on the day it is most wrong. Anchor the probe to the exact thing claimed — an exact ref, not a non-empty listing.
+- **The check was never tight.** The seeded-true-positives rule fires when a check is *loosened*; a check that never caught anything looks identical to one that works. The tell is a **deletion**: remove the thing the check exists to catch and confirm it turns red. If nothing turns red, there was no check.
+- **The count travels and the enumeration does not.** A number copied forward without the list behind it cannot be re-derived, and diverges silently from what it counts. Move the enumeration with the number, or make the number a probe.
+- **A state report decays; a claim does not.** *"Merged and tagged"* written before either happened is not distinguishable later from one that was true when written. Write state in the tense of what has actually run, and stamp it, so a reader can tell *reported wrong* from *was true then*.
 
    **Use this runner. Do not write one on the spot.** Every hand-written implementation observed so far reported *nothing wrong having checked nothing* — a silent, self-certifying pass, reached by six independent routes: a command containing `exit` ends the loop mid-iteration; an `ssh` (or any other stdin-reading command) swallows the rest of the command list; prose that merely *mentions* the syntax is executed as shell; `[^>]*` extraction truncates at the first `>`, mangling every command with a redirect; a `\|`-escaped command from a table cell runs with its pipes as literal `echo` arguments, so its fallback branch is dead code; and a command that succeeds in silence is indistinguishable from one that never ran. Each of the six is sufficient on its own. Save the block to a scratch file, **run it from the repo root**, and give it **absolute paths** — including the project file (`CLAUDE.md`, `AGENTS.md` or whatever your tool's naming map calls it): `bash /tmp/verify-runner.sh /repo/memory/*.md /repo/docs/hypothesis-log.md /repo/CLAUDE.md`. The cwd matters because the runner executes each command with `bash -c` and does not tell it which file it came from, so a probe resolving a relative path depends on where you stood. A probe in a file you never pass to the runner is worse than no probe: it reads as a checked claim and is never checked.
 
