@@ -112,10 +112,16 @@ for doc in sys.argv[1:]:
             # `undecided` you get still varies with whether the sibling is
             # checked out. What cannot happen is a false `dead` from the
             # environment, and a neighbourless CI checkout degrades to exactly
-            # the previous behaviour. The one way this DOES go wrong is a
-            # shallow or partial sibling checkout, where a file absent locally
-            # exists upstream — the same exposure the sibling step's own rung 4
-            # accepts.
+            # the previous behaviour.
+            #
+            # ⚠️ ONE way it does go wrong, and it is NARROWER than "a shallow or
+            # partial checkout" — that phrasing shipped in v1.34.0 and was wrong.
+            # MEASURED: `--depth 1` truncates HISTORY, not the working tree, and
+            # `--filter=blob:none` fetches blobs at checkout, so both leave every
+            # file present and neither reproduces anything. **Sparse checkout is
+            # the only one that omits files from the working tree**, and there a
+            # file present upstream reads as a confirmed dead reference. Seeded
+            # in the fixture as a known, unfixed exposure.
             sib = root.parent / frag.split('/')[0]
             if sib.is_dir():
                 if (root.parent / frag).is_file(): ok += 1

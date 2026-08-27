@@ -19,6 +19,24 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.34.1 (2026-08-27)
+
+**PATCH** — a corrected claim and a seeded case; no behaviour change.
+
+v1.34.0 said the sibling rung's one real exposure was *"a shallow or partial sibling checkout"*. **That is wrong**, and it was wrong because I accepted a plausible mechanism from an adopter without running it — in the same session that recorded *state the check before the claim, on any negative*.
+
+**Measured:**
+
+| clone mode | files in the working tree | reproduces it? |
+|---|---|---|
+| `git clone --depth 1` | **present** — depth truncates *history* | no |
+| `git clone --filter=blob:none` | **present** — blobs are fetched at checkout | no |
+| **sparse checkout** | **absent** | **yes** |
+
+So the exposure is real but **one mode wide, not three**, and the two everyone reaches for first do not cause it. `tests/fixtures/dead-reference/` now seeds a genuine sparse-checkout sibling and asserts the **current, unfixed** behaviour — a file present upstream reading as dead. Seeding a defect you have decided not to fix is what makes it visible rather than theoretical: if someone closes it, that row turns red and says so. The case is guarded, so a git without cone-mode sparse-checkout reports SKIP rather than passing vacuously.
+
+The adopter's own estate sweep — 16 sibling repos, none shallow, promisor, partial or sparse — stands, and they were explicit that it describes one machine on one evening rather than a property. It is recorded that way.
+
 ## v1.34.0 (2026-08-27)
 
 v1.33.0 stopped reporting a false *dead* and started withholding a true one. MINOR: a decidable outcome where there was none.
@@ -38,7 +56,7 @@ The left column is decidable and is now decided; the right column falls through 
 
 ⚠️ **This is NOT the rung-4 gate #93 rejected, and the difference is the whole argument.** Rung 4 reads a repo name **out of prose**, which is only recognisable as a repo name when that repo is on disk — so per-reference decidability is not computable. Here the fragment **qualifies itself**: `NexusMind/scripts/x.py` names its repo in the path. No prose is parsed and nothing is inferred.
 
-⚠️ **Residual environment-dependence, stated rather than discovered**: which of *dead* / *undecided* you get still varies with whether the sibling is checked out. What cannot happen is a **false *dead*** from the environment, and a neighbourless CI checkout degrades to exactly v1.33.0's behaviour. The one way it does go wrong is a shallow or partial sibling checkout, where a file absent locally exists upstream — the same exposure the sibling step's own rung 4 accepts.
+⚠️ **Residual environment-dependence, stated rather than discovered**: which of *dead* / *undecided* you get still varies with whether the sibling is checked out. What cannot happen is a **false *dead*** from the environment, and a neighbourless CI checkout degrades to exactly v1.33.0's behaviour. ⚠️ **The one way it does go wrong is narrower than this entry first said.** It read *"a shallow or partial sibling checkout"*, which is wrong and was corrected within the hour. **Measured**: `git clone --depth 1` truncates *history*, not the working tree, and `--filter=blob:none` fetches blobs at checkout — both leave every file present, and neither reproduces anything. **Sparse checkout is the only mode that omits files from the working tree**, and there a file present upstream reads as a confirmed dead reference. Now seeded in the fixture as a known, unfixed exposure. The wrong version was written by accepting a plausible mechanism from a peer without running it, in the same session that recorded *state the check before the claim*.
 
 The fixture seeds **all four cells in one run**, `AbsentRepo` being a sibling deliberately never created.
 

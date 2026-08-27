@@ -38,6 +38,23 @@ echo '{}' > node_modules/lodash/package.json     # vendored
 # The four-cell matrix for a self-qualifying cross-repo fragment. `AbsentRepo`
 # is never created, so the neighbourless half is exercised in the SAME run.
 : > "$W/NeighbourRepo/scripts/present.py"
+
+# ⚠️ KNOWN, UNFIXED EXPOSURE, seeded so it is visible rather than theoretical.
+# SparseRepo is a real sibling whose working tree OMITS the directory the
+# reference points into. The file exists upstream; the extractor cannot see it
+# and calls it dead. MEASURED, and narrower than the phrasing v1.34.0 shipped:
+# `--depth 1` truncates history and `--filter=blob:none` fetches blobs at
+# checkout — both leave every file present and neither reproduces this. Sparse
+# checkout is the only mode that omits files from the working tree.
+# This case asserts the CURRENT behaviour. If someone fixes it, this row turns
+# red and tells them the exposure is closed — which is the point of seeding a
+# defect you have decided not to fix.
+( mkdir -p "$W/sparse-origin/scripts" "$W/sparse-origin/docs"
+  cd "$W/sparse-origin" && git init -q . && git config user.email f@x && git config user.name f
+  : > scripts/upstream_only.py; : > docs/keep.md
+  git add -A && git commit -qm seed ) >/dev/null 2>&1
+( git clone -q "file://$W/sparse-origin" "$W/SparseRepo"
+  cd "$W/SparseRepo" && git sparse-checkout init --cone && git sparse-checkout set docs ) >/dev/null 2>&1
 cat > CLAUDE.md <<'EOF'
 Live at `docs/real.md`, and a bare `notes.md` one directory down.
 Dead: `docs/ghost.md`.
@@ -47,6 +64,7 @@ Sibling reference: `NeighbourRepo/docs/OVER_THERE.md`.
 Sibling, present there: `NeighbourRepo/scripts/present.py`.
 Sibling, PROVABLY absent there: `NeighbourRepo/scripts/ghost.py`.
 No such sibling on disk: `AbsentRepo/scripts/whatever.py`.
+Sparse sibling, file exists upstream: `SparseRepo/scripts/upstream_only.py`.
 Removed package: `oldpkg/gone.py`.
 Ambiguous: `helpers.py`.
 Identifier: `process.env`. Shape: `docs/work-items/<slug>.md`. Glob: `memory/project_*.md`.
@@ -75,6 +93,14 @@ resolves "NeighbourRepo/docs/OVER_THERE.md"
 resolves "NeighbourRepo/scripts/present.py"
 want DEAD "NeighbourRepo/scripts/ghost.py" "sibling IS on disk and the file is provably absent there — decidable, so decide it"
 want "CANNOT VERIFY" "AbsentRepo/scripts/whatever.py" "no sibling on disk — the fall-through, and the only environment-dependent cell"
+# Asserts the exposure, not a fix. Guarded, because a git without cone-mode
+# sparse-checkout would make this silently vacuous — the failure this whole
+# fixture exists to prevent.
+if [ -d "$W/SparseRepo" ] && [ ! -e "$W/SparseRepo/scripts" ]; then
+  want DEAD "SparseRepo/scripts/upstream_only.py" "KNOWN EXPOSURE: sparse sibling omits the dir; the file exists upstream and reads as dead"
+else
+  printf '  SKIP  SparseRepo — this git could not produce a sparse checkout, so the exposure case did not run\n'
+fi
 want "CANNOT VERIFY" "oldpkg/gone.py"  "same disposition, and the KNOWN COST: a deleted top-level dir lands here too"
 want SKIPPED "process.env"      "filename-shaped token, not a path"
 want SKIPPED "memory/project_*.md" "glob"
