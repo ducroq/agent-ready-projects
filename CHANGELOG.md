@@ -19,6 +19,30 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.36.0 (2026-08-27)
+
+**MINOR** — a new rule on an adopter-facing surface, promoted on evidence from two independent estates in one day.
+
+### *"Could this assertion have failed?"* is answered by running, not by reading
+
+⚠️ **This framework runs on ablations — ten fixtures of them — and no adopter-facing template mentioned the word.** The whole discipline was maintainer-only. `curate` sub-step 5's deletion-tell bullet now carries the reasoning, because the reasoning is what makes it a method rather than a ritual.
+
+**The scope limit is the point, and this release is the evidence for it.** A lexer catches shapes that are unambiguous on their face — a mutation identical to its target, an empty expected result; that is lint rule 10, whose own header calls itself a floor. It stops there, because the same construct is a hole in one place and correct in another: a disjunction in a **pass** condition gives the test two ways to succeed and you only ever exercise one, while the same disjunction in a **fail** condition widens detection and is right. **Nothing lexical separates them.**
+
+Measured on one evening, across two estates:
+
+| specimen | reported |
+|---|---|
+| an authored fixture, **26/26 cases and 6/6 ablations green**, carrying three assertions that could not fail | found independently by two reviewers |
+| `assert checked or True` sitting **two lines under a comment stating the rule it defeats** | adopter |
+| `assert "&amp;" not in result or "&" in result` — a tautology in a test named for removing entities; passed on decoded output, raw input and the empty string alike | adopter |
+
+**None was found by a linter, a review, or a green suite.** Every one was found by deleting the thing the check names and watching what stayed green.
+
+⚠️ **Two lint rules were considered and both came back short in the same day**, which is why this ships as method rather than as rule 11. Rule 10 was reported **not applicable** by an adopter — it lints template suites and they have none. A proposed rule 11 for the `or` smell was declined here after measuring: seeded the shape in both languages to prove the detector fires, then swept `tests/` and got **3 hits, all the safe direction, 0 dangerous** — three false positives and no true ones, because this repo's fixtures are shell, where the pass/fail disjunction is lexically identical.
+
+*(This corrects a claim made earlier in the same session — that mechanising these shapes was "the only change left that makes things both faster and cheaper". The lexer takes the easy half; the expensive half stays expensive.)*
+
 ## v1.35.0 (2026-08-27)
 
 Two adopter issues closed, and one of them by **refuting its own premise** — including a piece of guidance this project shipped three releases ago on that same premise, unchecked. MINOR: `update-drift` Step 0's operands and Step 3's comparison both change what an adopter does.
