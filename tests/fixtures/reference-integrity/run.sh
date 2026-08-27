@@ -411,6 +411,60 @@ grep -qF -- "PLACEHOLDER SHAPE THAT RESOLVES (resolves at rung 1b, doc-relative:
   || { XD_OK=0; printf '  FAIL  X19c an angle-bracket path with no marker is reported as a STALE MARKER — the remedy names something not in the document\n'; FAIL=1; }
 [ "$XD_OK" -eq 1 ] && printf '  PASS  X19c both rung-1b findings name their rung, their resolved path, and the right form\n' 
 
+# X21 — the USAGE gate (#96). An unrecognised `--` argument used to be consumed as
+# <repo-root>, so `--sibling-roots` (note the s) made the real root a source doc and
+# returned `DEFECTS (exit 1)` — a verdict, from a typo. `grep -nE '\b64\b|usage'`
+# over this file returned NOTHING before this row: the module docstring claimed a
+# mistyped flag cannot be read as either verdict and nothing had ever checked it.
+X21_OK=1
+if python3 refcheck.py --sibling-roots /tmp . CLAUDE.md >/dev/null 2>&1; then xg=0; else xg=$?; fi
+[ "$xg" -eq 64 ] || { X21_OK=0; printf '  FAIL  X21 an unrecognised flag returned %s, not 64 (EX_USAGE) — a typo is being read as a verdict\n' "$xg"; FAIL=1; }
+if python3 refcheck.py >/dev/null 2>&1; then xg=0; else xg=$?; fi
+[ "$xg" -eq 64 ] || { X21_OK=0; printf '  FAIL  X21 no arguments returned %s, not 64\n' "$xg"; FAIL=1; }
+[ "$X21_OK" -eq 1 ] && printf '  PASS  X21 a usage error is 64, distinct from both verdicts\n'
+
+# X22 — the angle arm labels by the reason that EXCUSED the row (#98). `both.md`
+# carries both marker forms; it is excused by SHAPE, and printing
+# `declared-placeholder` pointed its reader at the rung-4 coverage sentence, which
+# is false for a row no rung decided.
+XL="$( { python3 refcheck.py --sibling-root "$WORK/exitcodes/empty" \
+           "$WORK/exitcodes/repo" both.md 2>&1 || true; } | sed -n '/== SKIPPED as declared-placeholder/,/^  total:/p')"
+if grep -qE 'docs/work-items/<slug>\.md +angle-bracket segment' <<<"$XL"; then
+  printf '  PASS  X22 a both-forms path is labelled by the shape that excused it\n'
+else
+  printf '  FAIL  X22 a both-forms path is not labelled `angle-bracket segment` — its label names a reason that did not excuse it\n'; FAIL=1
+fi
+
+# X23 — the FINDINGS section on a NO-NEIGHBOUR run (#95). run.sh line ~16 pins the
+# main run to 3 siblings, so its UNCONFIRMED total is 0 BY CONSTRUCTION and no
+# assertion had ever read the findings body without a neighbour. Two mutants
+# survived green: an UNCONFIRMED row printing inside FINDINGS, and the total
+# counting undecided rows. Both are caught here.
+XF="$( { python3 refcheck.py --sibling-root "$WORK/exitcodes/empty" \
+           "$WORK/exitcodes/repo" mixed.md 2>&1 || true; } | sed -n '/== FINDINGS/,/^  total:/p')"
+X23_OK=1
+grep -qF -- "  total: 1" <<<"$XF" || { X23_OK=0; printf '  FAIL  X23 the FINDINGS total is not 1 — undecided rows are being counted as findings\n'; FAIL=1; }
+grep -qi -- "unconfirmed" <<<"$XF" && { X23_OK=0; printf '  FAIL  X23 an UNCONFIRMED row is printed inside the FINDINGS section\n'; FAIL=1; }
+grep -qF -- "helpers.py" <<<"$XF" || { X23_OK=0; printf '  FAIL  X23 the one real finding (the collision) is not in the FINDINGS section\n'; FAIL=1; }
+[ "$X23_OK" -eq 1 ] && printf '  PASS  X23 with no neighbour, FINDINGS holds the ruled-on reference and only that\n'
+
+# X24 — "one section or the other, never both", which Step 4 states as a design rule
+# and which nothing checked. Dropping a `continue` after a finding put one reference
+# in FINDINGS and in the skip section at once, suite green.
+XA="$( { python3 refcheck.py --sibling-root "$WORK/exitcodes/empty" \
+           "$WORK/exitcodes/repo" docs/docrel.md mixed.md both.md localmark.md 2>&1 || true; } )"
+# Keyed on DOC+PATH, not path alone: two different documents may legitimately
+# reference the same fragment and land in different sections — `helpers.py` is a
+# collision in mixed.md and an excused rung-2 marker in localmark.md, which is
+# correct. The first draft keyed on the path and reported that as a violation,
+# along with `0` and `3` picked out of the `total:` lines it failed to exclude.
+dup="$(awk '/^== /{sec=$0; next} /^  total:/{next} /^  [^ ]/ && sec ~ /FINDINGS|RESOLVED BELOW|SKIPPED|UNCONFIRMED/ {print $1"\t"$2}' <<<"$XA" | sort | uniq -d)"
+if [ -z "$dup" ]; then
+  printf '  PASS  X24 no reference appears in two counted sections\n'
+else
+  printf '  FAIL  X24 these references are in more than one counted section: %s\n' "$(tr '\n' ' ' <<<"$dup")"; FAIL=1
+fi
+
 # X16 — the undecided must be ENUMERATED, not merely counted in a verdict. The X
 # rows above assert the exit status and the verdict label; deleting the whole
 # UNCONFIRMED print block left all of them green while 33 references on the main

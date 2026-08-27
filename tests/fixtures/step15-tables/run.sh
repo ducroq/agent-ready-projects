@@ -35,6 +35,7 @@ printf -- '---\ndescription: Runs a | b\n---\n\nx | y\n--- | ---\n1 | 2 | 3\n' >
 printf 'a | b\n--- | ---\n1 | 2 | 3\n'                                   > n3_fenced.md
 printf '```\na | b\n--- | ---\n1 | 2 | 3\n```\n'                          > n3_fenced.md
 printf 'a | b\n--- | ---\n1 | 2 | | \n'                                   > t4_empty_excess.md
+printf 'a | b | c\n--- | ---\n1 | 2\n'                                     > t5_header_mismatch.md
 
 run() { awk -v F="$1" -f "$WORK/check.awk" "$1"; }
 want_hit()   { if [ -n "$(run "$1")" ]; then printf '  PASS  %s %s\n' "$1" "$2"; else printf '  FAIL  %s reported nothing — %s\n' "$1" "$2"; FAIL=1; fi; }
@@ -43,7 +44,13 @@ want_quiet() { if [ -z "$(run "$1")" ]; then printf '  PASS  %s %s\n' "$1" "$2";
 want_hit   t1_lf_lossy.md      "a lossy row under LF is reported"
 want_hit   t2_crlf_lossy.md    "a lossy row under CRLF is reported — the #52 defect: without the \\r strip NO table in the file is examined and the run is byte-identical to clean"
 want_hit   t3_fm_then_table.md "frontmatter is skipped WITHOUT disabling the rest of the file — the control on n2"
-want_quiet n1_crlf_clean.md    "a clean CRLF table stays quiet"
+# ⚠️ n1 is killed by NO ablation here, and that is stated rather than hidden: a
+# clean CRLF table is silent whether or not the `\r` strip is present, because
+# without it the table is never entered. t2 is what carries the CRLF sensitivity.
+# n1's value is guarding a FUTURE change that introduces a false positive on CRLF
+# input; as a measurement of today's code it is a seeded negative that cannot
+# fail, which this repo's gotcha log already lists twice.
+want_quiet n1_crlf_clean.md    "a clean CRLF table stays quiet (control only — no current ablation kills it)"
 want_quiet n2_frontmatter.md   "YAML frontmatter whose description carries a pipe is not a malformed table"
 want_quiet n3_fenced.md        "a table inside a code fence is not examined"
 # NOT a negative, and the first draft of this fixture had it as one — written from
@@ -52,6 +59,13 @@ want_quiet n3_fenced.md        "a table inside a code fence is not examined"
 # delimiter reports, and loses nothing." The tool reports; the human adjudicates.
 # Asserting the documented behaviour, not the behaviour that felt right.
 want_hit   t4_empty_excess.md  "excess EMPTY cells still report — the step's documented harmless-hit class, for a human to judge"
+# t5 — the HEADER branch, which had NO coverage at all. `grep -c 'header has'`
+# across every other case returns 0: they all fire the ROW branch. Worse, this
+# was a regression introduced by the frontmatter fix — n2_frontmatter.md was the
+# only input reaching the header branch, the fix correctly silenced it, and
+# nothing replaced it. So the branch that produced #52's own false positive
+# became the branch with no test. Stubbing its printf flipped nothing.
+want_hit   t5_header_mismatch.md "a genuine header/delimiter cell mismatch is reported" 
 
 # Ablations. Each reverts one guard; the kill sets are MEASURED by running them.
 ablate() {
@@ -64,7 +78,7 @@ if s.count(old) != 1: sys.exit('site occurs %d times, not once' % s.count(old))
 pathlib.Path(sys.argv[2]).write_text(s.replace(old, new))
 PY
   got=""
-  for f in t1_lf_lossy.md t2_crlf_lossy.md t3_fm_then_table.md t4_empty_excess.md n1_crlf_clean.md n2_frontmatter.md n3_fenced.md; do
+  for f in t1_lf_lossy.md t2_crlf_lossy.md t3_fm_then_table.md t4_empty_excess.md t5_header_mismatch.md n1_crlf_clean.md n2_frontmatter.md n3_fenced.md; do
     o="$(awk -v F="$f" -f "$WORK/mut.awk" "$f")"
     case "$f" in
       t*) [ -z "$o" ] && got="$got,$f" ;;
@@ -85,6 +99,11 @@ ablate "A1 drop the CRLF strip"       'sub(/\r$/, "")' 'sub(/ZZZ$/, "")'  "t2_cr
 # alone is not the guard. Measured — the first draft mutated the body and killed
 # nothing, reading as a passing ablation over an unguarded rule.
 ablate "A2 never enter frontmatter"   'NR == 1 && $(0) ~ /^---[ \t]*$/' 'NR == 0 && $(0) ~ /^---[ \t]*$/' "n2_frontmatter.md"
+# A3 stubs the HEADER branch. It flipped NOTHING before t5 existed.
+# SILENCES the branch — a first draft rewrote its printf TEXT, which still printed
+# something, and `want_hit` only tests for non-empty output. A mutation that does
+# not change what the assertion measures kills nothing and reads as a pass.
+ablate "A3 silence the header report" 'if (cells(prev) != base)' 'if (0)' "t5_header_mismatch.md"
 
 echo
 [ "$FAIL" -eq 0 ] && echo "All seeded cases behaved correctly." || echo "SENSITIVITY REGRESSION — do not ship."

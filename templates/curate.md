@@ -39,14 +39,27 @@ UNIT = re.compile(r'\.(service|timer|socket|mount|path|target)$')
 PATH = re.compile(r'`([^`\s]+\.(?:' + EXT + r'))`')
 root = Path(subprocess.run(['git','rev-parse','--show-toplevel'], capture_output=True,
                            text=True).stdout.strip() or '.')
-tree = {p.name: p for p in root.rglob('*') if p.is_file()}
+# TRACKED files, not rglob. rglob indexes `node_modules/`, `.venv/`, `vendor/`
+# and `.git/`, so a doc naming a root `package.json` that does not exist was
+# counted RESOLVED against `node_modules/lodash/package.json` — a false NEGATIVE
+# in the one check whose purpose is finding dead references. And a LIST per
+# basename, not one winner: `{p.name: p}` kept whichever of two same-named files
+# rglob happened to yield last, so a bare `helpers.py` with two answers resolved
+# silently while the sibling step reports that same input as a COLLISION.
+tree = {}
+for line in subprocess.run(['git','-C',str(root),'ls-files'], capture_output=True,
+                           text=True).stdout.splitlines():
+    tree.setdefault(Path(line).name, []).append(line)
 dead, unver, skip, ok = [], [], [], 0
 for doc in sys.argv[1:]:
     d = root / doc
     if not d.is_file():
         print(f'CANNOT VERIFY: {doc} is not readable'); continue
     for frag in dict.fromkeys(PATH.findall(d.read_text(errors='replace'))):
-        frag = frag.lstrip('@')          # `@file` is an inclusion sigil, not a name
+        # `@file` is an inclusion sigil — but `lstrip` is a CHARACTER SET, so it also
+        # ate the `@` of a scoped npm path and printed `types/node/index.d.ts`, text
+        # the document never contained. Strip one leading `@`, and only as a fallback.
+        cand0 = frag[1:] if frag.startswith('@') else frag
         # A SHAPE, not a file: `<slug>.md`, `settings*.json`, `project_*.md`. The
         # sibling step already decides these by their shape and nothing on disk;
         # reporting them dead is the loudest false positive this extractor can make,
@@ -63,12 +76,18 @@ for doc in sys.argv[1:]:
         # As written, then doc-relative, then the two directories this method puts
         # things in, then the basename anywhere. A bare `gotcha-log.md` means
         # `memory/gotcha-log.md`; calling it missing is the commonest false positive.
-        for cand in (root/frag, d.parent/frag, root/'memory'/frag, root/'docs'/frag):
-            if cand.is_file(): ok += 1; break
+        cands = [b/c for c in dict.fromkeys((frag, cand0))
+                 for b in (root, d.parent, root/'memory', root/'docs')]
+        if any(c.is_file() for c in cands):
+            ok += 1
         else:
-            hit = tree.get(Path(frag).name)
-            if hit and Path(frag).name == frag: ok += 1
-            elif hit: unver.append((doc, frag, f'basename only: {hit.relative_to(root)}'))
+            hits = tree.get(Path(cand0).name, [])
+            if len(hits) > 1:
+                # Two files answer to it. The sibling step calls this a COLLISION
+                # and reports it; silently picking one is how a deletion hides.
+                unver.append((doc, frag, f'ambiguous: {len(hits)} files match ' + ', '.join(hits[:3])))
+            elif hits and Path(cand0).name == cand0: ok += 1
+            elif hits: unver.append((doc, frag, f'basename only: {hits[0]}'))
             else: dead.append((doc, frag, 'resolves nowhere'))
 for label, rows in (('DEAD', dead), ('CANNOT VERIFY', unver), ('SKIPPED', skip)):
     for doc, frag, why in rows: print(f'{label}: {doc} -> {frag} ({why})')
