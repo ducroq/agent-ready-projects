@@ -125,7 +125,16 @@ Framework changes often land in paths that are gitignored in adopter repos: `.cl
 
 List the gitignored paths the framework touches and inspect each by eye. Say in the report when a behaviour changed only in an unshipped file — an adopter reading the diff cannot otherwise see it.
 
-⚠️ **A re-mapped project-local skill needs a CONTENT check; a version stamp cannot answer for it.** A user-global skill is covered — the installer compares bytes. A project-local one is a copy the adopter owns, and a *re-mapped* copy will never match the template again, so eyeballing a 577-line diff is not a method and the pin says nothing about the file. **Grep for the marker strings the release note names.** A defensive fix looks like nothing: the framework shipped one where broken and fixed were semantically identical in isolation — no error, no empty output, no non-zero status, the check simply examined a constant and printed what a clean run prints. If no markers are named, ask, and record `not verified` (#94).
+⚠️ **A re-mapped project-local skill needs a CONTENT check; a version stamp cannot answer for it.** A user-global skill is covered — the installer compares bytes. A project-local one is a copy the adopter owns, and a *re-mapped* copy will never match the template again, so eyeballing a 577-line diff is not a method and the pin says nothing about the file. ⚠️ **Diff the installed file against EVERY tag and read which one MINIMISES, not against HEAD alone.** A user-global install is not byte-identical to any tracked copy — the installer rewrites the header — so a single diff against latest returns *differs* both for "behind by four releases" and for "current, plus the installer's transformation", and the naive reading produces a false *not adopted* on a repo that is fully up to date. That is the reading that makes an adopter re-copy a skill they re-mapped. The **monotone fall to a floor** is the signal and the floor is the installer's constant. Measured by an adopter across four tags:
+
+```
+audit-context   v1.28.0 diff 84   v1.29.0 diff 74   v1.30.0 diff 23   v1.31.0 diff 23
+curate          v1.28.0 diff 119  v1.29.0 diff 119  v1.30.0 diff 119  v1.31.0 diff 24
+```
+
+`audit-context` is flat from v1.30.0 — current since then. `curate` falls only at v1.31.0 — current as of it. Neither reading is available from a diff against HEAD alone.
+
+**Grep for the marker strings the release note names.** A defensive fix looks like nothing: the framework shipped one where broken and fixed were semantically identical in isolation — no error, no empty output, no non-zero status, the check simply examined a constant and printed what a clean run prints. If no markers are named, ask, and record `not verified` (#94).
 
 ## Step 4 — Verify by execution, not by reading
 

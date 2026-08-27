@@ -60,13 +60,19 @@ cat > "$DEST/clean/tests/fixture.sh" <<'EOF'
 #!/usr/bin/env bash
 # Seeded cases for check.py. T = must report, N = must stay silent.
 set -u
+W="$(cd "$(dirname "$0")/.." && pwd)"
 FAIL=0
+mkdir -p "$W/src"; : > "$W/src/real.py"
+printf 'refs real.py and ghost.py\n' > "$W/t1.md"
 run() { python3 "$(dirname "$0")/check.py" "$1" "$2"; }
 [ -n "$(run "$W" t1.md | grep FINDINGS || true)" ] || { echo "FAIL t1"; FAIL=1; }
 ablate() {  # mutate, then confirm the named case turns red
   sed "s|$2|$3|" "$(dirname "$0")/check.py" > "$W/mut.py"
   out="$(python3 "$W/mut.py" "$W" t1.md 2>&1 || true)"
-  [ -z "$(grep 'UNRESOLVED' <<<"$out")" ] || { echo "FAIL ablation $1 killed nothing"; FAIL=1; }
+  # grep the SECTION, not the reason string: A1 moves the row from FINDINGS to
+  # WEAK and the reason travels with it, so matching on UNRESOLVED alone reports
+  # "killed nothing" for a mutation that killed the thing under test.
+  [ -z "$(grep '^FINDINGS' <<<"$out")" ] || { echo "FAIL ablation $1 killed nothing"; FAIL=1; }
 }
 ablate "A1 drop the findings arm" "findings.append" "weak.append"
 exit "$FAIL"
