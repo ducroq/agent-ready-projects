@@ -1,0 +1,8 @@
+id	class	file	line_hint	description
+D1	silent-zero	tests/check.py	7	the extraction loop iterates an empty list, so the check can never report anything
+D2	unhedged-absolute	templates/skill.md	18	"declines every path ... on any tree" — an absolute about behaviour with no measurement, replacing a hedged sentence
+D3	stale-restatement	templates/skill.md	5	the prose rung list drops rung 2 while the table two lines below still has a rung-2 row
+D4	unmeasured-count	templates/skill.md	22	"6 counted sections" — the table defines 5 and the code prints 3
+D5	vacuous-ablation	tests/fixture.sh	12	the ablation's mutation is a whitespace change; it kills nothing and reads as a passing guard
+D6	false-table-row	templates/skill.md	11	"nowhere, sibling reachable" maps to Unconfirmed; the code puts it in FINDINGS
+D7	silent-drop	tests/check.py	14	an unresolved reference enters no counted section — indistinguishable from never extracted

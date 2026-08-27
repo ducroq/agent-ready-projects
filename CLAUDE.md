@@ -103,7 +103,11 @@ agent-ready-projects/
 │       ├── verify-runner/       <- Seeded claims + prose for curate's verify runner
 │       │                           (34 positives, 10 negatives, 4 malformed, 7 structural,
 │       │                            4 timing, 29 ablations)
-│       ├── step15-tables/       <- Seeded tables, CRLF, frontmatter and emphasis for
+│       ├── review-bench/        <- Seeded defects for measuring a REVIEW CONFIG, not a
+      │                          checker (H-016). 7 historically-real classes, a clean
+      │                          control for precision, a mechanical scorer. Its recall
+      │                          numbers are a LOWER BOUND — read its threats section
+      ├── step15-tables/       <- Seeded tables, CRLF, frontmatter and emphasis for
       │                          review-changes Step 1.5 (6 positives, 4 negatives,
       │                          5 ablations). The awk is EXTRACTED from the template,
       │                          not copied, so it cannot drift
@@ -151,6 +155,7 @@ Listed here so the architecture diagram above is honest about what an adopter se
 | `tests/lint/dollar-digit.sh` | Lint rule 9 — a bare `$0`–`$9` in a skill body. Skill *arguments* are substituted into the skill *body*, so a bare `$0` in an embedded awk program ships as the first argument word (#77). The one class no runtime check here can reach: rule 6 compares two files carrying the same `$0`, and every fixture runs the extracted program with substitution nowhere on the path. **The safe form is context-dependent** — `$(N)` in awk, `${N}` in shell, `\$N` in prose; `${0}` and `\$0` are awk syntax errors and shell `$(1)` fails silently at rc 0, all five measured by the fixture's T-cases. Fixture at `tests/fixtures/dollar-digit/` |
 | `tests/lint/provision-quote.sh` | Lint rule 7 — the #42 class: a file that *provisions* a canonical row must quote it, not describe it by category. Rule 6 cannot see it, because the two `audit-context` copies agree with each other while contradicting `templates/project-file.md`. Fixture at `tests/fixtures/provisioning-quote/` |
 | `tests/fixtures/installer-release-guard/` | Seeded git states for the installer's release guard (#33). Its README carries the two rejected predicates and why — read before changing the comparison |
+| `tests/fixtures/review-bench/` | Measures the **review**, not a checker: seeded defects of seven classes that actually bit this repo, plus a clean control. Exists because narrow-scope review was adopted on **one** run's evidence (H-016). Read its threats section before believing a number — its seeds are the classes the author thought of, which is the blind spot that produced three refuted drafts of an emphasis check the same day |
 | `tests/fixtures/step15-tables/` | Seeded input for `review-changes` Step 1.5 (#50, #52). Its emphasis rule took three drafts, each refuted by running it over **this repo** (28 hits, then 15, then 1) rather than over the fixture — every draft passed the fixture. Read that history before loosening the bold-nesting test |
 | `tests/fixtures/verify-runner/` | Seeded claims and prose for `curate` Step 0 sub-step 5's runner (#34). It extracts the runner from `templates/curate.md` rather than copying it, so it cannot drift. ~90s — the slowest check here, and the only one with timing cases. Its README carries the rejected `\|` predicate and the three review rounds that produced the rest — read before touching the extraction |
 | `memory/MEMORY.md` | This repo's in-repo memory index (maintainer-local) |
@@ -175,6 +180,11 @@ bash tests/fixtures/provisioning-quote/run.sh       # sensitivity of lint rule 7
 bash tests/fixtures/size-ratchet/run.sh             # sensitivity of lint rule 8
 bash tests/fixtures/dollar-digit/run.sh             # sensitivity of lint rule 9
 bash tests/fixtures/step15-tables/run.sh            # sensitivity of review-changes Step 1.5
+
+# Measure a REVIEW rather than a checker (H-016). Not part of the suite — it has
+# no pass/fail; it scores a review config against seeded defects.
+bash tests/fixtures/review-bench/build.sh /tmp/rb
+bash tests/fixtures/review-bench/score.sh <findings-file> seeded
 
 # End a session
 /curate     # if installed locally from templates/curate.md
