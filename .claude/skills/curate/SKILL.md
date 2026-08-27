@@ -47,10 +47,23 @@ root = Path(subprocess.run(['git','rev-parse','--show-toplevel'], capture_output
 # basename, not one winner: `{p.name: p}` kept whichever of two same-named files
 # rglob happened to yield last, so a bare `helpers.py` with two answers resolved
 # silently while the sibling step reports that same input as a COLLISION.
+# git ls-files fixed #51's node_modules false NEGATIVE and introduced a false
+# POSITIVE of its own: a real file in a gitignored data dir is untracked, so a
+# bare basename referring to it read as DEAD. Walk the filesystem with an
+# explicit denylist instead — that excludes vendored trees without excluding
+# everything an adopter chose not to commit.
+DENY = {'.git', 'node_modules', '.venv', 'venv', 'vendor', '__pycache__',
+        '.mypy_cache', '.pytest_cache', 'dist', 'build', '.tox'}
 tree = {}
-for line in subprocess.run(['git','-C',str(root),'ls-files'], capture_output=True,
-                           text=True).stdout.splitlines():
-    tree.setdefault(Path(line).name, []).append(line)
+def _walk(d):
+    for c in d.iterdir():
+        if c.name in DENY: continue
+        if c.is_dir(): _walk(c)
+        elif c.is_file(): tree.setdefault(c.name, []).append(str(c.relative_to(root)))
+_walk(root)
+# Top-level directories of THIS repo. A fragment whose first segment is not one
+# of them cannot be a path in this repo at all.
+here = {p.name for p in root.iterdir() if p.is_dir()}
 dead, unver, skip, ok = [], [], [], 0
 for doc in sys.argv[1:]:
     d = root / doc
@@ -67,6 +80,20 @@ for doc in sys.argv[1:]:
         # and four of them were in this framework's own project file on first run.
         if '<' in frag or '*' in frag:
             skip.append((doc, frag, 'placeholder or glob, not a literal path')); continue
+        # CROSS-REPO. A qualified sibling reference — `NexusMind/docs/X.md` — is
+        # the form the sibling step tells authors to WRITE, so the better an
+        # adopter follows that advice the more phantom dead references a
+        # repo-local check invents: measured on one adopter, 12 dead reported and
+        # 0 actually dead, 9 of them qualified sibling paths. Deliberately NOT
+        # resolved against the neighbours: that is the environment-dependence
+        # #93 took five review rounds to remove. It gets its own disposition,
+        # matching how the sibling step's ladder already treats these. ⚠️ COST,
+        # stated: a genuinely dead `oldpkg/foo.py` whose top-level directory was
+        # deleted also lands here rather than in DEAD. That is a real
+        # sensitivity loss, taken knowingly — a check with a 100% false-positive
+        # rate is not read at all, which costs more.
+        if '/' in frag and frag.split('/')[0] not in here:
+            unver.append((doc, frag, 'cross-repo or removed top-level dir — not checkable from here')); continue
         # A claim about ANOTHER machine cannot be checked from here. Quarantined,
         # not flagged — the same disposition a host-dependent verify probe gets.
         if frag.startswith(('/', '~')):

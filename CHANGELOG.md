@@ -19,6 +19,24 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.33.0 (2026-08-27)
+
+`curate`'s dead-reference extractor reported **12 dead of which 0 were dead** on its first adopter run. MINOR: a new output disposition is new behaviour.
+
+### The better an adopter followed the cross-repo advice, the more phantom defects they got (closes #101)
+
+Reported by **llm-distillery**. The extractor resolved against `git ls-files` **of the current repo**, so every qualified sibling reference — `NexusMind/docs/ARTICLE_RECORD.md`, the form the sibling step *tells authors to write* — was unresolvable by construction. Nine of the twelve were that. It is #55's pressure one check over: following the advice makes the tool worse.
+
+⚠️ **The fix is deliberately NOT "resolve against the neighbours"** — that is the environment-dependence #93 took five review rounds to remove. A fragment whose first segment is not a top-level directory of this repo gets its own disposition, `cross-repo or removed top-level dir — not checkable from here`, matching how the sibling step's ladder already treats these.
+
+⚠️ **Known cost, taken knowingly and stated in the code**: a genuinely dead `oldpkg/foo.py` whose top-level directory was deleted now lands in that bucket too, rather than in DEAD. That is a real sensitivity loss. It is accepted because a check with a 100% false-positive rate is not read at all, which costs more — and the fixture seeds both sides so the trade stays visible.
+
+**`git ls-files` also had a false positive of its own**: a real file in a *gitignored* data dir is untracked, so a bare basename referring to it read as DEAD. It walks the filesystem with an explicit denylist now (`node_modules`, `.venv`, `vendor`, `__pycache__`, …), which excludes vendored trees without excluding what an adopter chose not to commit. #51's original `node_modules` false *negative* stays fixed — the fixture asserts a missing root `package.json` is not rescued by `node_modules/lodash/package.json`.
+
+**New fixture `tests/fixtures/dead-reference/`**, and it exists because this extractor shipped **two** false-positive classes in one day, both found by adopters running it rather than by anything here. 11 cases, every one a class that has actually bitten; the program is extracted from the template rather than copied. Two mutants confirm the new assertions are non-vacuous: reverting the cross-repo arm turns two red, reverting the denylist walk turns two others red.
+
+On this repo it moves 7 dead → 2.
+
 ## v1.32.0 (2026-08-27)
 
 A lint rule for checks that cannot fail, a benchmark that measures the **review** rather than a checker, and three adopter-reported corrections. MINOR: a new lint rule is new behaviour under the v1.10.1 precedent, as rules 7, 8 and 9 were, and `update-drift` Step 3 gains a method rather than a clarification.

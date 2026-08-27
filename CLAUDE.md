@@ -4,7 +4,7 @@ The source framework that teaches the layered memory method for AI coding agents
 
 - **Type**: Public methodology repo (guide + templates + skills)
 - **License**: MIT
-- **agent-ready-projects** (this repo): v1.32.0 (**lint rule 10 — an ablation that cannot kill anything — plus a benchmark that measures a REVIEW rather than a checker.** MINOR. Three to carry: (1) **rule 10 shipped its first draft reporting `0 violations` while unable to fire at all** — a stray stdin read hung it, then its fixture scored 0 of 4 because it built a path from `$OLDPWD` that every `cd` had reassigned; a rule about checks that cannot run, that could not run, reported clean, and only the fixture said so; (2) **the review benchmark's first result** — narrow and broad both 6/6 on seeded classes across 3 runs each, no-review 0 of 7, but broad reported 3–4× more *outside* the manifest, and the benchmark could measure neither precision (its base tree carried unseeded real defects) nor cost (a three-file corpus has no context to re-derive); (3) **an adopter found the #94 marker rule failing in the release that wrote it** — v1.31.0 named markers for #52 and #77 and not for #50, its other adopter-visible change. `/curate` also caught three probes on historical release lines still asserting they were current. **Twice in one day a checker written here reproduced a defect another surface in this repo had already fixed.**)
+- **agent-ready-projects** (this repo): v1.33.0 (**`curate`'s dead-reference extractor reported 12 dead of which 0 were dead** on its first adopter run — every qualified sibling reference, the form the sibling step tells authors to WRITE, was unresolvable by construction. #55's pressure one check over: following the advice made the tool worse. MINOR. Three to carry: (1) **the fix is deliberately NOT "resolve against the neighbours"** — that is #93's environment-dependence, five review rounds to remove; a cross-repo fragment gets its own disposition, and the **known cost** (a genuinely deleted top-level dir lands there too) is stated in the code and seeded on both sides; (2) **both of this extractor's false-positive classes were found by ADOPTERS running it, not by anything here** — two in one day, which is what `tests/fixtures/dead-reference/` now exists for; (3) **lint rule 10 reported `0 violations` while unable to fire at all**, and only its fixture said so. Twice in one day a checker written here reproduced a defect another surface in this repo had already fixed.)
 
 > Live project state (current threads, deferred items, surfaced patterns) lives in `memory/MEMORY.md` (maintainer-local — see *What is intentionally not shipped* below). Release notes live in `CHANGELOG.md`.
 
@@ -104,7 +104,11 @@ agent-ready-projects/
 │       ├── verify-runner/       <- Seeded claims + prose for curate's verify runner
 │       │                           (34 positives, 10 negatives, 4 malformed, 7 structural,
 │       │                            4 timing, 29 ablations)
-│       ├── review-bench/        <- Seeded defects for measuring a REVIEW CONFIG, not a
+│       ├── dead-reference/      <- Seeded classes for curate Step 0.1's extractor. Every one
+      │                          has actually bitten; two were adopter-reported in a single
+      │                          day. Read before loosening anything here — the cross-repo
+      │                          disposition costs real sensitivity, knowingly
+      ├── review-bench/        <- Seeded defects for measuring a REVIEW CONFIG, not a
       │                          checker (H-016). 7 historically-real classes, a clean
       │                          control for precision, a mechanical scorer. Its recall
       │                          numbers are a LOWER BOUND — read its threats section
@@ -182,6 +186,7 @@ bash tests/fixtures/size-ratchet/run.sh             # sensitivity of lint rule 8
 bash tests/fixtures/dollar-digit/run.sh             # sensitivity of lint rule 9
 bash tests/fixtures/step15-tables/run.sh            # sensitivity of review-changes Step 1.5
 bash tests/fixtures/vacuous-guard/run.sh            # sensitivity of lint rule 10
+bash tests/fixtures/dead-reference/run.sh           # sensitivity of curate's dead-reference extractor
 
 # Measure a REVIEW rather than a checker (H-016). Not part of the suite — it has
 # no pass/fail; it scores a review config against seeded defects.
