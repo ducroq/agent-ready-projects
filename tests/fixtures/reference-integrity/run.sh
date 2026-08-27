@@ -236,7 +236,8 @@ fi
 PLACEHELD="$(printf '%s' "$OUT" | sed -n '/== SKIPPED as declared-placeholder/,/^  total:/p')"
 for want in "docs/RUNBOOK.md" "config/absent.env" "src/aggregators/never_anywhere.py" "orphan_note.md" \
             "src/aggregators/my_new_aggregator.py" "docs/work-items/<slug>.md" \
-            "filters/<name>/<version>/config.yaml" "<slug>.md" "<root>/memory/MEMORY.md"; do
+            "filters/<name>/<version>/config.yaml" "<slug>.md" "<root>/memory/MEMORY.md" \
+            "review-prompt.md"; do
   if printf '%s' "$PLACEHELD" | grep -qF -- "$want"; then
     printf '  PASS  counted as declared-placeholder: %s\n' "$want"
   else
@@ -334,8 +335,8 @@ declare -a XCASES=(
   "X15 a confirmed defect AND an undecided reference in one run|mixed.md|empty|1|VERDICT: DEFECTS — 1 finding(s), 2 left undecided"
   "X17 marked path the LOCAL tree answers, neighbours reachable|localmark.md|neighbours|0|VERDICT: CLEAN — no findings"
   "X18 marked path the LOCAL tree answers, no neighbour — a rung that RAN decided it|localmark.md|empty|0|VERDICT: CLEAN — no findings"
-  "X19 marked path resolving doc-relative is MISLABELLED, neighbours reachable|docs/docrel.md|neighbours|1|VERDICT: DEFECTS — 1 finding(s)"
-  "X20 marked path resolving doc-relative is MISLABELLED, no neighbour|docs/docrel.md|empty|1|VERDICT: DEFECTS — 1 finding(s)"
+  "X19 marked path resolving doc-relative is MISLABELLED, neighbours reachable|docs/docrel.md|neighbours|1|VERDICT: DEFECTS — 2 finding(s)"
+  "X20 marked path resolving doc-relative is MISLABELLED, no neighbour|docs/docrel.md|empty|1|VERDICT: DEFECTS — 2 finding(s)"
 )
 
 # Runs the table against an arbitrary oracle and prints the names of the failing
@@ -366,6 +367,49 @@ for x in "${XCASES[@]}"; do
     printf '  FAIL  %s (wrong exit status or wrong verdict label)\n' "$xname"; FAIL=1
   else printf '  PASS  %s\n' "$xname"; fi
 done
+
+# X17c — every EXCUSING arm in this oracle needs the N20 guard, and round 6 found
+# the rung-2 marked arm shipped without it. Measured: replacing the arm's
+# `placeheld.append(...)` with a bare `continue` dropped both of localmark.md's
+# paths from ALL SIX counted sections and the whole suite stayed green — X17/X18
+# assert `VERDICT: CLEAN`, which a silent drop satisfies perfectly. The identical
+# mutation one arm down (rung 3) is killed instantly by N20. A verdict row cannot
+# guard an excusing arm; only an enumeration can.
+XP="$( { python3 refcheck.py --sibling-root "$WORK/exitcodes/empty" \
+           "$WORK/exitcodes/repo" localmark.md 2>&1 || true; } \
+       | sed -n '/== SKIPPED as declared-placeholder/,/^  total:/p')"
+XP_OK=1
+for want in "present.py" "helpers.py"; do
+  grep -qF -- "$want" <<<"$XP" || { XP_OK=0; printf '  FAIL  X17c %s was excused at rung 2 but appears in NO counted section — excused and never-extracted are indistinguishable\n' "$want"; FAIL=1; }
+done
+grep -qF -- "  total: 2" <<<"$XP" || { XP_OK=0; printf '  FAIL  X17c the skip section does not carry a total of 2\n'; FAIL=1; }
+# The reason, not just the path — this fixture's own T19 rule. A row that says
+# only `declared-placeholder` cannot distinguish WHICH arm excused it, and the
+# collision count inside the message is a measurement that has to be true.
+grep -qF -- "decided at rung 2 (1 local match)"  <<<"$XP" || { XP_OK=0; printf '  FAIL  X17c present.py is excused without naming rung 2 and its single match\n'; FAIL=1; }
+grep -qF -- "decided at rung 2 (2 local matches)" <<<"$XP" || { XP_OK=0; printf '  FAIL  X17c helpers.py is excused without naming rung 2 and its TWO matches — a count inside a message is a measurement\n'; FAIL=1; }
+[ "$XP_OK" -eq 1 ] && printf '  PASS  X17c rung-2 excusals are enumerated, counted, and name the rung that decided them\n'
+
+# X19c — the REASON, not just that a finding fired. `docs/docrel.md` holds exactly
+# one reference, so `VERDICT: DEFECTS — 1 finding(s)` is satisfied by ANY finding:
+# three mutants of the rung-1b message survived the suite green — reporting it as
+# `UNRESOLVED`, reporting it as `resolves at rung 1, as written`, and printing the
+# raw fragment instead of the resolved path. The middle one is the substantive
+# one: it writes a FALSE PROVENANCE into the finding and sends the author to the
+# repo root, which is the same argument this file makes twice for ordering rung 3
+# before rung 4. This fixture's own T19 rule: a positive that cannot distinguish
+# why it fired is not a test.
+XD="$( { python3 refcheck.py --sibling-root "$WORK/exitcodes/empty" \
+           "$WORK/exitcodes/repo" docs/docrel.md 2>&1 || true; } \
+       | sed -n '/== FINDINGS/,/^  total:/p')"
+XD_OK=1
+grep -qF -- "STALE PLACEHOLDER MARKER (resolves at rung 1b, doc-relative: docs/next_door.md)" <<<"$XD" \
+  || { XD_OK=0; printf '  FAIL  X19c the rung-1b finding does not name its rung and resolved path — its provenance is unasserted\n'; FAIL=1; }
+# The markerless twin. Both are findings and both resolve at rung 1b; only the
+# WORD separates them, and a shared constant would be wrong for one of the two.
+grep -qF -- "PLACEHOLDER SHAPE THAT RESOLVES (resolves at rung 1b, doc-relative: docs/<shape>.md)" <<<"$XD" \
+  || { XD_OK=0; printf '  FAIL  X19c an angle-bracket path with no marker is reported as a STALE MARKER — the remedy names something not in the document\n'; FAIL=1; }
+[ "$XD_OK" -eq 1 ] && printf '  PASS  X19c both rung-1b findings name their rung, their resolved path, and the right form\n' 
 
 # X16 — the undecided must be ENUMERATED, not merely counted in a verdict. The X
 # rows above assert the exit status and the verdict label; deleting the whole

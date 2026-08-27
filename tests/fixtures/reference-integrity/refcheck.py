@@ -561,9 +561,17 @@ def check(root, sources, sibling_roots=None):
                     # an adopter that ships `templates/CLAUDE.md` beside
                     # `papers/*/CLAUDE.md`; three references were left knowingly
                     # unfixed there because neither move was correct.
+                    # Which of the two forms excused it decides the WORD, and
+                    # round 6 found the marker wording being printed for a path
+                    # that carries no marker: `<slug>.md` with a literal
+                    # `docs/<slug>.md` on disk was reported as a STALE
+                    # PLACEHOLDER MARKER, prescribing the removal of something
+                    # not in the document. Both adjudicating arms use this.
+                    stale = ('STALE PLACEHOLDER MARKER' if frag in placeheld_frags
+                             else 'PLACEHOLDER SHAPE THAT RESOLVES')
                     if (root / frag).exists():
                         findings.append((src, frag,
-                                         'STALE PLACEHOLDER MARKER (resolves at rung 1, as written)'))
+                                         f'{stale} (resolves at rung 1, as written)'))
                         continue
                     # rung 1b and rung 2 — LOCAL, and they run here for
                     # DECIDABILITY, which this arm had conflated with
@@ -601,7 +609,7 @@ def check(root, sources, sibling_roots=None):
                         except ValueError:
                             shown = mdocrel
                         findings.append((src, frag,
-                                         'STALE PLACEHOLDER MARKER (resolves at rung 1b, '
+                                         f'{stale} (resolves at rung 1b, '
                                          f'doc-relative: {shown})'))
                         continue
                     # Collisions are excused here rather than reported, and that is

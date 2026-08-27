@@ -354,7 +354,7 @@ mkdir -p exitcodes/repo/src/dup exitcodes/repo/docs \
    && git config user.email f@x && git config user.name f)
 touch exitcodes/repo/src/present.py exitcodes/repo/src/helpers.py \
       exitcodes/repo/src/dup/helpers.py exitcodes/neighbours/sibling-repo/scripts/over_there.sh \
-      exitcodes/repo/docs/next_door.md
+      exitcodes/repo/docs/next_door.md 'exitcodes/repo/docs/<shape>.md'
 cat > exitcodes/repo/clean.md <<'EOF'
 # clean.md — rows X1/X2
 The entry point is `src/present.py` and it resolves as written, at rung 1.
@@ -431,6 +431,12 @@ this document. Markdown link semantics ARE doc-relative, so this path resolves
 AS WRITTEN and the marker is mislabelled in exactly the sense rung 1 means —
 a finding, at exit 1, whether or not a neighbour is reachable. This is the arm
 that adjudicates; the rung-2 pair in localmark.md is the arm that does not.
+
+A second reference, `<shape>.md`, carries NO marker and resolves the same way —
+a literal file of that name sits beside this document. It is a finding too, but
+the WORD has to differ: telling this author to remove a stale placeholder marker
+names something that is not in the document. Round 6 found the marker wording
+printed for exactly this path.
 EOF
 cat > exitcodes/repo/marked.md <<'EOF'
 # marked.md — rows X8/X9
