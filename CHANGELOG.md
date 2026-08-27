@@ -29,6 +29,8 @@ Sub-step 1 said *"for every file path mentioned, verify it still exists"* and le
 
 It now ships a canonical extractor that **classifies rather than flags**: resolve as written → doc-relative → `memory/` → `docs/` → basename; quarantine absolute and `~` paths as `CANNOT VERIFY` (a claim about another machine, the same disposition a host-dependent probe gets); skip unit-name shapes and placeholder/glob shapes; and print `N dead / N unresolvable / N skipped / N resolved`, because `0 dead` alone cannot distinguish a clean index from an extractor that captured nothing.
 
+⚠️ **Adopter-visible, and three of these changed after the first draft.** Resolution is against **tracked files** (`git ls-files`), not the whole tree: an `rglob` walk indexed `node_modules/`, `.venv/` and `.git/`, so a document naming a root `package.json` that does not exist resolved against `node_modules/lodash/package.json` — a false *negative* in the one check whose purpose is finding dead references. There is a **new output class**, `ambiguous: N files match …`, because a basename-keyed map kept one winner per name by iteration order and a bare `helpers.py` with two answers resolved silently, while `audit-context` reports that same input as a COLLISION. And a leading `@` is stripped by prefix, not by character class — `lstrip('@')` printed `types/node/index.d.ts` for `@types/node/index.d.ts`, text the document never contained.
+
 ⚠️ **Its first run on this repo reported four of its own false positives** — `templates/<name>.md`, `docs/work-items/<slug>.md`, `.claude/settings*.json`, `memory/project_*.md` — all shapes, not paths, and all a class `audit-context` had already solved. Fixed before shipping, by running it rather than reading it.
 
 ### `review-changes` Step 1.5: CRLF measured, YAML frontmatter fixed (closes #52)
@@ -41,9 +43,9 @@ The issue's second defect was live and is fixed: `isdelim()` accepts a bare `---
 
 ### `curate` measures its own read surface before reading (closes #46)
 
-The skill *body* is ratcheted by lint rule 8. What a run **reads** was not, and it is 4–25× larger and fresh tokens every time. Measured on three real repos: 147k characters here, 222k in a sibling, **1,000,426 across 69 files** in a third — where the step could not read its own inputs in one context window and nothing said so.
+The skill *body* is ratcheted by lint rule 8. What a run **reads** was not, and it is 4–25× larger and fresh tokens every time. Measured on three real repos by #46's own scope (everything a `/curate` run opens): 147,209 characters here, 222,120 in a sibling, **1,000,426 across 69 files** in a third — where the step could not read its own inputs in one context window and nothing said so.
 
-Step 0 now opens with the measurement and a threshold. Above ~300k characters, do not read the corpus: work from the runners, which take paths and report without pulling documents into context, curate the index and newest topic file only, and **say which files you did not open**. A run that silently reads a third of its inputs and reports as though it read all of them is this method's own failure mode one layer up. *(This repo measures 255,889 — under the line, and not by much.)*
+Step 0 now opens with the measurement and a threshold. Above ~300k characters, do not read the corpus: work from the runners, which take paths and report without pulling documents into context, curate the index and newest topic file only, and **say which files you did not open**. A run that silently reads a third of its inputs and reports as though it read all of them is this method's own failure mode one layer up. *(This repo measures **254,252** by the gate's narrower scope — `memory/` and `docs/work-items/` only — against 147,209 by #46's wider one. Two different scopes, both real; the gate deliberately measures the corpus it would otherwise read whole.)*
 
 ### Four ways a `verify:` annotation passes while its claim is false (closes #66, #62, #65, #61)
 
@@ -67,6 +69,8 @@ Step 1.5 exists for one property — *correct in the diff, wrong when rendered* 
 ⚠️ **Three drafts, each refuted by running it over this repo rather than over its own fixture.** "A risky token anywhere on a bold line" reported **28** lines here. "Two of them" still reported **15**. Both were every risk-tier row in `review-changes` itself, where `**HIGH**` opens *and closes* inside one table cell and the globs sit in the next — co-located, never adjacent. Only the third draft is right: code spans are masked to one character each, bold runs are paired positionally, and a token counts only when it lies **inside an open bold run**. That reports **1** line in this repo, and it is a true positive — the CHANGELOG entry that quotes the original defect.
 
 `n6_tier_row.md` seeds that exact shape, and ablation A5 reverts the bold-nesting test to prove it is what holds those 15 lines back. #50 asked for seeded positives *and* negatives before shipping, citing the table check's own 39% false-positive history; that was the right instruction and each draft would have passed a fixture-only check.
+
+**No adopter-installed file changed for #95, #96, #97 or #98**, and that is deliberate rather than the #92 shape: all four are oracle-scoped — CLI exit codes, fixture assertions, and a per-row report label no skill text prescribes. #98's other half, the coverage header's universal, already carries its carve-out from v1.29.0.
 
 ### Two more counts corrected (closes #97)
 

@@ -4,7 +4,7 @@
 templates/adr.md	2115
 templates/audit-context.md	45516
 templates/coordination.md	3909
-templates/curate.md	53942
+templates/curate.md	54428
 templates/gotcha-log.md	4886
 templates/hypothesis-log.md	3570
 templates/memory-index.md	3396
@@ -12,7 +12,7 @@ templates/project-file.md	5994
 templates/README.md	12325
 templates/release.md	18593
 templates/review-agent.md	5720
-templates/review-changes.md	31953
+templates/review-changes.md	32376
 templates/RUNBOOK.md	2795
 templates/test-verify-memory.md	6035
 templates/update-drift.md	15434

@@ -119,7 +119,7 @@ ablate "A2 never enter frontmatter"   'NR == 1 && $(0) ~ /^---[ \t]*$/' 'NR == 0
 # something, and `want_hit` only tests for non-empty output. A mutation that does
 # not change what the assertion measures kills nothing and reads as a pass.
 ablate "A3 silence the header report" 'if (cells(prev) != base)' 'if (0)' "t5_header_mismatch.md"
-ablate "A4 silence the emphasis check" 'if (nrisk > 1)' 'if (0)' "t6_emphasis.md"
+ablate "A4 silence the emphasis check" 'if (nrisk > 1 && index($(0), "`"))' 'if (0)' "t6_emphasis.md"
 # A5 widens the emphasis rule to "any bold line with any code span" — the broad
 # form that was rejected. It must break the negatives, which is WHY it was rejected.
 # A5 reverts the >1 tightening to the >0 form that was actually written first.

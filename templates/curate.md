@@ -27,7 +27,14 @@ Review the session's work and update the layered memory system:
 ⚠️ **Measure the read surface first, and say the number.** This step's *body* is paid once per invocation and is prompt-cached; what it **reads** is fresh tokens every run and is 4–25× larger. Measured across three real repos: 147k chars here, 222k in a sibling, and **1,000,426 chars across 69 files** in a third — where the step could not read its own inputs in one context window and nothing said so (#46).
 
 ```bash
-find memory docs/work-items -name '*.md' 2>/dev/null | xargs wc -c 2>/dev/null | tail -1
+# -print0/-0 because a single spaced path (`docs/work-items/my slug.md`) is
+# word-split into nonexistent paths and its bytes vanish from the total. `cat |
+# wc -m` rather than `xargs wc -c | tail -1` for two reasons: xargs BATCHES above
+# a few thousand files and `tail -1` then reports one batch's total (measured:
+# 6000 files reported 105,600 of 600,000), and `wc -m` counts characters, which
+# is what the threshold below is in. Both failures were silent and both read LOW.
+find memory docs/work-items -type f -name '*.md' -print0 2>/dev/null \
+  | xargs -0 cat | wc -m
 ```
 
 **Above roughly 300k characters, do not read the corpus.** Work from metadata and the runners in this step, which are built to avoid the full read: the dead-reference extractor and the verify runner both take paths and report, and neither needs the documents in context. Then curate **the index and the newest topic file only**, and say in the report which files you did not open. A run that silently reads a third of its inputs and reports as though it read all of them is the failure this whole method exists to prevent, one layer up.

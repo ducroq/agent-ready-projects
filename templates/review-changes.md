@@ -194,7 +194,12 @@ The lenses below all read *content*: does this path exist, is this flag right, w
           if (substr(masked, i, 2) == "**") { inb = 1 - inb; i++; continue }
           if (inb && substr(masked, i, 1) == "\001") nrisk++
         }
-        if (nrisk > 1)
+        # The backtick test guards against a literal \001/\002 byte in the source
+        # masquerading as a masked span: without it, a line with no backticks at
+        # all reported "two backticked tokens", a message that is simply false.
+        # No tracked file here contains those bytes; the message would be wrong
+        # anyway, and a wrong message is what sends a reader to the wrong line.
+        if (nrisk > 1 && index($(0), "`"))
           printf "%s:%d: two backticked tokens abutting ** inside one bold span — a formatter can join the runs and corrupt both\n", F, NR
       }
       if (isdelim($(0)) && prev != "" && (index($(0), "|") || index(prev, "|"))) {
