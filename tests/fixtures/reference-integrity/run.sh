@@ -520,7 +520,15 @@ if s.count(old) != 1:
 p.write_text(s.replace(old, new))
 EOF
   then printf '  FAIL  ablation %s could not be applied — its site has moved\n' "$label"; FAIL=1; return; fi
-  got="$(cd "$ABL_DIR" && xrun refcheck.py | sort | paste -sd, -)"
+  # LC_ALL=C: a bare `sort` collates by locale, so two case names differing only
+  # by a suffix ("X28 …" vs "X28b …") order differently under en_US than under C
+  # and the kill set silently reorders on someone else's machine. DEFENSIVE, not
+  # currently load-bearing — no kill set in the table today contains a pair that
+  # reorders (measured on en_US.utf8 and C: identical output). It becomes load-
+  # bearing the moment a letter-suffixed case name joins one, which is how it was
+  # found. Same reason the README already pins awk behaviour rather than trusting
+  # the runner's environment.
+  got="$(cd "$ABL_DIR" && xrun refcheck.py | LC_ALL=C sort | paste -sd, -)"
   if [ "$got" = "$want" ]; then
     printf '  PASS  ablation %s fails exactly [%s]\n' "$label" "$want"
   else

@@ -19,6 +19,18 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## Unreleased
+
+**PATCH** — two sensitivity fixes in the self-test layer. No adopter-facing change; `templates/` and `.claude/skills/` are untouched.
+
+**Lint rule 10 could not see an ablation runner whose name merely ends in `ablate`.** Its gate was `[^A-Za-z_]ablate[ \t]`, so a wrapper called `mablate` put `m` in the negated class and no such call was ever scanned — both of the rule's own shapes, a whitespace-only mutation and an empty kill set, went unreported. The gate is now `[A-Za-z_]*ablate[ \t]`. **Measured, not asserted**: `tests/fixtures/vacuous-guard/` gains two positives and two negatives under the wrapper name, and the two positives FAIL against the old gate and pass against the new one, while all five negatives stay silent under both. Found while writing such a wrapper on the #76 branch.
+
+⚠️ **Rule 10's arm (a) only inspects rows whose mutation operands are SINGLE-quoted** — it finds them with `split(line, tok, /'/)` and requires `n >= 5`. Of the 12 `ablate` calls in `tests/fixtures/reference-integrity/run.sh` today, **none** meets that condition, so arm (a) is currently inert there and only arm (b), the empty-kill-set check, is live. That is pre-existing and is recorded here rather than fixed, because changing the parser is a separate change with its own false-positive risk.
+
+**`ablate` now sorts its kill set under `LC_ALL=C`.** A bare `sort` collates by locale, so two case names differing only by a suffix (`X28` vs `X28b`) order differently under `en_US.utf8` than under `C`, and a kill set would silently reorder on someone else's machine. **Defensive, not currently load-bearing** — no kill set in the table today contains a pair that reorders, measured under both locales with identical output. It becomes load-bearing the moment a letter-suffixed case name joins one, which is how it was found.
+
+**#76 is not closed by this and its reopening evidence is refuted** — see the issue. The `<!-- quoted -->` marker form was built, reviewed in five rounds and withdrawn: this repo holds **zero** instances of the class it addresses (`refcheck.py --sibling-root .. . CHANGELOG.md` reports 0 rung-4 resolutions; no `oldpkg` sibling exists, and `NexusMind` is checked out but has no `scripts/x.py`), so the two-instance gate for a new normative convention rests on one adopter estate — the state #76 was originally closed in.
+
 ## v1.36.1 (2026-08-27)
 
 **PATCH** — three superseded sentences left standing beside the corrections that refuted them. Found by the session's wrap-up review; no behaviour change.

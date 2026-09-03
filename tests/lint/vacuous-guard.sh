@@ -38,7 +38,7 @@ while IFS= read -r f; do
   awk -v F="$f" '
     { line = $0
       while (line ~ /\\$/ && (getline nxt) > 0) { sub(/\\$/, "", line); line = line nxt }
-      if (line !~ /(^|[^A-Za-z_])ablate[ \t]/) next
+      if (line !~ /(^|[^A-Za-z_])[A-Za-z_]*ablate[ \t]/) next
       n = split(line, tok, /'"'"'/)          # split on single quotes: tok[2]=OLD, tok[4]=NEW
       if (n >= 5) {
         old = tok[2]; new = tok[4]
