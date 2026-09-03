@@ -248,9 +248,14 @@ def _marked_siblings(paragraph, siblings):
 
     - **Whole token, not substring.** A substring test lets "infrastructure"
       mark a repo called `infra`.
-    - **The reference may not mark itself.** Backticked paths are stripped from
-      the prose before the search, or `docs/DEPLOY.md` marks a sibling repo
+    - **The reference may not mark itself.** EVERY backticked span is stripped
+      from the prose before the search — not merely the path-shaped ones, so a
+      repo name written as `SiblingRepo` does not mark either (#102; this said
+      "backticked paths" until then, four lines above the `re.sub` that
+      disproves it). Without the strip, `docs/DEPLOY.md` marks a sibling repo
       named `docs` and any broken `docs/X.md` silently resolves next door.
+    - **Whole token is bounded by ALPHANUMERICS**, so `-`, `_` and `.` separate:
+      `pipeline-atlas` in prose marks a sibling `atlas`. Open as #119.
     """
     prose = re.sub(r'`[^`]*`', ' ', paragraph)
     out = []
@@ -290,8 +295,9 @@ def _sibling_hit(frag, siblings, listing, named):
       trusting the step.
     - **More than one sibling matching** yields no single provenance, so the
       finding says so rather than picking one. The finding text names a repo and
-      a file and tells the author to qualify against them; that sentence has to
-      be true.
+      a file; that sentence has to be true. It no longer tells the author to
+      qualify against them — see #102: for the single-match arm the remedy is to
+      remove the marker, and the AMBIGUOUS arm has no single provenance to name.
     """
     hits = []
     for s in siblings:
@@ -336,8 +342,9 @@ def _sibling_hit(frag, siblings, listing, named):
                           for s, h in uniq[:3])
         more = '' if len(uniq) <= 3 else ', and %d more' % (len(uniq) - 3)
         return ('AMBIGUOUS',
-                'resolves in %d places (%s%s) — no single provenance, so it cannot be '
-                'qualified against one' % (len(uniq), shown, more))
+                'resolves in %d places (%s%s) — no single provenance, so this step '
+                'prescribes no remedy: which neighbour is meant is a decision only the '
+                'author can make (#107, #120)' % (len(uniq), shown, more))
     return ('RESOLVED', 'sibling %s -> %s' % (uniq[0][0].name, uniq[0][1]))
 
 
@@ -643,13 +650,19 @@ def check(root, sources, sibling_roots=None):
                     # set permanently — so a later move or deletion there is reported
                     # by nothing. That is the population most likely to be marked in
                     # the first place (#73). Naming the rung matters: the author's
-                    # remedy is to qualify the reference, and a qualified reference is
-                    # checked forever where a marker is never checked again.
+                    # remedy is to REMOVE THE MARKER: this arm's precondition is that
+                    # the paragraph already names the repo, so the path resolves and the
+                    # marker is the false part (#102). "Qualify it instead" was the old
+                    # wording and an adopter read it as "write Repo/path/file", which on
+                    # its own resolves nothing. And a marker is NOT "never checked
+                    # again" — #73 added this very test; the template records that
+                    # correction and this comment outlived it by two releases.
                     sib = _sibling_hit(frag, siblings, listing, named_siblings())
                     if sib and sib[0] == 'RESOLVED':
                         findings.append((src, frag,
                                          'STALE PLACEHOLDER MARKER (resolves at rung 4: '
-                                         f'{sib[1]}) — qualify it instead'))
+                                         f'{sib[1]}) — remove the marker; the path resolves '
+                                         f'and the marker is what is false (#102)'))
                     elif sib:
                         findings.append((src, frag,
                                          f'STALE PLACEHOLDER MARKER ({sib[1]})'))

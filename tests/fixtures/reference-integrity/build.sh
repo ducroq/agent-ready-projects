@@ -39,7 +39,8 @@ touch ../sibling-repo/deploy/rung4_only.sh \
 # are the same SHAPE — a bare basename next door — and differ only in whether the
 # prose names the repo, which is the whole question B3 turns on. The two copies of
 # shared/ambiguous_note.md make "which neighbour" unanswerable on purpose.
-touch ../sibling-repo/docs/RUNBOOK.md ../docs/runbooks/RUNBOOK.md \
+touch ../sibling-repo/scripts/remedy_unqualified.sh ../sibling-repo/scripts/remedy_qualified.sh ../sibling-repo/scripts/remedy_backticked.sh \
+      ../sibling-repo/docs/RUNBOOK.md ../docs/runbooks/RUNBOOK.md \
       ../sibling-repo/scripts/bare_named.sh ../docs/runbooks/orphan_note.md \
       ../sibling-repo/data/pipeline_state.json ../sibling-repo/data/marked_state.json \
       ../sibling-repo/shared/ambiguous_note.md ../docs/shared/ambiguous_note.md
@@ -173,10 +174,42 @@ path beside it silently stays a finding — the two filters must agree.
 The sibling-repo checkout still carries it and ours was never written:
 `deploy/rung4_only.sh` <!-- placeholder -->
 It resolves nowhere locally, so rungs 1-2 excuse it and it leaves the checked
-set forever. The remedy is to qualify the reference, not to mark it.
+set forever WHILE UNMARKED. Marked, with the repo named in bare prose above,
+it is a stale-marker finding instead, and the remedy is to remove the marker.
 
 # N17 — a marker on a path that resolves NOWHERE must stay excused
 `src/aggregators/never_anywhere.py` <!-- placeholder -->
+EOF
+
+cat > docs/REMEDY.md <<'EOF'
+# #102 — the remedy a rung-4 finding prints must actually work when followed
+
+# ⚠️ The two rows use DIFFERENT target files on purpose. Sharing one would put
+# the same path in FINDINGS (from T28) and in RESOLVED (from N32), and the N-row
+# greps FINDINGS for absence — so it would fail, or worse, pass for the wrong
+# reason once either row moved. That is #116's collision, applied here rather
+# than rediscovered.
+# T28 — the qualified path ALONE does not resolve, and must still report. This
+# is the shape an author writes when the remedy says only "qualify it instead":
+# the repo name is inside the path, and rung 4 bullet 5 forbids a reference from
+# marking itself, so nothing here names a neighbour.
+The build script over there is the live one and ours was never written.
+`sibling-repo/scripts/remedy_unqualified.sh`
+
+# T29 — the backtick trap, and it is the sharpest thing #102 turned up. The
+# author names the neighbour exactly as instructed, in this framework's own
+# house style — backticked — and it does NOT mark the reference, because
+# _marked_siblings strips EVERY backticked span, not just the paths. The step
+# said "strip the backticked paths" until #102; it now says "every span" and
+# tells the author to use bare prose. This row is what stops that drifting back.
+The `sibling-repo` checkout holds the live copy of this one:
+`sibling-repo/scripts/remedy_backticked.sh`
+
+# N32 — the corrected remedy: the qualified path AND the repo named in the prose
+# around it. This must RESOLVE, and it is the whole point of #102. If this row
+# starts reporting, the remedy the step prints has become wrong again.
+The sibling-repo checkout holds the live copy of this build script:
+`sibling-repo/scripts/remedy_qualified.sh`
 EOF
 
 cat > docs/RUNG4.md <<'EOF'
@@ -193,7 +226,7 @@ disables the arm instead of gating it.
 Nothing in these three lines names a checkout next door, so a bare filename
 `orphan_note.md` <!-- placeholder -->
 is far too weak a token to pin on any one of them. A confident wrong provenance
-is worse than a miss: the finding tells the author to qualify the reference
+is worse than a miss: the finding would name a repo and a file to the author
 against a repository that has nothing to do with it.
 
 # N19 — a marked path resolving in TWO neighbours must not assert one of them

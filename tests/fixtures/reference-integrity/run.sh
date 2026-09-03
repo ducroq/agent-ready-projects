@@ -10,7 +10,7 @@ WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 bash build.sh "$WORK" >/dev/null
 
-DOCS="CLAUDE.md docs/ADVERSARIAL.md docs/MONOREPO.md docs/EXOTIC.md docs/PLACEHOLDERS.md docs/RUNG4.md docs/guides/LINKS.md templates/TEMPLATE_CLAUDE.md memory/MEMORY.md memory/gotcha-log.md"
+DOCS="CLAUDE.md docs/ADVERSARIAL.md docs/MONOREPO.md docs/EXOTIC.md docs/PLACEHOLDERS.md docs/RUNG4.md docs/guides/LINKS.md templates/TEMPLATE_CLAUDE.md memory/MEMORY.md memory/gotcha-log.md docs/REMEDY.md"
 # --sibling-root pins the search to the fixture. Without it the search
 # reaches the system temp dir and adopts stray repos, including fixtures
 # left behind by an interrupted run of this harness.
@@ -56,6 +56,26 @@ declare -a CASES=(
   "T12 stale placeholder marker on a resolving path|src/models/temporal.py"
   "T13 stale angle-bracket marker on a resolving path|src/<real>/exists.py"
   "T14 placeholder marker covering no path|COVERS NO PATH"
+  # #102 — the remedy a rung-4 finding prints must work when followed. T28 is
+  # the shape an author writes when the remedy says only "qualify it instead":
+  # the repo name sits inside the path, and bullet 5 forbids a reference from
+  # marking itself, so it does NOT resolve. Measured before the fix: an author
+  # who applied the printed remedy literally saw the same finding count, the row
+  # changing only from STALE PLACEHOLDER MARKER to UNRESOLVED.
+  # ⚠️ These two needles are PATHS, and T21's "needle is the reason" rule cannot
+  # be applied here — measured twice. The oracle prints `UNRESOLVED` for both
+  # "the gate declined it" and "the target is not there", so no reason string
+  # separates them; and a needle carrying the reason is keyed on the report's
+  # COLUMN PADDING, which moves with the path's length (T29 failed on exactly
+  # that, three spaces versus four). The discriminator is an existence check on
+  # the target files instead — see the block below. #116 is the same shape one
+  # fixture over, and this is the case where a better needle is not the answer.
+  "T28 the qualified path alone does not resolve|remedy_unqualified.sh"
+  # The backtick trap. A repo name inside backticks is stripped with every other
+  # span, so it does not mark the reference and the author who followed the
+  # advice in house style still gets a finding. Pinned so the "every span"
+  # wording in the step cannot quietly revert to "the paths".
+  "T29 a backticked repo name does not mark the reference|remedy_backticked.sh"
   # The hiding vector the issue demanded be seeded: line-scoping relabelled a
   # co-located genuine break as intentional. The marker is span-scoped, so this
   # must stay a finding.
@@ -86,6 +106,11 @@ declare -a NEG=(
   "N10 angle-bracket path, second form|filters/<name>/<version>/config.yaml"
   "N11 live path after a marker is not a stale marker|src/utils/redaction.py"
   "N12 leading angle bracket is extracted, not invisible|<root>/memory/MEMORY.md"
+  # The other half of #102, and the row that makes the corrected remedy a
+  # measurement rather than a claim: qualified path AND the repo named in the
+  # prose around it must RESOLVE. If this starts reporting, the remedy the step
+  # prints has become wrong again.
+  "N32 qualified path WITH the repo named in prose resolves|sibling-repo/scripts/remedy_qualified.sh"
   # The failure #69's widening newly permits: every real .qmd becoming a
   # phantom. Adding an extension must buy coverage, not noise.
   "N14 a resolving .qmd stays silent|analysis/index.qmd"
@@ -244,6 +269,41 @@ for want in "docs/RUNBOOK.md" "config/absent.env" "src/aggregators/never_anywher
     printf '  FAIL  %s is not in the counted skip section — skipped and never-extracted are indistinguishable\n' "$want"; FAIL=1
   fi
 done
+
+# T28's discriminator. The needle alone cannot distinguish "the self-marking
+# gate held" from "the target file is not there" — the oracle prints
+# `UNRESOLVED` for both, so no reason string separates them (measured: deleting
+# the target leaves the needle satisfied). The row is only a test of the gate if
+# the file it points at exists, so assert that directly. This is #116's lesson
+# arriving in a form a better needle could not have fixed.
+for t in remedy_unqualified remedy_backticked; do
+  if [ -f "$WORK/sibling-repo/scripts/$t.sh" ]; then
+    printf '  PASS  discriminator: %s.sh exists, so its UNRESOLVED means the gate held\n' "$t"
+  else
+    printf '  FAIL  %s.sh is missing — its UNRESOLVED proves nothing about the gate\n' "$t"; FAIL=1
+  fi
+done
+
+# #102's positive half. N32 above asserts only that the corrected remedy is not
+# a FINDING, and a path that was never extracted is also not a finding — the
+# silent-skip failure this fixture exists to refuse. Assert the enumeration too,
+# WITH what it resolved to, so "the remedy works" is a measurement and not an
+# absence. ⚠️ NO ablation guards this block and none can: `ablate()` scores
+# through `xrun`, which iterates XCASES against exitcodes/repo only, so no
+# ablation in this harness reaches a main-fixture row. A draft of this comment
+# cited an "A13" that does not exist — a described mutant presented as a
+# committed one, which is the thing this file exists to refuse. Verified by hand
+# instead: disabling the unmarked rung-4 arm turns both halves red.
+RESOLVED_SEC="$(printf '%s' "$OUT" | sed -n '/== RESOLVED BELOW RUNG 1/,/^  total:/p')"
+if printf '%s' "$RESOLVED_SEC" | grep -qF -- "sibling-repo/scripts/remedy_qualified.sh"; then
+  if printf '%s' "$RESOLVED_SEC" | grep -F -- "remedy_qualified.sh" | grep -qF -- "sibling sibling-repo -> scripts/remedy_qualified.sh"; then
+    printf '  PASS  N32 the corrected remedy resolves AND names what it resolved to\n'
+  else
+    printf '  FAIL  N32 is enumerated without naming its resolution — the reader cannot tell which neighbour claimed it\n'; FAIL=1
+  fi
+else
+  printf '  FAIL  N32 the qualified+prose form is in no counted section — the remedy the step prints cannot be shown to work\n'; FAIL=1
+fi
 
 # N20's other half, and deliberately decision-NEUTRAL: whether a marked runtime
 # state path belongs in the placeholder skip or in the rung-3 enumeration is a
