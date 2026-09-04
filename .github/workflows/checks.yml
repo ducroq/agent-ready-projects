@@ -1,0 +1,79 @@
+# Structural lint + every sensitivity fixture, on every push and pull request.
+#
+# WHY (#115): eleven lint rules and thirteen fixture suites existed for months and
+# gated nothing. CLAUDE.md said to run them; running them was a thing someone had
+# to remember, and the choice of WHICH ones to run was the author's — the same act
+# the anti-self-certification constraint is about, one level up. #105/#112 is what
+# that produces: a shell syntax error in an adopter-facing block, shipped for eight
+# releases, in a repo with a green suite.
+#
+# WHAT THIS DOES NOT CHECK, and must never be reported as checking:
+#   - the cross-step contracts between skill steps (#113) — no instrument exists
+#   - anything requiring judgement: /review-changes is still the diff-driven step
+#   - tests/fixtures/review-bench/, which SCORES a review config and has no
+#     pass/fail by design. It is declared a non-gate in tests/run-fixtures.sh
+# A green run here means "the deterministic checks that exist all passed", which
+# this repo's own record says has never once been sufficient.
+#
+# No path filters, deliberately. Scoping suites to the paths they cover would save
+# ~2 minutes (the whole set is ~2m15s wall clock, ~110s of it verify-runner) and
+# would buy back exactly the selection mechanism this workflow exists to remove.
+name: checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: structural lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: tests/lint/run.sh
+        run: |
+          set -o pipefail
+          bash tests/lint/run.sh 2>&1 | tee lint.log
+
+      - name: Report what was skipped
+        if: always()
+        run: |
+          [ -f lint.log ] || exit 0
+          {
+            echo "### Structural lint"
+            echo
+            if grep -q 'SKIPPED' lint.log; then
+              echo "Rules that checked **nothing** on this runner:"
+              echo
+              echo '```'
+              grep 'SKIPPED' lint.log
+              echo '```'
+              echo
+              echo "**A skipped rule is not a passed rule.** Two skips are expected here and"
+              echo "neither is a defect: \`memory/\` is gitignored maintainer-local state, so"
+              echo "rule 2 has no index to check, and rule 12's private-name list cannot be"
+              echo "tracked without publishing exactly what it protects. Both are unskippable"
+              echo "locally, where the files exist — CI covers the other ten rules."
+            else
+              echo "No rules skipped — all twelve ran."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  fixtures:
+    name: sensitivity fixtures
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: tests/run-fixtures.sh
+        run: bash tests/run-fixtures.sh
