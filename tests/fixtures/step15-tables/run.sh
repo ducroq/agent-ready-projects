@@ -32,6 +32,12 @@ sed 's/$/\r/' t1_lf_lossy.md                                             > t2_cr
 printf 'a | b\n--- | ---\n1 | 2\n' | sed 's/$/\r/'                       > n1_crlf_clean.md
 printf -- '---\ndescription: Runs a | b\n---\n\nprose\n'                 > n2_frontmatter.md
 printf -- '---\ndescription: Runs a | b\n---\n\nx | y\n--- | ---\n1 | 2 | 3\n' > t3_fm_then_table.md
+# T7 — #103. An UNCLOSED frontmatter leaves `infm` set, so `infm { next }` eats
+# the rest of the file and no table is examined: the check printed exactly what
+# a clean run prints, in the one step whose purpose is catching corruption that
+# is invisible in the diff. The seeded row is the same lossy 3-against-2 as t1,
+# so the ONLY difference from a reported case is the missing closing `---`.
+printf -- '---\ndescription: unclosed\n\na | b\n--- | ---\n1 | 2 | 3\n'    > t7_unclosed_fm.md
 printf 'a | b\n--- | ---\n1 | 2 | 3\n'                                   > n3_fenced.md
 printf '```\na | b\n--- | ---\n1 | 2 | 3\n```\n'                          > n3_fenced.md
 printf 'a | b\n--- | ---\n1 | 2 | | \n'                                   > t4_empty_excess.md
@@ -55,6 +61,7 @@ want_quiet() { if [ -z "$(run "$1")" ]; then printf '  PASS  %s %s\n' "$1" "$2";
 want_hit   t1_lf_lossy.md      "a lossy row under LF is reported"
 want_hit   t2_crlf_lossy.md    "a lossy row under CRLF is reported — the #52 defect: without the \\r strip NO table in the file is examined and the run is byte-identical to clean"
 want_hit   t3_fm_then_table.md "frontmatter is skipped WITHOUT disabling the rest of the file — the control on n2"
+want_hit   t7_unclosed_fm.md   "an unclosed frontmatter is REPORTED, not silent — without this the file's tables are all skipped and the run is byte-identical to clean (#103)"
 # ⚠️ n1 is killed by NO ablation here, and that is stated rather than hidden: a
 # clean CRLF table is silent whether or not the `\r` strip is present, because
 # without it the table is never entered. t2 is what carries the CRLF sensitivity.
@@ -93,7 +100,7 @@ if s.count(old) != 1: sys.exit('site occurs %d times, not once' % s.count(old))
 pathlib.Path(sys.argv[2]).write_text(s.replace(old, new))
 PY
   got=""
-  for f in t1_lf_lossy.md t2_crlf_lossy.md t3_fm_then_table.md t4_empty_excess.md t5_header_mismatch.md t6_emphasis.md n1_crlf_clean.md n2_frontmatter.md n3_fenced.md n4_glob_no_bold.md n5_bold_and_code.md n6_tier_row.md; do
+  for f in t1_lf_lossy.md t2_crlf_lossy.md t3_fm_then_table.md t4_empty_excess.md t5_header_mismatch.md t6_emphasis.md t7_unclosed_fm.md n1_crlf_clean.md n2_frontmatter.md n3_fenced.md n4_glob_no_bold.md n5_bold_and_code.md n6_tier_row.md; do
     o="$(awk -v F="$f" -f "$WORK/mut.awk" "$f")"
     case "$f" in
       t*) [ -z "$o" ] && got="$got,$f" ;;
