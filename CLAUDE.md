@@ -55,6 +55,11 @@ agent-ready-projects/
 ├── CLAUDE.md                  <- This file (agent orientation, maintainer-local but committed)
 ├── LICENSE                    <- MIT
 ├── docs/                      <- Full reference guide + rationale + worked examples + archive
+│   ├── rationale/             <- WHY a skill says what it says: superseded drafts and the
+│   │                             measurements that refuted them, moved out of the skill
+│   │                             bodies so adopters stop paying for this repo's litigation
+│   │                             on every invocation. Nothing is duplicated between the
+│   │                             two — if a claim is in both, one of them is wrong
 │   ├── GUIDE.md
 │   ├── verification-rationale.md
 │   ├── guide/                 <- Four-page visual walkthrough

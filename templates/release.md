@@ -64,7 +64,7 @@ Each part of that selector rules out a tag that is not this release's baseline. 
 
 Do not continue past an empty answer in either case. It is indistinguishable from a first release, and the next paragraph would then have you cut `v0.1.0` over a project with a hundred releases behind it.
 
-**If there are genuinely no tags** — `git rev-parse --is-shallow-repository` says `false` *and* `git tag` is empty — this is a first release. Skip the diff commands, review the full history (`git log --oneline`), and propose `v0.1.0` or `v1.0.0` per the project's own convention.
+**If there are genuinely no tags** — `git rev-parse --is-shallow-repository` says `false` *and* `git tag` is empty — this is a first release.
 
 Group the changed files by surface:
 
@@ -216,7 +216,7 @@ Only once the engineer confirms the push:
    git ls-remote --exit-code --tags origin "refs/tags/vX.Y.Z"
    ```
 
-   Do not use a substring grep. `grep v1.2.3` matches a months-old `v1.2.3-rc1`, so a failed or forgotten push reads as success — and every step below would then act on a release that does not exist: step 2 installs unreleased content into a copy that shadows every repo, and steps 3–5 record the release as shipped in project memory, on the issue tracker, and in the work item.
+   Do not use a substring grep.
 
 2. **Refresh any copy of a skill or command installed outside the repo** — a user-level install is not covered by the tag, and refreshing it *before* the tag would have put content no release contains into the copy that shadows every repo. This is the point at which that refresh is safe.
 3. ⚠️ **Tell consumers who stamp your version that the stamp is a *number*, not an adjective.** A pinned line reading "we are current with vX.Y.Z" is a state claim about a world that moves, and **your release cadence is what falsifies it** — an adopter cannot see the next tag coming. One adopter had the word *current* become false **within hours** of committing a correct stamp, because two more releases went out the same evening. The stamp was right; the adjective was not. This is `curate` sub-step 5's *a state report decays; a claim does not*, landing on the one line in an always-loaded file that every session of theirs starts from.

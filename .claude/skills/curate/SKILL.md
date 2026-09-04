@@ -459,7 +459,7 @@ PY
    | Exit 0 | **PASS** | |
    | Any other non-zero | **FAIL** | The claimed state is no longer true. Flag the entry for correction or removal. |
 
-   **One deprecated exception, and it is the only place a word in the output changes anything.** A command whose entire first line is `FAIL` and which exits 0 is scored FAIL, not PASS, and the row says why. This framework taught `… && echo PASS || echo FAIL` until v1.21.0, and that idiom exits 0 on its failure branch, so without this every such command in every adopter's memory files would read as a pass on upgrade. It matches the bare word only — evidence like `FAIL: 0  WARN: 0  OK: 12` is evidence. Rewrite the command; do not rely on it.
+   **One deprecated exception, and it is the only place a word in the output changes anything.** A command whose entire first line is `FAIL` and which exits 0 is scored FAIL, not PASS, and the row says why. It matches the bare word only — evidence like `FAIL: 0  WARN: 0  OK: 12` is evidence. Rewrite the command; do not rely on it.
 
    **Two blind spots, so a clean run is not read as more than it is.** Fenced blocks are skipped — including indented ones, `~~~` ones, and a `` ``` `` block nested inside a four-backtick one — but an annotation inside a *four-space-indented code block* (one with no fence at all) or inside a blockquote is indistinguishable from a live one and **will run**. Write examples in fenced blocks. And UNVERIFIED is not a disposition the runner can produce: it is your judgement about claims with no annotation at all, so "zero is a defect" does not apply to that one of the numbers in Step 6.
 
@@ -484,7 +484,7 @@ PY
      git rev-parse v1.2.3 >/dev/null 2>&1 && echo OK || echo NOTAG   # speaks, but "NOTAG" exits 0 — scored PASS
      ```
 
-     The second is a false PASS with the evidence of its own failure printed beside it, and this repo shipped one for two months. The disposition is carried by exit status and by the `CANNOT VERIFY` prefix — never by a word in the output, which nothing parses. The single exception is deprecated and exists only to stop this framework's own four-month-old idiom reading as a pass on upgrade: a first line that is exactly `FAIL` with exit 0 is scored FAIL and told to rewrite itself. Put the failure on a non-zero exit: `git rev-parse v1.2.3 >/dev/null 2>&1 && echo TAG-PRESENT || { echo TAG-MISSING; exit 1; }`. Printing the value you checked, rather than a verdict, is better still — it tells the next reader what the claim was measured against.
+     The second is a false PASS with the evidence of its own failure printed beside it, and this repo shipped one for two months. The disposition is carried by exit status and by the `CANNOT VERIFY` prefix — never by a word in the output, which nothing parses. The single exception is deprecated and exists only to stop this framework's own four-month-old idiom reading as a pass on upgrade: a first line that is exactly `FAIL` with exit 0 is scored FAIL and told to rewrite itself. Printing the value you checked, rather than a verdict, is better still — it tells the next reader what the claim was measured against.
    - **Assume nothing about the working directory.** The runner may be invoked from anywhere, and a relative command silently changes meaning when it is — `git ls-remote origin` checked a remote from the project root and, run one directory over, reported ERROR for a healthy claim. Address the target absolutely: `git -C /path/to/repo …`, absolute paths for files.
 
 
