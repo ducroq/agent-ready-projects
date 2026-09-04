@@ -42,3 +42,36 @@ both, one of them is wrong.
 ### Search case-insensitively for agent-ready-projects followed by a version-shaped token anyw…
 
 - **Do not assume a single stamp format.** Adopters write it at least four ways — `agent-ready-projects: v1.14.0`, `framework: agent-ready-projects v1.14.0` in YAML frontmatter, `- **agent-ready-projects**: v1.12.0` as a bullet, and prose inside a status paragraph.
+
+### Only a sibling named in prose may be matched — the measurements
+
+- An earlier version exempted qualified paths, on the argument that a path containing `/` carries its own evidence. Measured false on a 30-repo estate: **544** qualified relative paths occur in more than one neighbour, headed by `memory/gotcha-log.md` (21 repos) and `docs/RUNBOOK.md` (8) — the files this method tells every adopter to create. Bare basenames were measured the same way: **207** on one adopter tree, and the unrestricted form told one adopter repo to qualify its own `principes.md` against an unrelated sibling that happened to sort first.
+
+### The stale-marker remedy — what was measured
+
+- Measured on both seeded instances: stripping the marker moves each to *resolved below rung 1* and the findings count drops. With the path qualified and the marker kept, the finding message is byte-identical.
+- What is unsettled for the ambiguous and collision arms is which remedy an audit should recommend, and whether removing the marker is safe there: with two siblings it lets the first-sorting one win silently (#120), while with one sibling holding two files it produces a loud collision instead.
+- A draft of this paragraph asserted *no remedy is available*, which is false: naming one repo rather than two, or qualifying against the intended neighbour, both clear it.
+
+### Whole-token marking — the cases behind the rule
+
+- `my_atlas` and `atlas.example.com` are marked too; `atlases` correctly is not. Open as #119. A hyphenated repo name beside a repo named after one of its components is the shape to watch.
+- The window is one line either side rather than five because a dense component table puts unrelated rows within range.
+- The backticked-span trap was measured: an author who names the neighbour exactly as instructed, in backticks, still gets a finding and no explanation.
+
+### Link labels and declined URLs
+
+- The pressure created by extracting labels is to stop backticking link text, which makes the docs worse.
+- An unwhitelisted extension on a file that does not exist appears in neither the findings nor the "extensions in tree" trailer, which only names extensions the tree actually holds (#55).
+
+### Angle-bracket shape versus a literal file of that name
+
+- Both directions are rare — the name is illegal on NTFS — and both were measured.
+
+### Loosening a check
+
+- The first attempt at this fix shipped six defects and a self-confirming fixture that seeded only the failures the change was designed to preserve.
+
+### The third verdict is coarse in both directions
+
+- One unrelated clone next door is enough to make rung 4 count as having run for a reference naming a repo that is absent, and that reference is then reported as a defect.
