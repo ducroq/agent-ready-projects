@@ -19,9 +19,17 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## Unreleased
+## v1.37.0 (2026-09-04)
 
-**PATCH** — two sensitivity fixes in the self-test layer. No adopter-facing change; `templates/` and `.claude/skills/` are untouched.
+**MINOR** — a shipped block that had not parsed for eight releases, two rung-4 defects in `audit-context`, and two lint rules that could not see their own subject. Closes #103, #105, #112, #102. Five issues were filed from the same work rather than folded into it: #116–#120.
+
+**The through-line, since it decides how to read the rest.** Every fix here was found by running the thing, not by reading it — and three of the four were invisible to the checks that exist precisely to catch them. `review-changes` Step 1.5 was a shell syntax error that rule 6 could not see, because both copies carried the same defect and agreed perfectly. Lint rule 10 could not see an ablation runner whose name merely ends in `ablate`. `audit-context` printed a remedy that does not work, and the step's own gloss forty lines away was correct the whole time. **An instrument that agrees with itself is not evidence.**
+
+⚠️ **Three of the changes below were refuted by review before shipping, and two of those refutations were of the previous round's fix.** The counts are in each section because the count is the argument: this release contains a false measurement that was caught, a no-op remedy that was caught, and a table split that made an open bug reachable by following the instruction — all authored here, none found by the author.
+
+### Self-test layer — two guards that could not see their own subject
+
+*No adopter-facing change; `templates/` and `.claude/skills/` are untouched by this part.*
 
 **Lint rule 10 could not see an ablation runner whose name merely ends in `ablate`.** Its gate was `[^A-Za-z_]ablate[ \t]`, so a wrapper called `mablate` put `m` in the negated class and no such call was ever scanned — both of the rule's own shapes, a whitespace-only mutation and an empty kill set, went unreported. The gate is now `[A-Za-z_]*ablate[ \t]`. **Measured, not asserted**: `tests/fixtures/vacuous-guard/` gains two positives and two negatives under the wrapper name, and the two positives FAIL against the old gate and pass against the new one, while all five negatives stay silent under both. Found while writing such a wrapper on the #76 branch.
 
@@ -31,7 +39,7 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 **#76 is not closed by this and its reopening evidence is refuted** — see the issue. The `<!-- quoted -->` marker form was built, reviewed in five rounds and withdrawn: this repo holds **zero** instances of the class it addresses (`refcheck.py --sibling-root .. . CHANGELOG.md` reports 0 rung-4 resolutions; no `oldpkg` sibling exists, and `NexusMind` is checked out but has no `scripts/x.py`), so the two-instance gate for a new normative convention rests on one adopter estate — the state #76 was originally closed in.
 
-**PATCH** — two defects in `audit-context` Step 4's rung-4 advice. Closes #102.
+### `audit-context` Step 4 — a remedy that does not work, and a trap that defeats it (#102)
 
 **What #102 reported is not what was wrong.** The report read a qualified cross-repo path returning `UNRESOLVED` as a matching bug in rung 4. It is not: bullet 2's head-strip works, and a qualified path *with* the repo named in bare prose resolves today and did before this change. The gate correctly declines a reference whose only mention of the repo is inside its own path. The adopter-visible damage was real; two defects underneath it are.
 
@@ -57,7 +65,9 @@ The table is therefore back to its single row, with the remedy deferred to a bul
 
 **Counts**: 27 T, 28 N, 18 XCASES rows, 12 ablations — all re-measured by command. `CLAUDE.md` was stale on two of these before this change, and a draft of the fix replaced one with a differently-wrong number. **Size**: `templates/audit-context.md` 45,516 → 47,838 bytes, baseline updated.
 
-**MINOR** — `review-changes` Step 1.5 has not parsed since v1.31.0, and an unclosed frontmatter silenced it. New lint rule 11 so neither class recurs. Closes #105, #112, #103.
+### `review-changes` Step 1.5 — a shell syntax error for eight releases (#105, #112, #103)
+
+And new lint rule 11, so neither class recurs.
 
 **Step 1.5's shipped bash block was a shell syntax error for eight releases.** An ASCII apostrophe in a comment — *"the third construct with Step 1.5's property"* — closed the single-quoted awk program, and the backticked regex a few lines below was then read as command substitution:
 
@@ -80,6 +90,13 @@ syntax error near unexpected token `rest,'
 **Fixture** at `tests/fixtures/block-parses/`: 4 positives (the #105 apostrophe shape, an unbalanced quote, a marker buried below line 1, a broken block in a reference install), 4 negatives (a correct block, a declared not-executable block, a block whose angle-bracket placeholder sits inside a quoted string or an embedded program, and the collision control), plus coverage-line, exit-status and bad-root assertions. Two ablations with distinct kill sets: restoring the name collision reddens the four negatives, honouring the marker anywhere reddens the buried-marker positive.
 
 **Size**: `templates/review-changes.md` 32,601 → 33,322 bytes; `templates/release.md` 19,772 → 19,926. Baseline updated. Both are the fixes themselves — the #103 guard and the exemption marker.
+### Not shipped: the `<!-- quoted -->` marker (#76 stays open)
+
+A third marker form for Step 4 — for a path that is the **subject** of a sentence rather than a reference to a file — was built, reviewed through five rounds, and **withdrawn**. It worked, and on three real repos it changed nothing where no marker was present.
+
+It is not here because its evidence gate is not met. #76 was closed the first time with an explicit condition — *"reopen with a second adopter's instance and it becomes a straightforward convention change"* — and the reopening evidence is refuted: this repo holds **zero** instances of the class. The oracle over our own `CHANGELOG.md` returns 0 rung-4 resolutions, no `oldpkg` sibling exists, and `NexusMind` is on disk but has no `scripts/x.py`. Substituting `<!-- placeholder -->` on both candidate paths gives `declared-placeholder` in a 32-sibling estate *and* an empty one — no stale-marker finding either way, so they fail the class's defining property.
+
+**Shipping a normative convention to every downstream consumer on one estate's evidence is the move #16 was closed for.** Two fixes from that work survive above; the rest is on an unmerged branch. What would close #76 is one instance, on any estate, of a quoted path that *resolves at rung 4* — a single measurable observation, not a survey.
 
 ## v1.36.1 (2026-08-27)
 
