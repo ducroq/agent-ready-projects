@@ -47,7 +47,12 @@ for d in tests/fixtures/*/; do
   out=$(bash "$d/run.sh" 2>&1); rc=$?
   el=$((SECONDS - s)); ran=$((ran + 1))
   last=$(printf '%s' "$out" | grep -v '^[[:space:]]*$' | tail -1)
-  if [ "$rc" -eq 0 ]; then
+  if [ "$rc" -eq 0 ] && [ -z "$last" ]; then
+    # A suite that exits 0 having printed nothing asserted nothing — the same
+    # silence rule 12 refuses. Verified: a zero-byte run.sh otherwise reports `ok`.
+    failed=$((failed + 1)); FAILED_NAMES="$FAILED_NAMES $n"
+    printf '%-26s %6s %5s  %s\n' "$n" "FAIL" "$el" "exited 0 with no output — it asserted nothing"
+  elif [ "$rc" -eq 0 ]; then
     printf '%-26s %6s %5s  %s\n' "$n" "ok" "$el" "$last"
   else
     failed=$((failed + 1)); FAILED_NAMES="$FAILED_NAMES $n"

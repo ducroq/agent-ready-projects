@@ -19,7 +19,12 @@ echo "[1/12] CLAUDE.md path references resolve on disk"
 # The exemption is COUNTED AND REPORTED, never silent — an exempted reference is a
 # reference nobody checked, and this rule reported four FAILs on every fresh clone
 # before the exemption existed, which is part of why it was never in CI (#115).
-r1_checked=0; r1_exempt=0
+#
+# ⚠️ And the rule gates on its own coverage. The line below reports how much was
+# checked; reporting it is not the same as failing on it, and rule 2 one screen
+# down refuses exactly that silence. An absent or emptied CLAUDE.md made this rule
+# print `0 file reference(s) checked` and exit 0 — visible, ungated, and green.
+r1_checked=0; r1_exempt=0; r1_dirs=0; r1_dir_exempt=0
 while IFS= read -r path; do
   r1_checked=$((r1_checked + 1))
   [ -e "$path" ] && continue
@@ -38,14 +43,24 @@ while IFS= read -r path; do
   # Scoped to an explicit allowlist, NOT a blanket "any gitignored dir" skip, so a shipped
   # dir mistakenly added to .gitignore and then deleted still FAILs.
   # (A stale ref to an exempted dir under its exact gitignored name is out of scope here.)
+  r1_dirs=$((r1_dirs + 1))
   [ -d "$path" ] && continue
   case "$path" in
-    .claude/|memory/) git check-ignore -q "$path" && continue ;;
+    # 2>/dev/null for the same reason the file loop has it: outside a git repo this
+    # prints `fatal: not a git repository` into the middle of the FAIL list.
+    .claude/|memory/) if git check-ignore -q "$path" 2>/dev/null; then
+                        r1_dir_exempt=$((r1_dir_exempt + 1)); continue
+                      fi ;;
   esac
   fail "CLAUDE.md references directory \`$path\` but it does not exist"
 done < <(grep -oE '`[A-Za-z0-9_./-]+/`' CLAUDE.md | tr -d '`' | sort -u)
-printf '      %s file reference(s) checked; %s exempt (absent AND gitignored, under .claude/ or memory/)\n' \
-  "$r1_checked" "$r1_exempt"
+printf '      %s file and %s directory reference(s) checked; %s + %s exempt (absent AND gitignored, under .claude/ or memory/)\n' \
+  "$r1_checked" "$r1_dirs" "$r1_exempt" "$r1_dir_exempt"
+if [ ! -f CLAUDE.md ]; then
+  fail "CLAUDE.md is absent — rule 1 checked nothing"
+elif [ "$r1_checked" -eq 0 ] && [ "$r1_dirs" -eq 0 ]; then
+  fail "rule 1 extracted 0 references from CLAUDE.md — it checked nothing"
+fi
 
 echo "[2/12] memory/MEMORY.md index integrity"
 # ⚠️ SKIPPED IS NOT A PASS. memory/ is gitignored maintainer-local state, so on a
@@ -59,11 +74,18 @@ if [ ! -f memory/MEMORY.md ]; then
   echo "      SKIPPED: memory/MEMORY.md is absent (gitignored maintainer-local) — this rule checked nothing"
   SKIPPED=$((SKIPPED + 1))
 else
+  # ⚠️ The `memory/` prefix is optional in the pattern because the index writes it:
+  # every pointer in it reads `memory/project_x.md`, and the original pattern
+  # anchored on a backtick immediately before `project_`, so it matched ZERO of
+  # them — this arm had been checking nothing for its whole life. Nothing said so
+  # until the coverage line below was added; the rule was green either way, which
+  # is #115's own lesson landing on #115's own fix.
   r2_refs=0; r2_files=0
   while IFS= read -r name; do
     r2_refs=$((r2_refs + 1))
     [ -e "memory/$name" ] || fail "memory/MEMORY.md references \`$name\` but it does not exist"
-  done < <(grep -oE '`project_[a-z_]+\.md`' memory/MEMORY.md | tr -d '`' | sort -u)
+  done < <(grep -oE '`(memory/)?project_[a-z_]+\.md`' memory/MEMORY.md | tr -d '`' | sed 's|^memory/||' | sort -u)
+
 
   for f in memory/project_*.md; do
     [ -f "$f" ] || continue
@@ -71,6 +93,13 @@ else
     name=$(basename "$f")
     grep -qF "$name" memory/MEMORY.md || fail "memory/$name exists but is not referenced in MEMORY.md"
   done
+  # Scoped to "topic files exist but none was extracted", which is the pattern-miss
+  # above and nothing else. A bare `-eq 0` would fail an index that legitimately
+  # has no topic files yet — inventing a defect to avoid a silence is not a trade
+  # this rule makes.
+  if [ "$r2_refs" -eq 0 ] && [ "$r2_files" -gt 0 ]; then
+    fail "rule 2 extracted 0 index references while $r2_files topic file(s) exist — the pattern is matching nothing"
+  fi
   printf '      %s index reference(s) and %s topic file(s) checked\n' "$r2_refs" "$r2_files"
 fi
 

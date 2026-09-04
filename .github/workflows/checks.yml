@@ -45,9 +45,22 @@ jobs:
           bash tests/lint/run.sh 2>&1 | tee lint.log
 
       - name: Report what was skipped
-        if: always()
+        if: ${{ !cancelled() }}
         run: |
+          # `tee` creates lint.log before the script runs, so the file existing proves
+          # nothing — a run that died on line 1 leaves an empty log, and reporting
+          # "no rules skipped, all twelve ran" over it is the instrument agreeing with
+          # itself. Gate on the run's own terminal line instead.
           [ -f lint.log ] || exit 0
+          if ! grep -qE '^(All lint checks passed\.|[0-9]+ issue\(s\) found\.)' lint.log; then
+            {
+              echo "### Structural lint"
+              echo
+              echo "⚠️ The lint never reached its summary line — **this run measured nothing.**"
+              echo "Read the step log; do not read the job result as coverage."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
           {
             echo "### Structural lint"
             echo
