@@ -16,7 +16,7 @@ The source framework that teaches the layered memory method for AI coding agents
 | Installing, moving, or removing a skill | `docs/GUIDE.md` § "Where a skill lives" — global shadows local, so scope is exclusive. Run `bash scripts/install-global-skills.sh --check ~/repos` to verify the global install matches the tracked source and no inert local copies remain. **The install path refuses when the bytes it would copy are not what the highest release tag reachable from HEAD holds** (#33): refresh globals after the tag is pushed *and verified*, per `templates/release.md` Step 7 — a local tag satisfies the guard, so tagging alone is not the safe point. `--force` overrides it and is the right call only when you mean to run an unreleased skill knowingly. |
 | Editing a skill — either `templates/<name>.md` or `.claude/skills/<name>/SKILL.md` | **Edit both.** They are one artifact in two files; an edit to one is drift until the other matches. `install-global-skills.sh --check` cannot see this — it compares the global install to the tracked one, so both read as current while diverging from the template. `bash tests/lint/run.sh` rule 6 is what catches it. |
 | Closing an issue that was filed against a **skill** | **Name the adopter-installed file that changed because of it**, before writing `Closes #N` anywhere. `git diff -- templates/<skill>.md | grep -c '<the concept>'` returning 0 is the check, and it is the whole rule. v1.28.0 fixed #54/#55/#56 — three issues filed from adopter runs of `audit-context` — entirely inside `tests/fixtures/reference-integrity/refcheck.py`, which is an *oracle*: not normative, never installed, and its own header says so. Lint rule 6 saw nothing (both skill copies were unchanged, so they agreed perfectly), the fixture suite saw nothing (it points at the oracle, which is where the fix was), nine seeded cases passed, and two review rounds missed it. **Maintainer-local on purpose** — it is a question, not a check, and it has one instance; H-015 tracks the next ten issue-closing changes, after which it ships to `templates/` or gets deleted rather than kept for the look of the thing (#92). |
-| Before committing structural changes (CLAUDE.md, `memory/`, `templates/`) | Run `bash tests/lint/run.sh` — deterministic structural check, ten rules. Catches stale `CLAUDE.md` path references, `memory/MEMORY.md` orphans, broken skill-template frontmatter, a reference install that cannot register, unclosed YAML frontmatter, template↔install drift, a skill that provisions a canonical row without quoting it, adopter-facing templates growing unmeasured, and a bare `$0`–`$9` in a skill body (which the argument substituter eats — #77). See `tests/lint/README.md` for the rule catalog. Then run `/review-changes` for diff-driven LLM review — picks review lenses from what changed *and* how big it is (templates touched → full battery, unless the diff is small and hits no carve-out; docs-only → adversarial + doc-accuracy). |
+| Before committing structural changes (CLAUDE.md, `memory/`, `templates/`) | Run `bash tests/lint/run.sh` — deterministic structural check, eleven rules. Catches stale `CLAUDE.md` path references, `memory/MEMORY.md` orphans, broken skill-template frontmatter, a reference install that cannot register, unclosed YAML frontmatter, template↔install drift, a skill that provisions a canonical row without quoting it, adopter-facing templates growing unmeasured, and a bare `$0`–`$9` in a skill body (which the argument substituter eats — #77). Rule 11 parses every fenced bash block an adopter might copy: `review-changes` Step 1.5 was a shell syntax error for eight releases and nothing here could see it, because rule 6 compares two copies carrying the same defect and every internal run transcribed the awk rather than copying the block (#105). See `tests/lint/README.md` for the rule catalog. Then run `/review-changes` for diff-driven LLM review — picks review lenses from what changed *and* how big it is (templates touched → full battery, unless the diff is small and hits no carve-out; docs-only → adversarial + doc-accuracy). |
 | Picking up where the last session left off — **including a bare "continue", "carry on" or "pick up where we left off", which is the maintainer's normal way to start** | `memory/MEMORY.md` — the index itself. **Read it before doing anything else, and before asking what to work on: the answer is in there.** Nothing loads it automatically; this row is what reaches it. Its Current State section names the open branches, what each review found, and the next steps in order. Topic files in `memory/` stay on demand, per the index's own table. |
 | Editing templates | `templates/README.md` for the tool-agnostic naming map. Templates are the adopter-facing surface; changes ripple to every downstream consumer. |
 | Editing the guide | `docs/GUIDE.md` is the full reference; `README.md` is the on-ramp. Keep them in sync — when you change one, ask whether the other needs the same change. |
@@ -88,6 +88,8 @@ agent-ready-projects/
 ├── tests/                     <- Self-tests for this repo (Phase A: structural lint)
 │   ├── lint/                  <- Deterministic structural checks (no LLM)
 │   │   ├── vacuous-guard.sh    <- Rule 10: an ablation that cannot kill anything (#79's shape)
+│   │   ├── block-parses.sh    <- Rule 11: a fenced bash block an adopter copies must
+│   │   │                         parse; exemption is DECLARED, not guessed (#105)
 │   ├── skill-sync.sh      <- Rule 6: templates/<name>.md vs .claude/skills/<name>/SKILL.md
 │   │   └── dollar-digit.sh    <- Rule 9: a bare $0-$9 in a skill body is an argument word (#77)
 │   └── fixtures/              <- Seeded-defect fixtures: a check that finds nothing here is failing
@@ -98,6 +100,8 @@ agent-ready-projects/
 │       ├── skill-template-sync/  <- Seeded drift for lint rule 6 (17 positives, 7 negatives)
 │       ├── provisioning-quote/  <- Seeded drift for lint rule 7 (9 positives, 4 negatives)
 │       ├── size-ratchet/       <- Seeded growth for lint rule 8 (4 positives, 4 negatives)
+│       ├── block-parses/      <- Seeded blocks for lint rule 11 (4 positives, 4 negatives,
+│       │                          2 ablations; N4 is the file-ordinal collision control)
 │       ├── dollar-digit/       <- Seeded `$N` forms for lint rule 9 (13 positives,
 │       │                          12 negatives, 7 structural, 5 truth-table, 10 ablations;
 │       │                          every ablation co-seeds a control the mutant must keep)
@@ -176,7 +180,7 @@ git push --tags
 git diff vX.Y.Z..vX.Y+1.0 -- templates/
 
 # Self-tests, before committing structural changes
-bash tests/lint/run.sh                              # ten structural rules
+bash tests/lint/run.sh                              # eleven structural rules
 bash tests/fixtures/skill-template-sync/run.sh      # sensitivity of lint rule 6
 bash tests/fixtures/reference-integrity/run.sh      # sensitivity of audit-context Step 4
 bash tests/fixtures/installer-release-guard/run.sh  # sensitivity of the installer's release guard
@@ -186,6 +190,7 @@ bash tests/fixtures/size-ratchet/run.sh             # sensitivity of lint rule 8
 bash tests/fixtures/dollar-digit/run.sh             # sensitivity of lint rule 9
 bash tests/fixtures/step15-tables/run.sh            # sensitivity of review-changes Step 1.5
 bash tests/fixtures/vacuous-guard/run.sh            # sensitivity of lint rule 10
+bash tests/fixtures/block-parses/run.sh             # sensitivity of lint rule 11
 bash tests/fixtures/dead-reference/run.sh           # sensitivity of curate's dead-reference extractor
 
 # Measure a REVIEW rather than a checker (H-016). Not part of the suite — it has

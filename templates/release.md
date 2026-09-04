@@ -180,6 +180,8 @@ Afterward, re-run the **current-version** grep from Step 3 and confirm the only 
 Stage **only** the files this release touched — the changelog plus the files enumerated in Step 3, check 5:
 
 ```bash
+# lint-skip: not-executable — `<each file updated in Step 5>` is a placeholder
+# the engineer fills in, so this block cannot parse by design (rule 11).
 git add CHANGELOG.md <each file updated in Step 5>
 git status --porcelain          # confirm nothing unexpected is staged
 git commit -m "release: vX.Y.Z"

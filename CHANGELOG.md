@@ -19,6 +19,32 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## Unreleased
+
+**MINOR** — `review-changes` Step 1.5 has not parsed since v1.31.0, and an unclosed frontmatter silenced it. New lint rule 11 so neither class recurs. Closes #105, #112, #103.
+
+**Step 1.5's shipped bash block was a shell syntax error for eight releases.** An ASCII apostrophe in a comment — *"the third construct with Step 1.5's property"* — closed the single-quoted awk program, and the backticked regex a few lines below was then read as command substitution:
+
+```
+syntax error near unexpected token `rest,'
+```
+
+**Ablation**: neutralising that one apostrophe and changing nothing else makes the block parse. An adopter copying the block as shipped got a shell error instead of a structural pre-check.
+
+⚠️ **Why it survived eight releases, which is the part worth keeping.** Running Step 1.5 internally means transcribing the awk into a fresh heredoc, and that always worked — so every in-house use of the step exercised a copy that never had the defect. Only an adopter copying the fenced block hit it, and what they got did not look like a framework bug from where they stood. Rule 6 could not see it either: both copies carried the same apostrophe, so they agreed perfectly. The step's own magnitude gate says *"any change to a shell script or an executable"* is always full depth — a fenced block in a template is neither, and nothing parsed it.
+
+**An unclosed YAML frontmatter silenced every table in the file (#103).** `infm` is set on a leading `---` and cleared on the closing one; with no closing delimiter `infm { next }` swallows the rest of the file and no table is examined — the check then prints exactly what a clean run prints, which is the silence the frontmatter rule was itself added to remove. Measured, same lossy row in three files: unclosed → silent, closed → reported, absent → reported. It now reports the unclosed frontmatter and says plainly that no table was examined, rather than guessing where the frontmatter should have ended.
+
+**Lint rule 11** (`tests/lint/block-parses.sh`) parses every fenced `bash`/`sh` block on an adopter-facing surface. **26 blocks measured; 2 failed** — one defect in two copies. The exemption is **declared, not guessed**: a block that cannot parse by design carries `# lint-skip: not-executable` on its first line, which is why `templates/release.md`'s `git add CHANGELOG.md <each file updated in Step 5>` now does.
+
+⚠️ **A draft of the rule exempted any block containing an angle-bracket placeholder, and that was wrong on three of the four blocks it skipped** — `<slug>` in `curate`'s block sits inside the embedded *Python*, and that block is the highest-traffic executable in the framework. Measured: 8 skipped by the heuristic, 1 genuinely unrunnable. A reviewable marker beats a heuristic that silently exempts the thing most worth checking.
+
+⚠️ **The rule's own first draft reported "26 blocks parsed, 0 failures" while parsing one file's content 26 times.** awk's block counter restarts per file, so the extracted block files collided and overwrote each other; the one block known to fail came back clean. Caught by checking the count against a known-failing block rather than by reading the code. Seeded as **N4** — two files whose *first* blocks differ, one broken and one clean — and ablating the fix turns four negatives red.
+
+**Fixture** at `tests/fixtures/block-parses/`: 4 positives (the #105 apostrophe shape, an unbalanced quote, a marker buried below line 1, a broken block in a reference install), 4 negatives (a correct block, a declared not-executable block, a block whose angle-bracket placeholder sits inside a quoted string or an embedded program, and the collision control), plus coverage-line, exit-status and bad-root assertions. Two ablations with distinct kill sets: restoring the name collision reddens the four negatives, honouring the marker anywhere reddens the buried-marker positive.
+
+**Size**: `templates/review-changes.md` 32,601 → 33,322 bytes; `templates/release.md` 19,772 → 19,926. Baseline updated. Both are the fixes themselves — the #103 guard and the exemption marker.
+
 ## v1.36.1 (2026-08-27)
 
 **PATCH** — three superseded sentences left standing beside the corrections that refuted them. Found by the session's wrap-up review; no behaviour change.

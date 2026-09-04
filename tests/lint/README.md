@@ -104,6 +104,30 @@ The last three run outside the `ablate` helper on purpose: their consequences ar
 
 The fixture inherits #77's blind spot by construction — it cannot substitute arguments either, so it tests the lexical rule and nothing about delivery. That limit is the reason the rule is lexical, not a gap in the fixture.
 
+## Rule 11 and its fixture
+
+`block-parses.sh` runs `bash -n` over every fenced ```` ```bash ```` / ```` ```sh ```` block on an adopter-facing surface. It exists because `templates/review-changes.md`'s Step 1.5 block was a **shell syntax error for eight releases** (#105) — an ASCII apostrophe inside a single-quoted awk program.
+
+**Why nothing else caught it**, which is the argument for the rule:
+
+| instrument | why it was blind |
+|---|---|
+| rule 6 (template ↔ install) | both copies carried the same apostrophe, so they agreed perfectly |
+| rule 8 (size ratchet) | counts bytes |
+| the step's own magnitude gate | escalates "a shell script or an executable"; a fenced block in a template is neither |
+| every internal run of Step 1.5 | transcribed the awk into a fresh heredoc rather than copying the block, so it never had the defect |
+
+**The exemption is declared, not guessed.** A block that cannot parse by design carries `# lint-skip: not-executable` **on its first line**. A draft skipped any block containing an angle-bracket placeholder; measured over the tree that exempted **8 of 26 blocks** where only **1** was genuinely unrunnable — including `curate`'s extractor, whose `<slug>` sits inside the embedded Python and which is the highest-traffic executable in the framework. The marker is on the first line only, so an exemption cannot be buried in a long block (seeded as T3).
+
+**Scope, stated so a pass is not read as more than it is.** `bash -n` reports a parse error. It does not run anything and cannot see a command that is well-formed and wrong. A tilde-fenced block is not examined; no shipped block uses one (measured).
+
+| Ablation | Consequence it must produce |
+|---|---|
+| Name extracted blocks by block ordinal alone | every file's blocks overwrite the previous file's; four negatives report and the known-failing block reads clean |
+| Honour the marker anywhere, not only line 1 | a block with a buried exemption stops being reported |
+
+The first of those is not hypothetical — it is the bug the rule shipped with in its first draft, which reported *"26 blocks parsed, 0 failures"* while parsing one file's content 26 times. It was caught by checking the count against a block known to fail, not by reading the code, and `N4` (two files whose *first* blocks differ) is the control that keeps it caught.
+
 ## Adding a new rule
 
 1. Add a new section `echo "[N/M] description"` block in `run.sh`
@@ -111,5 +135,6 @@ The fixture inherits #77's blind spot by construction — it cannot substitute a
 3. Smoke-test against the current repo (should pass)
 4. Verify it catches the drift it claims to catch by temporarily breaking the relevant file — a pass on a clean repo is not evidence the rule works. If the rule is non-trivial, factor it out and add a fixture with seeded true positives, as rule 6 does
 5. Document the rule in the table above
+6. State what the rule **cannot** see, next to what it can. Rule 11 parses; it does not execute, so a well-formed wrong command passes it. A reader who mistakes a parse check for a correctness check will stop looking
 
 Keep rules deterministic and cheap. Anything LLM-in-the-loop belongs in `tests/behavioral/` (when that exists), not here.

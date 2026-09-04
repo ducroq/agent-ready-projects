@@ -155,7 +155,7 @@ The lenses below all read *content*: does this path exist, is this flag right, w
         intbl = 0; prev = ""; next
       }
       if (fch != "") next
-      # Emphasis spans — the third construct with Step 1.5's property: correct in
+      # Emphasis spans — the third construct with Step 1.5’s property: correct in
       # the diff, wrong when rendered (#50). Deliberately NARROW. The table check
       # reached a 39% false-positive rate before being anchored, so this reports
       # only the shape actually observed to break: a backticked token whose
@@ -204,7 +204,16 @@ The lenses below all read *content*: does this path exist, is this flag right, w
       }
       prev = $(0)
     }
-    END { if (fch != "") printf "%s: unclosed %s code fence\n", F, fch }
+    END { if (fch != "") printf "%s: unclosed %s code fence\n", F, fch
+          # An unclosed frontmatter leaves `infm` set, so `infm { next }` swallows
+          # every remaining line and NO table is examined — the check then prints
+          # exactly what a clean run prints. That is the same silence the
+          # frontmatter rule was added to remove, in the one step whose purpose is
+          # catching corruption invisible in the diff (#103). Report the state
+          # rather than recovering from it: a file whose frontmatter never closes
+          # is malformed on its own, and guessing where it should have ended is
+          # how a check starts inventing findings.
+          if (infm) printf "%s: unclosed YAML frontmatter — NO table in this file was examined\n", F }
   ' "$f"
 done
 ```
