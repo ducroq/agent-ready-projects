@@ -19,7 +19,11 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.37.0 (2026-09-04)
+## Unreleased
+
+⚠️ **Not released, and deliberately not.** This work is merged to `master` and pushed, but **no tag exists** and the version below is a *proposal*, not a fact. The engineer's decision on 2026-09-04 was to fix the remaining open issues first and release once. Until a tag is pushed, the highest release remains **v1.36.1**, `scripts/install-global-skills.sh` correctly refuses to refresh the global skills, and any adopter pinning to a tag sees none of this.
+
+**Proposed bump when it does go out: MINOR** — a new lint rule and new behaviour on two normative surfaces.
 
 **MINOR** — a shipped block that had not parsed for eight releases, two rung-4 defects in `audit-context`, and two lint rules that could not see their own subject. Closes #103, #105, #112, #102. Five issues were filed from the same work rather than folded into it: #116–#120.
 
