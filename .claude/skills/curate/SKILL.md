@@ -29,17 +29,20 @@ Check for context rot from *previous* sessions. This catches what the session-fo
 
 **Read metadata, not documents.** Measured across 2,264 real sessions, an ordinary session reads a **median of 3** memory files — the layer works as designed. This step is the exception that reads everything, and it does not need to. A gotcha log's headers are ~6–7% of the file and carry most of what Step 0.3, Step 1 and Step 2 use; a verify probe is *run*, not read; staleness is `stat`, not content. Where a large artifact is involved, take its index first and fetch a body only when you are going to act on it. In one measured repo this is the difference between ~1,000,000 characters and ~35,000.
 
-1. **Dead references**: run the extractor below over the memory index and project file. **Do not improvise one.** A rule stated in prose and left to the model is re-derived per run, and re-derived wrong: one adopter run produced 25 `MISSING:` lines of which essentially all were false — bare basenames that exist one directory down, systemd *unit names*, paths on other machines, a file in a sibling repo. Every run reports something, so nothing looks broken, and the honest summary was "this produced noise, not findings" (#51). **Classify, do not flag**, and print the reconciliation line: `0 dead` and `0 dead / 14 unresolvable / 3 skipped` are different results.
+1. **Dead references**: run the extractor below over the memory index and project file. **Do not improvise one.** A rule stated in prose and left to the model is re-derived per run, and re-derived wrong: one adopter run produced 25 `MISSING:` lines of which essentially all were false — bare basenames that exist one directory down, systemd *unit names*, paths on other machines, a file in a sibling repo. Every run reports something, so nothing looks broken, and the honest summary was "this produced noise, not findings" (#51). **Classify, do not flag**, and print the reconciliation line: `0 dead` and `0 dead / 14 unresolvable / 3 skipped / 61 resolved` are different results. **Four counts** — the example here carried three for four releases while the paragraph after the extractor said *report all four, always* and the code printed four.
 
 ```bash
 python3 - memory/MEMORY.md CLAUDE.md <<'PY'
-import re, subprocess, sys
+import os, re, subprocess, sys
 from pathlib import Path
 EXT = r'md|py|sh|js|ts|tsx|jsx|json|yaml|yml|toml|ini|cfg|conf|txt|sql|rs|go|rb|java|c|h|cpp|css|html|env|lock|tsv|csv'
 UNIT = re.compile(r'\.(service|timer|socket|mount|path|target)$')
 PATH = re.compile(r'`([^`\s]+\.(?:' + EXT + r'))`')
+# `.resolve()` matters: outside a git repo this falls back to `.`, and
+# `Path('.') in Path('../x.md').parents` is True — so every `../` fragment read
+# as inside the tree and was decided DEAD. Absolute on both sides or neither.
 root = Path(subprocess.run(['git','rev-parse','--show-toplevel'], capture_output=True,
-                           text=True).stdout.strip() or '.')
+                           text=True).stdout.strip() or '.').resolve()
 # TRACKED files, not rglob. rglob indexes `node_modules/`, `.venv/`, `vendor/`
 # and `.git/`, so a doc naming a root `package.json` that does not exist was
 # counted RESOLVED against `node_modules/lodash/package.json` — a false NEGATIVE
@@ -74,12 +77,92 @@ for doc in sys.argv[1:]:
         # ate the `@` of a scoped npm path and printed `types/node/index.d.ts`, text
         # the document never contained. Strip one leading `@`, and only as a fallback.
         cand0 = frag[1:] if frag.startswith('@') else frag
-        # A SHAPE, not a file: `<slug>.md`, `settings*.json`, `project_*.md`. The
-        # sibling step already decides these by their shape and nothing on disk;
-        # reporting them dead is the loudest false positive this extractor can make,
+        # A SHAPE, not a file: `<slug>.md`, `settings*.json`, `project_*.md`.
+        # Reporting one dead is the loudest false positive this extractor can make,
         # and four of them were in this framework's own project file on first run.
-        if '<' in frag or '*' in frag:
-            skip.append((doc, frag, 'placeholder or glob, not a literal path')); continue
+        # FOUR conventions, not two: `{a,b}` and `[slug]` are neither a placeholder
+        # marker nor a glob star, so both reached the resolver and were reported
+        # DEAD on an adopter run (#104, #106).
+        # ⚠️ Checked before quarantined, because a shape can be a real name —
+        # `[slug]` is a literal directory in Next.js and SvelteKit, `<slug>.md` is
+        # legal on ext4 — which is also what `audit-context` rung 1 does with one.
+        # ⚠️ Brace members are NOT expanded, so a dead `{a,b}` pair is silenced.
+        # Measured cost of that: nil. Across 66 directories (51 git roots), every
+        # member of every comma-brace fragment resolves. A draft claimed two real
+        # losses, from a member check asking `(root/member).is_file()` — which is
+        # #51's own false positive, the one the basename rung below removes. So
+        # #104's judgement stands, on evidence it did not have; expansion would be
+        # right on all of them and is filed as unprioritised (#121).
+        # ⚠️ `audit-context` is not the warrant for the two new conventions: Step 4
+        # names the angle-bracket form and neither of these, so the steps disagree
+        # about `[slug]` — skipped here, a finding there, on a form `docs/GUIDE.md`
+        # writes itself. Filed as #122.
+        if any(c in frag for c in '<*{['):
+            if (root / frag).is_file() or (d.parent / frag).is_file(): ok += 1; continue
+            skip.append((doc, frag, 'placeholder, glob, brace or bracket shape, not a literal path')); continue
+        # A claim about ANOTHER machine cannot be checked from here. Quarantined,
+        # not flagged — the same disposition a host-dependent verify probe gets.
+        # ⚠️ MUST PRECEDE THE CROSS-REPO RUNG. It sat below it for three releases,
+        # unreachable for every path it was written for: a POSIX absolute path
+        # contains a `/` and its first segment is `''`, never a top-level dir here,
+        # so the rung took it first and — pathlib discarding the left side of an
+        # absolute join — printed a false `DEAD ... absent in the sibling <parent>`.
+        # Windows forms arrive by the opposite route, no `/` at all: 10 false DEAD
+        # rows in 8 repos. Measured on an estate, never filed.
+        # ⚠️ Checked before quarantined: withholding a verdict the run HAS is the
+        # sibling rung's own sentence pointing the other way, and 19 of the 23
+        # resolutions this arm makes across that estate are `~`-prefixed.
+        # `os.path.expanduser`, not `Path.expanduser()`, which raises on a `~user`
+        # with no home.
+        if frag.startswith(('/', '~')) or re.match(r'[A-Za-z]:[\\/]|\\\\', frag):
+            ap = Path(os.path.expanduser(frag))
+            # Resolved only when genuinely absolute: `root` is resolved, so an
+            # unresolved `ap` made a symlinked repo path read as another host (the
+            # default on macOS). A Windows fragment is not absolute on POSIX, and
+            # resolving it would join it to the cwd and land it inside the repo.
+            if ap.is_absolute(): ap = ap.resolve()
+            if ap.is_file(): ok += 1
+            # A directory is not a dead file reference. The other half of this test
+            # was `ap == root`, true only of the root itself, which exists — so it
+            # asserted `resolves nowhere` about a directory that is there.
+            elif ap.is_dir(): unver.append((doc, frag, 'names a directory, not a file'))
+            # Inside this repo it is decidable, and `path on another host` would be
+            # a false reason — the kind that sends a reader to the wrong place.
+            elif root in ap.parents:
+                dead.append((doc, frag, 'absolute path inside this repo, and it resolves nowhere'))
+            # ⚠️ No on-disk-directory gate here, unlike the arm below, and the
+            # asymmetry is deliberate: a `../` fragment is unambiguously about the
+            # author's own tree, while an absolute path is a claim about *a*
+            # filesystem that may not be this one. With the gate, `/opt/app/x.json`
+            # from another machine reads DEAD wherever `/opt/app` happens to exist
+            # here — a false DEAD invented by the environment.
+            else: unver.append((doc, frag, 'path on another host'))
+            continue
+        # `./` and `../` are DOC-RELATIVE, not cross-repo. They reached the rung
+        # below because `..` is not a top-level dir here, which then tested a path
+        # ONE LEVEL ABOVE the one the fragment names and called a live file dead —
+        # its own reason said so, *absent in the sibling `..`* (#106). Lexical
+        # (`normpath`): `..` in a document means the textual parent.
+        # ⚠️ ONE base, the document's own directory, never the repo root as well.
+        # A draft used both; the root base lands outside the tree for any `../`
+        # fragment, so a stray `RUNBOOK.md` beside the repo silenced a dead
+        # reference — in the population this method creates (`memory/gotcha-log.md`
+        # exists in 35 git roots of one estate, `RUNBOOK.md` in 13). Nothing
+        # exercised it: deleting that base left every row and ablation green.
+        # Inside the tree it is decidable, so decide it. Outside, a directory ON
+        # DISK decides, and nothing on disk falls through to CANNOT VERIFY rather
+        # than to a false DEAD.
+        if frag.split('/')[0] in ('.', '..'):
+            rp = Path(os.path.normpath(d.parent / frag))
+            if rp.is_file(): ok += 1; continue
+            if rp.is_dir(): unver.append((doc, frag, 'names a directory, not a file')); continue
+            if root in rp.parents:
+                dead.append((doc, frag, 'doc-relative and resolves nowhere')); continue
+            if rp.parent.is_dir():
+                dead.append((doc, frag, 'relative path outside the tree, and the directory it names IS on disk'))
+            else:
+                unver.append((doc, frag, 'relative path outside the tree — nothing on disk to decide it'))
+            continue
         # CROSS-REPO. A qualified sibling reference — `AdopterRepo/docs/X.md` — is
         # the form the sibling step tells authors to WRITE, so the better an
         # adopter follows that advice the more phantom dead references a
@@ -142,10 +225,6 @@ for doc in sys.argv[1:]:
                 else: dead.append((doc, frag, f'absent in the sibling {sib.name}, which IS on disk'))
                 continue
             unver.append((doc, frag, 'cross-repo or removed top-level dir — no sibling on disk to decide it')); continue
-        # A claim about ANOTHER machine cannot be checked from here. Quarantined,
-        # not flagged — the same disposition a host-dependent verify probe gets.
-        if frag.startswith(('/', '~')):
-            unver.append((doc, frag, 'path on another host')); continue
         # A systemd unit NAME is not a file reference unless it carries a directory.
         if UNIT.search(frag) and '/' not in frag:
             skip.append((doc, frag, 'unit name, not a path')); continue
@@ -180,6 +259,7 @@ PY
 ```
 
 ⚠️ **A `0 dead` line alone is not a result.** It cannot distinguish a clean index from an extractor that captured nothing — report all four counts, always.
+
 2. **Stale memory**: Check modification dates of memory files. Flag any not modified in 30+ days — they may be outdated. Read dates from the **filesystem**, e.g. `ls -l --time-style=+%Y-%m-%d memory/` or `stat -c '%y %n' memory/*.md`. **Look for the files before reading their dates, and say which set you read.** Where there is no `memory/` there is no Layer 3, and this project's equivalents are the ones the naming map gives for a tool without auto-memory — `docs/gotcha-log.md`, `docs/hypothesis-log.md`, `docs/work-items/` — plus the project file itself. Both example commands fail the same silent way on a directory that is not there: `stat` and `ls` each write to stderr and print nothing to stdout, which reads exactly like "nothing is stale".
 
    Do not use `git log -1 --format=%ci -- <file>` as the primary check. When the memory directory is gitignored — the recommended setup, and this framework's own — `git log` returns **empty with exit 0** for every file, so the check reports nothing stale while having examined nothing. Empty `git log` output here means "the check did not run", not "no files are stale".
