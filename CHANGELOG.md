@@ -31,6 +31,18 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 ⚠️ **Every change below that was reviewed was refuted at least once, and the refutations of the refutations are the interesting part.** Three of the earlier changes were refuted before shipping, two of those by a round reviewing the previous round's fix. The `curate` section then took **two further rounds, which found eight defects and eight more** — four of the second round's created by the first round's fixes, and one of them a measurement whose *instrument* was wrong in the direction that flattered the change. The counts are in each section because the count is the argument: this release contains a false measurement that was caught, a no-op remedy that was caught, and a table split that made an open bug reachable by following the instruction — all authored here, none found by the author.
 
+### External corroboration for the mechanism, and one result that contradicts our own routing
+
+`docs/verification-rationale.md` gains a second external citation, held to the same discipline as the first: cite it for what it measured, not for what we do.
+
+*WikiSkill* ([arXiv:2608.27454](https://arxiv.org/abs/2608.27454), Google Research and Virginia Tech, 2026-08-28) independently arrives at this method's shape — immutable traces, a persistent knowledge layer that compounds and is never reset, and evolving versioned procedures — and **ablates the middle layer**. Removing it drops average benchmark performance from **63.7% to 48.7%** across five benchmarks. That is the first external evidence that an accumulation layer improves work done later, which is the assumption this entire framework rests on and has never been able to measure.
+
+**Scope, stated in the doc itself**: their population is LLM agents executing benchmark tasks, their outcome is a validation score, and their loop is machine-gated with automatic rollback. **H-017 — whether a human-maintained repo's memory is reached for by later sessions, in repos this author does not maintain — is untouched by it.** Citing this result for adoption substitutes a different population and a different outcome for the one in question.
+
+⚠️ **And one of their findings contradicts a routing decision this framework has never questioned.** Giving the *executing* agent access to the accumulated knowledge, rather than only to the skill, **degraded** final skill quality (63.7% → 60.9%); their default configuration therefore withholds it. This framework routes working sessions into `memory/gotcha-log.md` by design. Registered as **H-018** with a gate rather than acted on — their agent is scoring a benchmark where a worse trajectory is free, ours is doing work where being right now outranks improving the procedure, and the instrument that would settle it does not exist yet. **Nothing in the routing changes.** Acting on one external ablation from another population, against a decision that has worked here, is what #16 was closed for.
+
+Also filed: **#123** — this repo records what shipped, what broke and what is provisionally believed, but nothing queryable about what was **proposed and refused**; their harness-appended `skill-impact.md` exists so that rejected interventions are not proposed again, which is exactly the failure #16 was closed for.
+
 ### The adopter-facing surface, squeezed 20% — and the ratchet that let it grow
 
 `templates/` went **113,639 bytes at v1.10.0 to 311,924 at v1.36.1** — 2.75×, almost perfectly linear at ~40KB per five releases. Three changes, in order of leverage.
