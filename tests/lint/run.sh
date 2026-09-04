@@ -11,9 +11,51 @@ SKIPPED=0
 fail() { printf 'FAIL  %s\n' "$1"; ISSUES=$((ISSUES + 1)); }
 
 echo "[1/12] CLAUDE.md path references resolve on disk"
+# The two documented maintainer dirs (.claude/, memory/) are gitignored, so their
+# CONTENTS are absent from every fresh clone — CI's included. A file reference under
+# one of them is exempt only when it is BOTH absent AND still gitignored: a tracked
+# file that was deleted still FAILs, a file under any other path still FAILs, and
+# `.claude/skills/` is negated in .gitignore so its files are never exempt.
+# The exemption is COUNTED AND REPORTED, never silent — an exempted reference is a
+# reference nobody checked, and this rule reported four FAILs on every fresh clone
+# before the exemption existed, which is part of why it was never in CI (#115).
+#
+# ⚠️ And the rule gates on its own coverage. The line below reports how much was
+# checked; reporting it is not the same as failing on it, and rule 2 one screen
+# down refuses exactly that silence. An absent or emptied CLAUDE.md made this rule
+# print `0 file reference(s) checked` and exit 0 — visible, ungated, and green.
+r1_checked=0; r1_exempt=0; r1_dirs=0; r1_dir_exempt=0
 while IFS= read -r path; do
-  [ -e "$path" ] || fail "CLAUDE.md references \`$path\` but it does not exist"
-done < <(grep -oE '`[A-Za-z0-9_./-]+\.(md|yml|yaml|json|sh)`' CLAUDE.md | tr -d '`' | sort -u)
+  r1_checked=$((r1_checked + 1))
+  [ -e "$path" ] && continue
+  case "$path" in
+    # ⚠️ memory/ — the whole DIR must be absent, which is the fresh-clone shape and
+    # the only state this exemption is for. A per-file test was wrong and was
+    # measured wrong: `/memory/` is gitignored wholesale, so EVERY absent memory/
+    # reference was exempt on a fully populated checkout too, and the stale pointer
+    # `/curate` leaves behind when it renames or archives a topic file — this rule's
+    # load-bearing class, still advertised in CLAUDE.md — scanned green. The
+    # loosening had quietly traded the local catch for a clean CI run.
+    memory/*)
+      if [ ! -d memory ] && git check-ignore -q "$path" 2>/dev/null; then
+        r1_exempt=$((r1_exempt + 1)); continue
+      fi ;;
+    # .claude/ cannot use that test: the directory exists in every clone, because
+    # .claude/skills/ is tracked. So it stays per-file, and the residual gap is
+    # DECLARED rather than hidden — a stale pointer to a renamed .claude/ file is
+    # not caught. There are none today (all four exemptions in CI are memory/), and
+    # .claude/skills/ is negated in .gitignore, so its files are never exempt.
+    .claude/*)
+      if git check-ignore -q "$path" 2>/dev/null; then
+        r1_exempt=$((r1_exempt + 1)); continue
+      fi ;;
+  esac
+  fail "CLAUDE.md references \`$path\` but it does not exist"
+# LC_ALL=C: under the maintainer's en_US.UTF-8, `gotcha-log.md` and `gotcha_log.md`
+# collate equal and `sort -u` drops one — so the population, and the count printed
+# below as evidence, would differ between this machine and CI. No collision exists
+# today (27 references either way); this keeps it that way.
+done < <(grep -oE '`[A-Za-z0-9_./-]+\.(md|yml|yaml|json|sh)`' CLAUDE.md | tr -d '`' | LC_ALL=C sort -u)
 
 while IFS= read -r path; do
   # The two documented maintainer dirs (.claude/, memory/) are gitignored and may be
@@ -21,23 +63,69 @@ while IFS= read -r path; do
   # Scoped to an explicit allowlist, NOT a blanket "any gitignored dir" skip, so a shipped
   # dir mistakenly added to .gitignore and then deleted still FAILs.
   # (A stale ref to an exempted dir under its exact gitignored name is out of scope here.)
+  r1_dirs=$((r1_dirs + 1))
   [ -d "$path" ] && continue
   case "$path" in
-    .claude/|memory/) git check-ignore -q "$path" && continue ;;
+    # 2>/dev/null for the same reason the file loop has it: outside a git repo this
+    # prints `fatal: not a git repository` into the middle of the FAIL list.
+    .claude/|memory/) if git check-ignore -q "$path" 2>/dev/null; then
+                        r1_dir_exempt=$((r1_dir_exempt + 1)); continue
+                      fi ;;
   esac
   fail "CLAUDE.md references directory \`$path\` but it does not exist"
-done < <(grep -oE '`[A-Za-z0-9_./-]+/`' CLAUDE.md | tr -d '`' | sort -u)
+done < <(grep -oE '`[A-Za-z0-9_./-]+/`' CLAUDE.md | tr -d '`' | LC_ALL=C sort -u)
+printf '      %s file and %s directory reference(s) checked; %s + %s exempt (absent AND gitignored, under .claude/ or memory/)\n' \
+  "$r1_checked" "$r1_dirs" "$r1_exempt" "$r1_dir_exempt"
+if [ ! -f CLAUDE.md ]; then
+  fail "CLAUDE.md is absent — rule 1 checked nothing"
+elif [ "$r1_checked" -eq 0 ] && [ "$r1_dirs" -eq 0 ]; then
+  fail "rule 1 extracted 0 references from CLAUDE.md — it checked nothing"
+elif [ "$r1_checked" -eq 0 ] && [ "$r1_dirs" -gt 0 ]; then
+  # One arm dead while the other works. Rule 2 got this shape and rule 1 did not:
+  # breaking the file regex alone printed `0 file and 17 directory` and exited 0.
+  fail "rule 1 extracted 0 FILE references while $r1_dirs directory reference(s) were found — the file pattern is matching nothing"
+fi
 
 echo "[2/12] memory/MEMORY.md index integrity"
-while IFS= read -r name; do
-  [ -e "memory/$name" ] || fail "memory/MEMORY.md references \`$name\` but it does not exist"
-done < <(grep -oE '`project_[a-z_]+\.md`' memory/MEMORY.md | tr -d '`' | sort -u)
+# ⚠️ SKIPPED IS NOT A PASS. memory/ is gitignored maintainer-local state, so on a
+# fresh clone this file is absent and the rule can check NOTHING. Before #115 that
+# was silent: `grep` wrote "No such file or directory" to stderr, the loop read an
+# empty stream, zero failures were recorded, and the run printed "All lint checks
+# passed" — an absent index and a clean index producing byte-identical output. That
+# is the trap rules 6 and 12 are both built around, live in the rule two lines above
+# them. In CI this skip is the EXPECTED state and must stay legible as one.
+if [ ! -f memory/MEMORY.md ]; then
+  echo "      SKIPPED: memory/MEMORY.md is absent (gitignored maintainer-local) — this rule checked nothing"
+  SKIPPED=$((SKIPPED + 1))
+else
+  # ⚠️ The `memory/` prefix is optional in the pattern because the index writes it:
+  # every pointer in it reads `memory/project_x.md`, and the original pattern
+  # anchored on a backtick immediately before `project_`, so it matched ZERO of
+  # them — this arm had been checking nothing for its whole life. Nothing said so
+  # until the coverage line below was added; the rule was green either way, which
+  # is #115's own lesson landing on #115's own fix.
+  r2_refs=0; r2_files=0
+  while IFS= read -r name; do
+    r2_refs=$((r2_refs + 1))
+    [ -e "memory/$name" ] || fail "memory/MEMORY.md references \`$name\` but it does not exist"
+  done < <(grep -oE '`(memory/)?project_[a-z_]+\.md`' memory/MEMORY.md | tr -d '`' | sed 's|^memory/||' | LC_ALL=C sort -u)
 
-for f in memory/project_*.md; do
-  [ -f "$f" ] || continue
-  name=$(basename "$f")
-  grep -qF "$name" memory/MEMORY.md || fail "memory/$name exists but is not referenced in MEMORY.md"
-done
+
+  for f in memory/project_*.md; do
+    [ -f "$f" ] || continue
+    r2_files=$((r2_files + 1))
+    name=$(basename "$f")
+    grep -qF "$name" memory/MEMORY.md || fail "memory/$name exists but is not referenced in MEMORY.md"
+  done
+  # Scoped to "topic files exist but none was extracted", which is the pattern-miss
+  # above and nothing else. A bare `-eq 0` would fail an index that legitimately
+  # has no topic files yet — inventing a defect to avoid a silence is not a trade
+  # this rule makes.
+  if [ "$r2_refs" -eq 0 ] && [ "$r2_files" -gt 0 ]; then
+    fail "rule 2 extracted 0 index references while $r2_files topic file(s) exist — the pattern is matching nothing"
+  fi
+  printf '      %s index reference(s) and %s topic file(s) checked\n' "$r2_refs" "$r2_files"
+fi
 
 echo "[3/12] skill template embedded SKILL.md frontmatter"
 for f in templates/*.md; do

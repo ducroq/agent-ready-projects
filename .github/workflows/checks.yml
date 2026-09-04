@@ -1,0 +1,97 @@
+# Structural lint + every sensitivity fixture, on every push and pull request.
+#
+# WHY (#115): twelve lint rules and twelve gating fixture suites existed for months and
+# gated nothing. CLAUDE.md said to run them; running them was a thing someone had
+# to remember, and the choice of WHICH ones to run was the author's — the same act
+# the anti-self-certification constraint is about, one level up. #105/#112 is what
+# that produces: a shell syntax error in an adopter-facing block, shipped for eight
+# releases, in a repo with a green suite.
+#
+# WHAT THIS DOES NOT CHECK, and must never be reported as checking:
+#   - the cross-step contracts between skill steps (#113) — no instrument exists
+#   - rule 12, whose name list is untracked by design: it skips here every time
+#   - anything requiring judgement: /review-changes is still the diff-driven step
+#   - tests/fixtures/review-bench/, which SCORES a review config and has no
+#     pass/fail by design. It is declared a non-gate in tests/run-fixtures.sh
+# A green run here means "the deterministic checks that exist all passed", which
+# this repo's own record says has never once been sufficient.
+#
+# No path filters, deliberately. Scoping suites to the paths they cover would save
+# ~2 minutes (the whole set is ~2m15s wall clock, ~110s of it verify-runner) and
+# would buy back exactly the selection mechanism this workflow exists to remove.
+name: checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: structural lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: tests/lint/run.sh
+        run: |
+          set -o pipefail
+          bash tests/lint/run.sh 2>&1 | tee lint.log
+
+      - name: Report what was skipped
+        if: ${{ !cancelled() }}
+        run: |
+          # `tee` creates lint.log before the script runs, so the file existing proves
+          # nothing — a run that died on line 1 leaves an empty log, and reporting
+          # "no rules skipped, all twelve ran" over it is the instrument agreeing with
+          # itself. Gate on the run's own terminal line instead.
+          [ -f lint.log ] || exit 0
+          if ! grep -qE '^(All lint checks passed\.|[0-9]+ issue\(s\) found\.)' lint.log; then
+            {
+              echo "### Structural lint"
+              echo
+              echo "⚠️ The lint never reached its summary line — **this run measured nothing.**"
+              echo "Read the step log; do not read the job result as coverage."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          {
+            echo "### Structural lint"
+            echo
+            if grep -q 'SKIPPED' lint.log; then
+              echo "Rules that checked **nothing** on this runner:"
+              echo
+              echo '```'
+              grep 'SKIPPED' lint.log
+              echo '```'
+              echo
+              echo "**A skipped rule is not a passed rule.** Both skips above are expected"
+              echo "and neither is a defect: \`memory/\` is gitignored maintainer-local state,"
+              echo "so rule 2 has no index to check, and rule 12's private-name list cannot be"
+              echo "tracked without publishing exactly what it protects."
+              echo
+              echo "Rule 2 is checkable locally, where \`memory/\` exists. **Rule 12 skips"
+              echo "locally too** for anyone without \`~/.config/agent-ready/private-names\` —"
+              echo "the list is untracked, so the only machine where it runs is one that has"
+              echo "generated it. Giving CI the list via a secret is possible and was not done."
+            else
+              echo "No rules skipped — all twelve ran."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  fixtures:
+    name: sensitivity fixtures
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: tests/run-fixtures.sh
+        run: bash tests/run-fixtures.sh
