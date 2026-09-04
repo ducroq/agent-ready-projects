@@ -93,8 +93,12 @@ agent-ready-projects/
 │   └── fixtures/              <- Seeded-defect fixtures: a check that finds nothing here is failing
 │       ├── reference-integrity/  <- Seeded breaks for audit-context Step 4. refcheck.py is an ORACLE,
 │       │                          NOT normative and never installed — fix Step 4 too (#92).
-│       │                          25 T, 27 N, D1, E1, plus 14 exit-status rows, an isolation
-│       │                          guard, an enumeration guard and 10 ablations (#93)
+│       │                          27 T, 28 N, D1, E1, plus 18 XCASES exit-status rows
+│       │                          (`grep -cE '^  "X[0-9]+ '`; the isolation and
+│       │                          enumeration guards listed next are separate), and
+│       │                          12 ablations (#93, #102). Both counts here were
+│       │                          stale before #102, and a draft of this fix replaced
+│       │                          one with a differently-wrong number
 │       ├── skill-template-sync/  <- Seeded drift for lint rule 6 (17 positives, 7 negatives)
 │       ├── provisioning-quote/  <- Seeded drift for lint rule 7 (9 positives, 4 negatives)
 │       ├── size-ratchet/       <- Seeded growth for lint rule 8 (4 positives, 4 negatives)

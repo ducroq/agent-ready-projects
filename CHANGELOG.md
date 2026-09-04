@@ -31,6 +31,32 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 **#76 is not closed by this and its reopening evidence is refuted** — see the issue. The `<!-- quoted -->` marker form was built, reviewed in five rounds and withdrawn: this repo holds **zero** instances of the class it addresses (`refcheck.py --sibling-root .. . CHANGELOG.md` reports 0 rung-4 resolutions; no `oldpkg` sibling exists, and `NexusMind` is checked out but has no `scripts/x.py`), so the two-instance gate for a new normative convention rests on one adopter estate — the state #76 was originally closed in.
 
+**PATCH** — two defects in `audit-context` Step 4's rung-4 advice. Closes #102.
+
+**What #102 reported is not what was wrong.** The report read a qualified cross-repo path returning `UNRESOLVED` as a matching bug in rung 4. It is not: bullet 2's head-strip works, and a qualified path *with* the repo named in bare prose resolves today and did before this change. The gate correctly declines a reference whose only mention of the repo is inside its own path. The adopter-visible damage was real; two defects underneath it are.
+
+**1. A backticked repo name does not mark a reference, and the step said it would.** `_marked_siblings` strips **every** backticked span before looking for a repo name, while the step said *"strip the backticked **paths**"*. So an author who names the neighbour exactly as instructed, in this framework's own house style — `` `SiblingRepo` `` — gets no marking and no explanation. Measured, along with the window: same line and one line either side mark; two lines away do not. The step now says *every span*, and *bare prose, whole word, within a line either side*. Seeded as **T29**, and the same correction was needed in `refcheck.py`'s own docstring, four lines above the `re.sub` that disproves it.
+
+**2. The stale-marker remedy is arm-dependent, and neither the old wording nor three drafts of the new one got it right.** For the **single-match** arm the remedy is *remove the marker*: that arm's precondition is that the paragraph already names the repo, so the path resolves and the marker is the false part. Measured on both seeded instances. *"Qualify it instead"* — the old wording — does not clear it: with the path qualified and the marker kept, the finding **message** is byte-identical, because the marker is what is adjudicated. For the ambiguous and collision arms the remedy is an open question (#107, #120) and the step now says so rather than prescribing one.
+
+⚠️ **This change was refuted three times and every round's findings were defects the previous round's fixes created.** Recorded because the count is the argument:
+
+- **Round 1** — the justification was a false measurement. Two documents were compared and reported as one: the "after" also had the repo name deleted from its prose. Changing two things and crediting one, in a change about a wrong remedy.
+- **Round 2** — the replacement remedy, *"name the repo in the prose around it"*, is a **no-op**: it instructs the author to do the one thing the finding's own precondition guarantees they have already done.
+- **Round 3** — the table row was split into single-match and multi-sibling arms. The two rows are **not jointly exhaustive** — one sibling holding two files matches neither, which is #107's own reported shape — and the new row asserted *no remedy is available*, a **false absolute**: two remedies were measured that clear it. The split also broke two row-number references in surrounding prose.
+
+The table is therefore back to its single row, with the remedy deferred to a bullet that can carry a condition. **A taxonomy that three rounds could not state correctly in a table cell does not belong in one.**
+
+**Seeded**: **T28** a qualified path with no bare-prose mention still reports; **T29** the backtick trap; **N32** the qualified form *plus* a bare-prose mention resolves — asserted both as absent from FINDINGS and as present in the enumerated resolutions naming what it resolved to.
+
+⚠️ **T28 and T29 are needled on the PATH, and T21's "needle is the reason" rule cannot apply.** The oracle prints `UNRESOLVED` both when the gate declines a reference and when the target is absent, so no reason string separates them; and a reason-carrying needle keys on the report's column padding, which moves with the path length (T29 failed on exactly that). The discriminator is an existence check on the target files instead — #116's shape in the form where a better needle is not the answer.
+
+⚠️ **No ablation guards the new N32 block and none can**: `ablate()` scores through `xrun`, which reaches only XCASES against the exit-code tree, never a main-fixture row. A draft cited an "A13" that does not exist. Verified by hand instead — disabling the unmarked rung-4 arm turns both halves red.
+
+**Hedged, not fixed**: rung 4's whole-token rule is bounded by alphanumerics, so `-`, `_` and `.` separate and prose naming `pipeline-atlas` marks a sibling `atlas` (`atlases` correctly does not). Measured; filed as #119. Also filed: #118 (the bare `UNRESOLVED` row #102's reporter actually saw carries no remedy at all) and #120 (the unmarked arm resolves against the first named sibling where the marked arm reports ambiguity).
+
+**Counts**: 27 T, 28 N, 18 XCASES rows, 12 ablations — all re-measured by command. `CLAUDE.md` was stale on two of these before this change, and a draft of the fix replaced one with a differently-wrong number. **Size**: `templates/audit-context.md` 45,516 → 47,838 bytes, baseline updated.
+
 ## v1.36.1 (2026-08-27)
 
 **PATCH** — three superseded sentences left standing beside the corrections that refuted them. Found by the session's wrap-up review; no behaviour change.

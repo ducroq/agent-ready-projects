@@ -10,7 +10,7 @@ half is testable.
 
 ## What it seeds
 
-**Case counts, measured 2026-08-26** (`grep -oE '\bT[0-9]+[a-z]?\b' run.sh | sort -u | wc -l`, and the same for `N`): **25 T-cases** — T1–T27 with no T6 or T20 — and **27 N-cases**, N2–N28b. The enumeration below is the original eleven and is kept for the reasoning, not as a census; it went four releases without being re-counted, so treat any number in prose here as dated unless it carries a command.
+**Case counts, re-measured 2026-09-03** (`grep -oE '\bT[0-9]+[a-z]?\b' run.sh | sort -u | wc -l`, and the same for `N`): **27 T-cases** and **28 N-cases**; `grep -c '^ablate "' run.sh` gives **12 ablations**. #102 added T28, T29 and N32. The numbering is not contiguous and cannot be written as a range — there is no T6, T20, N4, N5 or N29–N31 — so quote the command, never a span. ⚠️ **T28 and T29 are needled on the PATH, not the reason**, which T21's rule normally forbids: the oracle prints `UNRESOLVED` both when the gate declines a reference and when the target is absent, so no reason string separates them, and a needle carrying the reason is keyed on column padding that moves with the path length. The discriminator is an existence check on the two target files instead. The enumeration below is the original eleven and is kept for the reasoning, not as a census; treat any number in prose here as dated unless it carries a command.
 
 The original eleven genuine breaks that must be reported:
 
