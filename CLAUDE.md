@@ -208,7 +208,7 @@ git diff vX.Y.Z..vX.Y+1.0 -- templates/
 
 # Self-tests, before committing structural changes
 bash tests/lint/run.sh                              # twelve structural rules (12 SKIPS without a local name list)
-bash tests/run-fixtures.sh                          # EVERY sensitivity fixture, ~2m15s (110s of it verify-runner).
+bash tests/run-fixtures.sh                          # EVERY sensitivity fixture, 2m12s measured (112s of it verify-runner).
                                                     # Enumerates tests/fixtures/, so a suite added tomorrow runs
                                                     # tonight; a dir with no run.sh FAILS unless declared not-a-gate
 bash tests/fixtures/<name>/run.sh                   # one suite, while iterating on it

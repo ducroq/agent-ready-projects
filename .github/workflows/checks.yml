@@ -1,6 +1,6 @@
 # Structural lint + every sensitivity fixture, on every push and pull request.
 #
-# WHY (#115): eleven lint rules and thirteen fixture suites existed for months and
+# WHY (#115): twelve lint rules and twelve gating fixture suites existed for months and
 # gated nothing. CLAUDE.md said to run them; running them was a thing someone had
 # to remember, and the choice of WHICH ones to run was the author's — the same act
 # the anti-self-certification constraint is about, one level up. #105/#112 is what
@@ -9,6 +9,7 @@
 #
 # WHAT THIS DOES NOT CHECK, and must never be reported as checking:
 #   - the cross-step contracts between skill steps (#113) — no instrument exists
+#   - rule 12, whose name list is untracked by design: it skips here every time
 #   - anything requiring judgement: /review-changes is still the diff-driven step
 #   - tests/fixtures/review-bench/, which SCORES a review config and has no
 #     pass/fail by design. It is declared a non-gate in tests/run-fixtures.sh
@@ -71,11 +72,15 @@ jobs:
               grep 'SKIPPED' lint.log
               echo '```'
               echo
-              echo "**A skipped rule is not a passed rule.** Two skips are expected here and"
-              echo "neither is a defect: \`memory/\` is gitignored maintainer-local state, so"
-              echo "rule 2 has no index to check, and rule 12's private-name list cannot be"
-              echo "tracked without publishing exactly what it protects. Both are unskippable"
-              echo "locally, where the files exist — CI covers the other ten rules."
+              echo "**A skipped rule is not a passed rule.** Both skips above are expected"
+              echo "and neither is a defect: \`memory/\` is gitignored maintainer-local state,"
+              echo "so rule 2 has no index to check, and rule 12's private-name list cannot be"
+              echo "tracked without publishing exactly what it protects."
+              echo
+              echo "Rule 2 is checkable locally, where \`memory/\` exists. **Rule 12 skips"
+              echo "locally too** for anyone without \`~/.config/agent-ready/private-names\` —"
+              echo "the list is untracked, so the only machine where it runs is one that has"
+              echo "generated it. Giving CI the list via a secret is possible and was not done."
             else
               echo "No rules skipped — all twelve ran."
             fi

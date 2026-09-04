@@ -36,7 +36,8 @@ extract() {
 }
 BODY="$W/body.sh"; extract > "$BODY"
 lines=$(wc -l < "$BODY")
-if [ "$lines" -lt 20 ] || ! grep -q 'check-ignore' "$BODY" || ! grep -q 'MEMORY.md' "$BODY"; then
+if [ "$lines" -lt 20 ] || ! grep -q 'check-ignore' "$BODY" || ! grep -q 'MEMORY.md' "$BODY" \
+   || ! grep -q 'r1_checked=' "$BODY" || ! grep -q 'r2_refs=' "$BODY"; then
   echo "EXTRACTION FAILED: rules 1-2 not found in tests/lint/run.sh (got $lines lines)."
   echo "The rule headers are the anchors — if they were renumbered or reworded, fix this fixture."
   exit 2
@@ -80,15 +81,15 @@ d=$(mkrepo T3); clone_shape "$d"; printf '.claude/*\n' > "$d/.gitignore"
 d=$(mkrepo T7); clone_shape "$d"; printf '/memory/\n.claude/*\n!.claude/skills/\ndocs/generated/\n' > "$d/.gitignore"
 echo 'Built: `docs/generated/out.md`' >> "$d/CLAUDE.md"
 # T4/T5 — the maintainer's shape: memory/ present, so rule 2 must RUN.
-d=$(mkrepo T4); clone_shape "$d"; mkdir -p "$d/memory"
+d=$(mkrepo T4); clone_shape "$d"; mkdir -p "$d/memory"; : > "$d/memory/gotcha-log.md"
 printf 'index\n- `project_gone.md`\n' > "$d/memory/MEMORY.md"
-d=$(mkrepo T5); clone_shape "$d"; mkdir -p "$d/memory"
+d=$(mkrepo T5); clone_shape "$d"; mkdir -p "$d/memory"; : > "$d/memory/gotcha-log.md"
 printf 'index with no pointers\n' > "$d/memory/MEMORY.md"; : > "$d/memory/project_orphan.md"
 # T8 — the index writes its pointers WITH the memory/ prefix, which is how the real
 # one writes all four of them. The original pattern anchored a backtick directly
 # before `project_` and matched none, so this arm checked nothing for its whole life
 # and was green throughout. Found by the coverage line, not by review.
-d=$(mkrepo T8); clone_shape "$d"; mkdir -p "$d/memory"
+d=$(mkrepo T8); clone_shape "$d"; mkdir -p "$d/memory"; : > "$d/memory/gotcha-log.md"
 printf 'index\n- `memory/project_gone.md`\n' > "$d/memory/MEMORY.md"
 # T9 — rule 1 with no CLAUDE.md at all: it must FAIL, not report 0 and pass.
 d=$(mkrepo T9); clone_shape "$d"; rm "$d/CLAUDE.md"
@@ -97,9 +98,18 @@ d=$(mkrepo T10); clone_shape "$d"; printf 'no references here at all\n' > "$d/CL
 # T11 — the pattern-miss shape: topic files on disk, index names them in a form the
 # extractor does not match. The orphan loop passes (it greps the basename), so only
 # the coverage gate catches it.
-d=$(mkrepo T11); clone_shape "$d"; mkdir -p "$d/memory"
+d=$(mkrepo T11); clone_shape "$d"; mkdir -p "$d/memory"; : > "$d/memory/gotcha-log.md"
 printf 'index\n- see project-notes for project_real.md\n' > "$d/memory/MEMORY.md"
 : > "$d/memory/project_real.md"
+# T12 — ⚠️ THE CASE THIS FIXTURE WAS MISSING, and it was missing in the direction
+# that flattered the change: with memory/ PRESENT, a dangling memory/ pointer is a
+# real break — the stale pointer /curate leaves when it renames a topic file. The
+# first exemption exempted it anyway, five seeded repos carried one, and N2 asserted
+# the result was clean. A sensitivity fixture written to justify a loosening was
+# asserting the hole was correct.
+d=$(mkrepo T12); clone_shape "$d"; mkdir -p "$d/memory"; : > "$d/memory/gotcha-log.md"
+printf 'index\n' > "$d/memory/MEMORY.md"
+echo 'Stale: `memory/project_gone_away.md`' >> "$d/CLAUDE.md"
 # T6 — the directory arm of rule 1, untouched by #115 and asserted anyway.
 d=$(mkrepo T6); clone_shape "$d"; echo 'Dir: `docs/nope/`' >> "$d/CLAUDE.md"
 # N1 — the CI shape itself: clean, with rule 2 reporting a SKIP. The `memory/`
@@ -107,7 +117,7 @@ d=$(mkrepo T6); clone_shape "$d"; echo 'Dir: `docs/nope/`' >> "$d/CLAUDE.md"
 # on every real CI run one reference was exempted with nothing counted or printed.
 d=$(mkrepo N1); clone_shape "$d"; echo 'Dir: `memory/`' >> "$d/CLAUDE.md"
 # N2 — the maintainer shape: memory/ present and consistent.
-d=$(mkrepo N2); clone_shape "$d"; mkdir -p "$d/memory"
+d=$(mkrepo N2); clone_shape "$d"; mkdir -p "$d/memory"; : > "$d/memory/gotcha-log.md"
 printf 'index\n- `project_real.md`\n' > "$d/memory/MEMORY.md"; : > "$d/memory/project_real.md"
 # N3 — .claude/skills/ IS tracked (negated in .gitignore); present, so silent.
 d=$(mkrepo N3); clone_shape "$d"; mkdir -p "$d/.claude/skills/curate"
@@ -126,13 +136,14 @@ expect() { # $1 case, $2 output
   case "$c" in
     T1) grep -q 'docs/nowhere.md' <<<"$o" ;;
     T2) grep -q '.claude/skills/curate/SKILL.md' <<<"$o" ;;
-    T3) grep -q 'memory/MEMORY.md' <<<"$o" && [ "$i" -ge 1 ] ;;
+    T3) grep -q 'references `memory/MEMORY.md` but it does not exist' <<<"$o" ;;
     T7) grep -q 'docs/generated/out.md' <<<"$o" ;;
     T4) grep -q 'project_gone.md' <<<"$o" ;;
     T8) grep -q 'project_gone.md' <<<"$o" ;;
     T9) grep -q 'CLAUDE.md is absent' <<<"$o" ;;
     T10) grep -q 'extracted 0 references' <<<"$o" ;;
     T11) grep -q 'extracted 0 index references' <<<"$o" ;;
+    T12) grep -q 'project_gone_away.md' <<<"$o" ;;
     T5) grep -q 'project_orphan.md' <<<"$o" ;;
     T6) grep -q 'docs/nope/' <<<"$o" ;;
     N1) [ "$i" -eq 0 ] && [ "$s" -eq 1 ] && grep -q 'SKIPPED' <<<"$o" \
@@ -142,7 +153,7 @@ expect() { # $1 case, $2 output
     N3) [ "$i" -eq 0 ] ;;
   esac
 }
-CASES="T1 T2 T3 T7 T4 T5 T6 T8 T9 T10 T11 N1 N2 N3"
+CASES="T1 T2 T3 T7 T4 T5 T6 T8 T9 T10 T11 T12 N1 N2 N3"
 declare -A WHY=(
   [T1]="an absent non-maintainer file is still a FAIL"
   [T2]=".claude/skills/ is tracked, so its files are never exempt"
@@ -151,6 +162,7 @@ declare -A WHY=(
   [T4]="rule 2 still catches a dangling index pointer where it can run"
   [T5]="rule 2 still catches an orphan topic file"
   [T6]="the directory arm still fires"
+  [T12]="with memory/ PRESENT a dangling memory/ pointer is a real break, not a fresh-clone artifact"
   [T8]="a pointer written with the memory/ prefix is extracted — it was not, for the arm's whole life"
   [T9]="no CLAUDE.md is a FAIL, not a green run over zero references"
   [T10]="a CLAUDE.md with no references is a FAIL for the same reason"
@@ -188,12 +200,18 @@ ablate() { # $1 label, $2 sed program, $3... kill set
   else printf '  FAIL  ablation %s: expected to kill [%s], killed [%s]\n' "$label" "${want% }" "${got% }"; FAIL=1; fi
 }
 
-# A1 — exempt on prefix alone, dropping the gitignore test. It kills T2 as well as
-# T3: .claude/skills/ matches the .claude/* prefix and is saved ONLY by check-ignore
-# reading .gitignore's negation, which is not obvious from the rule's text.
-ablate A1 's|if git check-ignore -q "$path" 2>/dev/null; then|if true; then|' T2 T3
-# A2 — exempt anything gitignored, dropping the maintainer-dir allowlist.
-ablate A2 's|    memory/\*\|\.claude/\*)|    *)|' T7
+# A1 — the .claude/ arm without its gitignore test. .claude/skills/ matches the
+# .claude/* prefix and is saved ONLY by check-ignore reading .gitignore's negation,
+# which is not visible in the rule's text.
+ablate A1 's|^      if git check-ignore -q "$path" 2>/dev/null; then|      if true; then|' T2
+# A11 — the memory/ arm without its gitignore test, so absence alone exempts.
+ablate A11 's|if \[ ! -d memory \] && git check-ignore -q "$path" 2>/dev/null; then|if [ ! -d memory ]; then|' T3
+# A2 — exempt anything gitignored and absent, dropping the maintainer-dir allowlist.
+# It kills N2 as well as T7: with every path routed into the memory/ arm, the
+# .claude/ arm becomes unreachable, so a populated checkout starts failing on the
+# gitignored .claude/settings.json it is supposed to excuse. The two arms are not
+# independent, which is only visible from the kill set.
+ablate A2 's|^    memory/\*)|    *)|' N2 T7
 # A3 — skip rule 2 without counting it: the run then prints no SKIPPED summary.
 ablate A3 's|  SKIPPED=$((SKIPPED + 1))|  :|' N1
 # A4 — the pre-#115 rule 2: the guard never fires, so an absent index runs the
@@ -208,6 +226,9 @@ ablate A4 's|if \[ ! -f memory/MEMORY.md \]; then|if false; then|' N1
 # which is the argument for asserting kill sets exactly. `,+N` is also a GNU sed
 # extension that BSD sed rejects.
 ablate A5 '/^printf .*directory reference(s) checked/{N;d;}' N1
+# A10 — the first form of the exemption: per-file rather than whole-dir. It is the
+# defect the review found, and T12 is the case that kills it.
+ablate A10 's|if \[ ! -d memory \] && git check-ignore|if git check-ignore|' T12
 # A6 — drop rule 2's coverage line.
 ablate A6 "/index reference(s) and/d" N2
 # A7 — restore the pattern that anchored on the backtick, missing every prefixed

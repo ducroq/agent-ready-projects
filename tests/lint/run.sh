@@ -29,13 +29,33 @@ while IFS= read -r path; do
   r1_checked=$((r1_checked + 1))
   [ -e "$path" ] && continue
   case "$path" in
-    memory/*|.claude/*)
+    # ⚠️ memory/ — the whole DIR must be absent, which is the fresh-clone shape and
+    # the only state this exemption is for. A per-file test was wrong and was
+    # measured wrong: `/memory/` is gitignored wholesale, so EVERY absent memory/
+    # reference was exempt on a fully populated checkout too, and the stale pointer
+    # `/curate` leaves behind when it renames or archives a topic file — this rule's
+    # load-bearing class, still advertised in CLAUDE.md — scanned green. The
+    # loosening had quietly traded the local catch for a clean CI run.
+    memory/*)
+      if [ ! -d memory ] && git check-ignore -q "$path" 2>/dev/null; then
+        r1_exempt=$((r1_exempt + 1)); continue
+      fi ;;
+    # .claude/ cannot use that test: the directory exists in every clone, because
+    # .claude/skills/ is tracked. So it stays per-file, and the residual gap is
+    # DECLARED rather than hidden — a stale pointer to a renamed .claude/ file is
+    # not caught. There are none today (all four exemptions in CI are memory/), and
+    # .claude/skills/ is negated in .gitignore, so its files are never exempt.
+    .claude/*)
       if git check-ignore -q "$path" 2>/dev/null; then
         r1_exempt=$((r1_exempt + 1)); continue
       fi ;;
   esac
   fail "CLAUDE.md references \`$path\` but it does not exist"
-done < <(grep -oE '`[A-Za-z0-9_./-]+\.(md|yml|yaml|json|sh)`' CLAUDE.md | tr -d '`' | sort -u)
+# LC_ALL=C: under the maintainer's en_US.UTF-8, `gotcha-log.md` and `gotcha_log.md`
+# collate equal and `sort -u` drops one — so the population, and the count printed
+# below as evidence, would differ between this machine and CI. No collision exists
+# today (27 references either way); this keeps it that way.
+done < <(grep -oE '`[A-Za-z0-9_./-]+\.(md|yml|yaml|json|sh)`' CLAUDE.md | tr -d '`' | LC_ALL=C sort -u)
 
 while IFS= read -r path; do
   # The two documented maintainer dirs (.claude/, memory/) are gitignored and may be
@@ -53,13 +73,17 @@ while IFS= read -r path; do
                       fi ;;
   esac
   fail "CLAUDE.md references directory \`$path\` but it does not exist"
-done < <(grep -oE '`[A-Za-z0-9_./-]+/`' CLAUDE.md | tr -d '`' | sort -u)
+done < <(grep -oE '`[A-Za-z0-9_./-]+/`' CLAUDE.md | tr -d '`' | LC_ALL=C sort -u)
 printf '      %s file and %s directory reference(s) checked; %s + %s exempt (absent AND gitignored, under .claude/ or memory/)\n' \
   "$r1_checked" "$r1_dirs" "$r1_exempt" "$r1_dir_exempt"
 if [ ! -f CLAUDE.md ]; then
   fail "CLAUDE.md is absent — rule 1 checked nothing"
 elif [ "$r1_checked" -eq 0 ] && [ "$r1_dirs" -eq 0 ]; then
   fail "rule 1 extracted 0 references from CLAUDE.md — it checked nothing"
+elif [ "$r1_checked" -eq 0 ] && [ "$r1_dirs" -gt 0 ]; then
+  # One arm dead while the other works. Rule 2 got this shape and rule 1 did not:
+  # breaking the file regex alone printed `0 file and 17 directory` and exited 0.
+  fail "rule 1 extracted 0 FILE references while $r1_dirs directory reference(s) were found — the file pattern is matching nothing"
 fi
 
 echo "[2/12] memory/MEMORY.md index integrity"
@@ -84,7 +108,7 @@ else
   while IFS= read -r name; do
     r2_refs=$((r2_refs + 1))
     [ -e "memory/$name" ] || fail "memory/MEMORY.md references \`$name\` but it does not exist"
-  done < <(grep -oE '`(memory/)?project_[a-z_]+\.md`' memory/MEMORY.md | tr -d '`' | sed 's|^memory/||' | sort -u)
+  done < <(grep -oE '`(memory/)?project_[a-z_]+\.md`' memory/MEMORY.md | tr -d '`' | sed 's|^memory/||' | LC_ALL=C sort -u)
 
 
   for f in memory/project_*.md; do

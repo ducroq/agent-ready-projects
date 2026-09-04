@@ -6,16 +6,20 @@
 # makes about which of them to bother with. This enumerates the directory instead,
 # so a fixture added tomorrow is run tonight without anyone remembering it.
 #
-# THREE THINGS IT REFUSES TO DO SILENTLY (#115):
-#   1. Report a pass over an empty population — no fixture directories is exit 2.
+# FOUR THINGS IT REFUSES TO DO SILENTLY (#115):
+#   1. Report a pass over an empty OR GUTTED population. No fixture directories is
+#      exit 2; fewer than MIN_GATES executed is a failure. Refusing only the empty
+#      case was the pre-#115 rule-2 silence rebuilt in the file written to close it:
+#      deleting 9 of 13 suites printed "4 of 5 … 0 failed. All fixture suites passed."
+#   1b. Report a pass for a suite that exited 0 having printed nothing.
 #   2. Skip a directory it cannot run. A fixture without run.sh is a FAILURE
 #      unless it is DECLARED below, the same "declared, not guessed" rule lint
 #      rule 11 uses for unparseable blocks.
 #   3. Stop at the first failure. Every suite runs; one red fixture must not hide
-#      the state of the other twelve.
+#      the state of the others.
 #
 # It does NOT stop on the first failure and it does NOT parallelise: the whole
-# set is ~2.5 min wall clock, dominated by verify-runner (~110s), and the
+# set is 2m12s wall clock measured, dominated by verify-runner (112s), and the
 # ordering keeps the log readable.
 set -uo pipefail
 cd "$(dirname "$0")/.." || exit 2
@@ -25,6 +29,11 @@ cd "$(dirname "$0")/.." || exit 2
 # pass/fail by design, and CLAUDE.md says so. Wiring it in as a gate would turn a
 # measurement into a threshold nobody chose.
 NOT_A_GATE=" review-bench "
+
+# A floor, not a target: suites are only ever added, so this rises and never falls
+# without a deliberate edit. Lower it only when a suite is deleted on purpose, and
+# say why in the same commit.
+MIN_GATES=13
 
 total=0; ran=0; failed=0; declared=0
 FAILED_NAMES=""
@@ -67,6 +76,10 @@ if [ "$total" -eq 0 ]; then
   exit 2
 fi
 echo "$ran of $total fixture suite(s) executed; $declared declared not-a-gate; $failed failed."
+if [ "$ran" -lt "$MIN_GATES" ]; then
+  echo "ONLY $ran GATING SUITE(S) RAN, $MIN_GATES expected — the population has been gutted, not passed."
+  exit 1
+fi
 if [ "$failed" -ne 0 ]; then
   echo "FAILED:$FAILED_NAMES"
   exit 1
