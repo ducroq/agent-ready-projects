@@ -54,7 +54,7 @@ Now run `git diff --stat "$BASE"...HEAD`, `git diff --stat` and `git diff --cach
 | Tier | File patterns | Depth |
 |------|-------------|-------|
 | **HIGH** | `templates/**`, `adopt.md`, `/README.md`, `docs/GUIDE.md`, `docs/verification-rationale.md`, `tests/**`, `scripts/**`, `.claude/skills/**`, `.gitignore` | Full battery (3-4 lenses) |
-| **MEDIUM** | `CLAUDE.md`, `docs/**`, `templates/checklists/**`, `templates/physics-tests/**`, `templates/test-fixtures/**` | Two lenses (adversarial + doc-accuracy) |
+| **MEDIUM** | `CLAUDE.md`, `docs/**`, `templates/checklists/**`, `templates/test-fixtures/**` | Two lenses (adversarial + doc-accuracy) |
 | **LOW** | `CHANGELOG.md`, `memory/**`, `docs/work-items/**` | One lens (adversarial) |
 
 `**` crosses directory levels; a leading `/` anchors to the repo root. **The most specific matching pattern wins** — `templates/checklists/foo.md` is MEDIUM, not HIGH, even though `templates/**` also matches it. Where no pattern is more specific than another, take the highest tier.

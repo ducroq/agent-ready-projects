@@ -83,7 +83,7 @@ for d in .claude/skills/*/; do
 done
 
 echo "[5/12] top-level YAML frontmatter closure"
-for f in templates/*.md templates/checklists/*.md templates/physics-tests/*.md memory/*.md; do
+for f in templates/*.md templates/checklists/*.md memory/*.md; do
   [ -f "$f" ] || continue
   [ "$(head -1 "$f")" = '---' ] || continue
   head -30 "$f" | awk 'NR>1 && /^---$/ {found=1; exit} END {exit !found}' \

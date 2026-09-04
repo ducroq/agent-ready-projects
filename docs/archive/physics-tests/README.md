@@ -1,3 +1,15 @@
+> **ARCHIVED 2026-09-04, unproven.** This family shipped in `templates/` for
+> months as 59,124 bytes — **19% of the entire adopter-facing surface** — and by
+> its own status note below it had never been run against a live simulator, not
+> by this repo and not by any downstream consumer. Issue #25 tracked exactly that
+> and was closed without the validation ever arriving. #16 is the precedent: this
+> framework retired the dead-end-log pattern when its gate stayed unmet, rather
+> than keeping it for the look of the thing, and the same disposition applies
+> here. Nothing is deleted — it is one directory away, and moving it back is one
+> `git mv` plus a `--raise-budget` on lint rule 8, which is exactly the
+> deliberate act that should be required. **What un-archives it is one report of
+> it being run against real simulation code.**
+
 # Physics Test Templates
 
 A family of test-scaffolding templates for physics simulation code. Sibling to the LLM-based theory-verification family in [`agent-ready-papers/templates/physics-verification/`](https://github.com/ducroq/agent-ready-papers/tree/master/templates/physics-verification).

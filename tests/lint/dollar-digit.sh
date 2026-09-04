@@ -54,7 +54,7 @@
 # glob let `templates/skills/new.md` escape the rule by being one directory
 # down, while claiming a new skill could not escape by being new.
 # `tests/**` is deliberately out of scope: bash runs those directly, so nothing
-# is substituted. `templates/physics-tests/` carries LaTeX math (`$10^4$`) and is
+# is substituted. The archived physics family carried LaTeX math (`$10^4$`) and was
 # excluded by the SAVE AS predicate, not by depth.
 #
 # Usage: dollar-digit.sh <repo-root>

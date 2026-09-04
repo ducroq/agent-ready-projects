@@ -79,7 +79,6 @@ agent-ready-projects/
 │   ├── test-verify-memory.md  <- Behavioral-test pattern (Phase B/C precedent)
 │   ├── test-fixtures/         <- Fixtures for behavioral tests
 │   ├── checklists/            <- Per-stage validation checklists
-│   ├── physics-tests/         <- Specialized scaffolding (physics simulation)
 │   └── README.md              <- Tool-agnostic naming map
 ├── scripts/                   <- Shipped maintainer/adopter tooling
 │   └── install-global-skills.sh

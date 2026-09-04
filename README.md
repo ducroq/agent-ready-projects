@@ -119,7 +119,7 @@ Ready-to-use starter files in [`templates/`](templates/). Tool-agnostic — rena
 - **[`review-changes.md`](templates/review-changes.md)** — Diff-driven pre-commit review with risk-based lens selection
 - **[`release.md`](templates/release.md)** — Release skill: classify the semver bump, verify preconditions, draft the changelog entry, sync version strings — stops before tagging or pushing
 - **[`coordination.md`](templates/coordination.md)** — Layer 5: contributors, shared constraints, WIP, conventions (multi-contributor projects only)
-- **[`physics-tests/`](templates/physics-tests/)** — Specialized test-scaffolding family for physics simulation code: energy conservation, MMS convergence, intercomparison, conservation logs
+- **[`physics-tests/`](docs/archive/physics-tests/)** — *archived, unproven.* A test-scaffolding family for physics simulation code that never got validated against a live simulator; kept in `docs/archive/` for anyone who wants to run it and report back, not shipped as a template.
 - **[`checklists/`](templates/checklists/)** — Validation checklists for each workflow stage
 
 ## Further Reading
