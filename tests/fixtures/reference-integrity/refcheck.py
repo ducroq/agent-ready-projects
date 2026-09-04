@@ -255,7 +255,7 @@ def _marked_siblings(paragraph, siblings):
       disproves it). Without the strip, `docs/DEPLOY.md` marks a sibling repo
       named `docs` and any broken `docs/X.md` silently resolves next door.
     - **Whole token is bounded by ALPHANUMERICS**, so `-`, `_` and `.` separate:
-      `pipeline-atlas` in prose marks a sibling `atlas`. Open as #119.
+      `data-atlas` in prose marks a sibling `atlas`. Open as #119.
     """
     prose = re.sub(r'`[^`]*`', ' ', paragraph)
     out = []
@@ -289,7 +289,7 @@ def _sibling_hit(frag, siblings, listing, named):
       restore the self-marking failure.
       Measured by a reviewer on a real tree: of the bare basenames extractable
       and absent locally, 207 occurred in more than one sibling repo, and the
-      unrestricted form told `ovr.news` to qualify its own `principes.md`
+      unrestricted form told an adopter to qualify its own `principes.md`
       against a house-renovation repo that happened to sort first. A confident
       wrong answer is worse than a miss, and it is what makes a reader stop
       trusting the step.
@@ -421,7 +421,7 @@ def check(root, sources, sibling_roots=None):
     rung4_runnable = bool(siblings)
     # Walked once per sibling, not once per reference, and LAZILY: a repo with
     # no rung-4 traffic pays nothing. Measured by a reviewer on real trees —
-    # NexusMind 19.7s -> 7.8s, ovr.news >4min (killed) -> 5.8s — because the
+    # adopter A 19.7s -> 7.8s, adopter B >4min (killed) -> 5.8s — because the
     # pre-existing rung 4 re-walked every sibling for every reference.
     #
     # Keyed on the PATH, not on `s.name`. A name-keyed dict silently drops one

@@ -7,9 +7,10 @@ set -u
 cd "$(dirname "$0")/../.."
 
 ISSUES=0
+SKIPPED=0
 fail() { printf 'FAIL  %s\n' "$1"; ISSUES=$((ISSUES + 1)); }
 
-echo "[1/11] CLAUDE.md path references resolve on disk"
+echo "[1/12] CLAUDE.md path references resolve on disk"
 while IFS= read -r path; do
   [ -e "$path" ] || fail "CLAUDE.md references \`$path\` but it does not exist"
 done < <(grep -oE '`[A-Za-z0-9_./-]+\.(md|yml|yaml|json|sh)`' CLAUDE.md | tr -d '`' | sort -u)
@@ -27,7 +28,7 @@ while IFS= read -r path; do
   fail "CLAUDE.md references directory \`$path\` but it does not exist"
 done < <(grep -oE '`[A-Za-z0-9_./-]+/`' CLAUDE.md | tr -d '`' | sort -u)
 
-echo "[2/11] memory/MEMORY.md index integrity"
+echo "[2/12] memory/MEMORY.md index integrity"
 while IFS= read -r name; do
   [ -e "memory/$name" ] || fail "memory/MEMORY.md references \`$name\` but it does not exist"
 done < <(grep -oE '`project_[a-z_]+\.md`' memory/MEMORY.md | tr -d '`' | sort -u)
@@ -38,7 +39,7 @@ for f in memory/project_*.md; do
   grep -qF "$name" memory/MEMORY.md || fail "memory/$name exists but is not referenced in MEMORY.md"
 done
 
-echo "[3/11] skill template embedded SKILL.md frontmatter"
+echo "[3/12] skill template embedded SKILL.md frontmatter"
 for f in templates/*.md; do
   grep -q 'SAVE AS:.*\.claude/skills/' "$f" || continue
   block=$(awk '/<!--/{c=1} c{print} /-->/{c=0}' "$f")
@@ -48,7 +49,7 @@ for f in templates/*.md; do
     || fail "$f: skill template missing \`description:\` in SAVE AS comment"
 done
 
-echo "[4/11] installed skills are loadable"
+echo "[4/12] installed skills are loadable"
 # Rule 3 checks that each template CARRIES installable frontmatter in its SAVE AS
 # comment. It cannot check that an install CONVERTED it. That gap is not theoretical:
 # an adopter repo was found holding all three skills copied verbatim, SAVE AS comment
@@ -81,7 +82,7 @@ for d in .claude/skills/*/; do
     || fail "$f: frontmatter has no non-empty \`description:\` — the agent is never told when to use it"
 done
 
-echo "[5/11] top-level YAML frontmatter closure"
+echo "[5/12] top-level YAML frontmatter closure"
 for f in templates/*.md templates/checklists/*.md templates/physics-tests/*.md memory/*.md; do
   [ -f "$f" ] || continue
   [ "$(head -1 "$f")" = '---' ] || continue
@@ -89,7 +90,7 @@ for f in templates/*.md templates/checklists/*.md templates/physics-tests/*.md m
     || fail "$f: opens with \`---\` but no closing \`---\` within first 30 lines"
 done
 
-echo "[6/11] skill templates and reference installs agree"
+echo "[6/12] skill templates and reference installs agree"
 # Rules 3 and 4 check each side in isolation; neither compares them. Factored into
 # its own script so tests/fixtures/skill-template-sync/ can drive it against seeded
 # drift — a run over this repo finds nothing, which is also what a broken check
@@ -123,7 +124,7 @@ else
 fi
 rm -f "$sync_out" "$sync_err"
 
-echo "[7/11] a skill that provisions a canonical row must quote it"
+echo "[7/12] a skill that provisions a canonical row must quote it"
 # Factored out for the same reason rule 6 is: the check needs a fixture with
 # seeded true positives, and tests/lint/README.md's own "adding a rule" checklist
 # says so. The first draft of this rule was inline, had no fixture, and shipped a
@@ -142,7 +143,7 @@ else
 fi
 rm -f "$pq_out" "$pq_err"
 
-echo "[8/11] adopter-facing templates have not grown"
+echo "[8/12] adopter-facing templates have not grown"
 # The surface nobody measured. curate.md went 11,358 -> 37,971 bytes across
 # eight releases, more than half of it in one session, and the framework had no
 # instrument that would have said so. A ratchet rather than a budget: no
@@ -165,7 +166,7 @@ rm -f "$sz_out" "$sz_err"
 # rule forbids. The first draft died on `$9: unbound variable` under set -u —
 # and printed NOTHING, because the expansion fails before echo emits anything.
 # (`$0` had already expanded to the script path.)
-echo '[9/11] no bare $0-$9 in a skill body'
+echo '[9/12] no bare $0-$9 in a skill body'
 # The one class no runtime check in this repo can reach. Skill ARGUMENTS are
 # substituted into the skill BODY between the file and the model, so a bare
 # `$0` in an embedded awk program ships as the first argument word: #77, where
@@ -189,7 +190,7 @@ else
 fi
 rm -f "$dd_out" "$dd_err"
 
-echo '[10/11] no ablation that cannot kill anything'
+echo '[10/12] no ablation that cannot kill anything'
 # The narrowest of the three shapes reviews keep re-finding, and the only one
 # that is decidable lexically. Two forms: a mutation whose replacement equals its
 # target modulo whitespace, and an ablation declaring an empty kill set. Both
@@ -211,7 +212,7 @@ else
 fi
 rm -f "$vg_out" "$vg_err"
 
-echo '[11/11] no fenced bash block that an adopter copies fails to parse'
+echo '[11/12] no fenced bash block that an adopter copies fails to parse'
 # Rule 11 — #105. `templates/review-changes.md`'s Step 1.5 block carried an ASCII
 # apostrophe inside a single-quoted awk program; the apostrophe closed it and the
 # block was a shell syntax error for eight releases. Nothing here could see it:
@@ -236,7 +237,32 @@ else
 fi
 rm -f "$bp_out" "$bp_err"
 
+echo "[12/12] no private project name in a tracked file"
+# ⚠️ SKIPPED IS NOT A PASS, and here it is the common case: the name list cannot
+# be tracked without publishing exactly what it protects, so it lives outside the
+# repo and an absent list means this rule checked NOTHING. That is reported as a
+# skip and counted as not-run, never folded into "All lint checks passed" — the
+# distinction #33 and rule 6 both exist to preserve.
+pn_out=$(mktemp); pn_err=$(mktemp)
+bash tests/lint/private-names.sh . >"$pn_out" 2>"$pn_err"; pn_rc=$?
+cat "$pn_err"
+if [ $pn_rc -eq 2 ]; then
+  SKIPPED=$((SKIPPED + 1))
+elif [ $pn_rc -gt 2 ]; then
+  fail "rule 12 checker could not run (exit $pn_rc) — this rule checked nothing"
+elif ! grep -q 'name(s) checked against' "$pn_err"; then
+  fail "rule 12 checker produced no coverage line — this rule checked nothing"
+else
+  while IFS= read -r line; do
+    [ -n "$line" ] && fail "$line"
+  done < "$pn_out"
+fi
+rm -f "$pn_out" "$pn_err"
+
 echo
+if [ "${SKIPPED:-0}" -gt 0 ]; then
+  echo "${SKIPPED} rule(s) SKIPPED — see above. A skipped rule is not a passed rule."
+fi
 if [ $ISSUES -eq 0 ]; then
   echo "All lint checks passed."
   exit 0

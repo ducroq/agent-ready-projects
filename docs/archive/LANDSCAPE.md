@@ -136,7 +136,7 @@ This guide was not written from theory. It was developed through iterative testi
 4. Multi-agent audit: three independent agents audited three different projects against the guide
 5. Consolidated feedback applied (duplication nuance, context budgets, retirement patterns)
 6. Cross-referenced against BMAD-METHOD and spec-kit for completeness
-7. Conductor (a predecessor framework by the same author) mined for additional patterns
+7. A predecessor framework by the same author, mined for additional patterns
 
 Each major concept in the guide traces to a specific failure or discovery during this process. See [METHODOLOGY.md](METHODOLOGY.md) for the full development story.
 

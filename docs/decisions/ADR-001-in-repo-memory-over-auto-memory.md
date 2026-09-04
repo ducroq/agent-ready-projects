@@ -17,7 +17,7 @@ Across 28 projects, approximately 75 memory files had accumulated in auto-memory
 
 ### 2. Auto-memory creates orphans
 
-The auto-memory path is derived from the project's filesystem path at the time of creation. Moving, renaming, or accessing a project from a different mount point creates a new auto-memory directory. The old one becomes an orphan — disconnected from the project, invisible, never loaded. This happened with projects accessed from both `C:\local_dev\` and `G:\Mijn Drive\`, producing duplicate memory directories with divergent content.
+The auto-memory path is derived from the project's filesystem path at the time of creation. Moving, renaming, or accessing a project from a different mount point creates a new auto-memory directory. The old one becomes an orphan — disconnected from the project, invisible, never loaded. This happened with projects accessed from both a local drive and a mounted cloud drive, producing duplicate memory directories with divergent content.
 
 ### 3. The "human benefit" heuristic fails in practice
 

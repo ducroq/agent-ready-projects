@@ -275,7 +275,7 @@ for s in $GLOBAL_SKILLS; do
     # the cries-wolf class that v1.15.1 and v1.23.0 each spent a release
     # removing. The exit code is what a hook or wrapper reads; prose is not
     # available to it, so the machine-readable half has to agree with the
-    # human-readable half. Reported by an adopter (ovr.news), v1.24.0 triage.
+    # human-readable half. Reported by an adopter, v1.24.0 triage.
     # Keyed on `$unreleased`, NOT on `$REFUSED`. `REFUSED` is set only on the
     # install path — under `--check` it stays 0, so a guard keyed on it can
     # never fire in the mode this defect was reported in. (The check further

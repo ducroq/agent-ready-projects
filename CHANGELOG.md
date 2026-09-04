@@ -31,6 +31,25 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 ⚠️ **Three of the changes below were refuted by review before shipping, and two of those refutations were of the previous round's fix.** The counts are in each section because the count is the argument: this release contains a false measurement that was caught, a no-op remedy that was caught, and a table split that made an open bug reachable by following the instruction — all authored here, none found by the author.
 
+### Private project names removed from every tracked file, and lint rule 12 to keep them out
+
+**This repo is public and its author works in an estate of private repos.** Six private or local-only project names were in tracked files — in **shipped `templates/`** (`templates/curate.md` used a real private repo as its cross-repo example, and every adopter copies that file), in released `CHANGELOG.md` entries as reporter attributions, in four test fixtures, in `scripts/install-global-skills.sh`, and in an archived positioning doc. **42 occurrences across 10 files.**
+
+⚠️ **`memory/gotcha-log.md` had already recorded this lesson and named the missing piece** — *"Neutral placeholders. Needs a lint rule at the tracked-file boundary, private names from `gh repo list --json name,visibility`"* — one release before it happened again. The entry was right, the rule was never built, and the leak recurred in the release that cites the entry.
+
+**One scheme, applied everywhere**: a private name used as a path component becomes `AdopterRepo`; an attribution becomes *"an adopter"*; a label that must stay distinguishable in a table becomes *adopter A* / *adopter B*; a hyphenated-token example becomes `data-atlas`, which keeps the technical point intact. Every measurement, count and quoted finding is unchanged — only the identities are gone.
+
+⚠️ **Scope, stated plainly: this cleans the current tree only.** The names were pushed in earlier releases, so they remain in this repo's git history, in existing clones and forks, and in every tag from v1.18.0 to v1.36.1. Removing them from history would rewrite every commit SHA and move all release tags, which breaks the 28+ adopters who pin one — **so it was deliberately not done.** Anyone auditing exposure should read that as: current tree clean, history unchanged.
+
+**Lint rule 12** (`tests/lint/private-names.sh`) checks every tracked file against a list of private project names. Two design constraints shaped it, and both are load-bearing:
+
+- ⚠️ **The name list cannot be tracked**, because a tracked denylist of private names publishes exactly what it protects. It lives at `~/.config/agent-ready/private-names` (or `$AGENT_READY_PRIVATE_NAMES`), generated from `gh repo list --visibility` plus any local-only directory that has no GitHub repo at all — **two of the six leaked names were local-only and invisible to `gh`.** An absent list means the rule checked *nothing*, so it reports `SKIPPED`, exits 2, and `run.sh` prints *"N rule(s) SKIPPED — a skipped rule is not a passed rule"* rather than folding it into a green run.
+- **Short and generic names are declared UNCHECKED, not matched.** A private repo called `infra`, `docs` or `research` would match this repo's own prose everywhere; a sweep over 356 estate directory names found the large majority to be ordinary English words. Names under 6 characters, or on an explicit generic list, are reported to stderr so the gap is visible. That trades recall for a usable signal — the same trade `curate`'s dead-reference extractor had to make (#51) — and the four names currently unchecked were verified absent by hand.
+
+⚠️ **The rule reported its own fixture, one commit after it should have.** The first draft's population was `git ls-files` — tracked files only — so a name in a **brand-new** file was invisible until it was committed. It passed clean over the very fixture that contains such a name, then flagged it the moment that fixture was tracked. The population is now tracked **plus untracked-not-ignored**, which is what a pre-commit gate needs; gitignored files stay out, because `memory/` here is maintainer-local and legitimately full of these names. Two ablations pin both halves. Two of the rule's own files also named a private repo in their explanatory comments, which the rule then caught — the check working on its author, at last.
+
+**Measured, not asserted**: `tests/fixtures/private-names/` seeds 4 positives (a name in a shipped template, in an attribution, lowercased inside an agent id — the form that actually reached a released entry — and in an untracked new file), 5 negatives (a deliberately-linked public sibling, `infrastructure` against a repo called `infra`, an untracked file, and one case for each gate), 3 rows asserting the **skip** dispositions are visible, and **8 ablations**. The fixture found a hole in the rule on its first run: the length gate ran before the generic gate, so the generic branch was **unreachable** and two ablations were inert against it. Both gates now have their own seed and their own lethal mutant.
+
 ### Self-test layer — two guards that could not see their own subject
 
 *No adopter-facing change; `templates/` and `.claude/skills/` are untouched by this part.*
@@ -41,7 +60,7 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 **`ablate` now sorts its kill set under `LC_ALL=C`.** A bare `sort` collates by locale, so two case names differing only by a suffix (`X28` vs `X28b`) order differently under `en_US.utf8` than under `C`, and a kill set would silently reorder on someone else's machine. **Defensive, not currently load-bearing** — no kill set in the table today contains a pair that reorders, measured under both locales with identical output. It becomes load-bearing the moment a letter-suffixed case name joins one, which is how it was found.
 
-**#76 is not closed by this and its reopening evidence is refuted** — see the issue. The `<!-- quoted -->` marker form was built, reviewed in five rounds and withdrawn: this repo holds **zero** instances of the class it addresses (`refcheck.py --sibling-root .. . CHANGELOG.md` reports 0 rung-4 resolutions; no `oldpkg` sibling exists, and `NexusMind` is checked out but has no `scripts/x.py`), so the two-instance gate for a new normative convention rests on one adopter estate — the state #76 was originally closed in.
+**#76 is not closed by this and its reopening evidence is refuted** — see the issue. The `<!-- quoted -->` marker form was built, reviewed in five rounds and withdrawn: this repo holds **zero** instances of the class it addresses (`refcheck.py --sibling-root .. . CHANGELOG.md` reports 0 rung-4 resolutions; no `oldpkg` sibling exists, and the one sibling repo that is checked out has no `scripts/x.py`), so the two-instance gate for a new normative convention rests on one adopter estate — the state #76 was originally closed in.
 
 ### `audit-context` Step 4 — a remedy that does not work, and a trap that defeats it (#102)
 
@@ -65,7 +84,7 @@ The table is therefore back to its single row, with the remedy deferred to a bul
 
 ⚠️ **No ablation guards the new N32 block and none can**: `ablate()` scores through `xrun`, which reaches only XCASES against the exit-code tree, never a main-fixture row. A draft cited an "A13" that does not exist. Verified by hand instead — disabling the unmarked rung-4 arm turns both halves red.
 
-**Hedged, not fixed**: rung 4's whole-token rule is bounded by alphanumerics, so `-`, `_` and `.` separate and prose naming `pipeline-atlas` marks a sibling `atlas` (`atlases` correctly does not). Measured; filed as #119. Also filed: #118 (the bare `UNRESOLVED` row #102's reporter actually saw carries no remedy at all) and #120 (the unmarked arm resolves against the first named sibling where the marked arm reports ambiguity).
+**Hedged, not fixed**: rung 4's whole-token rule is bounded by alphanumerics, so `-`, `_` and `.` separate and prose naming `data-atlas` marks a sibling `atlas` (`atlases` correctly does not). Measured; filed as #119. Also filed: #118 (the bare `UNRESOLVED` row #102's reporter actually saw carries no remedy at all) and #120 (the unmarked arm resolves against the first named sibling where the marked arm reports ambiguity).
 
 **Counts**: 27 T, 28 N, 18 XCASES rows, 12 ablations — all re-measured by command. `CLAUDE.md` was stale on two of these before this change, and a draft of the fix replaced one with a differently-wrong number. **Size**: `templates/audit-context.md` 45,516 → 47,838 bytes, baseline updated.
 
@@ -98,7 +117,7 @@ syntax error near unexpected token `rest,'
 
 A third marker form for Step 4 — for a path that is the **subject** of a sentence rather than a reference to a file — was built, reviewed through five rounds, and **withdrawn**. It worked, and on three real repos it changed nothing where no marker was present.
 
-It is not here because its evidence gate is not met. #76 was closed the first time with an explicit condition — *"reopen with a second adopter's instance and it becomes a straightforward convention change"* — and the reopening evidence is refuted: this repo holds **zero** instances of the class. The oracle over our own `CHANGELOG.md` returns 0 rung-4 resolutions, no `oldpkg` sibling exists, and `NexusMind` is on disk but has no `scripts/x.py`. Substituting `<!-- placeholder -->` on both candidate paths gives `declared-placeholder` in a 32-sibling estate *and* an empty one — no stale-marker finding either way, so they fail the class's defining property.
+It is not here because its evidence gate is not met. #76 was closed the first time with an explicit condition — *"reopen with a second adopter's instance and it becomes a straightforward convention change"* — and the reopening evidence is refuted: this repo holds **zero** instances of the class. The oracle over our own `CHANGELOG.md` returns 0 rung-4 resolutions, no `oldpkg` sibling exists, and a sibling repo is on disk but has no `scripts/x.py`. Substituting `<!-- placeholder -->` on both candidate paths gives `declared-placeholder` in a 32-sibling estate *and* an empty one — no stale-marker finding either way, so they fail the class's defining property.
 
 **Shipping a normative convention to every downstream consumer on one estate's evidence is the move #16 was closed for.** Two fixes from that work survive above; the rest is on an unmerged branch. What would close #76 is one instance, on any estate, of a quoted path that *resolves at rung 4* — a single measurable observation, not a survey.
 
@@ -213,7 +232,7 @@ The adopter who reported #101 measured the fix against the one reference their r
 
 The left column is decidable and is now decided; the right column falls through to v1.33.0's disposition unchanged.
 
-⚠️ **This is NOT the rung-4 gate #93 rejected, and the difference is the whole argument.** Rung 4 reads a repo name **out of prose**, which is only recognisable as a repo name when that repo is on disk — so per-reference decidability is not computable. Here the fragment **qualifies itself**: `NexusMind/scripts/x.py` names its repo in the path. No prose is parsed and nothing is inferred.
+⚠️ **This is NOT the rung-4 gate #93 rejected, and the difference is the whole argument.** Rung 4 reads a repo name **out of prose**, which is only recognisable as a repo name when that repo is on disk — so per-reference decidability is not computable. Here the fragment **qualifies itself**: `AdopterRepo/scripts/x.py` names its repo in the path. No prose is parsed and nothing is inferred.
 
 ⚠️ **Residual environment-dependence, stated rather than discovered**: which of *dead* / *undecided* you get still varies with whether the sibling is checked out. What cannot happen is a **false *dead*** from the environment, and a neighbourless CI checkout degrades to exactly v1.33.0's behaviour. ⚠️ **The one way it does go wrong is narrower than this entry first said.** It read *"a shallow or partial sibling checkout"*, which is wrong and was corrected within the hour. **Measured**: `git clone --depth 1` truncates *history*, not the working tree, and `--filter=blob:none` fetches blobs at checkout — both leave every file present, and neither reproduces anything. **Sparse checkout is the only mode that omits files from the working tree**, and there a file present upstream reads as a confirmed dead reference. Now seeded in the fixture as a known, unfixed exposure. The wrong version was written by accepting a plausible mechanism from a peer without running it, in the same session that recorded *state the check before the claim*.
 
@@ -231,7 +250,7 @@ Same adopter: within **hours** of committing a correct `v1.31.0` stamp, the word
 
 ### The better an adopter followed the cross-repo advice, the more phantom defects they got (closes #101)
 
-Reported by **llm-distillery**. The extractor resolved against `git ls-files` **of the current repo**, so every qualified sibling reference — `NexusMind/docs/ARTICLE_RECORD.md`, the form the sibling step *tells authors to write* — was unresolvable by construction. Nine of the twelve were that. It is #55's pressure one check over: following the advice makes the tool worse.
+Reported by an adopter. The extractor resolved against `git ls-files` **of the current repo**, so every qualified sibling reference — `AdopterRepo/docs/ARTICLE_RECORD.md`, the form the sibling step *tells authors to write* — was unresolvable by construction. Nine of the twelve were that. It is #55's pressure one check over: following the advice makes the tool worse.
 
 ⚠️ **The fix is deliberately NOT "resolve against the neighbours"** — that is the environment-dependence #93 took five review rounds to remove. A fragment whose first segment is not a top-level directory of this repo gets its own disposition, `cross-repo or removed top-level dir — not checkable from here`, matching how the sibling step's ladder already treats these.
 
@@ -279,7 +298,7 @@ The read-surface gate command is also corrected: `find | xargs wc -c | tail -1` 
 
 ### Adopter report: the #94 marker rule failed in the release that wrote it
 
-Reported by **llm-distillery**, running `/update-drift` across v1.26.1→v1.31.0.
+Reported by an adopter, running `/update-drift` across v1.26.1→v1.31.0.
 
 ⚠️ **v1.31.0 named marker strings for #52 and #77 and not for #50** — its other adopter-visible change to the same project-local skill. Verified: `nrisk` appears 3× in `templates/review-changes.md` and 0× in the changelog. Without markers, an adopter following `update-drift` Step 3 must record `not verified` for a change worth adopting, or eyeball a 577-line diff — precisely what #94 says a re-mapped adopter cannot do. `nrisk` and the `\001`/`\002` masking pair are now named; `n6_tier_row.md` is a *fixture* name and is not a marker. **This is v1.30.0's "a rule restated in many places, edited in one" one level up**: stated in the changelog and in `templates/release.md` Step 4, and not applied to the release stating it.
 
@@ -340,7 +359,7 @@ Step 1.5 exists for one property — *correct in the diff, wrong when rendered* 
 
 `n6_tier_row.md` seeds that exact shape, and ablation A5 reverts the bold-nesting test to prove it is what holds those 15 lines back. #50 asked for seeded positives *and* negatives before shipping, citing the table check's own 39% false-positive history; that was the right instruction and each draft would have passed a fixture-only check.
 
-⚠️ **Adopter markers for this change, and their absence is the #94 rule failing in the release that wrote it** — reported by an adopter (llm-distillery) running `/update-drift` across v1.26.1→v1.31.0. A current `review-changes` contains **`nrisk`** and the `\001`/`\002` masking pair in the emphasis block. `n6_tier_row.md` is a *fixture* name and appears nowhere in the template, so it is not a marker. Without these, an adopter following `update-drift` Step 3 must record `not verified` for a change worth adopting, or eyeball a 577-line diff — precisely what #94 says a re-mapped adopter cannot do. This release applied its own new rule to #52 and #77 and **not to its other adopter-visible change**. That is v1.30.0's *a rule restated in many places, edited in one*, one level up: stated here and in `templates/release.md` Step 4, and not applied to the release stating it.
+⚠️ **Adopter markers for this change, and their absence is the #94 rule failing in the release that wrote it** — reported by an adopter running `/update-drift` across v1.26.1→v1.31.0. A current `review-changes` contains **`nrisk`** and the `\001`/`\002` masking pair in the emphasis block. `n6_tier_row.md` is a *fixture* name and appears nowhere in the template, so it is not a marker. Without these, an adopter following `update-drift` Step 3 must record `not verified` for a change worth adopting, or eyeball a 577-line diff — precisely what #94 says a re-mapped adopter cannot do. This release applied its own new rule to #52 and #77 and **not to its other adopter-visible change**. That is v1.30.0's *a rule restated in many places, edited in one*, one level up: stated here and in `templates/release.md` Step 4, and not applied to the release stating it.
 
 **No adopter-installed file changed for #95, #96, #97 or #98**, and that is deliberate rather than the #92 shape: all four are oracle-scoped — CLI exit codes, fixture assertions, and a per-row report label no skill text prescribes. #98's other half, the coverage header's universal, already carries its carve-out from v1.29.0.
 
@@ -754,7 +773,7 @@ Recorded because it is a change in kind: this is the first time an adopter-facin
 
 ### `install-global-skills.sh --check` failed daily on a healthy install (closes #49)
 
-`--check` reported an issue and exited **1** whenever a global install matched the **latest release** while the tracked copy had moved past it. On this repo's own machine that is true on any day with an unreleased skill edit — most days during active development — so a correct install failed every time it was checked. The exit code is what a hook or wrapper reads; prose is not available to it, so the machine-readable half has to agree with the human-readable half. Reported by an adopter (ovr.news) during v1.24.0 triage. This is the cries-wolf class that v1.15.1 and v1.23.0 each spent a release removing.
+`--check` reported an issue and exited **1** whenever a global install matched the **latest release** while the tracked copy had moved past it. On this repo's own machine that is true on any day with an unreleased skill edit — most days during active development — so a correct install failed every time it was checked. The exit code is what a hook or wrapper reads; prose is not available to it, so the machine-readable half has to agree with the human-readable half. Reported by an adopter during v1.24.0 triage. This is the cries-wolf class that v1.15.1 and v1.23.0 each spent a release removing.
 
 | state | verdict | exit |
 |---|---|---|
@@ -771,7 +790,7 @@ The summary line does not claim they match the tracked source, because they do n
 
 ### `curate` sub-step 8 named an agent it had not identified, and its verification ran from the wrong cwd (adopter report, #78)
 
-Reported by an adopter (RenkumSpot, pinned v1.18.0) who ran the sub-step by hand and then checked its two prescriptions instead of trusting them. Both were shakier than they read.
+Reported by an adopter (pinned v1.18.0) who ran the sub-step by hand and then checked its two prescriptions instead of trusting them. Both were shakier than they read.
 
 **It named the re-padding agent without identifying one.** The step said to exempt the file from the formatter "otherwise the pre-commit hook re-pads it on the very next commit". The adopter patched `lint-staged`, then ran a control with the patch removed — and found the hook had never touched the file: `lint-staged` applies a config only to files beneath that config's own directory, and theirs lived in `frontend/`, so the root project file had never been in its reach. The control is the only reason a decorative fix did not ship. An unverified mechanism claim in a normative surface is the class the absolutes-in-descriptions constraint targets, and it named a specific agent that a whole family of adopter layouts does not have. The step now says to identify which agent re-pads before claiming one does.
 
@@ -874,7 +893,7 @@ Ablation confirms both directions: neutering the predicate fails **N15** and exi
 
 So a marker on a path that lives in a sibling repo was not a stale marker, not a finding, and not resolvable. It landed in `SKIPPED as declared-placeholder` and **left the checked set permanently** — if that sibling file later moved or was deleted, nothing would report it. The blind spot sat exactly where the convention gets used most: cross-repo references are the population most likely to be marked, because they are the ones that legitimately do not resolve locally.
 
-The **class** was found in an adopter audit (`NexusMind`, 2026-08-17) over 34 marker-form paths. *An earlier draft of this entry said the fix catches the mislabel that motivated it. A non-author review checked, and it does not:* that instance was qualified by hand in the same session that filed #73, so it resolves on `master` today and the new arm never sees it. What the arm does fire on is **17 other paths of the same shape** in that repo, plus the *narration* of the original mislabel. The claim as first written was checkable and false, which is why it is corrected here rather than softened.
+The **class** was found in an adopter audit (2026-08-17) over 34 marker-form paths. *An earlier draft of this entry said the fix catches the mislabel that motivated it. A non-author review checked, and it does not:* that instance was qualified by hand in the same session that filed #73, so it resolves on `master` today and the new arm never sees it. What the arm does fire on is **17 other paths of the same shape** in that repo, plus the *narration* of the original mislabel. The claim as first written was checkable and false, which is why it is corrected here rather than softened.
 
 The fix runs rung 4 for marked paths against **every reachable sibling**, not only prose-named ones — a marked reference typically does not name its repo, which is why the normal rung-4 gate could never fire on it. The finding names the rung and the remedy: qualify the reference instead, because a qualified reference is checked on every run and a marker is never checked again.
 
@@ -882,7 +901,7 @@ The fix runs rung 4 for marked paths against **every reachable sibling**, not on
 
 ### A pre-existing per-reference re-walk made Step 4 close to unusable on a large memory tree
 
-Caching the sibling listings was written to pay for the new arm and turned out to be the larger user-visible change. Rung 4 had been re-walking every sibling tree for **every reference**. Measured by a non-author reviewer on real repositories: **NexusMind 19.7s → 7.8s** (24 docs, 38 siblings), and **ovr.news from over four minutes — killed, not completed — to 5.8s** (100 docs). The cache is lazy, so a repo with no rung-4 traffic pays nothing for it.
+Caching the sibling listings was written to pay for the new arm and turned out to be the larger user-visible change. Rung 4 had been re-walking every sibling tree for **every reference**. Measured by a non-author reviewer on real repositories: **adopter A, 19.7s → 7.8s** (24 docs, 38 siblings), and **adopter B, from over four minutes — killed, not completed — to 5.8s** (100 docs). The cache is lazy, so a repo with no rung-4 traffic pays nothing for it.
 
 It is keyed on the **path**, not the repository name. A name-keyed cache silently drops one of any two siblings sharing a basename, and `sorted(set(...))` breaks the tie in set-iteration order — hash order, randomized per process. The checker's findings then **varied between two runs of the same command**: the reviewer reproduced eight seeds giving two different verdicts on identical input. An oracle that is not reproducible is worse than the gap it closes. No such collision exists on this machine today; it is one `git init` away, and it fails silently in both directions.
 
@@ -926,7 +945,7 @@ A second non-author review — this one a subagent, run after the first reviewer
 
 ### What the non-author review changed, recorded because the first draft shipped none of it
 
-`nexusmind-a9` reviewed this by running it against the repository the class was found in, and returned six defects. Three were blockers: the nondeterministic cache above; rung 4 running **before** rung 3 in the marked arm, which the same file forbids two hundred lines below (marking a runtime-state path flipped its provenance to another repo); and an unrestricted sibling search that told `ovr.news` to qualify its own `principes.md` against a house-renovation repo — a confident wrong answer, produced live, on real data.
+An independent review agent reviewed this by running it against the repository the class was found in, and returned six defects. Three were blockers: the nondeterministic cache above; rung 4 running **before** rung 3 in the marked arm, which the same file forbids two hundred lines below (marking a runtime-state path flipped its provenance to another repo); and an unrestricted sibling search that told one adopter to qualify its own `principes.md` against an unrelated repo — a confident wrong answer, produced live, on real data.
 
 ⚠️ **And one the author had asked about and got the direction wrong on.** T19 reused `scripts/deploy_thing.sh`, which is T4's needle, so T4 became satisfied by T19's finding: a new case turned an existing one **vacuous**, in the same commit whose own T19 had just been rewritten for exactly that weakness. T19 now has its own file. Ablating the prose-naming gate fails T4, T7 and T8 again, matching `master`.
 
@@ -1003,7 +1022,7 @@ The baseline is now the default branch, resolved once in Step 1 and reused by St
 
 Verified across four states: unpushed feature branch, **pushed feature branch** (the defect), the default branch, and a repo with no remote at all.
 
-Reported by an adopter (NexusMind) who hit it on a real PR, where following the instruction literally would have returned "nothing to review" on a diff that a widened review then found **4 blockers** in. This repo hit the same defect twice on the same day and worked around it both times without recognising it — the workaround (`master...HEAD`) is what the fix now prescribes.
+Reported by an adopter who hit it on a real PR, where following the instruction literally would have returned "nothing to review" on a diff that a widened review then found **4 blockers** in. This repo hit the same defect twice on the same day and worked around it both times without recognising it — the workaround (`master...HEAD`) is what the fix now prescribes.
 
 ### Round 3 — #64 was only half fixed, in the place nobody re-read
 
@@ -1173,7 +1192,7 @@ Restating it in characters made it worse, not better. At the ~200 characters the
 |---|---|---|---|---|
 | agent-ready-projects | 34 | 737 | 20% | 2% |
 | agent-ready-papers | 40 | 1,108 | 27% | 2% |
-| llm-distillery | 203 | 1,200 | 35% | 5% |
+| adopter A | 203 | 1,200 | 35% | 5% |
 
 ### And the reason to police it had already gone
 
@@ -1195,7 +1214,7 @@ An ordinary session reads a **median of 3** memory files — from 2,264 real ses
 |---|---|---|---|
 | agent-ready-projects | 118,141 chars | 41,888 | 64% |
 | agent-ready-papers | 244,753 | 95,651 | 60% |
-| llm-distillery | 1,035,845 | 77,375 | **92%** |
+| adopter A | 1,035,845 | 77,375 | **92%** |
 
 Method: *before* is the project file plus every `memory/*.md`; *after* is the project file plus the index, both-level headings, and the Promoted table. The project file is on both sides because four sub-steps read it — it is 24–36KB and dominates the "after". The runner's report and the mtime listing are output rather than reads and are excluded from both.
 
@@ -1208,7 +1227,7 @@ Method: *before* is the project file plus every `memory/*.md`; *after* is the pr
 
 ### The first draft was refuted on ten points; three are worth recording
 
-- **The heading grep was level-blind and missed 105 of 200 entries** in the repo the headline number came from. `llm-distillery` uses `##` for entries and says so in its own file comment. `^### ` returned 94 — a plausible number omitting half the file, including every entry from the preceding two weeks. That is the failure this very sub-step enumerates six times over, committed by the instrument built to avoid it. It also invalidated the evidence: 200 entries not 94, mean entry **1,488** chars not 3,119 (≈7× over spec, not 15×), and 5 headings already carried `[RESOLVED]` where the draft reported none.
+- **The heading grep was level-blind and missed 105 of 200 entries** in the repo the headline number came from. adopter A uses `##` for entries and says so in its own file comment. `^### ` returned 94 — a plausible number omitting half the file, including every entry from the preceding two weeks. That is the failure this very sub-step enumerates six times over, committed by the instrument built to avoid it. It also invalidated the evidence: 200 entries not 94, mean entry **1,488** chars not 3,119 (≈7× over spec, not 15×), and 5 headings already carried `[RESOLVED]` where the draft reported none.
 - **Step 0.3 without the Promoted table is a bulk false-positive generator** — 11 entries in one measured log are recorded resolved in the table with no marker in their heading, so every run would report them lingering, forever. The v1.15.1 failure class.
 - **The convention was written into the skill and none of the artifacts that define it.** An adopter following `templates/gotcha-log.md` or `docs/EXAMPLE.md` would have written body status and been told about it every session.
 
@@ -1258,7 +1277,7 @@ Widening it once was not enough either. The *leading* character class was still 
 
 **Adopter action: run the new runner over your memory files before anything else, and expect it to find things.** In one measured adopter repo every annotation reports ERROR. Read them against the new writing rules — more are affected than you would guess.
 
-> **Clarification added 2026-08-12, after this wording cost an adoption its first triage.** An adopter (ovr.news, 76 annotations, 64 of them in the `… && echo PASS || echo FAIL` shape this framework taught from v1.9.0) drafted a **decline** on the strength of the paragraph above, having concluded that upgrading meant rewriting 64 probes as a precondition. It does not. **All 64 score correctly today** via the deprecated first-line-`FAIL` compatibility rule; nothing breaks, and the rewrite is a recommendation rather than a gate. The decline was reversed only after reading the runner itself rather than this entry.
+> **Clarification added 2026-08-12, after this wording cost an adoption its first triage.** An adopter (76 annotations, 64 of them in the `… && echo PASS || echo FAIL` shape this framework taught from v1.9.0) drafted a **decline** on the strength of the paragraph above, having concluded that upgrading meant rewriting 64 probes as a precondition. It does not. **All 64 score correctly today** via the deprecated first-line-`FAIL` compatibility rule; nothing breaks, and the rewrite is a recommendation rather than a gate. The decline was reversed only after reading the runner itself rather than this entry.
 >
 > The 0-pass/8-error repo cited above is the *worst* case — guards that succeed in silence — not the common one. The common one is the shape this framework taught, and it is handled. If you are triaging this release: the compatibility rule is load-bearing for you, and the upgrade is cheap. A command that succeeds in silence is now reported ERROR rather than passing; `\|` is un-escaped only inside table cells, because outside one it is shell's or awk's escape and not GFM's; and `… && echo PASS || echo FAIL` — the shape this guide itself taught from v1.9.0 — exits 0 on its failure branch, so it was never a failure signal. That last one is caught by a deprecated compatibility rule rather than silently rescored, but the commands still want rewriting.
 
@@ -1270,8 +1289,8 @@ The first draft of this entry said "no adopter has to edit anything to keep work
 
 | Repo | Result |
 |------|--------|
-| `disentangled-infrastructure` | **0 pass, 8 error** — every annotation it has. Its guards are silent on success, which the new rules score ERROR |
-| `llm-distillery` | 26 ran: 12 pass, 9 fail, 5 error, 3 malformed |
+| adopter B | **0 pass, 8 error** — every annotation it has. Its guards are silent on success, which the new rules score ERROR |
+| adopter A | 26 ran: 12 pass, 9 fail, 5 error, 3 malformed |
 
 Nothing breaks and no annotation stops working — but until they are rewritten, one measured adopter's Step 0 reports every claim as broken. That is real adopter action, and under `templates/release.md` rule 1 it is an argument for MAJOR.
 
@@ -1288,7 +1307,7 @@ Six causes, each sufficient on its own, each producing output indistinguishable 
 3. Prose that merely *mentions* the syntax is executed as shell. Of five `verify:` hits in this repo's memory files at the time of filing, **three were prose** — including the gotcha entry documenting a previous extraction bug — and they reported ERROR, the disposition meaning "the verify command may be stale", which invites someone to fix a line of prose.
 4. `[^>]*` extraction truncates at the first `>`, mangling every command with a redirect. This repo's `memory/gotcha-log.md` records that bug **three times**, twice in the same file on the same day.
 5. A table cell's `\|` escapes run as literal `echo` arguments, so the fallback branch is dead code. Found by measuring this repo's own two annotations; both were in this shape.
-6. A command that succeeds in silence has proved nothing, yet exits 0. Inbound from agent-ready-papers/pipeline-atlas, which shipped `ops/run_verifies.sh` for exactly this after finding checks that passed by not running.
+6. A command that succeeds in silence has proved nothing, yet exits 0. Inbound from agent-ready-papers and a sibling estate, which shipped `ops/run_verifies.sh` for exactly this after finding checks that passed by not running.
 
 Sub-step 2 already warns that an empty `git log` means "the check did not run", not "nothing is stale". Sub-step 5 had the same trap one step over, with no warning.
 
@@ -1397,7 +1416,7 @@ Every other check in Step 0 compares the index to something *outside* it: paths 
 
 The founding instance sat in an adopter's index for five days and several `/curate` runs: two entries 28 lines apart, one asserting that a feature renders to readers and one asserting it does not, the second citing the same issue id and instructing the reader not to re-derive it. A probe against the sibling repo settled it in seconds. **A stale entry is wrong; a self-contradicting index is wrong while also carrying its own correction**, so which version an agent acts on depends on read order rather than on evidence — and the `@memory/MEMORY.md` import that `templates/memory-index.md` offers puts both versions into every session's context.
 
-- **The cheap cluster first**: a `grep -on … | sort -u | cut | uniq -d` pipeline lists every identifier cited by more than one *entry*, and those entries get read *together* rather than in place. Three details are load-bearing and each was wrong in the first draft: counting per line rather than per mention (an entry repeating `#34` four times is not a cluster), keeping a qualified id distinct from a bare one (`llm-distillery#76` and a local `#76` are different trackers), and printing a warning when the index is not at the path given — an empty result from a missing file is otherwise indistinguishable from a clean index, the trap sub-step 2 already warns about for `git log`.
+- **The cheap cluster first**: a `grep -on … | sort -u | cut | uniq -d` pipeline lists every identifier cited by more than one *entry*, and those entries get read *together* rather than in place. Three details are load-bearing and each was wrong in the first draft: counting per line rather than per mention (an entry repeating `#34` four times is not a cluster), keeping a qualified id distinct from a bare one (`adopterrepo#76` and a local `#76` are different trackers), and printing a warning when the index is not at the path given — an empty result from a missing file is otherwise indistinguishable from a clean index, the trap sub-step 2 already warns about for `git log`.
 - **Scope, measured honestly.** Across all 31 memory indexes on the author's machine the identifier pass returns 0–21 clusters, not the 3–12 of the four repos first sampled. And it is only the cheap half: clustering by *entity* is a pairwise read of the whole index with no bound but the index's size. The step now says which half to cut short, and at what size.
 - **Then by entity** — a repo, a path, a component, a host — asking "can all of these hold at once", not "is each plausible", which is what reading them in place amounts to.
 - **The contradicting pair is reported verbatim and left unresolved** unless a probe settles it. The more emphatic entry is not the more likely one: in the founding instance the false entry was the emphatic one *and* the one that told the reader not to check.

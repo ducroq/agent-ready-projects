@@ -656,7 +656,7 @@ fi
 #
 # The second holds on any day with an unreleased skill edit, so --check returned
 # failure daily for a healthy install — the cries-wolf class v1.15.1 and v1.23.0
-# each spent a release removing. Reported by an adopter (ovr.news).
+# each spent a release removing. Reported by an adopter.
 #
 # Both cases share a tree that is AHEAD of the tag; they differ only in what the
 # destination holds. If the exit codes ever agree again, one of them fails.

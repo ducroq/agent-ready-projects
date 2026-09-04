@@ -2,9 +2,9 @@
 # Regenerate with: bash tests/lint/size-ratchet.sh . --update
 # Growth fails. Shrinkage fails until locked in here, so this file only goes down.
 templates/adr.md	2115
-templates/audit-context.md	47838
+templates/audit-context.md	47833
 templates/coordination.md	3909
-templates/curate.md	61365
+templates/curate.md	61366
 templates/gotcha-log.md	4886
 templates/hypothesis-log.md	3570
 templates/memory-index.md	3396

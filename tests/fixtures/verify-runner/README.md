@@ -29,7 +29,7 @@ its own, each seeded here:
 
 Causes 1 and 2 are the issue as filed; 3 and 4 arrived on it later; 5 was found
 by measuring this repo's own annotations; 6 came in from
-agent-ready-papers/pipeline-atlas, which shipped `ops/run_verifies.sh` for it.
+agent-ready-papers and a sibling estate, which shipped `ops/run_verifies.sh` for it.
 
 ## The runner is extracted, not copied
 
@@ -248,7 +248,7 @@ executing as shell:
 
 The round-3 lens also measured the shipped runner against real adopter memory
 trees, which is what the hostile-repo rule asks for and what no fixture can
-substitute for. `disentangled-infrastructure` reports **0 pass, 8 error** — every
+substitute for. adopter B reports **0 pass, 8 error** — every
 annotation it has — because its guards are silent by design. That is the
 `no output → ERROR` rule meeting four months of annotations written before it
 existed, and it is the reason this release's adopter action is not "none".

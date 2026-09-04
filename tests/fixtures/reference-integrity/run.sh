@@ -128,7 +128,7 @@ declare -a NEG=(
   "N22 marked qualified path, no neighbour named, stays excused|docs/RUNBOOK.md"
   # #73 — the unconditional walk drops rung 4's prose-naming gate, so a bare
   # basename gets pinned on whichever neighbour sorts first. Measured on an
-  # adopter: ovr.news's own `principes.md` was attributed to an unrelated
+  # adopter: one adopter's own `principes.md` was attributed to an unrelated
   # house-renovation repo, with instructions to qualify the reference against
   # it. A confident wrong provenance is worse than a miss.
   "N18 marked bare basename with NO neighbour named stays excused|orphan_note.md"

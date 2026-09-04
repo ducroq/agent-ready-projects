@@ -94,7 +94,7 @@ for doc in sys.argv[1:]:
         # and four of them were in this framework's own project file on first run.
         if '<' in frag or '*' in frag:
             skip.append((doc, frag, 'placeholder or glob, not a literal path')); continue
-        # CROSS-REPO. A qualified sibling reference — `NexusMind/docs/X.md` — is
+        # CROSS-REPO. A qualified sibling reference — `AdopterRepo/docs/X.md` — is
         # the form the sibling step tells authors to WRITE, so the better an
         # adopter follows that advice the more phantom dead references a
         # repo-local check invents: measured on one adopter, 12 dead reported and
@@ -124,7 +124,7 @@ for doc in sys.argv[1:]:
             # the whole argument: rung 4 reads a repo NAME OUT OF PROSE, which is
             # only recognisable as a repo name when that repo is on disk, so
             # per-reference decidability is not computable. Here the FRAGMENT
-            # QUALIFIES ITSELF — `NexusMind/scripts/x.py` names its repo in the
+            # QUALIFIES ITSELF — `AdopterRepo/scripts/x.py` names its repo in the
             # path — so no prose is parsed and nothing is inferred.
             #
             # ⚠️ Residual environment-dependence, stated: which of `dead` /
@@ -434,7 +434,7 @@ PY
      grep -onE '[A-Za-z0-9_.-]*#[0-9]+' "$idx" | sort -u | cut -d: -f2- | sort | uniq -d
      ```
 
-     `-o` with `-n` and `sort -u` counts an id **once per line**, so an entry that repeats `#34` four times is not a cluster of one. The optional prefix keeps a qualified id distinct: `llm-distillery#76` and a local `#76` are different trackers and must not be reconciled with each other. Read the surviving entries *together*, not in place. Known false positive: a six-digit hex colour reads as an id — discard it on sight. **An empty result with no index at that path is not a clean index**, which is why the guard prints rather than staying silent.
+     `-o` with `-n` and `sort -u` counts an id **once per line**, so an entry that repeats `#34` four times is not a cluster of one. The optional prefix keeps a qualified id distinct: `adopterrepo#76` and a local `#76` are different trackers and must not be reconciled with each other. Read the surviving entries *together*, not in place. Known false positive: a six-digit hex colour reads as an id — discard it on sight. **An empty result with no index at that path is not a clean index**, which is why the guard prints rather than staying silent.
    - **The idea generalises to any stable identifier — the command does not.** For `ADR-023`, `GH-88` or `PROJ-45`, change the pattern (`[A-Za-z]+-[0-9]+`) and re-check what it matches before trusting the output.
    - **Then cluster by entity**: a repo, a file path, a component, a host. For each cluster ask one question — can all of these hold at once? Not "is each plausible", which is what reading them in place amounts to. **This half is a pairwise read of the whole index and is not bounded by anything but the index's size**, so it is the half to cut short when the index is large; the identifier pass above is the one that is cheap enough to run every session.
    - **Distinguish a contradiction from a recorded correction.** An entry that *names* the claim it supersedes and dates it — "this row asserted the opposite until 2026-08-11 and was false" — is correct practice, not a defect; the index is allowed to remember being wrong. A contradiction is two entries each asserting their version *without reference to the other*, so a reader has no way to tell which came second. If you cannot tell, say so and surface both.
