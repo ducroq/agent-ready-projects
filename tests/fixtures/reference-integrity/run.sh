@@ -619,6 +619,53 @@ else
   printf '  FAIL  X10 the main run scanned %s neighbours, not 3 — a fixture tree is leaking into the rung-4 search\n' "$N_SIB"; FAIL=1
 fi
 
+# --- #119 / #120 — rung 4 provenance, in an ISOLATED estate. -----------------
+# Isolated because both cases need two siblings whose names share a
+# hyphen-delimited component, and adding those to $WORK would change the main
+# run's neighbour count and trip X10.
+#
+# X10's own comment already recorded both bugs from the other side: `repo` was
+# marked by all 13 prose mentions of `sibling-repo` because a hyphen was a token
+# boundary (#119), and "it sorted first and the rung-4 loop breaks on the first
+# hit" (#120). These rows are what would have caught them.
+P="$WORK/prov"
+mkdir -p "$P/repo" "$P/alpharepo/scripts" "$P/beta-alpharepo/scripts"
+for d in "$P/repo" "$P/alpharepo" "$P/beta-alpharepo"; do mkdir -p "$d/.git"; done
+: > "$P/alpharepo/scripts/only_in_alpha.py"
+: > "$P/alpharepo/scripts/twin.py"
+: > "$P/beta-alpharepo/scripts/twin.py"
+
+# T30 — prose names ONLY beta-alpharepo; the file exists only in alpharepo.
+printf 'The beta-alpharepo checkout owns this:\n`scripts/only_in_alpha.py`\n' \
+  > "$P/repo/h1.md"
+# T31 — both siblings hold the same file and prose names both.
+printf 'Both beta-alpharepo and alpharepo hold it:\n`scripts/twin.py`\n' \
+  > "$P/repo/h2.md"
+
+PROV="$(python3 refcheck.py --sibling-root "$P" "$P/repo" h1.md h2.md 2>&1 || true)"
+
+if printf '%s' "$PROV" | grep -qF -- 'sibling alpharepo -> scripts/only_in_alpha.py'; then
+  printf '  FAIL  T30 a hyphen-separated component still marks a different sibling (#119)\n'; FAIL=1
+else
+  printf '  PASS  T30 prose naming beta-alpharepo does not mark the sibling alpharepo (#119)\n'
+fi
+
+if printf '%s' "$PROV" | grep -qF -- 'AMBIGUOUS (2 siblings match'; then
+  printf '  PASS  T31 the UNMARKED arm reports cross-sibling ambiguity (#120)\n'
+else
+  printf '  FAIL  T31 the unmarked arm picked a single provenance instead of reporting ambiguity (#120)\n'; FAIL=1
+fi
+
+# N33 — the fix must not cost the ordinary case: a sibling named in bare prose,
+# whole word, still marks. Without this, "never mark anything" scores 2/2 above.
+printf 'The alpharepo repo owns this:\n`scripts/only_in_alpha.py`\n' > "$P/repo/h3.md"
+PROV3="$(python3 refcheck.py --sibling-root "$P" "$P/repo" h3.md 2>&1 || true)"
+if printf '%s' "$PROV3" | grep -qF -- 'sibling alpharepo -> scripts/only_in_alpha.py'; then
+  printf '  PASS  N33 a whole-word sibling name in bare prose still resolves\n'
+else
+  printf '  FAIL  N33 the #119 fix broke ordinary rung-4 resolution\n'; FAIL=1
+fi
+
 # --- Ablations. Committed rather than described, because the prose form of this
 # claim was refuted twice by reviewers who reconstructed the mutants and got a
 # different row count under an equally natural reading. A mutant's exact text is

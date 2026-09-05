@@ -254,13 +254,24 @@ def _marked_siblings(paragraph, siblings):
       "backticked paths" until then, four lines above the `re.sub` that
       disproves it). Without the strip, `docs/DEPLOY.md` marks a sibling repo
       named `docs` and any broken `docs/X.md` silently resolves next door.
-    - **Whole token is bounded by ALPHANUMERICS**, so `-`, `_` and `.` separate:
-      `data-atlas` in prose marks a sibling `atlas`. Open as #119.
+    - **Whole token treats `-` and `_` as WORD characters, not separators**
+      (#119, fixed 2026-09-05). They had been separators, so prose naming
+      `beta-alpharepo` marked a sibling `alpharepo` and a reference resolved against
+      a repo the prose never mentioned — a confident wrong provenance, which
+      this step's own text calls worse than a miss. X10 in the runner records
+      the same bug biting from the other side: `repo` was marked by all 13
+      prose mentions of `sibling-repo`.
+      ⚠️ **`.` is deliberately still a separator.** Adding it would stop a
+      sibling `alpharepo` being marked by a sentence ending "we use alpharepo." —
+      the common case. The residual gap is prose writing `pipeline.alpharepo`,
+      which is rare and errs toward a miss rather than a wrong answer.
+      ⚠️ The new class costs recall in one shape, knowingly: a sibling `alpharepo`
+      mentioned as "alpharepo-based" no longer marks. A miss is the safe direction.
     """
     prose = re.sub(r'`[^`]*`', ' ', paragraph)
     out = []
     for s in siblings:
-        if re.search(r'(?<![A-Za-z0-9])' + re.escape(s.name) + r'(?![A-Za-z0-9])',
+        if re.search(r'(?<![A-Za-z0-9_-])' + re.escape(s.name) + r'(?![A-Za-z0-9_-])',
                      prose, re.IGNORECASE):
             out.append(s)
     return out
@@ -748,7 +759,16 @@ def check(root, sources, sibling_roots=None):
 
                 # rung 4 — marked cross-repo, suffix-matched inside the sibling,
                 # carrying rung 2's collision rule with it.
+                # #120 — every named sibling is examined, and the loop no
+                # longer BREAKS on the first hit. It did until 2026-09-05, so
+                # two siblings holding the same file produced a confident single
+                # provenance chosen by sort order, while the MARKED arm reported
+                # the ambiguity on identical input. The asymmetry ran backwards:
+                # marking a reference made the tool careful, leaving it alone got
+                # a guess. Line 99 of templates/audit-context.md already required
+                # this of both arms.
                 claim = None
+                per_sibling = []
                 for s in named_siblings():
                     cands = [frag]
                     head, _, tail = frag.partition('/')
@@ -768,8 +788,15 @@ def check(root, sources, sibling_roots=None):
                         claim = (f'COLLISION ({len(hits)} matches in {s.name})', True)
                         break
                     if hits:
-                        claim = (f'sibling {s.name} -> {hits[0]}', False)
-                        break
+                        per_sibling.append((s.name, hits[0]))
+                if claim is None and per_sibling:
+                    if len(per_sibling) > 1:
+                        where = ', '.join(f'{n} -> {h}' for n, h in per_sibling)
+                        claim = (f'AMBIGUOUS ({len(per_sibling)} siblings match: '
+                                 f'{where}) — no single provenance', True)
+                    else:
+                        n, h = per_sibling[0]
+                        claim = (f'sibling {n} -> {h}', False)
                 if claim:
                     (findings if claim[1] else resolved_weak).append((src, frag, claim[0]))
                     continue
