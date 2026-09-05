@@ -619,6 +619,44 @@ else
   printf '  FAIL  X10 the main run scanned %s neighbours, not 3 — a fixture tree is leaking into the rung-4 search\n' "$N_SIB"; FAIL=1
 fi
 
+# --- #118 — the UNRESOLVED row must say WHICH situation it is. ----------------
+# #102's reporter met four bare `UNRESOLVED` rows on qualified cross-repo paths,
+# could not tell which of several situations they were in, inferred a matching
+# bug and filed against the matcher. The matcher was fine; the message was empty.
+U="$WORK/unres"; mkdir -p "$U/repo/.git" "$U/neighbour/scripts"
+mkdir -p "$U/neighbour/.git"
+: > "$U/neighbour/scripts/contract_check.py"
+# T33 — the sibling IS on disk; the prose never names it in bare text.
+printf 'See `neighbour/scripts/contract_check.py` for the check.\n' > "$U/repo/u1.md"
+# N36 — nothing of that name is reachable. This gets the BARE word, because the
+# state is indistinguishable from a plain local break (`docs/gone.md` in a repo
+# with no docs/). A draft diagnosed it anyway; N35 caught that and the branch was
+# removed. Kept as a NEGATIVE so the branch cannot come back.
+printf 'See `absentrepo/scripts/gone.py` for the check.\n' > "$U/repo/u2.md"
+UOUT="$(python3 refcheck.py --sibling-root "$U" "$U/repo" u1.md u2.md 2>&1 || true)"
+
+if printf '%s' "$UOUT" | grep -q 'is on disk but the prose never names it'; then
+  printf '  PASS  T33 UNRESOLVED names the declined-gate case and its remedy (#118)\n'
+else
+  printf '  FAIL  T33 the UNRESOLVED row still carries no remedy for a reachable sibling (#118)\n'; FAIL=1
+fi
+if printf '%s' "$UOUT" | grep -F 'absentrepo/scripts/gone.py' | grep -qE 'UNRESOLVED$'; then
+  printf '  PASS  N36 an unreachable head keeps the bare word — undiagnosable, so unremedied\n'
+else
+  printf '  FAIL  N36 an unreachable head was diagnosed; it cannot be told from a local break (#118)\n'; FAIL=1
+fi
+
+# N35 — the CONTROL. A plain local break must keep the BARE word: a remedy
+# invented for a situation not actually diagnosed is worse than silence, and this
+# step already has a scar from a printed remedy that failed when followed (#102).
+printf 'A local file: `docs/definitely_absent.md`\n' > "$U/repo/u3.md"
+UOUT3="$(python3 refcheck.py --sibling-root "$U" "$U/repo" u3.md 2>&1 || true)"
+if printf '%s' "$UOUT3" | grep -F 'definitely_absent.md' | grep -qE 'UNRESOLVED$'; then
+  printf '  PASS  N35 a plain local break still reports a bare UNRESOLVED\n'
+else
+  printf '  FAIL  N35 a local break was given a cross-repo remedy it cannot use\n'; FAIL=1
+fi
+
 # --- #108 — a source file under a state directory is still source. ------------
 # Reported by an adopter running /audit-context with seeded positives: two
 # fabricated SOURCE names under data/ were both excused as "runtime state" and
@@ -755,7 +793,11 @@ X20N="X20 marked path resolving doc-relative is MISLABELLED, no neighbour"
 # the mutants instead of describing them.
 ablate "A1 revert the split"        "if confirmed or missing:" "if findings or missing:"      "$X4N"
 ablate "A2 exit 0 when unconfirmed" "rc, verdict = 2, ('COVERAGE" "rc, verdict = 0, ('COVERAGE" "$X4N,$X9N"
-ablate "A3 everything unconfirmed"  "'UNRESOLVED' if rung4_runnable else UNCONFIRMED" "UNCONFIRMED" "$X3N"
+# #118 moved this site: the ternary now selects between a DIAGNOSED reason
+# string and UNCONFIRMED, so the mutant text changed with it. The fixture
+# refused to apply the old mutant rather than silently passing — which is
+# the whole point of asserting that an ablation could be applied at all.
+ablate "A3 everything unconfirmed"  "why if rung4_runnable else UNCONFIRMED" "UNCONFIRMED" "$X3N"
 ablate "A4 drop the unread arm"     "if confirmed or missing:" "if confirmed:"                "$X7N"
 # A5, A6 and A7 each widened when a row was added below them, and A5 and A6
 # widened AGAIN when round 5 added X17-X20 (A5 gains X20, A6 gains X18). Recorded rather

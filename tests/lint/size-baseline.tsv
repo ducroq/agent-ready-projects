@@ -2,10 +2,10 @@
 # Regenerate rows with: bash tests/lint/size-ratchet.sh . --update
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and is recorded below.
-# BUDGET 246501
-# ratcheted down 2026-09-05
+# BUDGET 246760
+# RAISED 2026-09-05 from 246501 to 246760: 2026-09-05 FOURTH raise, +259, for #118's remedy note in audit-context Step 4. It documents behaviour an adopter now SEES: the UNRESOLVED row names the declined-gate case, and stays bare where the state is undiagnosable. Tightened once (397 -> 259) before raising. Session net: raises of 1012/641/393/259 against ratchet-downs to 246110 and 246501, so the surface is far below the sum of the raises. #131 still stands: docs/ is outside this budget.
 templates/adr.md	2115
-templates/audit-context.md	42714
+templates/audit-context.md	42973
 templates/checklists/architect-checklist.md	1263
 templates/checklists/implement-checklist.md	1329
 templates/checklists/qa-checklist.md	1836

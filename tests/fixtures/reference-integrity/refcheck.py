@@ -835,8 +835,39 @@ def check(root, sources, sibling_roots=None):
                 # every unresolved reference, and when rung 4 could not run say so on
                 # each one, so no finding is presented as a confirmed break on the
                 # strength of a check that never executed.
+                # #118 — a bare `UNRESOLVED` is the row an adopter meets in
+                # QUANTITY on a qualified cross-repo path, and it is the only
+                # adjudicating outcome in this step that names no rung and no
+                # remedy. #102's reporter saw four of them, could not tell which
+                # of several quite different situations they were in, inferred a
+                # matching bug, and filed against the matcher. The matcher was
+                # fine. Say which situation it is when the shape is diagnosable:
+                #
+                #   (a) the head looks like a repo name, a sibling of that name
+                #       IS reachable, but the prose never named it in bare text
+                #       — the gate declined it, and the fix is one sentence.
+                # ⚠️ ONLY (a). A second branch was written for "the head looks
+                # like a repo name and no such sibling is reachable" and was
+                # REMOVED, because that state is indistinguishable from a plain
+                # local break: `docs/gone.md` in a repo with no `docs/` directory
+                # matches it exactly, and the draft handed that a cross-repo
+                # remedy the author could not use. Seeded as N35, which caught it.
+                # A remedy invented for a situation not actually diagnosed is
+                # worse than silence, and this step already carries a scar from a
+                # printed remedy that did not work when followed (#102).
+                why = 'UNRESOLVED'
+                if rung4_runnable:
+                    head, sep, _ = frag.partition('/')
+                    if sep and not (root / head).is_dir():
+                        sib = next((x for x in siblings
+                                    if x.name.lower() == head.lower()), None)
+                        if sib is not None:
+                            why = ('UNRESOLVED (sibling `%s` is on disk but the '
+                                   'prose never names it in bare text — name it '
+                                   'in a line either side, outside backticks)'
+                                   % head)
                 findings.append((src, frag,
-                                 'UNRESOLVED' if rung4_runnable else UNCONFIRMED))
+                                 why if rung4_runnable else UNCONFIRMED))
 
     tree_ext = {p.suffix.lstrip('.').lower() for p in _tree(root) if p.suffix}
     known = set(EXT.split('|'))
