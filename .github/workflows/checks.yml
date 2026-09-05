@@ -32,6 +32,14 @@ name: checks
 # protocol pushes a tag at a commit CI has already tested, so the extra run is
 # redundant rather than wrong, and suppressing it would need a filter that could
 # also suppress a first-push-of-a-branch.
+#
+# ⚠️ KNOWN COST of skipping same-repo PR runs, stated rather than discovered:
+# `push` tests the BRANCH TIP, never `refs/pull/N/merge` — the merge result. A
+# branch that is green alone can still break against a moved base, and nothing
+# here would catch it. Accepted because this repo merges locally, so the merge
+# commit is tested by the push that follows it. ⚠️ **If these are ever made
+# REQUIRED checks on a PR, this is wrong twice**: the jobs will not run, and a
+# required check that never runs sits pending forever. Revisit then, not before.
 on:
   push:
   pull_request:

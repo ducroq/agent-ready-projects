@@ -116,18 +116,28 @@ STATE_SHAPE = re.compile(r'(_state\.json|_health\.json|\.pid|\.sock)$')
 # `data/nope_not_real.json.py` were both excused as runtime state and the run
 # reported CLEAN. The check disagreed with its own spec, losing sensitivity.
 #
-# ⚠️ Extensions only, not a content test. The residual gap is a GENERATED source
-# file that is genuinely runtime output — `data/schema_pb2.py`, say — which now
-# reports rather than being excused. That is the safe direction: a false finding
-# is visible and arguable, an excused real break is neither. Data extensions
-# (.json, .csv, .db, .log …) are untouched, so the ordinary case still resolves.
+# ⚠️ Extensions only, not a content test — and the list is DELIBERATELY SHORT.
+# A first version included `.ts .js .php .c .h` and a comment claiming the only
+# residual gap was a generated `data/schema_pb2.py`. That claim was unmeasured
+# and wrong: review produced three ordinary real-world runtime paths it broke —
+#   var/cache/prod/App_KernelProdContainer.php   Symfony's compiled container
+#   data/segment0001.ts                          MPEG transport stream, not TypeScript
+#   cache/bundle.js                              bundler cache output
+# All three went from `runtime state` to a bare UNRESOLVED, which is exactly the
+# unactionable row #118 exists to reduce, since their heads (`var`, `data`,
+# `cache`) exist locally so #118's hint cannot fire either. An extension whose
+# meaning depends on the ecosystem is not evidence of source.
+#
+# So: only extensions with no common data or build-artifact meaning. Anything
+# ambiguous stays excused — losing sensitivity for the adopter's actual reported
+# case (`.py` under `data/`) is not worth manufacturing findings on real state.
 #
 # ⚠️ NOT applied to check_legacy(), which reproduces v1.15.0 faithfully so the
 # changelog's "before" number stays re-derivable from the same instrument. Its
 # arm is written `elif`, which is what distinguishes the three call sites.
-SOURCE_EXT = ('.py', '.sh', '.bash', '.zsh', '.js', '.ts', '.tsx', '.jsx',
-              '.rs', '.go', '.java', '.rb', '.php', '.c', '.h', '.cpp', '.hpp',
-              '.cs', '.kt', '.swift', '.vue', '.svelte', '.proto')
+SOURCE_EXT = ('.py', '.sh', '.bash', '.zsh', '.rs', '.go', '.java', '.rb',
+              '.cpp', '.hpp', '.cs', '.kt', '.swift', '.vue', '.svelte',
+              '.proto', '.jsx', '.tsx')
 
 
 def _is_source_file(frag):
@@ -280,16 +290,19 @@ def _marked_siblings(paragraph, siblings):
       "backticked paths" until then, four lines above the `re.sub` that
       disproves it). Without the strip, `docs/DEPLOY.md` marks a sibling repo
       named `docs` and any broken `docs/X.md` silently resolves next door.
-    - **Whole token treats `-` and `_` as WORD characters, not separators**
-      (#119, fixed 2026-09-05). They had been separators, so prose naming
+    - **Whole token treats `-` as a WORD character, not a separator**
+      (#119, fixed 2026-09-05). It had been a separator, so prose naming
       `beta-alpharepo` marked a sibling `alpharepo` and a reference resolved against
       a repo the prose never mentioned — a confident wrong provenance, which
       this step's own text calls worse than a miss. X10 in the runner records
       the same bug biting from the other side: `repo` was marked by all 13
       prose mentions of `sibling-repo`.
-      ⚠️ **`.` is deliberately still a separator.** Adding it would stop a
+      ⚠️ **`.` and `_` are deliberately still separators.** `.` would stop a
       sibling `alpharepo` being marked by a sentence ending "we use alpharepo." —
-      the common case. The residual gap is prose writing `pipeline.alpharepo`,
+      the common case. `_` was included in a first version and REMOVED: review
+      showed it broke ordinary markdown emphasis, so `_alpharepo_` — standard
+      italics — stopped marking the sibling it names. A repo name containing an
+      underscore is rarer than italics around one. The residual gap is prose writing `pipeline.alpharepo`,
       which is rare and errs toward a miss rather than a wrong answer.
       ⚠️ The new class costs recall in one shape, knowingly: a sibling `alpharepo`
       mentioned as "alpharepo-based" no longer marks. A miss is the safe direction.
@@ -297,7 +310,7 @@ def _marked_siblings(paragraph, siblings):
     prose = re.sub(r'`[^`]*`', ' ', paragraph)
     out = []
     for s in siblings:
-        if re.search(r'(?<![A-Za-z0-9_-])' + re.escape(s.name) + r'(?![A-Za-z0-9_-])',
+        if re.search(r'(?<![A-Za-z0-9-])' + re.escape(s.name) + r'(?![A-Za-z0-9-])',
                      prose, re.IGNORECASE):
             out.append(s)
     return out
@@ -836,6 +849,13 @@ def check(root, sources, sibling_roots=None):
                             if h not in hits:
                                 hits.append(h)
                     if len(hits) > 1:
+                        # ⚠️ Declared limit: this breaks, so later siblings are not
+                        # examined and any per_sibling already collected is dropped.
+                        # Two repos holding the path where one ALSO has an internal
+                        # collision reports only that one. Left as is — both outcomes
+                        # say "no single provenance", which is the actionable part,
+                        # and enumerating the rest would not change what the author
+                        # does. Recorded so it is not rediscovered as a bug.
                         claim = (f'COLLISION ({len(hits)} matches in {s.name})', True)
                         break
                     if hits:

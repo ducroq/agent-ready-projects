@@ -700,6 +700,22 @@ for f in fabricated_source.py nope_not_real.json.py; do
   fi
 done
 
+# N37 — the CONTROLS review had to supply, because the first SOURCE_EXT list was
+# too broad and its comment claimed the residual gap was narrow. It was not:
+# these three are ordinary real-world runtime state whose extensions have a
+# source meaning in some other ecosystem. All three regressed to bare UNRESOLVED
+# rows — the unactionable shape #118 exists to reduce, and #118's hint cannot
+# fire for them because their heads exist locally.
+printf 'Real state: `var/cache/prod/App_KernelProdContainer.php` `data/segment0001.ts` `cache/bundle.js`\n' > "$ST/repo/s3.md"
+STOUT3="$(python3 refcheck.py --sibling-root "$ST" "$ST/repo" s3.md 2>&1 || true)"
+for f in App_KernelProdContainer.php segment0001.ts bundle.js; do
+  if printf '%s' "$STOUT3" | grep -F -- "$f" | grep -q 'runtime state'; then
+    printf '  PASS  N37 %s is still runtime state — an ambiguous extension is not evidence of source\n' "$f"
+  else
+    printf '  FAIL  N37 %s was reported as a break; SOURCE_EXT is too broad again (#108)\n' "$f"; FAIL=1
+  fi
+done
+
 # N34 — the CONTROL, and the reason this pair is not just "stop excusing data/".
 # Genuine runtime state under the same directory must still resolve; without this
 # row, deleting rung 3 outright would score 2/2 above.
@@ -746,6 +762,18 @@ if printf '%s' "$PROV" | grep -qF -- 'AMBIGUOUS (2 siblings match'; then
   printf '  PASS  T31 the UNMARKED arm reports cross-sibling ambiguity (#120)\n'
 else
   printf '  FAIL  T31 the unmarked arm picked a single provenance instead of reporting ambiguity (#120)\n'; FAIL=1
+fi
+
+# N38 — markdown emphasis. A first version of the #119 fix treated `_` as a word
+# character, so `_alpharepo_` — standard italics around a repo name — stopped
+# marking the sibling it names. A repo name containing an underscore is rarer
+# than italics around one.
+printf 'We integrate with _alpharepo_ for this:\n`scripts/only_in_alpha.py`\n' > "$P/repo/h4.md"
+PROV4="$(python3 refcheck.py --sibling-root "$P" "$P/repo" h4.md 2>&1 || true)"
+if printf '%s' "$PROV4" | grep -qF -- 'sibling alpharepo -> scripts/only_in_alpha.py'; then
+  printf '  PASS  N38 markdown emphasis around a sibling name still marks it (#119)\n'
+else
+  printf '  FAIL  N38 _alpharepo_ no longer marks — the boundary class ate markdown italics\n'; FAIL=1
 fi
 
 # N33 — the fix must not cost the ordinary case: a sibling named in bare prose,

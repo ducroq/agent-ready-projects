@@ -97,6 +97,14 @@ fi
 
 if [ "$mode" = "--raise-budget" ]; then
   [ -n "$reason" ] || { echo "REFUSED: --raise-budget needs a reason argument. The reason is the whole point." >&2; exit 2; }
+  # ⚠️ Report the spill BEFORE rewriting the baseline. `write_baseline` recomputes
+  # the SPILL line, so a raise in the same commit as a moving-bytes payment used
+  # to erase the evidence of the transfer before anyone could see it — the raise
+  # would silently launder exactly the move #131 exists to surface.
+  sp_was=$(read_spill); sp_now=$(measure_spill)
+  if [ -n "$sp_was" ] && [ "$sp_now" -gt "$sp_was" ]; then
+    echo "      NOTE: docs/rationale/ also grew ${sp_was} -> ${sp_now} (+$((sp_now - sp_was))) in this same change — part of what is being paid for MOVED rather than went away (#131)." >&2
+  fi
   old=$(read_budget)
   write_baseline "$now_total" "RAISED $(date +%Y-%m-%d) from ${old:-none} to $now_total: $reason"
   echo "budget RAISED ${old:-none} -> $now_total (+$((now_total - ${old:-0}))): $reason"

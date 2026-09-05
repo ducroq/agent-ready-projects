@@ -71,7 +71,14 @@ while IFS= read -r path; do
     # not caught. There are none today (all four exemptions in CI are memory/), and
     # .claude/skills/ is negated in .gitignore, so its files are never exempt.
     .claude/*)
-      if [ "$R1_SKIPPED" -eq 1 ]; then r1_exempt=$((r1_exempt + 1)); continue; fi
+      # ⚠️ NO skip-exemption here, and that is the whole point. `.claude/skills/`
+      # is NEGATED in .gitignore, so it is tracked and PRESENT in a tarball —
+      # a reference to a missing file under it is a real break whether or not
+      # git can be asked. A first version exempted this arm under the skip too,
+      # which silently excused the one class the negation exists to keep checked:
+      # a dangling `.claude/skills/**` pointer scanned clean outside a work tree.
+      # Measured: all four exemptions on a fresh clone are `memory/`, so scoping
+      # the skip to memory/ costs nothing real.
       if git check-ignore -q "$path" 2>/dev/null; then
         r1_exempt=$((r1_exempt + 1)); continue
       fi ;;
@@ -94,14 +101,26 @@ while IFS= read -r path; do
   case "$path" in
     # 2>/dev/null for the same reason the file loop has it: outside a git repo this
     # prints `fatal: not a git repository` into the middle of the FAIL list.
-    .claude/|memory/) if [ "$R1_SKIPPED" -eq 1 ] || git check-ignore -q "$path" 2>/dev/null; then
+    # Same scoping as the file arm: only memory/ is excused by the skip.
+    memory/) if [ "$R1_SKIPPED" -eq 1 ] || git check-ignore -q "$path" 2>/dev/null; then
+        r1_dir_exempt=$((r1_dir_exempt + 1)); continue
+      fi ;;
+    .claude/) if git check-ignore -q "$path" 2>/dev/null; then
                         r1_dir_exempt=$((r1_dir_exempt + 1)); continue
                       fi ;;
   esac
   fail "CLAUDE.md references directory \`$path\` but it does not exist"
 done < <(grep -oE '`[A-Za-z0-9_./-]+/`' CLAUDE.md | tr -d '`' | LC_ALL=C sort -u)
-printf '      %s file and %s directory reference(s) checked; %s + %s exempt (absent AND gitignored, under .claude/ or memory/)\n' \
-  "$r1_checked" "$r1_dirs" "$r1_exempt" "$r1_dir_exempt"
+# ⚠️ The parenthetical is a CLAIM about how the exemption was decided, so it must
+# not be printed when no `check-ignore` ran. Under the skip it asserted "absent
+# AND gitignored" for references nothing had tested.
+if [ "$R1_SKIPPED" -eq 1 ]; then
+  printf '      %s file and %s directory reference(s) checked; %s + %s exempt (UNVERIFIED — rule SKIPPED, no gitignore test ran)\n' \
+    "$r1_checked" "$r1_dirs" "$r1_exempt" "$r1_dir_exempt"
+else
+  printf '      %s file and %s directory reference(s) checked; %s + %s exempt (absent AND gitignored, under .claude/ or memory/)\n' \
+    "$r1_checked" "$r1_dirs" "$r1_exempt" "$r1_dir_exempt"
+fi
 if [ ! -f CLAUDE.md ]; then
   fail "CLAUDE.md is absent — rule 1 checked nothing"
 elif [ "$r1_checked" -eq 0 ] && [ "$r1_dirs" -eq 0 ]; then
