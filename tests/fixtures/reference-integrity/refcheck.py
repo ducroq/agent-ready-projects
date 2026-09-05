@@ -702,8 +702,31 @@ def check(root, sources, sibling_roots=None):
                                          f'{sib[1]}) — remove the marker; the path resolves '
                                          f'and the marker is what is false (#102)'))
                     elif sib:
-                        findings.append((src, frag,
-                                         f'STALE PLACEHOLDER MARKER ({sib[1]})'))
+                        # #107 — an AMBIGUOUS rung-4 match on a MARKED path used to
+                        # be reported as a stale marker, and the finding's own text
+                        # said no single provenance exists. So all three states were
+                        # findings and the author had no legal move: marked reports,
+                        # unmarked reports a collision, and "qualify it" is
+                        # impossible against six candidates. It was re-triaged and
+                        # re-dismissed on every audit — the recurring cost the
+                        # placeholder skip exists to remove.
+                        #
+                        # Rung 2 already makes the opposite choice deliberately
+                        # (#56: a suffix match "is not evidence of intent", so it
+                        # decides without adjudicating). The argument is stronger
+                        # here: if six siblings match, that is not evidence the
+                        # author meant any one of them, and the marker is then an
+                        # accurate statement of intent rather than a stale label.
+                        # Rung 4 therefore DECIDES but does not ADJUDICATE for a
+                        # marked path that matches more than one sibling.
+                        #
+                        # ⚠️ Scoped to the MARKED arm. The unmarked ambiguity report
+                        # (#120) stays, because there it is actionable: no marker is
+                        # asserting the path is not meant to resolve.
+                        placeheld.append((src, frag,
+                                          'declared-placeholder'
+                                          if frag in placeheld_frags
+                                          else 'angle-bracket segment'))
                     elif rung4_runnable:
                         placeheld.append((src, frag,
                                           'declared-placeholder'

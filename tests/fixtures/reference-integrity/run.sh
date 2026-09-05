@@ -301,8 +301,31 @@ for wrong in "sibling sibling-repo -> shared/ambiguous_note.md" \
     printf '  FAIL  N19 a two-neighbour match resolved to a single provenance: %s\n' "$wrong"; FAIL=1
   fi
 done
-if printf '%s' "$FINDINGS" | grep -qF -- "shared/ambiguous_note.md"; then
-  printf '  PASS  N19 ambiguous cross-repo marker is reported without asserting one neighbour\n'
+# ⚠️ N19's SECOND HALF WAS RE-SCOPED 2026-09-05, deliberately, and the reasoning
+# matters more than the change. It asserted the row appears in FINDINGS. #107
+# showed that made every state a finding for a MARKED ambiguous path — marked
+# reports, unmarked reports a collision, and the prescribed "qualify it instead"
+# is impossible against six candidates. The author had no legal move, so the row
+# was re-triaged and re-dismissed on every audit: the exact recurring cost the
+# placeholder skip exists to remove.
+#
+# The principle N19 defends — an ambiguity must not VANISH — is untouched, and is
+# what this assertion still enforces: the row must appear in the enumerated
+# declared-placeholder section. What changed is which section counts as "reported".
+# Rung 2 already decides without adjudicating (#56); rung 4 now does the same for
+# a marked path with no single provenance.
+#
+# The first half above is UNCHANGED and is the one that must never loosen: it
+# still forbids asserting a single neighbour.
+# Computed locally: $PLACEHELD is defined further down, and using it here read
+# as an empty string — the check then reported "not reported at all" for a row
+# that was present. A negative produced by an unset variable is exactly the
+# broken-instrument shape this repo files issues about.
+N19_PH="$(printf '%s' "$OUT" | sed -n '/== SKIPPED as declared-placeholder/,/^  total:/p')"
+if printf '%s' "$N19_PH" | grep -qF -- "shared/ambiguous_note.md"; then
+  printf '  PASS  N19 an ambiguous cross-repo MARKER is enumerated as a declared placeholder, not adjudicated (#107)\n'
+elif printf '%s' "$FINDINGS" | grep -qF -- "shared/ambiguous_note.md"; then
+  printf '  FAIL  N19 an ambiguous marked path is still an unactionable FINDING — #107 regressed\n'; FAIL=1
 else
   printf '  FAIL  N19 shared/ambiguous_note.md is not reported at all — an ambiguity that vanishes is worse than one resolved wrongly\n'; FAIL=1
 fi

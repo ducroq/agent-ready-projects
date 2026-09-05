@@ -31,6 +31,18 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 ⚠️ **Every change below that was reviewed was refuted at least once, and the refutations of the refutations are the interesting part.** Three of the earlier changes were refuted before shipping, two of those by a round reviewing the previous round's fix. The `curate` section then took **two further rounds, which found eight defects and eight more** — four of the second round's created by the first round's fixes, and one of them a measurement whose *instrument* was wrong in the direction that flattered the change. The counts are in each section because the count is the argument: this release contains a false measurement that was caught, a no-op remedy that was caught, and a table split that made an open bug reachable by following the instruction — all authored here, none found by the author.
 
+### An ambiguous rung-4 match on a marked path had no legal move (#107, #118)
+
+**#107** — a `<!-- placeholder -->` on a path that suffix-matched *several* siblings was reported as a stale marker whose own text said no single provenance exists. Every state was a finding: marked reports, unmarked reports a collision, and the prescribed *"qualify it instead"* is impossible against six candidates. An adopter re-triaged and re-dismissed the same row on every audit — the recurring cost the placeholder skip exists to remove.
+
+Rung 2 already makes the opposite choice deliberately (#56: a suffix match *"is not evidence of intent"*, so it decides without adjudicating). **The argument is stronger at rung 4**: if six siblings match, that is not evidence the author meant any one of them, and the marker is then an accurate statement of intent. A marked path with no single provenance is now **enumerated as a declared placeholder** rather than reported. ⚠️ **Scoped to the marked arm** — the unmarked ambiguity report (#120) stays, because there it is actionable.
+
+⚠️ **This required overruling an existing seeded decision, which is recorded rather than done quietly.** N19 asserted the row must appear in **FINDINGS**, on the principle that *"an ambiguity that vanishes is worse than one resolved wrongly."* That principle is untouched and is still enforced — the row must appear in the enumerated declared-placeholder section — but *which section counts as reported* changed. N19's first half, which forbids asserting a single neighbour, is unchanged and is the half that must never loosen.
+
+⚠️ **The re-scoped N19 then produced a false negative from an unset variable**: it read `$PLACEHELD`, which is defined 35 lines further down, so it reported "not reported at all" for a row that was present. Computed locally now. A negative produced by an empty variable is exactly the broken-instrument shape this repo files issues about, and it appeared inside the fix for one.
+
+**#118** — see the section below; both landed against the same arm.
+
 ### Rung 3 excused a source file because of the directory it sat in (#108)
 
 Reported by an adopter running `/audit-context` with **seeded positives** — the right way to find this, and the reason it was findable at all. Two fabricated *source* names under `data/` were both classified as runtime state and the run printed `VERDICT: CLEAN — no findings (exit 0)`:
