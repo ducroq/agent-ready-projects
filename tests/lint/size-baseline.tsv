@@ -2,8 +2,8 @@
 # Regenerate rows with: bash tests/lint/size-ratchet.sh . --update
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and is recorded below.
-# BUDGET 246915
-# RAISED 2026-09-05 from 246760 to 246915: 2026-09-05 FIFTH raise, +155, for #107's resolution in audit-context Step 4 — it REPLACES the sentence that called #107 an open question with what the step now does. Tightened once (334 -> 155). Session totals: five raises (1012/641/393/259/155 = 2460) against ratchet-downs at 246110 and 246501; the surface stands at 246915 versus 244822 at session start, so +2093 net for four fixed bugs, one new adopter doc pointer and a fixing-discipline step, with ~1.9KB of archaeology moved out. See #131: docs/ is outside this budget, so that move is not visible here.
+# BUDGET 247526
+# RAISED 2026-09-05 from 246915 to 247526: 2026-09-05 SIXTH and final raise, +611, for #109 and #110 in curate Step 0.8 — measure the WHOLE auto-loaded set rather than the project file alone, budget the memory index in characters not lines, and apply the footer-trim rule to every auto-loaded file. Paid down first: the prettier ignore-file cwd table and both table-padding measurements moved to docs/rationale/curate.md, and a 35% figure that the move had DUPLICATED between skill and rationale was removed from the skill (the split rule forbids a claim appearing in both). 1381 -> 611. Session net: surface 244822 at start -> 247526, +2704 for six fixed bugs (#107 #108 #116 #118 #119 #120 #124 #125 #109 #110), a fixing-discipline step and an adopter doc pointer.
 templates/adr.md	2115
 templates/audit-context.md	43128
 templates/checklists/architect-checklist.md	1263
@@ -12,7 +12,7 @@ templates/checklists/qa-checklist.md	1836
 templates/checklists/README.md	1097
 templates/checklists/test-checklist.md	1234
 templates/coordination.md	3909
-templates/curate.md	67089
+templates/curate.md	67700
 templates/gotcha-log.md	4886
 templates/hypothesis-log.md	3570
 templates/memory-index.md	3396
