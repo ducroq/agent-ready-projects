@@ -71,14 +71,19 @@ while IFS= read -r path; do
     # not caught. There are none today (all four exemptions in CI are memory/), and
     # .claude/skills/ is negated in .gitignore, so its files are never exempt.
     .claude/*)
-      # ⚠️ NO skip-exemption here, and that is the whole point. `.claude/skills/`
-      # is NEGATED in .gitignore, so it is tracked and PRESENT in a tarball —
-      # a reference to a missing file under it is a real break whether or not
-      # git can be asked. A first version exempted this arm under the skip too,
-      # which silently excused the one class the negation exists to keep checked:
-      # a dangling `.claude/skills/**` pointer scanned clean outside a work tree.
-      # Measured: all four exemptions on a fresh clone are `memory/`, so scoping
-      # the skip to memory/ costs nothing real.
+      # ⚠️ The skip splits this arm in two, and BOTH halves were got wrong once.
+      # `.claude/skills/` is NEGATED in .gitignore, so it is tracked and PRESENT
+      # in a tarball — a dangling pointer under it is a real break whether or not
+      # git can be asked, and exempting it under the skip silently excused the
+      # one class the negation exists to keep checked. Everything else under
+      # `.claude/` IS gitignored and legitimately absent, so refusing to exempt
+      # it re-created #125's original symptom for a different path: a false FAIL
+      # on `.claude/settings.json`, which is exactly what the skip is for. The
+      # clone-lint fixture caught that second error in CI, not locally.
+      case "$path" in
+        .claude/skills/*) : ;;                      # never exempt: tracked
+        *) if [ "$R1_SKIPPED" -eq 1 ]; then r1_exempt=$((r1_exempt + 1)); continue; fi ;;
+      esac
       if git check-ignore -q "$path" 2>/dev/null; then
         r1_exempt=$((r1_exempt + 1)); continue
       fi ;;

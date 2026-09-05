@@ -245,7 +245,12 @@ ablate A4 's|if \[ ! -f memory/MEMORY.md \]; then|if false; then|' N1
 # counter init under it, killing all fourteen cases — caught by the exact kill set,
 # which is the argument for asserting kill sets exactly. `,+N` is also a GNU sed
 # extension that BSD sed rejects.
-ablate A5 '/^printf .*directory reference(s) checked/{N;d;}' N1
+# ⚠️ Retargeted 2026-09-05: #125 wrapped the coverage line in an if/else (the
+# skipped run must not claim 'absent AND gitignored' when no check-ignore ran),
+# so `^printf` no longer matched and the mutant became inert. The fixture said
+# 'changed nothing' rather than passing — which is the behaviour that makes an
+# ablation worth having. Now deletes the whole block.
+ablate A5 '/^if \[ "$R1_SKIPPED" -eq 1 \]; then$/,/^fi$/d' N1
 # A10 — the first form of the exemption: per-file rather than whole-dir. It is the
 # defect the review found, and T12 is the case that kills it.
 ablate A10 's|if \[ ! -d memory \] && git check-ignore|if git check-ignore|' T12
