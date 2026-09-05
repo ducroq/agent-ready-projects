@@ -26,7 +26,10 @@ declare -a CASES=(
   "T5 real move, parent changed|oldpkg/temporal.py"
   "T7 path supplies its own marker|docs/DEPLOY.md"
   "T8 substring marker must not mark|deploy/main.py"
-  "T9 ambiguous inside sibling|main.py"
+  # Needle is the REASON (#116): `main.py` alone also matched
+  # `deploy/main.py UNRESOLVED` and `main.py UNRESOLVED`, so the collision arm
+  # could break and T9 would still pass on someone else's finding.
+  "T9 ambiguous inside sibling|COLLISION (2 matches in sibling-repo)"
   "T10 deletion with surviving twin|packages/api/config/settings.py"
   "T11 unlisted extension .tf|infra/nonexistent.tf"
   "T11 unlisted extension .ipynb|notebooks/missing.ipynb"
@@ -53,8 +56,16 @@ declare -a CASES=(
   "T21 marked bare basename WITH the neighbour named|STALE PLACEHOLDER MARKER (resolves at rung 4: sibling sibling-repo -> scripts/bare_named.sh)"
   # #45 — the failure the placeholder skip newly permits: a marker on a path
   # that resolves. Mislabelling must not become a way to hide a real break.
-  "T12 stale placeholder marker on a resolving path|src/models/temporal.py"
-  "T13 stale angle-bracket marker on a resolving path|src/<real>/exists.py"
+  # ⚠️ Needles are the REASONS, not the paths — #116. Until 2026-09-05 both
+  # asserted only their path, so ANY other seeded case referencing the same file
+  # satisfied them and the row went vacuous without the suite noticing. That was
+  # measured on the withdrawn #76 branch: a second document naming
+  # src/models/temporal.py made T12 pass under the very ablation it exists to
+  # fail. FIFTH instance of this collision in this fixture. The two reasons are
+  # distinguishable because the arm emits different text for a real marker than
+  # for a bare placeholder SHAPE, and both differ from T19/T21's rung 4.
+  "T12 stale placeholder marker on a resolving path|STALE PLACEHOLDER MARKER (resolves at rung 1"
+  "T13 stale angle-bracket marker on a resolving path|PLACEHOLDER SHAPE THAT RESOLVES (resolves at rung 1"
   "T14 placeholder marker covering no path|COVERS NO PATH"
   # #102 — the remedy a rung-4 finding prints must work when followed. T28 is
   # the shape an author writes when the remedy says only "qualify it instead":
@@ -160,11 +171,60 @@ declare -a NEG=(
 )
 
 FAIL=0
+
+# #116 — a needle that matches MORE THAN ONE reported line cannot distinguish its
+# own subject from someone else's finding, so the row passes while testing
+# nothing and no ablation can kill it. That has happened FIVE times in this
+# fixture, always the same way: a later case reuses a path an earlier row
+# asserted. Exact-duplicate needles are the degenerate case; the live one is a
+# needle satisfied by a second finding, which is why the match is COUNTED and
+# not just tested.
+#
+# ⚠️ A first draft of this comment claimed "every needle matching exactly once".
+# That was never measured — only exact duplicates were (0 of 23) — and this
+# guard refuted it on its first run: T4, T9 and T14 each matched several
+# findings. T9 was fixed by switching to its reason string. T4 and T14 cannot
+# be: their extra matches are the SAME reason reported from a different seeded
+# document, and a doc-qualified needle would be keyed on the report's column
+# padding, which moves with path length (T29 failed on exactly that). They are
+# DECLARED below rather than silently tolerated — the rule-11 principle, an
+# exemption is declared, not guessed.
+#
+# What a declared row still buys: nothing, for that row's discrimination. It is
+# a marker saying "known weak", so the next person does not rediscover it as
+# instance nine.
+declare -A SEEN_NEEDLE=()
 for c in "${CASES[@]}"; do
   name="${c%%|*}"; needle="${c##*|}"
-  if printf '%s' "$FINDINGS" | grep -qF -- "$needle"; then
+  if [ -n "${SEEN_NEEDLE[$needle]:-}" ]; then
+    printf '  FAIL  %s shares a needle with %s — one of them tests nothing\n' \
+      "$name" "${SEEN_NEEDLE[$needle]}"; FAIL=1
+  fi
+  SEEN_NEEDLE[$needle]="$name"
+done
+
+for c in "${CASES[@]}"; do
+  name="${c%%|*}"; needle="${c##*|}"
+  hits=$(printf '%s' "$FINDINGS" | grep -cF -- "$needle" || true)
+  case "$name" in
+    # DECLARED weak needles — see the note above. Same reason string, different
+    # seeded document; no discriminating needle exists that is not padding-keyed.
+    "T4 unmarked sibling coincidence"|"T14 placeholder marker covering no path")
+      if [ "$hits" -ge 1 ]; then
+        printf '  PASS  %s (needle matched %s — DECLARED weak, #116)\n' "$name" "$hits"
+      else
+        printf '  FAIL  %s (expected a finding for %s)\n' "$name" "$needle"; FAIL=1
+      fi
+      continue ;;
+  esac
+  if [ "$hits" -eq 1 ]; then
     printf '  PASS  %s\n' "$name"
-  else printf '  FAIL  %s (expected a finding for %s)\n' "$name" "$needle"; FAIL=1; fi
+  elif [ "$hits" -eq 0 ]; then
+    printf '  FAIL  %s (expected a finding for %s)\n' "$name" "$needle"; FAIL=1
+  else
+    printf '  FAIL  %s: needle matched %s findings — it cannot distinguish its own subject (#116)\n' \
+      "$name" "$hits"; FAIL=1
+  fi
 done
 for c in "${NEG[@]}"; do
   name="${c%%|*}"; needle="${c##*|}"
