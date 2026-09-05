@@ -14,7 +14,7 @@ Also read the full reference: https://github.com/ducroq/agent-ready-projects/blo
 
 Then analyze THIS repo — its structure, existing documentation, size, complexity, and how agent sessions currently work here. Based on what you find, answer:
 
-1. **Current state**: What context engineering does this project already have? (project files, READMEs, CLAUDE.md, AGENTS.md, .windsurfrules, ADRs, etc.) What's working? What's missing?
+1. **Current state**: What context engineering does this project already have? (project files, READMEs, AGENTS.md, CLAUDE.md, .cursor/rules/, .windsurfrules, .github/copilot-instructions.md, ADRs, etc.) What's working? What's missing?
 
 2. **Pain points**: Based on the codebase structure, where would an agent most likely struggle without persistent context? (complex subsystems, non-obvious conventions, deployment quirks, fragile areas, cross-cutting concerns)
 
@@ -54,7 +54,7 @@ Also read the templates at:
 Now analyze THIS repo thoroughly — read the codebase structure, existing docs, config files, test setup, deployment scripts, CI/CD, and recent git history. Then scaffold the layered memory system for this project:
 
 STEP 1 — Determine the right tool.
-Check what AI coding agent files already exist (.claude/, CLAUDE.md, AGENTS.md, .cursor/, .windsurfrules, .github/copilot-instructions.md, .aider.conf.yml). Use the matching convention. If nothing exists, ask me which tool I'm using.
+Check what AI coding agent files already exist (.claude/, AGENTS.md, CLAUDE.md, .cursor/, .windsurfrules, .github/copilot-instructions.md, CONVENTIONS.md, .aider.conf.yml) — this list is for DETECTION, and several of these are legacy or tool-specific. Use the matching convention. If nothing exists, write AGENTS.md, which most tools now read natively; use CLAUDE.md for Claude Code and CONVENTIONS.md for Aider, which do not. If two of these files exist, say in each which one is canonical: some tools read both. Ask me which tool I'm using if it is not obvious.
 
 STEP 2 — Create the project file (Layer 1).
 Save as the tool-appropriate filename. Fill in:

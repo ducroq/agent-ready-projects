@@ -101,7 +101,7 @@ A gotcha logged in session 4 gets promoted to a topic file by session 8, reaches
 
 **`AGENTS.md` is the portable default** — a Linux Foundation-stewarded convention read natively by Codex, Cursor, Windsurf, Copilot, VS Code, Zed and others. The exceptions are **Claude Code** (`CLAUDE.md`) and **Aider** (`CONVENTIONS.md`, not auto-loaded). If you keep two of these files, say in each which one is canonical — some tools read both.
 
-See the [full reference guide](docs/GUIDE.md#tool-specific-setup) for detailed setup instructions, multi-tool projects, and Cursor `.mdc` examples.
+See the [full reference guide](docs/GUIDE.md#tool-specific-setup) for detailed setup instructions, multi-tool projects, and the per-tool rule-directory formats.
 
 > **Not sure how much to adopt?** Measured across 58 repos: every one has a project file, 21 have a gotcha log, 18 a memory index — and **zero** have the Layer 5 coordination doc. Start with Layer 1 and add each other layer when you feel the problem it solves. See [What to Adopt](docs/GUIDE.md#what-to-adopt-and-what-most-people-dont).
 
@@ -133,5 +133,5 @@ Ready-to-use starter files in [`templates/`](templates/). Tool-agnostic — rena
 - **[Framework comparison](docs/archive/COMPARISON.md)** — Mapping against BMAD-METHOD and spec-kit
 - **[Methodology](docs/archive/METHODOLOGY.md)** — How this guide was developed and tested
 - **[Verification rationale](docs/verification-rationale.md)** — Three structural principles organizing the framework's verification patterns: multi-pass verification as invariant coverage, tier-monotonicity for claim language, compositional validation. Decision rules for when to add, skip, or retire a verification layer.
-- **[Seeded defects and ablations](docs/seeded-defects-and-ablations.md)** — How to tell a check that works from a check that is silent: seed the failures it must catch, then break it on purpose and require the fixture to go red. Tool-agnostic, and the part of this method with the most measured catches.
+- **[Seeded defects and ablations](docs/seeded-defects-and-ablations.md)** — How to tell a check that works from a check that is silent: seed the failures it must catch, then break it on purpose and require the fixture to go red. Tool-agnostic, and the part of this method with the most catches on record.
 - **[Verifying what we write](docs/verifying-what-we-write.md)** — The same discipline applied to prose claims: a claim registry and what a 27-claim audit actually found.

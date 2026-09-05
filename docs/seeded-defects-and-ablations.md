@@ -4,13 +4,15 @@
 might be clean. It might be broken. It might be pointed at an empty population. From the
 outside those are the same result: silence, and an exit code of zero.
 
-This page describes the two cheap instruments that tell them apart. They are the part of
-this framework with the most measured catches, and they are not specific to any tool,
-language, or agent.
+This page describes the two cheap instruments that tell them apart. They are, by this
+framework's own record, the part of it with the most catches recorded — and they are not
+specific to any tool, language, or agent.
 
 ## The problem, concretely
 
-Every example below is a real check in this repository that was green while broken.
+Every example below is real and from this repository. The first three are checks that were
+green while broken; the fourth is the neighbouring failure — a thing that was never exercised
+at all, which is how a check gets to be green without ever having been tested.
 
 - A structural rule matched **0 of 4** of the references it existed to validate, for its
   entire life. It was green from both directions: a second loop happened to cover the same
@@ -18,10 +20,11 @@ Every example below is a real check in this repository that was green while brok
 - A rule comparing a template against its installed copy passed for **eight releases**
   while the thing it compared was a shell syntax error. Both copies carried the same
   defect, so they agreed perfectly.
-- A test-suite family shipped for months having **never been run** against the system it
-  claimed to test. Its own README said so; nobody read the README.
 - A guard was added, reviewed, and merged that **could not fail** — no input existed that
   would make it fire.
+- A test-suite family shipped for months having **never been run** against the system it
+  claimed to test. Its own README disclosed this; it was archived rather than fixed once
+  someone re-read it.
 
 None of these were caught by reading. All of them were caught by *running the check
 against known failures* — or by discovering there were none to run against.
@@ -88,15 +91,20 @@ That limit is not hypothetical, and it is not only ours:
 
 - Three successive drafts of one check here each **passed their own fixture** and were each
   refuted by running them over a real corpus — 28 false hits, then 15, then 1.
-- In the mutation-testing literature, Just et al. (FSE 2014) examined 357 real faults across
-  five projects and found mutation score does correlate with real-fault detection — but only
-  about **73%** of real faults were coupled to standard mutation operators at all, and the
-  correlation is an aggregate, not a warrant for any individual mutant's realism.
-- One 2026 evaluation of LLM code reviewers measured **F1 0.847 on synthetic mutated samples
-  against 0.066 on real pull requests** — a ~92% degradation from synthetic to real.
-- The much older software-inspection literature on defect seeding reached the same warning
-  first: estimates are biased unless seeded and naturally-occurring defects are **equally
-  detectable**.
+- Just et al., *Are Mutants a Valid Substitute for Real Faults in Software Testing?* (FSE 2014,
+  [ACM](https://dl.acm.org/doi/10.1145/2635868.2635929)) examined 357 real faults across five
+  projects and found mutation score does correlate with real-fault detection — but only about
+  **73%** of real faults were coupled to standard mutation operators at all, and the correlation
+  is an aggregate, not a warrant for any individual mutant's realism.
+- *Bigger Isn't Always Better* ([arXiv](https://arxiv.org/html/2606.15689v1), 2026) measured LLM
+  code reviewers at **F1 0.847 on synthetic mutated samples against 0.066 on real pull requests**
+  — a ~92% degradation from synthetic to real.
+- The much older software-inspection literature on defect seeding reached the same warning first:
+  estimates are biased unless seeded and naturally-occurring defects are **equally detectable**
+  ([capture-recapture after ten years](https://www.researchgate.net/publication/222300754_Capture-recapture_in_software_inspections_after_10_years_research_-_Theory_evaluation_and_application)).
+
+*(All three are reported here with their sources; none is a measurement made by this framework.
+Its own numbers are the ones above, from this repository.)*
 
 **So: use fixtures to stop checks from rotting silently. Do not use them to certify that a
 check is sufficient.** Those are different claims, and conflating them is how a fixture

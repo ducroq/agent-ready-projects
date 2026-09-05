@@ -757,7 +757,10 @@ This guide's concepts map to every major AI coding agent. The file names and mec
 | This guide says | Claude Code | Codex (OpenAI) | Cursor | Windsurf | GitHub Copilot | Aider |
 |----------------|------------|----------------|--------|----------|----------------|-------|
 | "Project file" (Layer 1) | `CLAUDE.md` | `AGENTS.md` | `AGENTS.md` | `AGENTS.md` | `AGENTS.md` | `CONVENTIONS.md` (not auto-loaded) |
-<!-- AGENTS.md is stewarded by the Agentic AI Foundation (Linux Foundation) and read natively by Codex, Cursor, Windsurf, Copilot, VS Code and Zed; verified 2026-09-05 in each vendor's own docs, not from the standard's adopter list, which over-claims (it lists Aider, whose docs describe CONVENTIONS.md loaded via --read or .aider.conf.yml). Claude Code does not read AGENTS.md. Cursor and Windsurf still accept their own rule directories; Windsurf documents .windsurf/rules/ as legacy. -->
+
+**`AGENTS.md` is stewarded by the Agentic AI Foundation (Linux Foundation)** and read natively by Codex, Cursor, Windsurf, Copilot, VS Code and Zed — verified in each vendor's own documentation rather than from the standard's adopter list, which over-claims (it lists Aider, whose docs describe `CONVENTIONS.md` loaded via `--read` or `.aider.conf.yml`). **Claude Code does not read it.** Cursor and Windsurf still accept their own rule directories — `.cursor/rules/*.mdc` and `.devin/rules/` — and Windsurf documents `.windsurf/rules/` as legacy.
+
+⚠️ **Some tools read `AGENTS.md` *and* `CLAUDE.md`** (Cursor's CLI does), so keeping both loads two instruction sets that drift apart silently. Name the canonical one in each.
 | "Memory" (Layer 3) | `MEMORY.md` + topic files | — | — | — | — | — |
 | "Curate command" | `~/.claude/skills/curate/SKILL.md` (`/curate`, user-global) | End-of-session prompt | End-of-session prompt | End-of-session prompt | End-of-session prompt | End-of-session prompt |
 | "Audit command" | `~/.claude/skills/audit-context/SKILL.md` (`/audit-context`, user-global) | Ad-hoc prompt | Ad-hoc prompt | Ad-hoc prompt | Ad-hoc prompt | Ad-hoc prompt |

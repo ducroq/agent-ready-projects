@@ -31,11 +31,31 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 ⚠️ **Every change below that was reviewed was refuted at least once, and the refutations of the refutations are the interesting part.** Three of the earlier changes were refuted before shipping, two of those by a round reviewing the previous round's fix. The `curate` section then took **two further rounds, which found eight defects and eight more** — four of the second round's created by the first round's fixes, and one of them a measurement whose *instrument* was wrong in the direction that flattered the change. The counts are in each section because the count is the argument: this release contains a false measurement that was caught, a no-op remedy that was caught, and a table split that made an open bug reachable by following the instruction — all authored here, none found by the author.
 
+### The review of this release found nine defects in it, two of them blockers
+
+Two independent cold lenses, one round, on the whole session diff (1,082 insertions, 25 files, 14 commits). **Everything below had already passed twelve lint rules, thirteen fixture suites, CI, and the author's read.** The base rate is unchanged.
+
+**Both blockers were claims that contradicted the change shipped beside them:**
+
+1. **A refuted number left standing above its own correction.** The `introduced`-vs-`missed` table was introduced by *"5 rounds, 28 findings"* while the paragraph below it — and three places in `docs/rationale/review-changes.md` — said **4**. The correction had been written; the headline had not been updated to match. **That is this repo's signature defect, appearing in the entry that documents this repo's signature defect.**
+2. **A fix announced but not made.** This entry said the duplicated 35% padding figure had been *"removed from the skill"*. Both the 35% and 61% figures were still there when review checked. The entry described a convention violation, prescribed the fix, claimed it, and shipped without it. Now actually removed — `grep -c '35%\|61%' templates/curate.md` returns 0.
+
+**Seven more:**
+- **`+1,653` was `+1,652`**, stated twice, and re-derivable two ways (`git show 1181cae:… | wc -c`, and the ratchet's own baseline delta).
+- **"twelve gating fixture suites" beside a new "thirteen"** in the same file — fourteen directories, one declared not-a-gate. The release that fixed a rule-catalog undercount left a stale count next to it.
+- **The bullet arguing that the index must be budgeted in *characters* gave its only evidence in tokens** — "127 lines and ~46k tokens" against a cap stated in chars, without saying it was several times over.
+- **Two of four external citations in the new adopter doc had no source**, and the entry claimed they were "recorded with URLs in `memory/`", which is **gitignored** — unreachable for the audience the doc is for. All four now carry links inline, with a line saying none is this framework's own measurement.
+- **An unmeasured superlative on three surfaces** — *"the part of this framework with the most measured catches"* — now hedged to *"the most catches on record"*.
+- **`"Every example below is a real check that was green while broken"`** included a template family that was never run at all: a neighbouring failure, not that class. Reordered and relabelled.
+- **`ablat` appears in 0 files under `docs/`** was left in the present tense in the entry announcing the page that changed it to three.
+
+⚠️ **And #128 had updated the naming tables but not `adopt.md`**, which is normative under the same Hard Constraint — it still enumerated the pre-fix conventions. Worse, `docs/GUIDE.md` carried the load-bearing qualifications (Claude Code is not an adopter; Windsurf's rule directory is legacy; some tools read both files) **inside an HTML comment**, invisible in the rendered guide, where the table now read `AGENTS.md` flat. Both fixed; the qualifications are now visible prose.
+
 ### The budget could be paid by moving bytes to a surface it does not measure (#131)
 
 Found by an adversarial review of this release's own first change, and then **exercised six times in the same session before it was fixed** — which is the argument for fixing it rather than noting it.
 
-Lint rule 8 measures `templates/`. The sanctioned way to pay for growth is to move argument out of a skill into `docs/rationale/<skill>.md`, per the split convention. **`docs/` is not in the population**, so that move discharges the budget without reducing what an adopter reads: it relocates bytes across the boundary the rule happens to measure. Measured here: `templates/review-changes.md` +1,653 while `docs/rationale/review-changes.md` went **1,150 → 7,059**.
+Lint rule 8 measures `templates/`. The sanctioned way to pay for growth is to move argument out of a skill into `docs/rationale/<skill>.md`, per the split convention. **`docs/` is not in the population**, so that move discharges the budget without reducing what an adopter reads: it relocates bytes across the boundary the rule happens to measure. Measured here: `templates/review-changes.md` +1,652 while `docs/rationale/review-changes.md` went **1,150 → 7,059**.
 
 **Option 3 from the issue shipped: report the transfer, gate nothing.** `docs/rationale/` is now a second, reported-only population recorded as a `# SPILL` line in the baseline. When the surface shrinks while that population grows, the run says so: *"the surface shrank while docs/rationale/ grew: some of this payment MOVED bytes rather than removing them. Adopters read both."*
 
@@ -55,7 +75,7 @@ Both reported by adopters, both from real instances, and both are the same failu
 
 **#110 — the index budgeted in lines while the cost is in characters.** `templates/memory-index.md` warns at ~200 lines, and a line count cannot see cell width: an adopter's index was **127 lines and ~46k tokens** — the single largest thing loaded each session — comfortably inside the line budget. Two auto-loaded files budgeted in non-comparable currencies means the denser one escapes. The line warning is now stated as a readability hint; the character budget is the cost. **And the footer-trim rule now applies to every auto-loaded file, the index included** — index rows for old sessions balloon into paragraph-length re-summaries of the very files they point to, and the existing reasoning transfers verbatim.
 
-**Paid for by moving measurement archaeology out**, per the split convention: the prettier ignore-file cwd table and both table-padding measurements now live in `docs/rationale/curate.md`. ⚠️ **That move duplicated a figure into both files** — the 35% padding share — and *"nothing is duplicated between the two; if a claim appears in both, one of them is wrong"* is the convention's own rule. Removed from the skill. Budget raised +611 after those two payments took it down from +1,381.
+**Paid for by moving measurement archaeology out**, per the split convention: the prettier ignore-file cwd table and both table-padding measurements now live in `docs/rationale/curate.md`. ⚠️ **That move duplicated figures into both files** — the 35% and 61% padding shares — and *"nothing is duplicated between the two; if a claim appears in both, one of them is wrong"* is the convention's own rule. ⚠️ **A first attempt to remove them said so in this entry and did not do it**: both figures were still in the skill when review checked, so the entry announced a fix that shipped unmade. The skill now carries the *shape* of the finding and points at the rationale for the numbers; `grep -c '35%\|61%' templates/curate.md` returns 0. Budget raised +611 after those two payments took it down from +1,381.
 
 ### An ambiguous rung-4 match on a marked path had no legal move (#107, #118)
 
@@ -179,7 +199,7 @@ So on a merging tool the risk is not one dead file but two live instruction sets
 
 The engineer's constraint, stated twice: *"All the reviewing is getting waaay too expensive… otherwise the framework does not earn its keep"*, and then the sharper half — *"the reviews are carrying more of the quality than my first drafts are, so we need to balance quality and cost."*
 
-The obvious reading is that review should be cut. **The ledger says otherwise, and it had held the answer unread for nine days.** `memory/review-ledger.tsv` carries a `missed` column and an `introduced` column, added specifically to separate review recall from fix quality, and never once totalled. Totalled over real-work rounds only — 5 rounds, 28 findings:
+The obvious reading is that review should be cut. **The ledger says otherwise, and it had held the answer unread for nine days.** `memory/review-ledger.tsv` carries a `missed` column and an `introduced` column, added specifically to separate review recall from fix quality, and never once totalled. Totalled over real-work rounds only — **4 rounds**, 28 classified findings (the correction below explains why this said *5*):
 
 | what the finding turned out to be | share of classified |
 |---|---|
@@ -199,13 +219,13 @@ One round produced 5 of the next round's 8 findings; the rounds on that release 
 
 **External corroboration, this repo's first ecosystem scan** (recorded with URLs in `memory/`): published work measures LLM reviewers at **F1 0.847 on synthetic mutants against 0.066 on real PRs** — a 92% degradation that is `review-bench`'s own threat #1, measured by strangers; Just et al. (FSE 2014) found only ~73% of real faults couple to standard mutation operators; and Basili's perspective-based-reading studies found **little overlap between what different perspectives catch**, which is the human-inspection form of the disjoint-lenses result. Anthropic publishes a ~15× token multiplier for multi-agent work and cache reads at **0.1×** input. None of it is measured on this repo, and all of it is cited as reported.
 
-**Paid for, not waived — and the accounting was itself wrong once.** ~1.9KB of existing archaeology moved to `docs/rationale/review-changes.md` (the prettier mechanism and version history, git baseline-resolution provenance, the 39% table-check measurement, the CRLF remediation detail). Net on the adopter surface: `templates/review-changes.md` **+1,653 bytes**. Rule 8's budget was raised **twice** — the second raise corrects the first, whose recorded reason claimed Step 5 had been "cut to ~1,900 bytes" when it measured 2,485. ⚠️ **And review caught the shape of the payment**: `docs/rationale/` is not in rule 8's glob, so moving prose there discharges the budget without reducing what an adopter reads — that file grew **1,150 → 7,059**. Filed as **#131** rather than fixed here.
+**Paid for, not waived — and the accounting was itself wrong once.** ~1.9KB of existing archaeology moved to `docs/rationale/review-changes.md` (the prettier mechanism and version history, git baseline-resolution provenance, the 39% table-check measurement, the CRLF remediation detail). Net on the adopter surface: `templates/review-changes.md` **+1,652 bytes**. Rule 8's budget was raised **twice** — the second raise corrects the first, whose recorded reason claimed Step 5 had been "cut to ~1,900 bytes" when it measured 2,485. ⚠️ **And review caught the shape of the payment**: `docs/rationale/` is not in rule 8's glob, so moving prose there discharges the budget without reducing what an adopter reads — that file grew **1,150 → 7,059**. Filed as **#131** rather than fixed here.
 
 ⚠️ **Scope, stated because the rule it produces is normative**: one repo, one maintainer, **4 rounds**, 28 classified findings, and the `introduced` column was classified **by the person who wrote the fixes**. That is an admission against interest, so more likely under-counted than inflated — but it is self-classified, unreplicated, and Step 5 says so where an adopter will read it.
 
 ⚠️ **This section was reviewed by one cold adversarial lens and came back with two BLOCKERs and five WARNINGs** — the header-row miscount, the dropped 35% behind the word "all", two contradictions with rules already in the same file, four unhedged descriptive absolutes, and the budget-transfer above. Every one was in text that had already passed twelve lint rules, three fixtures and the author's own read. **The base rate holds: a green suite plus an author's read has still never been sufficient here**, and the section documenting that fact was no exception to it.
 
-Filed from this work rather than folded into it: **#128** (`AGENTS.md` became a Linux Foundation standard while this repo mapped around it), **#129** (the shadowing constraint's mechanism is Claude Code-specific — Cursor and Copilot merge), **#130** (seeded fixtures with ablations are this repo's least-published invention: `ablat` appears in **0** files under `docs/`).
+Filed from this work rather than folded into it: **#128** (`AGENTS.md` became a Linux Foundation standard while this repo mapped around it), **#129** (the shadowing constraint's mechanism is Claude Code-specific — Cursor and Copilot merge), **#130** (seeded fixtures with ablations are this repo's least-published invention: `ablat` appeared in **0** files under `docs/` before this release).
 
 ### The suite finally gates something — CI, and the two rules that could not run in it
 
