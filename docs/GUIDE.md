@@ -510,7 +510,18 @@ The key shift: end-of-session time becomes **1-2 minutes of review**, not 20 min
 
 This decision is not cosmetic, and getting it wrong fails silently.
 
-**A user-global skill shadows a project-local one of the same name.** In Claude Code, `~/.claude/skills/<name>/` wins over `<repo>/.claude/skills/<name>/`. The local copy is not merged, not preferred, and not warned about — it is simply never loaded. So a project-local copy of a skill you also installed globally is not a customization. It is dead weight that reads to every future session as the authoritative version.
+**In Claude Code, a user-global skill shadows a project-local one of the same name.** `~/.claude/skills/<name>/` wins over `<repo>/.claude/skills/<name>/`. The local copy is not merged, not preferred, and not warned about — it is simply never loaded. So a project-local copy of a skill you also installed globally is not a customization. It is dead weight that reads to every future session as the authoritative version.
+
+⚠️ **Shadowing is Claude Code's mechanism, not a universal one, and the tools that differ fail differently rather than not at all.** Cursor *merges* its rule layers (Team → Project → User) and its CLI reads `AGENTS.md` and `CLAUDE.md` both. GitHub Copilot *combines* personal, repository and organization instructions: its docs state that **all** relevant sets are provided, that personal ranks highest, and — the part that matters — that **"Copilot's choice between conflicting instructions is non-deterministic."** (Verified 2026-09-05 in each vendor's own documentation.)
+
+So the failure inverts by tool, and so does the remedy:
+
+| | what goes wrong | how you find it | remedy |
+|---|---|---|---|
+| **Shadowing** (Claude Code) | the local copy is **never loaded** and silently drifts | nothing warns you; diff the loaded file against the local one | never keep a local copy of a globally installed skill |
+| **Merging** (Cursor, Copilot) | **both** load, and conflicts resolve unpredictably | contradictory behaviour between runs on unchanged input | keep one canonical file; make the other a pointer, not a copy |
+
+**The scope rules below assume shadowing.** On a merging tool, "installing it globally would silently disable both" is the wrong risk — the right one is that both apply at once. The scope *decisions* still hold, because a skill naming files in one tree is wrong to install everywhere either way; only the reason changes.
 
 One documented exception: **directory-scoped skills are namespaced, not shadowed.** A skill under a subdirectory of the project (e.g. `apps/web/.claude/skills/curate/`) loads as `apps/web:curate` *alongside* the global one rather than being suppressed by it — so in a monorepo a scoped copy can be live, not inert. Everywhere else, the shadowing rule holds.
 

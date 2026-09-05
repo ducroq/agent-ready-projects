@@ -31,6 +31,21 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 ⚠️ **Every change below that was reviewed was refuted at least once, and the refutations of the refutations are the interesting part.** Three of the earlier changes were refuted before shipping, two of those by a round reviewing the previous round's fix. The `curate` section then took **two further rounds, which found eight defects and eight more** — four of the second round's created by the first round's fixes, and one of them a measurement whose *instrument* was wrong in the direction that flattered the change. The counts are in each section because the count is the argument: this release contains a false measurement that was caught, a no-op remedy that was caught, and a table split that made an open bug reachable by following the instruction — all authored here, none found by the author.
 
+### The shadowing rule is Claude Code's mechanism, stated as a universal one (#129)
+
+`docs/GUIDE.md` § "Where a skill lives" opened with a bolded universal — *"A user-global skill shadows a project-local one of the same name"* — and narrowed it to Claude Code only in the following clause. The whole section, in a **tool-agnostic** guide, then reasons from exclusivity: the scope table's justification for `review-changes` is that a global install *"would silently disable both"*.
+
+**Two of the six tools this framework serves do not shadow at all, and their failure is arguably worse.** Verified 2026-09-05 in each vendor's own docs:
+
+- **Cursor** *merges* its rule layers (Team → Project → User), and its CLI reads AGENTS.md and CLAUDE.md both.
+- **GitHub Copilot** *combines* personal, repository and organization instructions. Its docs state that **all** relevant sets are provided, personal ranking highest, and — the sentence that matters — that **"Copilot's choice between conflicting instructions is non-deterministic."**
+
+So on a merging tool the risk is not one dead file but two live instruction sets resolving unpredictably, and it presents as contradictory behaviour on unchanged input rather than as silence. The guide now carries a per-tool table of failure, detection and remedy, and says plainly that the scope rules below it assume shadowing. **The scope decisions are unchanged** — a skill naming files in one tree is wrong to install everywhere either way — only the reason differs.
+
+`CLAUDE.md`'s Hard Constraint is hedged the same way. It is an **absolute in a description**, which this repo's own constraint forbids unmeasured, and it had been one since 2026-08-06.
+
+⚠️ **Writing the hedge tripped lint rule 1** — *"CLAUDE.md references `AGENTS.md` but it does not exist"* — because a **quoted filename another tool reads** is indistinguishable from a **referenced local path**. That is #76's thesis appearing in a second instrument (rule 1, not refcheck rung 4). The remedy was already convention and cost nothing: no backticks for an adopter's filename. Recorded on #76 as an argument *against* adding a marker, since a formatting habit already solves it.
+
 ### The naming map named the wrong file for four of its six tools (#128)
 
 `templates/README.md`, `README.md` and `docs/GUIDE.md` all placed **`AGENTS.md` in the "Codex (OpenAI)" column** — one vendor among six — and gave Cursor, Windsurf, Copilot and Aider their own vendor-specific paths. That was true when written. It is not true now, and a tool-agnostic framework was steering adopters toward vendor lock-in that the ecosystem had already removed.
