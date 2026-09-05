@@ -7,9 +7,9 @@ framework: agent-ready-projects v1.36.1   # a NUMBER, not a status — never wri
 
 # [Project Name]
 
-<!-- SAVE AS: CLAUDE.md (Claude Code), AGENTS.md (Codex), .windsurfrules (Windsurf),
-     .github/copilot-instructions.md (Copilot), .cursor/rules/*.mdc (Cursor),
-     or .aider.conf.yml (Aider). See templates/README.md for details. -->
+<!-- SAVE AS: AGENTS.md for most tools. Exceptions: CLAUDE.md (Claude Code),
+     CONVENTIONS.md (Aider, not auto-loaded). Two of these files means two sets
+     of instructions load at once. See templates/README.md. -->
 
 <!-- 3-5 lines: what this is, who it's for, what it does -->
 

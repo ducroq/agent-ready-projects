@@ -2,7 +2,7 @@
 # Regenerate rows with: bash tests/lint/size-ratchet.sh . --update
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and is recorded below.
-# BUDGET 246474
+# BUDGET 246110
 # ratcheted down 2026-09-05
 templates/adr.md	2115
 templates/audit-context.md	42323
@@ -16,8 +16,8 @@ templates/curate.md	67089
 templates/gotcha-log.md	4886
 templates/hypothesis-log.md	3570
 templates/memory-index.md	3396
-templates/project-file.md	6122
-templates/README.md	11544
+templates/project-file.md	6106
+templates/README.md	11196
 templates/release.md	19437
 templates/review-agent.md	5720
 templates/review-changes.md	34371

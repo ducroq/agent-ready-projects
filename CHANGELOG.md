@@ -31,6 +31,22 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 ⚠️ **Every change below that was reviewed was refuted at least once, and the refutations of the refutations are the interesting part.** Three of the earlier changes were refuted before shipping, two of those by a round reviewing the previous round's fix. The `curate` section then took **two further rounds, which found eight defects and eight more** — four of the second round's created by the first round's fixes, and one of them a measurement whose *instrument* was wrong in the direction that flattered the change. The counts are in each section because the count is the argument: this release contains a false measurement that was caught, a no-op remedy that was caught, and a table split that made an open bug reachable by following the instruction — all authored here, none found by the author.
 
+### The naming map named the wrong file for four of its six tools (#128)
+
+`templates/README.md`, `README.md` and `docs/GUIDE.md` all placed **`AGENTS.md` in the "Codex (OpenAI)" column** — one vendor among six — and gave Cursor, Windsurf, Copilot and Aider their own vendor-specific paths. That was true when written. It is not true now, and a tool-agnostic framework was steering adopters toward vendor lock-in that the ecosystem had already removed.
+
+`AGENTS.md` is stewarded by the **Agentic AI Foundation under the Linux Foundation** and is read natively by Codex, Cursor, Windsurf, GitHub Copilot's coding agent, VS Code, Zed and others.
+
+⚠️ **Every entry was checked against the vendor's own documentation, not against the standard's adopter list — and that mattered, because the list over-claims.** agents.md names 23 adopters including **Aider**; Aider's own docs describe `CONVENTIONS.md`, loaded with `--read` or a `read:` key in `.aider.conf.yml`, and **do not mention `AGENTS.md` at all**. Taking the list at face value would have shipped a false claim about a tool's behaviour into a normative table — the same shape as the three peer-supplied mechanisms shipped unverified on 2026-08-27. Verified: Cursor (cursor.com/docs/rules — also reads `CLAUDE.md` in its CLI), Copilot (github.blog changelog, 2025-08-28), Windsurf (docs — and `.windsurf/rules/` is now documented as **legacy**, so that column was stale twice over).
+
+⭐ **The asymmetry that shaped the fix: Claude Code is not an adopter.** The framework's own home tool is the one that does not read the emerging standard, which rules out a rename as firmly as it ruled out the status quo. The map now carries a portable default and two exceptions.
+
+⚠️ **New warning on the surface**: some tools read `AGENTS.md` *and* `CLAUDE.md` (Cursor's CLI does), so keeping both loads two instruction sets that drift apart silently. The map now says to name the canonical one.
+
+**Paid for by removing redundancy, and the budget ratcheted DOWN.** Seven rows of the naming table repeated an identical path across all six columns — `hypothesis-log.md`, `RUNBOOK.md`, `review-agent.md`, `adr.md`, `work-item.md`, `coordination.md`, `checklists/`. They are now one line. Budget **246,474 → 246,110**.
+
+⚠️ **One defect introduced and caught while making this change**: the first placement of the explanatory note landed *inside* the table, orphaning three rows from their header so they would have rendered as plain text. Found by applying Step 5's own "name what the fix could have broken" — the same class as the table split recorded above, in the release that added the rule against it.
+
 ### `review-changes` gains a fixing discipline, because fixing is where the cost is (Step 5)
 
 The engineer's constraint, stated twice: *"All the reviewing is getting waaay too expensive… otherwise the framework does not earn its keep"*, and then the sharper half — *"the reviews are carrying more of the quality than my first drafts are, so we need to balance quality and cost."*

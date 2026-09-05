@@ -15,22 +15,21 @@ If your tool has auto-memory (currently Claude Code), also grab `memory-index.md
 
 | Template | Claude Code | Codex (OpenAI) | Cursor | Windsurf | GitHub Copilot | Aider |
 |----------|------------|----------------|--------|----------|----------------|-------|
-| `project-file.md` | `CLAUDE.md` | `AGENTS.md` | `.cursor/rules/*.mdc` | `.windsurfrules` | `.github/copilot-instructions.md` | `.aider.conf.yml` |
+| `project-file.md` | `CLAUDE.md` | `AGENTS.md` | `AGENTS.md` | `AGENTS.md` | `AGENTS.md` | `CONVENTIONS.md` |
 | `memory-index.md` | `MEMORY.md` | — | — | — | — | — |
 | `gotcha-log.md` | `memory/gotcha-log.md` | `docs/gotcha-log.md` | `docs/gotcha-log.md` | `docs/gotcha-log.md` | `docs/gotcha-log.md` | `docs/gotcha-log.md` |
-| `hypothesis-log.md` | `docs/hypothesis-log.md` | `docs/hypothesis-log.md` | `docs/hypothesis-log.md` | `docs/hypothesis-log.md` | `docs/hypothesis-log.md` | `docs/hypothesis-log.md` |
-| `RUNBOOK.md` | `docs/RUNBOOK.md` | `docs/RUNBOOK.md` | `docs/RUNBOOK.md` | `docs/RUNBOOK.md` | `docs/RUNBOOK.md` | `docs/RUNBOOK.md` |
 | `curate.md` | `~/.claude/skills/curate/SKILL.md` (**user-global**) | End-of-session prompt | End-of-session prompt | End-of-session prompt | End-of-session prompt | End-of-session prompt |
 | `audit-context.md` | `~/.claude/skills/audit-context/SKILL.md` (**user-global**) | Ad-hoc prompt | Ad-hoc prompt | Ad-hoc prompt | Ad-hoc prompt | Ad-hoc prompt |
 | `update-drift.md` | `~/.claude/skills/update-drift/SKILL.md` (**user-global**) | Start-of-session prompt | Start-of-session prompt | Start-of-session prompt | Start-of-session prompt | Start-of-session prompt |
 | `review-changes.md` | `<repo>/.claude/skills/review-changes/SKILL.md` (**project-local, never global**) | Pre-commit prompt | Pre-commit prompt | Pre-commit prompt | Pre-commit prompt | Pre-commit prompt |
 | `release.md` | `<repo>/.claude/skills/release/SKILL.md` (**project-local**) | Release-time prompt | Release-time prompt | Release-time prompt | Release-time prompt | Release-time prompt |
-| `review-agent.md` | `docs/reviews/[domain]-review.md` | `docs/reviews/[domain]-review.md` | `docs/reviews/[domain]-review.md` | `docs/reviews/[domain]-review.md` | `docs/reviews/[domain]-review.md` | `docs/reviews/[domain]-review.md` |
-| `adr.md` | `docs/decisions/ADR-NNN-slug.md` | `docs/decisions/ADR-NNN-slug.md` | `docs/decisions/ADR-NNN-slug.md` | `docs/decisions/ADR-NNN-slug.md` | `docs/decisions/ADR-NNN-slug.md` | `docs/decisions/ADR-NNN-slug.md` |
-| `work-item.md` | `docs/work-items/[slug].md` | `docs/work-items/[slug].md` | `docs/work-items/[slug].md` | `docs/work-items/[slug].md` | `docs/work-items/[slug].md` | `docs/work-items/[slug].md` |
 | `test-verify-memory.md` | `<repo>/.claude/skills/test-verify-memory/SKILL.md` (**project-local**) | Ad-hoc prompt | Ad-hoc prompt | Ad-hoc prompt | Ad-hoc prompt | Ad-hoc prompt |
-| `coordination.md` | `COORDINATION.md` | `COORDINATION.md` | `COORDINATION.md` | `COORDINATION.md` | `COORDINATION.md` | `COORDINATION.md` |
-| `checklists/` | `docs/checklists/` | `docs/checklists/` | `docs/checklists/` | `docs/checklists/` | `docs/checklists/` | `docs/checklists/` |
+
+**Same path on every tool** (nothing tool-specific about these): `hypothesis-log.md` → `docs/hypothesis-log.md` · `RUNBOOK.md` → `docs/RUNBOOK.md` · `review-agent.md` → `docs/reviews/[domain]-review.md` · `adr.md` → `docs/decisions/ADR-NNN-slug.md` · `work-item.md` → `docs/work-items/[slug].md` · `coordination.md` → `COORDINATION.md` · `checklists/` → `docs/checklists/`
+
+**`AGENTS.md` is the portable default**, stewarded by the Agentic AI Foundation and read natively by Codex, Cursor, Windsurf, Copilot, VS Code and Zed — checked in each vendor's docs, not taken from the standard's adopter list. Two exceptions: **Claude Code** reads `CLAUDE.md`; **Aider** reads `CONVENTIONS.md` and does not auto-load it (`read:` in `.aider.conf.yml`, or `--read`).
+
+⚠️ **Keeping both `AGENTS.md` and `CLAUDE.md` loads two sets of instructions** — some tools read both — so name the canonical one in each. A pointer beats a second copy.
 
 **Tools without auto-memory**: The project file carries more weight — it's your only auto-loaded file. Keep it lean, use it as an index with task-triggered pointers to the runbook, gotcha log, and ADRs. The self-learning loop still works; promotion just targets the project file directly instead of passing through a memory index.
 

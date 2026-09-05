@@ -95,9 +95,11 @@ A gotcha logged in session 4 gets promoted to a topic file by session 8, reaches
 
 | This guide says | Claude Code | Codex | Cursor | Windsurf | GitHub Copilot | Aider |
 |----------------|------------|-------|--------|----------|----------------|-------|
-| "Project file" | `CLAUDE.md` | `AGENTS.md` | `.cursor/rules/*.mdc` | `.windsurfrules` | `.github/copilot-instructions.md` | `.aider.conf.yml` |
+| "Project file" | `CLAUDE.md` | `AGENTS.md` | `AGENTS.md` | `AGENTS.md` | `AGENTS.md` | `CONVENTIONS.md` |
 | "Memory" | `MEMORY.md` + topic files | — | — | — | — | — |
 | "Curate command" | `/curate` skill | End-of-session prompt | End-of-session prompt | End-of-session prompt | End-of-session prompt | End-of-session prompt |
+
+**`AGENTS.md` is the portable default** — a Linux Foundation-stewarded convention read natively by Codex, Cursor, Windsurf, Copilot, VS Code, Zed and others. The exceptions are **Claude Code** (`CLAUDE.md`) and **Aider** (`CONVENTIONS.md`, not auto-loaded). If you keep two of these files, say in each which one is canonical — some tools read both.
 
 See the [full reference guide](docs/GUIDE.md#tool-specific-setup) for detailed setup instructions, multi-tool projects, and Cursor `.mdc` examples.
 

@@ -128,7 +128,7 @@ The gotcha log is the exception worth calling out: it costs nothing until it has
 **Voice**: Welcoming — "here's what you need to know"
 **Location**: Project root (checked into repo)
 **Auto-loaded**: Yes
-**Tool-specific names**: CLAUDE.md (Claude Code), AGENTS.md (Codex), `.cursor/rules/*.mdc` (Cursor), `.windsurfrules` (Windsurf) — see [Tool-Specific Setup](#tool-specific-setup)
+**Tool-specific names**: `AGENTS.md` for most tools (Codex, Cursor, Windsurf, Copilot, VS Code, Zed); `CLAUDE.md` for Claude Code; `CONVENTIONS.md` for Aider — see [Tool-Specific Setup](#tool-specific-setup)
 
 This is the project's home base. It's the only file guaranteed to be read every session, so it carries the most weight. For small-to-medium projects, it contains *everything* an agent needs to start working — identity, constraints, architecture, and operational how-to.
 
@@ -562,7 +562,7 @@ The rhythm above has four phases: **Capture → Surface → Promote → Retire.*
 
 The goal of this loop is **memory as residue, not choreography**. You shouldn't need to write documentation about your work after you finish it. Instead, work in a way that leaves a record on its own: gotchas logged as they happen, patterns promoted as they recur, the memory index updated at end-of-session, the work-item savepoint refreshed before you walk away. The loop isn't a separate documentation task — it's the natural byproduct of working within the layered model.
 
-This loop applies to all tools. File names vary (CLAUDE.md vs AGENTS.md vs `.windsurfrules`), but the progression Capture → Surface → Promote → Retire is universal.
+This loop applies to all tools. File names vary (`AGENTS.md` for most, `CLAUDE.md` for Claude Code), but the progression Capture → Surface → Promote → Retire is universal.
 
 **Capture.** During work, you log gotchas as they happen (2-3 lines), note non-obvious learnings in topic files, and write ADRs when choosing between approaches. This is the raw material — cheap to create in the moment, expensive to reconstruct later. (Details: [The Documentation Rhythm](#the-documentation-rhythm), [Layer 4: History](#layer-4-history-gotcha-logmd--always-present).)
 
@@ -742,7 +742,8 @@ This guide's concepts map to every major AI coding agent. The file names and mec
 
 | This guide says | Claude Code | Codex (OpenAI) | Cursor | Windsurf | GitHub Copilot | Aider |
 |----------------|------------|----------------|--------|----------|----------------|-------|
-| "Project file" (Layer 1) | `CLAUDE.md` | `AGENTS.md` | `.cursor/rules/*.mdc` | `.windsurfrules` | `.github/copilot-instructions.md` | `.aider.conf.yml` + convention files |
+| "Project file" (Layer 1) | `CLAUDE.md` | `AGENTS.md` | `AGENTS.md` | `AGENTS.md` | `AGENTS.md` | `CONVENTIONS.md` (not auto-loaded) |
+<!-- AGENTS.md is stewarded by the Agentic AI Foundation (Linux Foundation) and read natively by Codex, Cursor, Windsurf, Copilot, VS Code and Zed; verified 2026-09-05 in each vendor's own docs, not from the standard's adopter list, which over-claims (it lists Aider, whose docs describe CONVENTIONS.md loaded via --read or .aider.conf.yml). Claude Code does not read AGENTS.md. Cursor and Windsurf still accept their own rule directories; Windsurf documents .windsurf/rules/ as legacy. -->
 | "Memory" (Layer 3) | `MEMORY.md` + topic files | — | — | — | — | — |
 | "Curate command" | `~/.claude/skills/curate/SKILL.md` (`/curate`, user-global) | End-of-session prompt | End-of-session prompt | End-of-session prompt | End-of-session prompt | End-of-session prompt |
 | "Audit command" | `~/.claude/skills/audit-context/SKILL.md` (`/audit-context`, user-global) | Ad-hoc prompt | Ad-hoc prompt | Ad-hoc prompt | Ad-hoc prompt | Ad-hoc prompt |
