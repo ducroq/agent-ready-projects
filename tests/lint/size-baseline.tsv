@@ -2,10 +2,10 @@
 # Regenerate rows with: bash tests/lint/size-ratchet.sh . --update
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and is recorded below.
-# BUDGET 246503
-# RAISED 2026-09-05 from 246110 to 246503: 2026-09-05 THIRD raise, +393, for #119 and #120 fix documentation in audit-context. It REPLACES a bug disclosure with fixed behaviour: the old text told adopters that a hyphen defeats the whole-token rule and that the two rung-4 arms disagree; the new text states what each now does plus the knowing cost (a sibling named 'alpha-based' no longer marks alpha - a miss, chosen over a confident wrong provenance). Tightened twice before raising, 619 -> 393. Prior raises this session: +1012 and +641, then ratcheted DOWN to 246110 by collapsing seven redundant naming-map rows, so the net across the session is far below the sum of the raises. See #131 - docs/ is still outside this budget and prose moved there does not show up here.
+# BUDGET 246501
+# ratcheted down 2026-09-05
 templates/adr.md	2115
-templates/audit-context.md	42716
+templates/audit-context.md	42714
 templates/checklists/architect-checklist.md	1263
 templates/checklists/implement-checklist.md	1329
 templates/checklists/qa-checklist.md	1836

@@ -31,6 +31,23 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 ⚠️ **Every change below that was reviewed was refuted at least once, and the refutations of the refutations are the interesting part.** Three of the earlier changes were refuted before shipping, two of those by a round reviewing the previous round's fix. The `curate` section then took **two further rounds, which found eight defects and eight more** — four of the second round's created by the first round's fixes, and one of them a measurement whose *instrument* was wrong in the direction that flattered the change. The counts are in each section because the count is the argument: this release contains a false measurement that was caught, a no-op remedy that was caught, and a table split that made an open bug reachable by following the instruction — all authored here, none found by the author.
 
+### Rung 3 excused a source file because of the directory it sat in (#108)
+
+Reported by an adopter running `/audit-context` with **seeded positives** — the right way to find this, and the reason it was findable at all. Two fabricated *source* names under `data/` were both classified as runtime state and the run printed `VERDICT: CLEAN — no findings (exit 0)`:
+
+```
+data/nope_not_real.json.py    -> "runtime state"   (excused)
+data/fabricated_source.py     -> "runtime state"   (excused)
+```
+
+**The step's prose already carried the rule** — *"runtime state is data — a source file … is still source, and its absence is still a real break"* — so this was the check disagreeing with its own spec, in the direction that loses sensitivity. A source extension is no longer excused by the directory signal.
+
+⚠️ **The prose was sharpened too, because it was ambiguous for exactly this case.** Its carve-out named a source file whose *name* contains "cache" or "state"; the failure was a source file **under a state directory**, which is the *other* positive signal. An agent following the text could reasonably have excused it. It now says the carve-out applies on either signal, name or directory. **So this is not an oracle-only fix** — the adopter-installed file changed, which is the question `CLAUDE.md` requires answering before closing a skill issue (#92).
+
+⚠️ **Extensions, not a content test.** A generated source file that genuinely is runtime output — `data/schema_pb2.py` — now reports instead of being excused. That is the safe direction: a false finding is visible and arguable; an excused real break is neither.
+
+**Seeded as T32 with N34 as the control.** N34 asserts that genuine state under the same directory still resolves — without it, deleting rung 3 outright would have scored perfectly on T32. Ablated both ways: reverting the carve-out fails only T32, disabling rung 3 fails only N34. `check_legacy()` is deliberately untouched, since it reproduces v1.15.0 so the changelog's "before" numbers stay re-derivable; its arm is written `elif`, which is what distinguishes the three call sites and is why a first attempt that matched all three was caught by its own assertion rather than by review.
+
 ### The lint could not run outside a git work tree, and said the wrong thing about why (#125)
 
 Rule 1 exempts an absent maintainer-local path only when `git check-ignore` agrees it is ignored. **Outside a work tree — a tarball export, a vendored copy, `.git` removed — that command fails for a reason with nothing to do with the path**, no exemption is granted, and the maintainer-local references become FAILs. The `2>/dev/null` that keeps `fatal: not a git repository` out of the output is what made it silent: four "missing file" FAILs indistinguishable from four genuinely missing files.

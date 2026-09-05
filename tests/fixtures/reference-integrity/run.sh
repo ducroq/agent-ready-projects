@@ -619,6 +619,37 @@ else
   printf '  FAIL  X10 the main run scanned %s neighbours, not 3 — a fixture tree is leaking into the rung-4 search\n' "$N_SIB"; FAIL=1
 fi
 
+# --- #108 — a source file under a state directory is still source. ------------
+# Reported by an adopter running /audit-context with seeded positives: two
+# fabricated SOURCE names under data/ were both excused as "runtime state" and
+# the run printed VERDICT: CLEAN. The step's own prose already carried the rule.
+# Isolated for the same reason as the block below: extra trees would change the
+# main run's neighbour count and trip X10.
+ST="$WORK/statedir"; mkdir -p "$ST/repo/data" "$ST/repo/.git"
+: > "$ST/repo/data/real_state.json"
+printf 'Source under data: `data/fabricated_source.py` and `data/nope_not_real.json.py`\n' > "$ST/repo/s1.md"
+printf 'Genuine state: `data/absent_cache.json` and `data/run_state.json`\n' > "$ST/repo/s2.md"
+STOUT="$(python3 refcheck.py --sibling-root "$ST" "$ST/repo" s1.md s2.md 2>&1 || true)"
+
+for f in fabricated_source.py nope_not_real.json.py; do
+  if printf '%s' "$STOUT" | grep -F -- "$f" | grep -q 'runtime state'; then
+    printf '  FAIL  T32 %s is still excused as runtime state (#108)\n' "$f"; FAIL=1
+  else
+    printf '  PASS  T32 %s is not excused by the directory signal (#108)\n' "$f"
+  fi
+done
+
+# N34 — the CONTROL, and the reason this pair is not just "stop excusing data/".
+# Genuine runtime state under the same directory must still resolve; without this
+# row, deleting rung 3 outright would score 2/2 above.
+for f in absent_cache.json run_state.json; do
+  if printf '%s' "$STOUT" | grep -F -- "$f" | grep -q 'runtime state'; then
+    printf '  PASS  N34 %s still resolves as runtime state\n' "$f"
+  else
+    printf '  FAIL  N34 the #108 fix broke genuine rung-3 resolution for %s\n' "$f"; FAIL=1
+  fi
+done
+
 # --- #119 / #120 — rung 4 provenance, in an ISOLATED estate. -----------------
 # Isolated because both cases need two siblings whose names share a
 # hyphen-delimited component, and adding those to $WORK would change the main

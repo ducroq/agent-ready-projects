@@ -108,6 +108,32 @@ STATE_SHAPE = re.compile(r'(_state\.json|_health\.json|\.pid|\.sock)$')
 # runtime state, i.e. as correctly-absent. A committed lockfile is not runtime
 # state. The documented test is a state DIRECTORY or a state-file SHAPE; keep it
 # that way, and see docs/reference-integrity.md before widening either.
+# #108 — a SOURCE FILE under a state directory is still source, and its absence
+# is still a real break. `templates/audit-context.md` rung 3 already says so:
+# "runtime state is data — a source file whose name merely contains 'cache' or
+# 'state' is still source". The implementation applied the DIRECTORY signal
+# without that carve-out, so an adopter's seeded `data/fabricated_source.py` and
+# `data/nope_not_real.json.py` were both excused as runtime state and the run
+# reported CLEAN. The check disagreed with its own spec, losing sensitivity.
+#
+# ⚠️ Extensions only, not a content test. The residual gap is a GENERATED source
+# file that is genuinely runtime output — `data/schema_pb2.py`, say — which now
+# reports rather than being excused. That is the safe direction: a false finding
+# is visible and arguable, an excused real break is neither. Data extensions
+# (.json, .csv, .db, .log …) are untouched, so the ordinary case still resolves.
+#
+# ⚠️ NOT applied to check_legacy(), which reproduces v1.15.0 faithfully so the
+# changelog's "before" number stays re-derivable from the same instrument. Its
+# arm is written `elif`, which is what distinguishes the three call sites.
+SOURCE_EXT = ('.py', '.sh', '.bash', '.zsh', '.js', '.ts', '.tsx', '.jsx',
+              '.rs', '.go', '.java', '.rb', '.php', '.c', '.h', '.cpp', '.hpp',
+              '.cs', '.kt', '.swift', '.vue', '.svelte', '.proto')
+
+
+def _is_source_file(frag):
+    return frag.lower().endswith(SOURCE_EXT)
+
+
 PRUNE = {'.git', 'venv', '.venv', 'node_modules', '__pycache__', 'target', 'dist'}
 
 # Span-scoped, NOT line-scoped. A line may retire one path and name its live
@@ -651,7 +677,8 @@ def check(root, sources, sibling_roots=None):
                     # after the local test, so MARKING a runtime-state path flipped
                     # its provenance to a sibling repo — and the remedy the finding
                     # prescribes would have written that falsehood into the document.
-                    if frag.startswith(STATE_DIRS) or STATE_SHAPE.search(frag):
+                    if ((frag.startswith(STATE_DIRS) or STATE_SHAPE.search(frag))
+                            and not _is_source_file(frag)):  # #108
                         placeheld.append((src, frag,
                                           'declared-placeholder'
                                           if frag in placeheld_frags else 'angle-bracket segment'))
@@ -753,7 +780,8 @@ def check(root, sources, sibling_roots=None):
                 # rung 3 (runtime state) BEFORE rung 4 (sibling) — a file this
                 # repo's own runtime writes is explained here; letting a sibling
                 # claim it first produces a provenance that is simply false.
-                if frag.startswith(STATE_DIRS) or STATE_SHAPE.search(frag):
+                if ((frag.startswith(STATE_DIRS) or STATE_SHAPE.search(frag))
+                            and not _is_source_file(frag)):  # #108
                     resolved_weak.append((src, frag, 'runtime state'))
                     continue
 
