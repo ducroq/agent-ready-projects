@@ -31,6 +31,22 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 ⚠️ **Every change below that was reviewed was refuted at least once, and the refutations of the refutations are the interesting part.** Three of the earlier changes were refuted before shipping, two of those by a round reviewing the previous round's fix. The `curate` section then took **two further rounds, which found eight defects and eight more** — four of the second round's created by the first round's fixes, and one of them a measurement whose *instrument* was wrong in the direction that flattered the change. The counts are in each section because the count is the argument: this release contains a false measurement that was caught, a no-op remedy that was caught, and a table split that made an open bug reachable by following the instruction — all authored here, none found by the author.
 
+### The budget could be paid by moving bytes to a surface it does not measure (#131)
+
+Found by an adversarial review of this release's own first change, and then **exercised six times in the same session before it was fixed** — which is the argument for fixing it rather than noting it.
+
+Lint rule 8 measures `templates/`. The sanctioned way to pay for growth is to move argument out of a skill into `docs/rationale/<skill>.md`, per the split convention. **`docs/` is not in the population**, so that move discharges the budget without reducing what an adopter reads: it relocates bytes across the boundary the rule happens to measure. Measured here: `templates/review-changes.md` +1,653 while `docs/rationale/review-changes.md` went **1,150 → 7,059**.
+
+**Option 3 from the issue shipped: report the transfer, gate nothing.** `docs/rationale/` is now a second, reported-only population recorded as a `# SPILL` line in the baseline. When the surface shrinks while that population grows, the run says so: *"the surface shrank while docs/rationale/ grew: some of this payment MOVED bytes rather than removing them. Adopters read both."*
+
+⚠️ **Deliberately not folded into the budget.** The split exists for a real reason and the costs genuinely differ — a skill body is paid **every invocation**, a `docs/` page only when someone follows the pointer. Pricing them equally punishes the split; pricing the second at zero is what a moving-bytes payment exploits. A discount rate would be a threshold picked rather than measured, and this repo has scars from those. Reporting invents no number.
+
+**Seeded P6 with two controls, and the controls are what make it a check** — N5 (a genuine deletion with `docs/rationale/` untouched stays quiet) and N6 (rationale growing alone is not a transfer). Without them, "warn whenever a template shrinks" and "warn whenever `docs/` grows" would each score perfectly. Ablated: removing the report kills P6 and leaves both controls green.
+
+⚠️ **Two of this repo's own guards fired on this change while it was being written**, and both are recorded because each is a check working:
+- The new `spill()` added a second `find … -type f | sed`, so an existing ablation's mutation was no longer unique and the helper **refused to apply it** rather than mutating whichever function it hit first. An ablation applied to the wrong function still reports PASS while testing something else.
+- A first draft of the new ablation passed a bare `'!'` as its pattern, so `grep -qF -- ""` matched everything and it reported *"mutant changed nothing"* for a mutant that changed exactly what it should. **An empty needle is a check that cannot fail** — lint rule 10's own subject, one file over.
+
 ### The size budget measured one file of a set, and the index in the wrong units (#109, #110)
 
 Both reported by adopters, both from real instances, and both are the same failure at different angles: **a budget that measures part of a population reads green while the population is over.**

@@ -25,9 +25,11 @@ trap 'rm -rf "$WORK"' EXIT
 
 mktree() {  # mktree <root>
   local r="$1"
-  mkdir -p "$r/templates" "$r/tests/lint"
+  mkdir -p "$r/templates" "$r/tests/lint" "$r/docs/rationale"
   printf 'aaaaaaaaaa\n' > "$r/templates/one.md"      # 11 bytes
   printf 'bbbbbbbbbbbbbbbbbbbb\n' > "$r/templates/two.md"   # 21 bytes
+  # #131's second population: reported, never gated.
+  printf 'rrrrrrrrrr\n' > "$r/docs/rationale/one.md"  # 11 bytes
   bash "$CHECK" "$r" --update >/dev/null
 }
 
@@ -53,6 +55,41 @@ run_case() {  # run_case <id> <expect: HIT|CLEAN> <needle> <mutator>
     else printf '  FAIL  %s — expected no violation, got: %s\n' "$id" "$out"; FAIL=1; fi
   fi
 }
+
+# --- #131 — a payment made by MOVING bytes must not read as a clean shrink. ----
+# The sanctioned way to pay for growth is to move argument into docs/rationale/,
+# which the budget does not measure — so the trade discharges the budget without
+# reducing what an adopter reads. Exercised six times in one session before this
+# existed. Reported, never gated: the two costs genuinely differ (a skill body is
+# paid every invocation, a docs page only when followed), and a discount rate
+# would be a threshold picked rather than measured.
+spill_case() {  # spill_case <id> <expect-warning: YES|NO> <mutator>
+  local id="$1" want="$2" mut="$3"
+  local r="$WORK/$id"; mkdir -p "$r"; mktree "$r"; "$mut" "$r"
+  local err="$WORK/$id.err"; bash "$CHECK" "$r" >/dev/null 2>"$err"
+  grep -q 'template(s) measured' "$err" || {
+    printf '  FAIL  %s — no measurement line; the rule did not run\n' "$id"; FAIL=1; return; }
+  if grep -q 'payment MOVED bytes' "$err"; then got=YES; else got=NO; fi
+  if [ "$got" = "$want" ]; then printf '  PASS  %s\n' "$id"
+  else printf '  FAIL  %s — expected moving-bytes warning %s, got %s\n' "$id" "$want" "$got"; FAIL=1; fi
+}
+
+# The seeded shape: template shrinks, docs/rationale grows. Total is under budget,
+# so without the report this reads as a clean reduction.
+m_moved() { printf 'a\n' > "$1/templates/one.md"
+            printf 'rrrrrrrrrrrrrrrrrrrrrrrrrrrrrr\n' > "$1/docs/rationale/one.md"; }
+spill_case P6-bytes-moved-to-unbudgeted-docs YES m_moved
+
+# N5 — the CONTROL, and the reason P6 is not just "warn whenever a template
+# shrinks". A genuine deletion, with docs/rationale untouched, must stay quiet.
+m_real_shrink() { printf 'a\n' > "$1/templates/one.md"; }
+spill_case N5-genuine-shrink-is-not-a-transfer NO m_real_shrink
+
+# N6 — the other control: rationale growing on its own, with no template shrink,
+# is not a transfer either. Without this, "warn whenever docs/rationale grows"
+# would score both rows above.
+m_docs_only() { printf 'rrrrrrrrrrrrrrrrrrrrrrrrrrrrrr\n' > "$1/docs/rationale/one.md"; }
+spill_case N6-rationale-growth-alone-is-not-a-transfer NO m_docs_only
 
 echo "positives — states the ratchet must report:"
 
@@ -177,7 +214,20 @@ ablate over-budget-check 'if [ "$now_total" -gt "$budget" ]; then' 'if false; th
 # Without the refusal, --update rubber-stamps growth again.
 ablate update-refusal 'if [ -n "$budget" ] && [ "$now_total" -gt "$budget" ]; then' 'if false; then' m_grew '!cannot raise the budget'
 # Without recursion the nested 59KB goes back to being invisible.
-ablate recursive-scan '-type f | sed' '-maxdepth 1 -type f | sed' m_nested '!not in the size baseline'
+# Anchored on the templates glob: #131 added a second `find ... -type f | sed`
+# for the docs/rationale population, so the bare pattern stopped being unique
+# and the helper REFUSED rather than mutating whichever it hit first. That
+# refusal is the behaviour worth having — an ablation applied to the wrong
+# function still reports PASS while testing something else entirely.
+ablate recursive-scan 'templates" -name '"'"'*.md'"'"' -type f' 'templates" -maxdepth 1 -name '"'"'*.md'"'"' -type f' m_nested '!not in the size baseline'
+
+# #131's own ablation: remove the spill report and P6 must die, while N5 and N6
+# stay green — otherwise the warning fires on any shrink and proves nothing.
+# ⚠️ The pattern must NAME the string, not be a bare '!'. A first draft passed
+# '!' alone, so `grep -qF -- ""` matched everything and the ablation reported
+# "mutant changed nothing" for a mutant that changed exactly what it should.
+# An empty needle is a check that cannot fail — lint rule 10's own subject.
+ablate spill-report 'payment MOVED bytes' 'payment did nothing at all' m_moved '!payment MOVED bytes'
 
 echo
 if [ $FAIL -eq 0 ]; then echo "All size-ratchet fixture cases passed."; else echo "Fixture failures above."; fi

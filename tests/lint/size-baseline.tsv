@@ -3,7 +3,8 @@
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and is recorded below.
 # BUDGET 247526
-# RAISED 2026-09-05 from 246915 to 247526: 2026-09-05 SIXTH and final raise, +611, for #109 and #110 in curate Step 0.8 — measure the WHOLE auto-loaded set rather than the project file alone, budget the memory index in characters not lines, and apply the footer-trim rule to every auto-loaded file. Paid down first: the prettier ignore-file cwd table and both table-padding measurements moved to docs/rationale/curate.md, and a 35% figure that the move had DUPLICATED between skill and rationale was removed from the skill (the split rule forbids a claim appearing in both). 1381 -> 611. Session net: surface 244822 at start -> 247526, +2704 for six fixed bugs (#107 #108 #116 #118 #119 #120 #124 #125 #109 #110), a fixing-discipline step and an adopter doc pointer.
+# SPILL 18902
+# ratcheted down 2026-09-05
 templates/adr.md	2115
 templates/audit-context.md	43128
 templates/checklists/architect-checklist.md	1263

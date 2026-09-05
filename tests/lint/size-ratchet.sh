@@ -41,9 +41,29 @@ BASELINE="$root/tests/lint/size-baseline.tsv"
 # it by living one directory down, which is how 59KB stayed invisible.
 tracked() { find "$root/templates" -name '*.md' -type f | sed "s|^$root/||" | sort; }
 
+# #131 — the SPILL population, reported and never gated.
+#
+# The sanctioned way to pay for growth is to move argument out of a skill into
+# docs/rationale/<skill>.md. `tracked()` globs templates/ only, so that move
+# discharges the budget without reducing what an adopter reads — it relocates
+# bytes across the boundary this rule happens to measure. Exercised six times in
+# one session on 2026-09-05: templates/review-changes.md +1653 while
+# docs/rationale/review-changes.md went 1150 -> 7059.
+#
+# ⚠️ NOT folded into the budget, deliberately. The split exists for a real reason
+# and the costs genuinely differ: a skill body is paid EVERY INVOCATION, a docs/
+# page only when someone follows the pointer. Pricing them equally would punish
+# the split; pricing the second at zero is what a moving-bytes payment exploits.
+# A discount rate would be a threshold picked rather than measured, and this repo
+# has scars from those. So: REPORT the transfer, invent no number, let a reader
+# see both sides of the trade. That is option 3 on #131.
+spill() { [ -d "$root/docs/rationale" ] && find "$root/docs/rationale" -name '*.md' -type f | sed "s|^$root/||" | sort; }
+measure_spill() { local t=0 n; while IFS= read -r rel; do [ -n "$rel" ] || continue; n=$(wc -c < "$root/$rel"); t=$((t + n)); done < <(spill); echo "$t"; }
+
 measure_total() { local t=0 n; while IFS= read -r rel; do n=$(wc -c < "$root/$rel"); t=$((t + n)); done < <(tracked); echo "$t"; }
 
 read_budget() { sed -n 's/^# BUDGET[[:space:]]\{1,\}\([0-9]\{1,\}\).*/\1/p' "$BASELINE" | head -1; }
+read_spill()  { sed -n 's/^# SPILL[[:space:]]\{1,\}\([0-9]\{1,\}\).*/\1/p'  "$BASELINE" | head -1; }
 
 write_baseline() { # write_baseline <budget> <note>
   { echo "# Lint rule 8 baseline — bytes per adopter-facing template, and the TOTAL budget."
@@ -51,6 +71,8 @@ write_baseline() { # write_baseline <budget> <note>
     echo "# The budget only goes DOWN. Growth in one file must be paid for by a shrink in"
     echo "# another. Raising it takes --raise-budget \"<reason>\" and is recorded below."
     echo "# BUDGET $1"
+    # Reported only — see spill() above. A budget line would make it a gate.
+    echo "# SPILL $(measure_spill)"
     [ -n "${2:-}" ] && echo "# $2"
     while IFS= read -r rel; do printf '%s\t%s\n' "$rel" "$(wc -c < "$root/$rel")"; done < <(tracked)
   } > "$BASELINE"
@@ -85,6 +107,9 @@ fi
 budget=$(read_budget)
 [ -n "$budget" ] || { echo "$BASELINE carries no '# BUDGET <bytes>' line — this rule cannot bind and checked nothing" >&2; exit 2; }
 
+# #131 — report the spill delta beside the budget, so a payment made by MOVING
+# bytes is visible instead of reading as a clean shrink. Never gates.
+spill_now=$(measure_spill); spill_was=$(read_spill)
 issues=0; checked=0; grew=0; shrank=0
 declare -A base=()
 while IFS=$'\t' read -r rel bytes; do
@@ -124,5 +149,12 @@ fi
 # Silence from a checker that did not run is indistinguishable from a clean
 # result, which is the failure this repo keeps re-learning. Always say the size.
 echo "      $checked template(s) measured; $now_total bytes total against a budget of $budget ($grew grew, $shrank shrank)" >&2
+if [ -n "$spill_was" ] && [ "$spill_now" -ne "$spill_was" ]; then
+  d=$((spill_now - spill_was)); sign=+; [ "$d" -lt 0 ] && { sign=-; d=$(( -d )); }
+  echo "      docs/rationale/ ${spill_was} -> ${spill_now} (${sign}${d}) — REPORTED, not budgeted (#131)" >&2
+  if [ "$now_total" -lt "$budget" ] && [ "$spill_now" -gt "$spill_was" ]; then
+    echo "      ⚠️ the surface shrank while docs/rationale/ grew: some of this payment MOVED bytes rather than removing them. Adopters read both." >&2
+  fi
+fi
 [ "$issues" -eq 0 ] || exit 1
 exit 0
