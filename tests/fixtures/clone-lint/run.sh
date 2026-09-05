@@ -71,6 +71,14 @@ MD
   : > "$1/templates/curate.md"; : > "$1/tests/lint/run.sh"
 }
 
+# N4 — #125: a tree that is NOT a git work tree (tarball export, vendored copy,
+# .git deleted). `git check-ignore` fails there for a reason unrelated to the
+# path, so before the fix the maintainer-local references became FAILs and
+# `2>/dev/null` hid why — indistinguishable from genuinely missing files. The
+# rule must SKIP itself and say so, and the skip must be COUNTED: a first draft
+# printed the line without incrementing, so the summary under-reported.
+d=$(mkrepo N4); clone_shape "$d"; rm -rf "$d/.git"
+
 d=$(mkrepo T1); clone_shape "$d"; echo 'Missing: `docs/nowhere.md`' >> "$d/CLAUDE.md"
 d=$(mkrepo T2); clone_shape "$d"; echo 'Install: `.claude/skills/curate/SKILL.md`' >> "$d/CLAUDE.md"
 # T3 — memory/ is NOT gitignored here, so its absence is a real break, not a
@@ -151,9 +159,13 @@ expect() { # $1 case, $2 output
     N2) [ "$i" -eq 0 ] && [ "$s" -eq 0 ] \
         && grep -qE '1 index reference\(s\) and 1 topic file\(s\) checked' <<<"$o" ;;
     N3) [ "$i" -eq 0 ] ;;
+    # No FAILs, and the rule must declare itself skipped rather than pass quietly.
+    # Asserting the skip COUNT as well as the line, because they are two claims.
+    N4) [ "$i" -eq 0 ] && [ "$s" -ge 1 ] \
+        && grep -q 'not inside a git work tree' <<<"$o" ;;
   esac
 }
-CASES="T1 T2 T3 T7 T4 T5 T6 T8 T9 T10 T11 T12 N1 N2 N3"
+CASES="T1 T2 T3 T7 T4 T5 T6 T8 T9 T10 T11 T12 N1 N2 N3 N4"
 declare -A WHY=(
   [T1]="an absent non-maintainer file is still a FAIL"
   [T2]=".claude/skills/ is tracked, so its files are never exempt"
@@ -170,6 +182,7 @@ declare -A WHY=(
   [N1]="the CI shape is clean AND reports rule 2 as skipped, not passed"
   [N2]="the maintainer shape is clean and prints its coverage"
   [N3]="a present tracked install is silent"
+  [N4]="outside a git work tree rule 1 SKIPS and counts it, instead of reporting false FAILs (#125)"
 )
 for c in $CASES; do
   out=$(run_case "$c" "$PRISTINE")
@@ -212,8 +225,15 @@ ablate A11 's|if \[ ! -d memory \] && git check-ignore -q "$path" 2>/dev/null; t
 # gitignored .claude/settings.json it is supposed to excuse. The two arms are not
 # independent, which is only visible from the kill set.
 ablate A2 's|^    memory/\*)|    *)|' N2 T7
-# A3 — skip rule 2 without counting it: the run then prints no SKIPPED summary.
-ablate A3 's|  SKIPPED=$((SKIPPED + 1))|  :|' N1
+# A3 — skip WITHOUT counting it: the run then prints no SKIPPED summary, so a
+# rule that checked nothing reads as a rule that passed.
+# ⚠️ The substitution is unanchored and therefore hits EVERY skip counter, not
+# just rule 2's. That became visible when #125 added rule 1's: A3 started killing
+# N4 as well as N1, and the honest response is to widen the expectation rather
+# than to anchor the mutant, because both cases assert the same guarantee — a
+# skip is announced AND counted. Narrowing it to one rule would have made the
+# ablation weaker while looking tidier.
+ablate A3 's|  SKIPPED=$((SKIPPED + 1))|  :|' N1 N4
 # A4 — the pre-#115 rule 2: the guard never fires, so an absent index runs the
 # loops anyway. Written as a dead condition rather than by deleting the block,
 # because deleting it leaves a dangling `fi` and every case dies of a syntax

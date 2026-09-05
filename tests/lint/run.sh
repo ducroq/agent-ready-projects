@@ -24,6 +24,30 @@ echo "[1/12] CLAUDE.md path references resolve on disk"
 # checked; reporting it is not the same as failing on it, and rule 2 one screen
 # down refuses exactly that silence. An absent or emptied CLAUDE.md made this rule
 # print `0 file reference(s) checked` and exit 0 — visible, ungated, and green.
+# ⚠️ #125 — the exemption above is granted by `git check-ignore`, and OUTSIDE a git
+# work tree that command fails for a reason that has nothing to do with the path.
+# A tarball export, a vendored copy, a clone with .git removed: no exemption is
+# granted, the maintainer-local references become FAILs, and `2>/dev/null` makes
+# the cause invisible — four "missing file" FAILs that are indistinguishable from
+# four genuinely missing files. Reproduced by deleting .git from a clone.
+#
+# A run outside a work tree cannot tell GITIGNORED from MISSING, so the rule
+# reports itself SKIPPED rather than guessing — the same disposition rule 12 takes
+# for an absent name list, and rule 2 for an absent memory/. **The trade, stated
+# because a skip is a loosening**: a tarball consumer gets less checking and no
+# failure. The alternative — a static allowlist of maintainer-local paths — stops
+# asking git but then drifts silently the first time a path is added.
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  echo "      SKIPPED: not inside a git work tree — cannot distinguish gitignored from missing (#125)"
+  # Register it. A first draft printed the line without incrementing the counter,
+  # so the run summary said "1 rule(s) SKIPPED" while two rules had skipped — the
+  # exact under-report this counter exists to prevent, in the change that added a
+  # skip. The line and the count are two different claims and both are load-bearing.
+  SKIPPED=$((SKIPPED + 1))
+  R1_SKIPPED=1
+else
+  R1_SKIPPED=0
+fi
 r1_checked=0; r1_exempt=0; r1_dirs=0; r1_dir_exempt=0
 while IFS= read -r path; do
   r1_checked=$((r1_checked + 1))
@@ -37,6 +61,7 @@ while IFS= read -r path; do
     # load-bearing class, still advertised in CLAUDE.md — scanned green. The
     # loosening had quietly traded the local catch for a clean CI run.
     memory/*)
+      if [ "$R1_SKIPPED" -eq 1 ]; then r1_exempt=$((r1_exempt + 1)); continue; fi
       if [ ! -d memory ] && git check-ignore -q "$path" 2>/dev/null; then
         r1_exempt=$((r1_exempt + 1)); continue
       fi ;;
@@ -46,6 +71,7 @@ while IFS= read -r path; do
     # not caught. There are none today (all four exemptions in CI are memory/), and
     # .claude/skills/ is negated in .gitignore, so its files are never exempt.
     .claude/*)
+      if [ "$R1_SKIPPED" -eq 1 ]; then r1_exempt=$((r1_exempt + 1)); continue; fi
       if git check-ignore -q "$path" 2>/dev/null; then
         r1_exempt=$((r1_exempt + 1)); continue
       fi ;;
@@ -68,7 +94,7 @@ while IFS= read -r path; do
   case "$path" in
     # 2>/dev/null for the same reason the file loop has it: outside a git repo this
     # prints `fatal: not a git repository` into the middle of the FAIL list.
-    .claude/|memory/) if git check-ignore -q "$path" 2>/dev/null; then
+    .claude/|memory/) if [ "$R1_SKIPPED" -eq 1 ] || git check-ignore -q "$path" 2>/dev/null; then
                         r1_dir_exempt=$((r1_dir_exempt + 1)); continue
                       fi ;;
   esac

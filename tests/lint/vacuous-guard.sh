@@ -53,7 +53,19 @@ while IFS= read -r f; do
         printf "%s: an ablation declares an EMPTY expected kill set — it is expected to break no case, which is a tautology\n", F
     }
   ' "$f" >>"$hits"
-done < <(git ls-files 'tests/**/*.sh' 'tests/*.sh' 2>/dev/null)
+# #125's class, one rule over: `git ls-files` enumerates NOTHING outside a work
+# tree — a tarball export, a vendored copy, .git removed — so this rule reported
+# "could not run (exit 2)" and the whole suite went red for a reason unrelated to
+# any ablation. Unlike rule 1 it failed LOUDLY, which is why it was not the filed
+# bug, but a tarball consumer still cannot run the suite. Fall back to `find`.
+# The two populations differ: `git ls-files` omits untracked files and `find`
+# includes them. That is the safe direction here — an untracked ablation runner is
+# still an ablation runner, and this rule's job is to catch one that cannot kill.
+done < <(if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+           git ls-files 'tests/**/*.sh' 'tests/*.sh' 2>/dev/null
+         else
+           find tests -name '*.sh' -type f 2>/dev/null | LC_ALL=C sort
+         fi)
 cat "$hits"
 [ -s "$hits" ] && FOUND=1
 

@@ -21,6 +21,17 @@
 # would buy back exactly the selection mechanism this workflow exists to remove.
 name: checks
 
+# TRIGGERS (#124). `push:` is unfiltered on purpose — this repo merges locally and
+# rarely opens PRs, so filtering to master would leave branch work ungated. That
+# double-ran a same-repo PR branch: push and pull_request produce different
+# `github.ref` values, so the concurrency groups differ and neither cancels the
+# other. The jobs below therefore skip `pull_request` when the head repo IS this
+# repo, since `push` has already covered that commit. A FORK's PR still runs here,
+# and it is the only case `push` cannot see.
+# ⚠️ A tag push still triggers its own run. That is left alone: the release
+# protocol pushes a tag at a commit CI has already tested, so the extra run is
+# redundant rather than wrong, and suppressing it would need a filter that could
+# also suppress a first-push-of-a-branch.
 on:
   push:
   pull_request:
@@ -35,10 +46,13 @@ concurrency:
 jobs:
   lint:
     name: structural lint
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      # Pinned by digest, not by the moving v4 tag (#124). Bump deliberately:
+      #   gh api repos/actions/checkout/git/ref/tags/v4 --jq .object.sha
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: tests/lint/run.sh
         run: |
@@ -72,10 +86,13 @@ jobs:
               grep 'SKIPPED' lint.log
               echo '```'
               echo
-              echo "**A skipped rule is not a passed rule.** Both skips above are expected"
-              echo "and neither is a defect: \`memory/\` is gitignored maintainer-local state,"
-              echo "so rule 2 has no index to check, and rule 12's private-name list cannot be"
-              echo "tracked without publishing exactly what it protects."
+              echo "**A skipped rule is not a passed rule.** The expected skips here are"
+              echo "rule 2 (\`memory/\` is gitignored maintainer-local state, so there is no"
+              echo "index to check) and rule 12 (its private-name list cannot be tracked"
+              echo "without publishing exactly what it protects). ⚠️ **Any OTHER skip in the"
+              echo "block above is unexpected and should be read as a defect** — rule 1 skips"
+              echo "outside a git work tree (#125), which a CI checkout is not, so seeing it"
+              echo "here means the checkout is not what this workflow assumes."
               echo
               echo "Rule 2 is checkable locally, where \`memory/\` exists. **Rule 12 skips"
               echo "locally too** for anyone without \`~/.config/agent-ready/private-names\` —"
@@ -88,10 +105,41 @@ jobs:
 
   fixtures:
     name: sensitivity fixtures
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      # Pinned by digest, not by the moving v4 tag (#124). Bump deliberately:
+      #   gh api repos/actions/checkout/git/ref/tags/v4 --jq .object.sha
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: tests/run-fixtures.sh
-        run: bash tests/run-fixtures.sh
+        run: |
+          set -o pipefail
+          bash tests/run-fixtures.sh 2>&1 | tee fixtures.log
+
+      - name: Report what ran and what did not
+        if: ${{ !cancelled() }}
+        run: |
+          # Same reasoning as the lint job's summary: `tee` creates the file before
+          # the script runs, so its existence proves nothing. Gate on the runner's
+          # own terminal line, and say so when it never arrived (#124).
+          [ -f fixtures.log ] || exit 0
+          {
+            echo "### Sensitivity fixtures"
+            echo
+            if grep -qE '^[0-9]+ of [0-9]+ fixture suite\(s\) executed' fixtures.log; then
+              echo '```'
+              grep -E '^[0-9]+ of [0-9]+ fixture suite\(s\) executed' fixtures.log
+              echo '```'
+              echo
+              if grep -q 'declared not-a-gate' fixtures.log; then
+                echo "One suite is a **declared non-gate**: \`tests/fixtures/review-bench/\`"
+                echo "scores a review configuration and has no pass/fail by design. It did"
+                echo "**not** pass — it was not asked to. Everything else is a real gate."
+              fi
+            else
+              echo "⚠️ The runner never reached its summary line — **this run measured nothing.**"
+              echo "Read the step log; do not read the job result as coverage."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -31,6 +31,28 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 ⚠️ **Every change below that was reviewed was refuted at least once, and the refutations of the refutations are the interesting part.** Three of the earlier changes were refuted before shipping, two of those by a round reviewing the previous round's fix. The `curate` section then took **two further rounds, which found eight defects and eight more** — four of the second round's created by the first round's fixes, and one of them a measurement whose *instrument* was wrong in the direction that flattered the change. The counts are in each section because the count is the argument: this release contains a false measurement that was caught, a no-op remedy that was caught, and a table split that made an open bug reachable by following the instruction — all authored here, none found by the author.
 
+### The lint could not run outside a git work tree, and said the wrong thing about why (#125)
+
+Rule 1 exempts an absent maintainer-local path only when `git check-ignore` agrees it is ignored. **Outside a work tree — a tarball export, a vendored copy, `.git` removed — that command fails for a reason with nothing to do with the path**, no exemption is granted, and the maintainer-local references become FAILs. The `2>/dev/null` that keeps `fatal: not a git repository` out of the output is what made it silent: four "missing file" FAILs indistinguishable from four genuinely missing files.
+
+The rule now reports itself **SKIPPED** rather than guessing — the disposition rule 12 already takes for an absent name list, and rule 2 for an absent `memory/`. ⚠️ **A skip is a loosening and the trade is stated**: a tarball consumer gets less checking and no failure. The alternative, a static allowlist of maintainer-local paths, stops asking git but drifts silently the first time a path is added.
+
+**Rule 10 had the same disease and a different symptom.** `git ls-files` enumerates nothing outside a work tree, so it reported *"checker could not run (exit 2)"* and took the whole suite red. It failed loudly, which is why it was never the filed bug — but a tarball consumer still could not run the suite. It now falls back to `find`. The populations differ (`find` includes untracked files) and that is the safe direction: an untracked ablation runner is still an ablation runner.
+
+⚠️ **A first draft printed the skip line without incrementing the counter**, so the run summary said *"1 rule(s) SKIPPED"* while two rules had skipped — the exact under-report that counter exists to prevent, introduced by the change that added a skip. **The line and the count are two separate claims.** Seeded as N4 in `tests/fixtures/clone-lint/`, which asserts both.
+
+⭐ **Adding N4 made an existing ablation stronger, and the fixture said so.** A3's mutant is unanchored, so it strips *every* skip counter; it began killing N4 as well as N1. Widening its expectation was the honest response — both cases assert the same guarantee, that a skip is announced **and** counted. Anchoring the mutant to one rule would have looked tidier and tested less.
+
+### CI mechanics: an unpinned action, a double run, and a silent job (#124)
+
+Three items left undone deliberately when #115 landed, none of which blocked the gate.
+
+1. **`actions/checkout@v4` is a moving tag.** Now pinned by digest `11d5960…` with the resolving command in a comment beside it, and the `# v4.4.0` annotation checked against `repos/actions/checkout/git/ref/tags/v4.4.0` rather than assumed.
+2. **`push:` + `pull_request:` double-ran a same-repo PR branch**, and the two concurrency groups differ so neither cancelled the other. Both jobs now skip `pull_request` when the head repo *is* this repo, because `push` has already covered that commit; **a fork's PR still runs**, and it is the only case `push` cannot see. Unfiltered `push` stays deliberate — this repo merges locally, so filtering to `master` would leave branch work ungated. ⚠️ A tag push still triggers its own run, left alone knowingly: the release protocol tags a commit CI has already tested, so it is redundant rather than wrong.
+3. **The fixtures job wrote no step summary**, so the one thing a reader needs surfaced — that `review-bench` is a *declared non-gate* rather than a suite that passed — lived only in the raw log. It now says so, and, like the lint job, gates on the runner's own terminal line: `tee` creates the log before the script runs, so the file existing proves nothing.
+
+**And the lint summary's prose was made to survive a third skip.** It asserted *"Both skips above are expected"* — a hardcoded count that #125 had just made falsifiable. It now names the two expected rules and says explicitly that any other skip should be read as a defect.
+
 ### Rung 4 gave two kinds of confident wrong provenance (#119, #120)
 
 Both produce the outcome `audit-context` Step 4's own text calls the worst available — *"A confident wrong answer is worse than a miss, and it is what makes a reader stop trusting the step."*
