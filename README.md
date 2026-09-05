@@ -133,3 +133,5 @@ Ready-to-use starter files in [`templates/`](templates/). Tool-agnostic — rena
 - **[Framework comparison](docs/archive/COMPARISON.md)** — Mapping against BMAD-METHOD and spec-kit
 - **[Methodology](docs/archive/METHODOLOGY.md)** — How this guide was developed and tested
 - **[Verification rationale](docs/verification-rationale.md)** — Three structural principles organizing the framework's verification patterns: multi-pass verification as invariant coverage, tier-monotonicity for claim language, compositional validation. Decision rules for when to add, skip, or retire a verification layer.
+- **[Seeded defects and ablations](docs/seeded-defects-and-ablations.md)** — How to tell a check that works from a check that is silent: seed the failures it must catch, then break it on purpose and require the fixture to go red. Tool-agnostic, and the part of this method with the most measured catches.
+- **[Verifying what we write](docs/verifying-what-we-write.md)** — The same discipline applied to prose claims: a claim registry and what a 27-claim audit actually found.

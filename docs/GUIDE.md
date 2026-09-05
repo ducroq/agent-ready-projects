@@ -440,6 +440,9 @@ The same principle applies to research and exploration. Offload search, grep, an
 
 ## Verification Hooks
 
+> **A hook that never fires is indistinguishable from a hook that passes.** Before trusting any check in this section — a hook, a linter, a structural rule — seed it with the failures it must catch and confirm it still fails when you break it deliberately. See [Seeded defects and ablations](seeded-defects-and-ablations.md).
+
+
 A session hook orients the agent at the start. A **verification hook** closes the loop at the other end: it runs your checks after an edit and puts the result back in front of the agent.
 
 The difference this makes is who carries the error message. Without a hook, the agent edits, stops, and waits; you run the tests, read the failure, and paste it back. With one, the agent edits, sees the failure, and fixes it — the cheapest possible correction, made while the reasoning that produced the bug is still in context. This is the same division of labour as the rest of the method: deterministic checks catch what a rule can decide, and the agent's judgment is reserved for what a rule can't.
