@@ -28,9 +28,9 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 | present | 3 — a lossy table row, an emphasis span, an unclosed fence |
 | typo'd | 1 — the frontmatter message |
 
-It now reports **"no check ran on any line of this file"**. ⚠️ Not *"no line was examined"*, which is the adopter's own field-tested wording and is still an overstatement: the `\r` strip and both frontmatter regexes do run on every line. What is measurable is that no *check* runs — every finding `printf` sits below that `next`, and END's fence rule reads a variable set only inside the skipped block. This is the Hard Constraint on absolutes in descriptions applied to a fix for a message that was wrong in the same way.
+It now reports **"no check ran on any line of this file"**. ⚠️ Not *"no line was examined"*, which is the adopter's own field-tested wording and is still an overstatement: the `\r` strip does run on every line. What is measurable is that no *check* runs — every finding `printf` sits below that `next`, and END's fence rule reads a variable set only inside the skipped block. This is the Hard Constraint on absolutes in descriptions applied to a fix for a message that was wrong in the same way.
 
-**The neighbouring enumeration made the same understatement.** Step 1.5's prose said *"Hits come in three shapes"* and named the table, header and fence cases, omitting the emphasis finding shipped since #50 and the frontmatter guard itself — ten lines above the message being corrected. Now five, named.
+**The neighbouring enumeration made the same understatement.** Step 1.5's prose said *"Hits come in three shapes"* and named the table, header and fence cases, omitting the emphasis finding shipped since #50 and the frontmatter guard itself — nine lines below the message being corrected. Now five, named.
 
 **Seeded**, since a message is a claim: `tests/fixtures/step15-tables/` gains **T8** (unclosed) with **T9 as its control** — the same body with the delimiter closed, asserting three findings of three different kinds, so T8's single line is a measured loss and not an empty body. Ablation **A6** is the only one in that suite testing a *message* rather than a firing.
 
@@ -47,7 +47,7 @@ It now reports **"no check ran on any line of this file"**. ⚠️ Not *"no line
 
 The class is at **0** in this repo, so a run over the real tree cannot distinguish a working rule from a disabled one. `tests/fixtures/maintainer-path/` seeds it: 3 positives (template, reference install, and an **untracked** file), 4 negatives including the two legitimate classes above and a declared exemption, exit-code cases for findings / clean / **empty population**, and 2 ablations whose kill sets are measured.
 
-**Also**: `templates/review-changes.md` shrank 206 bytes; `docs/rationale/` grew 1,687. The ratchet reports that transfer rather than counting it as a saving, and it is a transfer — bytes moved off a surface paid per invocation onto one read on demand, not removed. `CLAUDE.md`'s counts for this fixture become **commands**, having been wrong before this change added to them.
+**Also**, and stated as measured rather than as remembered: across this work `templates/review-changes.md` **grew** and `docs/rationale/` grew more. ⚠️ **A draft of this paragraph claimed the template "shrank 206 bytes"** — 206 was an intra-session intermediate, not a net against the parent commit, where the file grew. That is the fourth fabricated byte count in this session and the second inside a paragraph about honest byte accounting. Re-derive rather than trust: `git show <ref>^:<path> | wc -c` against `git show <ref>:<path> | wc -c`, and `tests/lint/size-baseline.tsv` records both the per-file rows and the `# SPILL` total in the same commit. `CLAUDE.md`'s counts for this fixture become **commands**, having been wrong before this change added to them.
 
 
 ## v1.38.0 (2026-09-06)

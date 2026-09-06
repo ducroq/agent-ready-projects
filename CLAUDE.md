@@ -163,8 +163,11 @@ agent-ready-projects/
       │                          Counts are COMMANDS: the
       │                          numbers here were already wrong before #144 added
       │                          cases (#93's class, third fixture to hit it):
-      │                            t/n  grep -oE '> [tn][0-9]+_[a-z_]+\.md' run.sh | sort -u | wc -l
-      │                            abl  grep -cE '^(msg_)?ablate ' run.sh
+      │                            t/n  grep -oE '\b[tn][0-9]+_[a-z0-9_]+\.md\b' run.sh | sort -u | wc -l
+      │                            abl  grep -cE '^[a-z_]*ablate[a-z_]* ' run.sh
+      │                          (both widened after a review showed the first
+      │                          drafts missed a digit in a name and a renamed
+      │                          ablation helper, silently)
       │                          The awk is EXTRACTED from the template, not copied,
       │                          so it cannot drift
       ├── baseline-fallback/    <- Seeded git states for review-changes Step 1's baseline

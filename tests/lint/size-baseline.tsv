@@ -3,15 +3,16 @@
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and every raise is
 # recorded below, oldest first — notes accumulate and are never replaced.
-# BUDGET 249642
-# SPILL 27308
+# BUDGET 250043
+# SPILL 27914
 # RAISED 2026-09-06 from 247526 to 247969: #133: the #118 remedy string shipped unconditional and can turn a resolved reference into an AMBIGUOUS finding; the caveat that scopes it is +443 b on templates/audit-context.md, seeded as T39/T40/N39 (reason restored 2026-09-06 — write_baseline used to overwrite each note with the next)
 # RAISED 2026-09-06 from 247969 to 248237: #140: UNRESOLVED had two causes printing one reason. +268 b on templates/audit-context.md, seeded as T41/T41b/N40 (reason restored 2026-09-06)
 # RAISED 2026-09-06 from 248237 to 248864: #149 (BLOCKER): review-changes could report a clean result on wholly unreviewed content — the root-commit fallback excluded the root, so a one-commit repo diffed to nothing and Step 1's terminator said 'nothing to review'. +627 b (measured; a draft of this line said +466, and the edit I called a trim was 77 b LARGER than what it replaced — third fabricated byte count in this session, same class as the defects being fixed) buys three runtime lines that name the excluded content and the companion command, plus a terminator clause the fallback cannot satisfy. THIRD RAISE TODAY: three correctness fixes to adopter-facing prose in one session, none paid by a shrink — if that keeps happening the budget is mis-calibrated, not the fixes. Seeded at tests/fixtures/baseline-fallback/
 # RAISED 2026-09-06 from 248864 to 249353: FOURTH raise today, and the last one that should ever be waved through: +489 b of irreducible adopter-facing content from the review of #133/#140/#149 — UNRESOLVED gained a third cause (#154), the cross-repo remedy gained the half that makes it work, the baseline fallback gained a printed marker and a pipefail guard. ⚠️ +4461 b was paid by MOVING measured history to docs/rationale/ (see the SPILL line) rather than by a shrink, so this raise is smaller than the change. FOUR raises in one session with no shrink anywhere says the budget's calibration is the open question, not these fixes — #109/#110's neighbourhood
 # RAISED 2026-09-06 from 249353 to 249600: FIFTH raise today, and I said the fourth was the last — that contradiction is the finding, not the bytes. +247 b net (review-changes +386, curate -139, the first real SHRINK all session) to replace a WRONG shipped statistic with a right one plus the awk to re-derive it: v1.37.0 shipped '14 of 28 against 6 misses' as 'the findings classified as to origin', where the ledger classifies 11 rows / 138 findings / 13 misses; 52% belongs to four hand-picked rounds, 8% to the whole ledger. Found by an adopter whose doc lens verified the number against docs/rationale (identical prose) while its adversarial lens refuted it against the TSV — self-corroborating copy. ⚠️ A budget whose escape hatch is always available and always taken is a LOG, not a budget: five raises, one shrink, and the shrink only happened because #139 forced a deletion. Re-baseline as a deliberate decision or make raises cost something
 # ratcheted down 2026-09-06
-# RAISED 2026-09-06 from 249584 to 249642: #144/#150: the enumeration named 3 of the awk's 5 hit shapes and the repair sentence told adopters to escape a pipe for a frontmatter hit, which is wrong. Net +58 after paying 206 and 16 bytes of shrink and three rounds of tightening (+415 -> +58).
+# RAISED 2026-09-06 from 249584 to 249642: #144/#150: the enumeration named 3 of the awk's 5 hit shapes and the repair sentence told adopters to escape a pipe for a frontmatter hit, which is wrong. ⚠️ CORRECTED 2026-09-06: this note said "+58 after paying 206 and 16 bytes of shrink". The 206 was an INTRA-SESSION intermediate, not a shrink against the parent commit — measured against ec1f1ae^ the template GREW 42 b. The 16 is real. Fabricating a payment to justify a raise is the shape H-022 is about, pointed at the ledger itself.
+# RAISED 2026-09-06 from 249642 to 250043: #144/#150 round 3: four of the five enumerated hit shapes had NO repair given and the frontmatter shape never told the reader to close the delimiter and re-run — the actual reader action the issue was filed about. Restores the GFM spec citation dropped in round 2 and scopes the false-positive caveat to the row shape it applies to. +401 b, measured against this working tree; no shrink is claimed anywhere.
 templates/adr.md	2115
 templates/audit-context.md	43903
 templates/checklists/architect-checklist.md	1263
@@ -28,7 +29,7 @@ templates/project-file.md	6106
 templates/README.md	11196
 templates/release.md	19437
 templates/review-agent.md	5720
-templates/review-changes.md	35851
+templates/review-changes.md	36252
 templates/RUNBOOK.md	2795
 templates/test-fixtures/memory/decision-no-verify.md	185
 templates/test-fixtures/memory/observation-no-verify.md	185

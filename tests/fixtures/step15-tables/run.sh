@@ -63,7 +63,12 @@ printf 'A **bolded phrase** with a plain `src/lib.py` token.\n'             > n5
 # reverts. 15 lines of this exact shape were reported before that test existed.
 printf '| **HIGH** | `templates/**`, `tests/**`, `scripts/**` | Full battery |\n' > n6_tier_row.md
 
-run() { awk -v F="$1" -f "$WORK/check.awk" "$1"; }
+# AWKF is indirection with a purpose: it lets an ablation re-run the REAL
+# assertions against a mutated program instead of re-implementing them. A6's
+# first two drafts both scored their mutant with a private copy of the
+# comparison, so weakening the assertion left the ablation green.
+AWKF="$WORK/check.awk"
+run() { awk -v F="$1" -f "$AWKF" "$1"; }
 want_hit()   { if [ -n "$(run "$1")" ]; then printf '  PASS  %s %s\n' "$1" "$2"; else printf '  FAIL  %s reported nothing — %s\n' "$1" "$2"; FAIL=1; fi; }
 want_quiet() { if [ -z "$(run "$1")" ]; then printf '  PASS  %s %s\n' "$1" "$2"; else printf '  FAIL  %s reported [%s] — %s\n' "$1" "$(run "$1")" "$2"; FAIL=1; fi; }
 # want_hit cannot see a message that is WRONG, only one that is absent — #144
@@ -162,7 +167,7 @@ ablate "A5 emphasis rule ignores bold nesting" 'if (inb && substr(masked, i, 1) 
 # what it said. Reverting the wording must turn want_out red while leaving the guard
 # firing — a mutation that silences it would be evidence about something else.
 msg_ablate() {
-  local label="$1" old="$2" new="$3" hits
+  local label="$1" old="$2" new="$3" hits saved mutfail
   OLD="$old" NEW="$new" python3 -c '
 import os, sys, pathlib
 s = pathlib.Path(sys.argv[1]).read_text()
@@ -170,12 +175,21 @@ old, new = os.environ["OLD"], os.environ["NEW"]
 if s.count(old) != 1: sys.exit("site occurs %d times, not once" % s.count(old))
 pathlib.Path(sys.argv[2]).write_text(s.replace(old, new))
 ' "$WORK/check.awk" "$WORK/msg.awk" || { printf '  FAIL  ablation %s could not be applied — its site has moved\n' "$label"; FAIL=1; return; }
+  # The mutant must still FIRE. A mutation that silences the guard would be
+  # evidence about something else entirely.
   hits="$(awk -v F=t8_fm_loses_all.md -f "$WORK/msg.awk" t8_fm_loses_all.md)"
   if [ -z "$hits" ]; then printf '  FAIL  ablation %s silenced the guard — not a message-only mutation\n' "$label"; FAIL=1; return; fi
-  if [ "$hits" = "t8_fm_loses_all.md: $EXPECT_FM" ]; then
-    printf '  FAIL  ablation %s left the assertion GREEN — want_exact cannot detect an APPENDED false claim\n' "$label"; FAIL=1
+  # ⚠️ Score the mutant with want_exact ITSELF, not a copy of what it does. If
+  # want_exact is ever weakened back to a substring test, this ablation goes red
+  # — which is the whole point, and what two earlier drafts failed to do.
+  saved=$FAIL; FAIL=0; AWKF="$WORK/msg.awk"
+  want_exact t8_fm_loses_all.md "t8_fm_loses_all.md: $EXPECT_FM" "(scored inside A6)" >/dev/null 2>&1
+  mutfail=$FAIL
+  AWKF="$WORK/check.awk"; FAIL=$saved
+  if [ "$mutfail" = "1" ]; then
+    printf '  PASS  ablation %s appends a false narrowing and want_exact — the real assertion, re-run — catches it\n' "$label"
   else
-    printf '  PASS  ablation %s appends a false narrowing and want_exact catches it — a substring test would not\n' "$label"
+    printf '  FAIL  ablation %s left want_exact GREEN: the assertion cannot detect an APPENDED false claim\n' "$label"; FAIL=1
   fi
 }
 msg_ablate "A6 append a false narrowing to the guard message" "$EXPECT_FM" "$EXPECT_FM — but only the TABLE check matters here"
