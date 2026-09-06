@@ -62,6 +62,8 @@ agent-ready-projects/
 │   │                             two — if a claim is in both, one of them is wrong
 │   ├── GUIDE.md
 │   ├── verification-rationale.md
+│   ├── seeded-defects-and-ablations.md
+│   │                          <- Seeded fixtures + ablations, taught tool-agnostically (#130)
 │   ├── guide/                 <- Four-page visual walkthrough
 │   ├── work-items/            <- Per-work-item context files (v1.11.0)
 │   ├── archive/               <- LANDSCAPE.md, COMPARISON.md, METHODOLOGY.md (per 2026-04-14 pivot)
@@ -108,15 +110,20 @@ agent-ready-projects/
 │   └── fixtures/              <- Seeded-defect fixtures: a check that finds nothing here is failing
 │       ├── reference-integrity/  <- Seeded breaks for audit-context Step 4. refcheck.py is an ORACLE,
 │       │                          NOT normative and never installed — fix Step 4 too (#92).
-│       │                          27 T, 28 N, D1, E1, plus 18 XCASES exit-status rows
-│       │                          (`grep -cE '^  "X[0-9]+ '`; the isolation and
-│       │                          enumeration guards listed next are separate), and
-│       │                          12 ablations (#93, #102). Both counts here were
-│       │                          stale before #102, and a draft of this fix replaced
-│       │                          one with a differently-wrong number
+│       │                          Counts are COMMANDS, not numbers — both were stale
+│       │                          before #102, a draft of that fix replaced one with a
+│       │                          differently-wrong number, and they went stale again
+│       │                          in v1.37.0 the moment cases were added:
+│       │                            T ids  grep -oE '\bT[0-9]+\b' run.sh | sort -u | wc -l
+│       │                            N ids  grep -oE '\bN[0-9]+\b' run.sh | sort -u | wc -l
+│       │                            X      grep -cE '^  "X[0-9]+ ' run.sh
+│       │                            abl    grep -cE '^ablate ' run.sh
+│       │                          (#93, #102). The isolation and enumeration guards are
+│       │                          separate from the X rows
 │       ├── skill-template-sync/  <- Seeded drift for lint rule 6 (17 positives, 7 negatives)
 │       ├── provisioning-quote/  <- Seeded drift for lint rule 7 (9 positives, 4 negatives)
-│       ├── size-ratchet/       <- Seeded growth for lint rule 8 (4 positives, 4 negatives)
+│       ├── size-ratchet/       <- Seeded growth for lint rule 8, plus the #131 spill
+│       │                          rows: `grep -cE '^(run_case|spill_case|ablate) '`
 │       ├── block-parses/      <- Seeded blocks for lint rule 11 (4 positives, 4 negatives,
 │       │                          2 ablations; N4 is the file-ordinal collision control)
 │       ├── private-names/      <- Seeded names for lint rule 12 (4 positives, 5 negatives,
@@ -174,6 +181,7 @@ Listed here so the architecture diagram above is honest about what an adopter se
 | `CHANGELOG.md` | Release notes with maintainer release process at top |
 | `docs/GUIDE.md` | Full reference |
 | `docs/verification-rationale.md` | Three structural principles + decision rules (v1.10.1) |
+| `docs/seeded-defects-and-ablations.md` | **The adopter-facing page for this repo's most-caught-with instruments** (v1.37.0, #130). Seed the failures a check must catch; then break the check and require the fixture to go red. Ships its own limits — recall against seeds is a lower bound, with the external evidence for that. ⚠️ **Linked from `README.md` and `docs/GUIDE.md`, deliberately**: `docs/verification-rationale.md` and `docs/verifying-what-we-write.md` were reachable from nothing, which is the failure #130 is about |
 | `templates/project-file.md` | Layer-1 project file template |
 | `templates/work-item.md` | Multi-session work tracking with built-in savepoint |
 | `templates/review-changes.md` | Diff-driven pre-commit review skill |
@@ -184,7 +192,7 @@ Listed here so the architecture diagram above is honest about what an adopter se
 | `.claude/skills/` | Reference installs (tracked) — the frontmatter-correct source a global install is derived from |
 | `.github/workflows/checks.yml` | CI: `tests/lint/run.sh` + `tests/run-fixtures.sh`, every push and PR (#115). Its own header carries what it does *not* check |
 | `tests/run-fixtures.sh` | Runs every suite under `tests/fixtures/`, enumerated not listed. Refuses three silences: an empty population exits 2, an undeclared fixture dir with no runner FAILS, and one red suite never stops the other twelve |
-| `tests/fixtures/clone-lint/` | Sensitivity of lint rules 1–2 **in CI's environment** — a checkout with no `memory/`. Rule 1's fresh-clone exemption is a loosening, so T2/T3/T7 are the failures it must still catch; the rules are extracted from `tests/lint/run.sh`, not copied |
+| `tests/fixtures/clone-lint/` | Sensitivity of lint rules 1–2 **in the environments this repo is not developed in** — a checkout with no `memory/`, and (v1.37.0, N4) a tree that is **not a git work tree** at all, where `check-ignore` fails for a reason unrelated to the path. N4 asserts the skip line **and its count**, because a first draft printed one without the other. It also caught the over-correction: refusing to exempt all of `.claude/` re-created the original false FAIL for `.claude/settings.json`. Rule 1's fresh-clone exemption is a loosening, so T2/T3/T7 are the failures it must still catch; the rules are extracted from `tests/lint/run.sh`, not copied |
 | `tests/lint/skill-sync.sh` | Lint rule 6 — template↔reference-install drift; fixture at `tests/fixtures/skill-template-sync/` |
 | `tests/lint/size-ratchet.sh` | Lint rule 8 — a ratchet on adopter-facing template sizes; baseline in `size-baseline.tsv`, fixture at `tests/fixtures/size-ratchet/`. **Measures the smaller of the two costs**: a skill body is paid once per invocation and is prompt-cached, while the *read surface* a run consumes is fresh tokens every time and is 4–25× larger. See #46 |
 | `tests/lint/dollar-digit.sh` | Lint rule 9 — a bare `$0`–`$9` in a skill body. Skill *arguments* are substituted into the skill *body*, so a bare `$0` in an embedded awk program ships as the first argument word (#77). The one class no runtime check here can reach: rule 6 compares two files carrying the same `$0`, and every fixture runs the extracted program with substitution nowhere on the path. **The safe form is context-dependent** — `$(N)` in awk, `${N}` in shell, `\$N` in prose; `${0}` and `\$0` are awk syntax errors and shell `$(1)` fails silently at rc 0, all five measured by the fixture's T-cases. Fixture at `tests/fixtures/dollar-digit/` |
