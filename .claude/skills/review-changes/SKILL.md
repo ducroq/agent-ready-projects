@@ -26,21 +26,25 @@ BASE=$(for c in refs/remotes/origin/main refs/remotes/origin/master main master;
 if [ -n "${BASE:-}" ] && [ "$(git rev-parse --abbrev-ref HEAD 2>/dev/null)" = "${BASE##*/}" ]; then
   BASE=$(git rev-parse --abbrev-ref '@{u}' 2>/dev/null || printf %s '')
 fi
-# A name that resolves to nothing is the dangerous case: an empty or dangling BASE
-# makes "$BASE"...HEAD an empty diff, which is what a clean tree also yields. Fall
-# back to the whole branch — over-reporting is the safe direction for a review tool.
-# No `${BASE:-sentinel}` placeholder here: any word chosen as a sentinel is a
-# legal branch name, and if it exists the check passes while BASE stays empty,
-# so the guard below fires with a diagnosis that is simply wrong. Measured.
+# An empty or dangling BASE makes "$BASE"...HEAD an empty diff, which is what a
+# clean tree also yields. The fallback below is NOT "the whole branch": three-dot
+# excludes the root's own content, so a one-commit repo diffs to NOTHING (#149).
+# No `${BASE:-sentinel}` placeholder — any sentinel word is a legal branch name.
+ROOTFALLBACK=          # initialised, or a later `set -u` reader aborts on it
 { [ -n "${BASE:-}" ] && git rev-parse --verify --quiet "$BASE^{commit}" >/dev/null; } || {
-  BASE=$(git rev-list --max-parents=0 HEAD 2>/dev/null | tail -1); ROOTFALLBACK=1
-  # Three-dot diffs from merge-base(BASE,HEAD) — the root — so the root's own
-  # content is EXCLUDED; a one-commit repo diffs to nothing. Abort first, or an
-  # empty repo is told to run `git show --stat` with no argument (#149).
+  # `|| :` is load-bearing: without it, `set -eo pipefail` kills the shell here
+  # and prints nothing. Abort before the message, or an empty repo is told to run
+  # `git show --stat` with no argument. Both measured; four modes seeded.
+  BASE=$(git rev-list --max-parents=0 HEAD 2>/dev/null | tail -1) || :
   : "${BASE:?no commits in this repository — nothing can be reviewed}"
-  { echo "BASELINE UNRESOLVED — fell back to root commit $BASE, whose OWN content"
-    echo "  \"\$BASE\"...HEAD EXCLUDES. Run 'git show --stat $BASE' too, and report"
-    echo "  the unresolved baseline as a FINDING — never as a clean result."; } >&2
+  ROOTFALLBACK=1
+  # PRINTED as well as set: a shell variable does not reach the next tool call,
+  # and this one degrades toward PERMITTING a clean result. The terminator keys
+  # off the printed token, because scrollback survives what the shell does not.
+  { echo "BASELINE UNRESOLVED (ROOTFALLBACK=1) — fell back to root commit $BASE,"
+    echo "  whose OWN content \"\$BASE\"...HEAD EXCLUDES. Run 'git show --stat $BASE'"
+    echo "  too. Report this as a FINDING, never a clean result — Step 1.5's file"
+    echo "  list carries the same term and the same hole."; } >&2
 }
 
 git diff --shortstat "$BASE"...HEAD    # committed on this branch
@@ -50,7 +54,7 @@ git diff --cached --shortstat          # staged
 
 **Resolving a name is not enough — it has to resolve to a commit.** A ref can look fine and diff to nothing. That is why the block validates `^{commit}` and, on failure, falls back to the root commit and says so: an unresolved baseline and a clean tree produce identical output.
 
-The loop covers the cases where `origin/HEAD` is absent: `git init` + `git remote add` with no fetch, and older git. (When it is set: `docs/rationale/review-changes.md`.) ⚠️ It does **not** cover a remote whose default branch is neither `main` nor `master` *and* whose `origin/HEAD` is unset: a repo defaulting to `develop` falls through to the root-commit fallback and reviews the whole branch — over-reporting, the safe direction, but a fallback rather than the intended path.
+The loop covers the cases where `origin/HEAD` is absent: `git init` + `git remote add` with no fetch, and older git. (When it is set: `docs/rationale/review-changes.md`.) ⚠️ It does **not** cover a remote whose default branch is neither `main` nor `master` *and* whose `origin/HEAD` is unset: a repo defaulting to `develop` falls through to the root-commit fallback, which reviews everything **except the root commit's own content** — see the fallback's own comment; it is a fallback rather than the intended path, and it under-reports rather than over-reporting (#149).
 
 ⚠️ **`$BASE` lives in a shell, and Step 1.5 needs it. Run Step 1.5's blocks in the same shell invocation as this one** — paste them together, or re-run this block at the top of that shell. A tool call that starts a fresh shell does not inherit it, and Step 1.5 is written to abort rather than proceed with the term missing. That abort is the intended behaviour: the alternative is Step 1.5 quietly reviewing a fraction of the change, which is #64 one step later.
 
@@ -109,7 +113,7 @@ If only LOW files changed **and the gate above does not escalate**, run Step 1.5
 
 **If a changed file matches no pattern, treat it as MEDIUM, and name it in the report under "Unclassified" even when a HIGH file in the same diff makes the tier moot.** The naming is the point: an unrecognized path is usually new shipped content whose tier nobody has decided yet, and it will keep arriving un-triaged until someone adds a row. Do not silently drop it, and do not default it to LOW. **If it is executable or is copied into an adopter's tree, escalate it to HIGH rather than leaving it at MEDIUM** — MEDIUM omits both the guarantee-preservation and shell-correctness lenses, which are exactly the two that shipped content needs.
 
-If no files changed, report "nothing to review" and stop — but only after `$BASE` resolved **and `ROOTFALLBACK` is unset**. ⚠️ A fallback baseline *resolves* while excluding the root's own content, so an empty result under `ROOTFALLBACK` is the unresolved-baseline finding, never a clean tree (#149). A clean tree because everything is merged and a clean tree because the work is already pushed are indistinguishable from `git diff` alone, and the second is a full PR. If the baseline could not be resolved, that is the finding; report it instead of a clean result.
+If no files changed, report "nothing to review" and stop — but only after `$BASE` resolved **and the block printed no `BASELINE UNRESOLVED` line**. ⚠️ Key on the printed line, not the variable: a fallback baseline *resolves* while excluding the root's own content, so an empty result there is the unresolved-baseline finding, and `git show --stat <root>` is what shows you what the diff omitted (#149). A clean tree because everything is merged and a clean tree because the work is already pushed are indistinguishable from `git diff` alone, and the second is a full PR. If the baseline could not be resolved, that is the finding; report it instead of a clean result.
 
 ## Step 1.5 — Structural pre-check
 

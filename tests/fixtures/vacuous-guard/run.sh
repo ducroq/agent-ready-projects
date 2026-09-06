@@ -34,14 +34,27 @@ seed n3.sh '# a comment mentioning ablate but not calling it'
 # N5 that it does not fire on an identifier that merely contains the word.
 seed n4.sh 'mablate "A9 real mutation, wrapper name" '"'"'if (x > 1)'"'"' '"'"'if (0)'"'"' "case"'
 seed n5.sh 'deablate_all=1   # an identifier, not a call'
+# T7/T8 — DOUBLE-QUOTED and MIXED args. The rule split on the single quote
+# alone, so `ablate "L" "OLD" "NEW" "WANT"` read tok[2] as a fragment of prose
+# and a vacuous ablation shipped in tests/fixtures/baseline-fallback/ unseen.
+# Mixed quoting is the normal case when OLD contains an apostrophe.
+seed t7.sh 'ablate "A10 whitespace only, double-quoted" "if (x > 1)" "if (x > 1) " "case"'
+# Mixed quoting, whitespace-only: OLD double-quoted, NEW single-quoted. A first
+# draft of this row seeded "don't fire" -> 'don', which is a REAL mutation, so
+# the rule was right not to report it and the row was wrong to expect it.
+printf 'ablate "A11 whitespace only, mixed quotes" "x = 1" %s "case"\n' "'x  =  1'" > tests/t8.sh
+# N6/N7 — the widened parse must not start reporting real double-quoted
+# mutations, which is the failure a careless widening produces.
+seed n6.sh 'ablate "A12 real mutation, double-quoted" "if (x > 1)" "if (0)" "case"'
+seed n7.sh 'ablate "A13 real, mixed quotes" "findings.append" '"'"'weak.append'"'"' "c1"'
 git add -A >/dev/null 2>&1
 
 OUT="$(cd "$W/repo" && bash "$CHK" . 2>/dev/null)"
-for t in t1 t2 t3 t4 t5 t6; do
+for t in t1 t2 t3 t4 t5 t6 t7 t8; do
   if grep -q "tests/$t.sh" <<<"$OUT"; then printf '  PASS  %s reported\n' "$t"
   else printf '  FAIL  %s is a no-op ablation and was NOT reported\n' "$t"; FAIL=1; fi
 done
-for n in n1 n2 n3 n4 n5; do
+for n in n1 n2 n3 n4 n5 n6 n7; do
   if grep -q "tests/$n.sh" <<<"$OUT"; then printf '  FAIL  %s is a real mutation and was reported\n' "$n"; FAIL=1
   else printf '  PASS  %s stayed silent\n' "$n"; fi
 done

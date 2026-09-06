@@ -39,9 +39,23 @@ while IFS= read -r f; do
     { line = $0
       while (line ~ /\\$/ && (getline nxt) > 0) { sub(/\\$/, "", line); line = line nxt }
       if (line !~ /(^|[^A-Za-z_])[A-Za-z_]*ablate[ \t]/) next
-      n = split(line, tok, /'"'"'/)          # split on single quotes: tok[2]=OLD, tok[4]=NEW
-      if (n >= 5) {
-        old = tok[2]; new = tok[4]
+      # ⚠️ Args may be SINGLE- or DOUBLE-quoted, and mixing the two is normal
+      # when OLD contains an apostrophe. Splitting on one quote character alone
+      # made this rule blind to `ablate "L" "OLD" 'NEW' "WANT"`: a vacuous
+      # ablation shipped in tests/fixtures/baseline-fallback/ and this rule read
+      # tok[2] as a fragment of prose. Pull the first two QUOTED RUNS after the
+      # label instead, whichever quote character opens each.
+      rest = line; sub(/^[^ \t]*ablate[ \t]+/, "", rest)
+      nq = 0; old = ""; new = ""
+      while (nq < 3 && match(rest, /^[ \t]*("[^"]*"|'"'"'[^'"'"']*'"'"')/)) {
+        run = substr(rest, RSTART, RLENGTH); sub(/^[ \t]*/, "", run)
+        run = substr(run, 2, length(run) - 2)
+        nq++
+        if (nq == 2) old = run
+        if (nq == 3) new = run
+        rest = substr(rest, RSTART + RLENGTH)
+      }
+      if (nq >= 3) {
         o = old; w = new
         gsub(/[ \t]/, "", o); gsub(/[ \t]/, "", w)
         if (o == w) {

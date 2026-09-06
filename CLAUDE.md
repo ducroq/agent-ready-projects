@@ -150,6 +150,11 @@ agent-ready-projects/
       │                          review-changes Step 1.5 (6 positives, 4 negatives,
       │                          5 ablations). The awk is EXTRACTED from the template,
       │                          not copied, so it cannot drift
+      ├── baseline-fallback/    <- Seeded git states for review-changes Step 1's baseline
+      │                          fallback (#149). The block is EXTRACTED from the template,
+      │                          and every row runs in FOUR shell modes — the defect lived
+      │                          only in `set -eo pipefail`, and this fixture's own first
+      │                          draft ran without `-e`, so it certified what it could not test
       └── installer-release-guard/
 │                              <- Seeded git states for the installer's release guard
 │                                 (17 positives, 15 negatives, 32 ablation rows)
@@ -191,7 +196,7 @@ Listed here so the architecture diagram above is honest about what an adopter se
 | `scripts/install-global-skills.sh` | Installs the user-global skills from tracked `.claude/skills/`, verifies they match, and with a root argument scans an estate for inert project-local copies. Refuses to install when the bytes it would copy are not what the highest release tag reachable from HEAD holds; fixture at `tests/fixtures/installer-release-guard/` |
 | `.claude/skills/` | Reference installs (tracked) — the frontmatter-correct source a global install is derived from |
 | `.github/workflows/checks.yml` | CI: `tests/lint/run.sh` + `tests/run-fixtures.sh`, every push and PR (#115). Its own header carries what it does *not* check |
-| `tests/run-fixtures.sh` | Runs every suite under `tests/fixtures/`, enumerated not listed. Refuses three silences: an empty population exits 2, an undeclared fixture dir with no runner FAILS, and one red suite never stops the other twelve |
+| `tests/run-fixtures.sh` | Runs every suite under `tests/fixtures/`, enumerated not listed. Refuses three silences: an empty population exits 2, an undeclared fixture dir with no runner FAILS, and one red suite never stops the other thirteen |
 | `tests/fixtures/clone-lint/` | Sensitivity of lint rules 1–2 **in the environments this repo is not developed in** — a checkout with no `memory/`, and (v1.37.0, N4) a tree that is **not a git work tree** at all, where `check-ignore` fails for a reason unrelated to the path. N4 asserts the skip line **and its count**, because a first draft printed one without the other. It also caught the over-correction: refusing to exempt all of `.claude/` re-created the original false FAIL for `.claude/settings.json`. Rule 1's fresh-clone exemption is a loosening, so T2/T3/T7 are the failures it must still catch; the rules are extracted from `tests/lint/run.sh`, not copied |
 | `tests/lint/skill-sync.sh` | Lint rule 6 — template↔reference-install drift; fixture at `tests/fixtures/skill-template-sync/` |
 | `tests/lint/size-ratchet.sh` | Lint rule 8 — a ratchet on adopter-facing template sizes; baseline in `size-baseline.tsv`, fixture at `tests/fixtures/size-ratchet/`. **Measures the smaller of the two costs**: a skill body is paid once per invocation and is prompt-cached, while the *read surface* a run consumes is fresh tokens every time and is 4–25× larger. See #46 |

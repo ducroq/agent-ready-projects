@@ -65,14 +65,24 @@ measure_total() { local t=0 n; while IFS= read -r rel; do n=$(wc -c < "$root/$re
 read_budget() { sed -n 's/^# BUDGET[[:space:]]\{1,\}\([0-9]\{1,\}\).*/\1/p' "$BASELINE" | head -1; }
 read_spill()  { sed -n 's/^# SPILL[[:space:]]\{1,\}\([0-9]\{1,\}\).*/\1/p'  "$BASELINE" | head -1; }
 
+# ⚠️ Notes ACCUMULATE. This used to emit only the note it was called with, so
+# each raise silently overwrote its predecessor: three raises in one session left
+# one reason behind, and the header above promises they are "recorded below". A
+# budget whose escape hatch is also its log cannot afford a lossy log. Prior
+# `# RAISED`/`# seeded` lines are carried forward verbatim, oldest first.
+prior_notes() { [ -f "$BASELINE" ] && grep -E '^# (RAISED|seeded|ratcheted) ' "$BASELINE" || :; }
+
 write_baseline() { # write_baseline <budget> <note>
+  local carried; carried=$(prior_notes)
   { echo "# Lint rule 8 baseline — bytes per adopter-facing template, and the TOTAL budget."
     echo "# Regenerate rows with: bash tests/lint/size-ratchet.sh . --update"
     echo "# The budget only goes DOWN. Growth in one file must be paid for by a shrink in"
-    echo "# another. Raising it takes --raise-budget \"<reason>\" and is recorded below."
+    echo "# another. Raising it takes --raise-budget \"<reason>\" and every raise is"
+    echo "# recorded below, oldest first — notes accumulate and are never replaced."
     echo "# BUDGET $1"
     # Reported only — see spill() above. A budget line would make it a gate.
     echo "# SPILL $(measure_spill)"
+    [ -n "$carried" ] && printf '%s\n' "$carried"
     [ -n "${2:-}" ] && echo "# $2"
     while IFS= read -r rel; do printf '%s\t%s\n' "$rel" "$(wc -c < "$root/$rel")"; done < <(tracked)
   } > "$BASELINE"

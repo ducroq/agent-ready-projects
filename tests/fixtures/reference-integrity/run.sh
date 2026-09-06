@@ -680,79 +680,171 @@ else
   printf '  FAIL  N35 a local break was given a cross-repo remedy it cannot use\n'; FAIL=1
 fi
 
-# --- #133 — the #118 remedy has a blast radius, and the string must say so. ---
-# Reported by an adopter estate and reproduced here: rung 4 builds its candidate
-# set from bare repo names in a WINDOW around a reference, and that window does
-# not belong to the row being fixed. Naming a repo to clear one row hands a new
-# candidate to every unqualified reference beside it. Isolated in its own tree
-# for the same reason as the blocks around it — extra neighbours trip X10.
-BR="$WORK/blastradius"; mkdir -p "$BR/repo/.git" "$BR/alpha/.git" "$BR/gamma/.git"
+# --- #133 / #140 / #154 — the cross-repo remedy and the three UNRESOLVED causes.
+# The remedy string is PRESCRIPTIVE, so it is wrong in two directions and both
+# have been shipped: draft 1 scoped it by the remedy line's CONTENT ("a line that
+# carries no unqualified reference"), which an adopter can satisfy exactly and
+# still break the neighbour; draft 2 scoped it by DISTANCE FROM ANY reference,
+# which puts the name outside the ±1 window that rescues its own reference, so
+# the remedy stopped working at all. T42 and T43 pin those two. Rung 4's window
+# is `lines[i-1:i+2]`, so the rule with both halves is: on or beside THIS
+# reference, and two lines clear of any OTHER unqualified one.
+BR="$WORK/blastradius"
+mkdir -p "$BR/repo/.git" "$BR/alpha/.git" "$BR/gamma/.git" "$BR/alpha/scripts" \
+         "$BR/alpha/target" "$BR/alpha/real"
 : > "$BR/alpha/CHANGELOG.md"; : > "$BR/gamma/CHANGELOG.md"
+: > "$BR/alpha/scripts/present.py"; : > "$BR/alpha/target/pruned.md"
+: > "$BR/alpha/real/deep.md"; ln -sfn real "$BR/alpha/linked"
 
-# T39 — the remedy string carries its scope. Without this the fix is one edit
-# away from being reverted by anyone who finds the clause wordy.
-if printf '%s' "$UOUT" | grep -q 'carries no UNQUALIFIED reference'; then
-  printf '  PASS  T39 the #118 remedy states the scope that keeps it safe (#133)\n'
-else
-  printf '  FAIL  T39 the #118 remedy is back to unconditional — it can break a neighbouring row (#133)\n'; FAIL=1
-fi
+# `bref <file>` runs the oracle over one seeded doc and prints its FINDINGS rows.
+# `|| true`: the oracle exits 1 when it has findings, and `set -e` is on, so a
+# bare capture aborts the harness the moment a seeded row does its job. House
+# style, same as $UOUT above. Output is CAPTURED, then asserted with a single
+# grep -- a `grep | grep -q` chain under `pipefail` can return 141 on SIGPIPE and
+# turn a real match into a FAIL.
+bref() { python3 refcheck.py --sibling-root "$BR" "$BR/repo" "$1" 2>&1 || true; }
+has() { printf '%s' "$1" | grep -qF "$2"; }
+b_say() { if [ "$1" = 1 ]; then printf '  PASS  %s\n' "$2"
+          else printf '  FAIL  %s\n' "$3"; FAIL=1; fi; }
 
-# T40 — the collateral itself, asserted rather than described. An unqualified
-# reference that RESOLVES to one sibling becomes AMBIGUOUS when the remedy is
-# applied on the adjacent line. This is current, correct behaviour; it is seeded
-# so that a later change to rung 4's windowing cannot alter it silently while
-# the caveat above goes on claiming it.
+# T39 — the remedy names BOTH halves of the distance rule. A grep, so it holds
+# the wording down; T42/T43 are what make the wording mean something.
+printf 'See `gamma/CHANGELOG.md` for theirs.\n' > "$BR/repo/r0.md"
+R0="$(bref r0.md)"
+b_say "$(has "$R0" 'on or beside THIS reference, and at least two lines from any OTHER unqualified reference' && echo 1 || echo 0)" \
+  "T39 the remedy states both halves of the distance rule (#133)" \
+  "T39 the remedy lost a half of the distance rule — one half alone is wrong in a measured direction (#133)"
+
+# T40 — the collateral: the remedy applied BESIDE another unqualified reference
+# hands it a new candidate. Current, correct behaviour, seeded so a change to
+# rung 4's windowing cannot alter it silently while the prose claims it.
 printf 'The alpha repo keeps one; see `CHANGELOG.md`.\nThe gamma repo also has a qualified `gamma/CHANGELOG.md` reference.\n' > "$BR/repo/b1.md"
-BOUT="$(python3 refcheck.py --sibling-root "$BR" "$BR/repo" b1.md 2>&1 || true)"
-if printf '%s' "$BOUT" | grep -F 'CHANGELOG.md' | grep -q 'AMBIGUOUS (2 siblings match'; then
-  printf '  PASS  T40 the remedy on a shared line turns a resolved row AMBIGUOUS — the blast radius is real (#133)\n'
-else
-  printf '  FAIL  T40 the blast radius did not reproduce; the #133 caveat now describes behaviour that is gone\n'; FAIL=1
-fi
+B1="$(bref b1.md)"
+b_say "$(has "$B1" 'AMBIGUOUS (2 siblings match' && echo 1 || echo 0)" \
+  "T40 a name beside another unqualified reference turns it AMBIGUOUS — the blast radius is real (#133)" \
+  "T40 the blast radius did not reproduce; the #133 prose now describes behaviour that is gone"
 
-# N39 — the CONTROL, and the whole point of the scope clause: apply the same
-# remedy on a line that carries no unqualified reference and NOTHING is a
-# finding. Without this row T40 would be a fixture that only knows how to fail.
-printf 'The alpha repo keeps one; see `CHANGELOG.md`.\n\nThe gamma repo has its own, at `gamma/CHANGELOG.md`.\n' > "$BR/repo/b2.md"
-BOUT2="$(python3 refcheck.py --sibling-root "$BR" "$BR/repo" b2.md 2>&1 || true)"
-if printf '%s' "$BOUT2" | grep -A2 '== FINDINGS' | grep -q 'total: 0'; then
-  printf '  PASS  N39 the scoped remedy clears its row and creates no finding (#133)\n'
-else
-  printf '  FAIL  N39 the scoped remedy still produced a finding — the scope in the string does not work\n'; FAIL=1
-fi
+# T42 — DRAFT 1'S FAILURE. The remedy line carries no unqualified reference at
+# all, which satisfies draft 1 exactly, and the neighbour still breaks. Without
+# this row the old wording reads as correct.
+printf 'The alpha repo keeps one; see `CHANGELOG.md`.\nThe gamma repo is next door.\nSee `gamma/CHANGELOG.md` for theirs.\n' > "$BR/repo/b5.md"
+B5="$(bref b5.md)"
+b_say "$(has "$B5" 'AMBIGUOUS (2 siblings match' && echo 1 || echo 0)" \
+  "T42 a remedy line with NO unqualified reference still breaks the neighbour — draft 1 was wrong (#133)" \
+  "T42 draft 1's wording is no longer refutable, so the shipped rule may have been loosened back to it"
 
-# --- #140 — the hint fired on the wrong cause. -------------------------------
-# The branch was gated on "a sibling of that name is on disk", which is not the
-# question the message answers. A reference to a file that is GONE from a
-# sibling the prose already names was told the prose never names it. Reported by
-# an adopter WITH A CONTROL — the same sentence shape with a present target
-# resolves — which is what makes it a finding rather than a guess. Reusing the
-# blastradius tree: alpha is on disk and holds no `scripts/gone_xyz.py`.
-mkdir -p "$BR/alpha/scripts"; : > "$BR/alpha/scripts/present.py"
+# T43 — DRAFT 2'S FAILURE, the opposite direction: two lines clear of every
+# reference puts the name outside its OWN window, so nothing is rescued.
+printf 'The alpha repo keeps one; see `CHANGELOG.md`.\n\nThe gamma repo is next door.\n\nSee `gamma/CHANGELOG.md` for theirs.\n' > "$BR/repo/b6.md"
+B6="$(bref b6.md)"
+b_say "$(has "$B6" 'gamma/CHANGELOG.md' && has "$B6" 'UNRESOLVED (sibling `gamma`' && echo 1 || echo 0)" \
+  "T43 a name two lines from EVERY reference rescues nothing — draft 2 was wrong (#133)" \
+  "T43 draft 2's wording now appears to work, so the ±1 window has changed and the prose is stale"
 
-# T41 — repo NAMED in prose, target absent. The reason must be about the target.
+# N39 — the CONTROL, and it measures DISTANCE, which is what the rule is about.
+# ⚠️ Its earlier comment credited "the scope clause" and its earlier input
+# differed from T40 only by a blank line, so it measured the blank line while
+# appearing to measure the clause. Now it seeds the placement the rule actually
+# prescribes: beside the reference being fixed, three lines clear of the other.
+printf 'The alpha repo keeps one; see `CHANGELOG.md`.\n\n\nThe gamma repo is next door.\nSee `gamma/CHANGELOG.md` for theirs.\n' > "$BR/repo/b2.md"
+B2="$(bref b2.md)"
+b_say "$(printf '%s' "$B2" | grep -A2 '== FINDINGS' | grep -qF 'total: 0' && echo 1 || echo 0)" \
+  "N39 the prescribed placement clears its row and creates no finding (#133)" \
+  "N39 the placement the remedy prescribes does not work — the remedy is unfollowable"
+
+# T41 — repo NAMED in prose, target genuinely absent. The reason must be about
+# the target, not about the prose.
 printf 'The alpha repo holds it: `alpha/scripts/gone_xyz.py` is the check.\n' > "$BR/repo/b3.md"
-BOUT3="$(python3 refcheck.py --sibling-root "$BR" "$BR/repo" b3.md 2>&1 || true)"
-if printf '%s' "$BOUT3" | grep -q 'is not in it — the target is gone or moved'; then
-  printf '  PASS  T41 a named sibling with an absent target gets the absent-target reason (#140)\n'
-else
-  printf '  FAIL  T41 a named sibling with an absent target is still told the prose never names it (#140)\n'; FAIL=1
-fi
-if printf '%s' "$BOUT3" | grep -q 'never names it in bare text'; then
-  printf '  FAIL  T41b the false reason is still printed for a repo the prose plainly names (#140)\n'; FAIL=1
-else
-  printf '  PASS  T41b the bare-prose reason is no longer printed when the prose names the repo (#140)\n'
-fi
+B3="$(bref b3.md)"
+b_say "$(has "$B3" 'is not in it — the target is gone or moved' && echo 1 || echo 0)" \
+  "T41 a named sibling with an absent target gets the absent-target reason (#140)" \
+  "T41 a named sibling with an absent target is still told the prose never names it (#140)"
+b_say "$(has "$B3" 'never names it in bare text' && echo 0 || echo 1)" \
+  "T41b the bare-prose reason is not printed when the prose names the repo (#140)" \
+  "T41b the false reason is still printed for a repo the prose plainly names (#140)"
+b_say "$(has "$B3" 'IF the reference belongs to that repo' && echo 1 || echo 0)" \
+  "T41c the absent-target reason is hedged — no rung here checked whose repo it is" \
+  "T41c the message asserts the target is gone from that repo without hedging whose repo it is"
 
-# N40 — the CONTROL that keeps the split honest: repo NOT named, target absent.
-# The original #118 hint must survive here, or the fix has simply deleted it.
+# T44 / T45 — #154's population, and the reason "no rung-4 hit" is NOT "absent".
+# `_tree` filters PRUNE (which holds `target` and `dist`) and rglob does not
+# follow directory symlinks, so both of these files EXIST and were unindexed.
+# Telling the reader they are gone is a confident wrong answer about the disk.
+printf 'The alpha repo holds it: `alpha/target/pruned.md` is the check.\n' > "$BR/repo/b7.md"
+B7="$(bref b7.md)"
+b_say "$(has "$B7" 'EXISTS in it, but this scan did not index it' && echo 1 || echo 0)" \
+  "T44 a target inside a pruned directory is reported as present-but-unindexed (#154)" \
+  "T44 a file that EXISTS in the sibling is reported as gone — a confident wrong answer (#154)"
+printf 'The alpha repo holds it: `alpha/linked/deep.md` is the check.\n' > "$BR/repo/b8.md"
+B8="$(bref b8.md)"
+b_say "$(has "$B8" 'EXISTS in it, but this scan did not index it' && echo 1 || echo 0)" \
+  "T45 a target behind a directory symlink is reported as present-but-unindexed (#154)" \
+  "T45 a symlinked target is reported as gone from the sibling"
+
+# N40 — the CONTROL for the split: repo NOT named, target absent. The #118 hint
+# must survive, or the fix has simply deleted it.
 printf 'See `alpha/scripts/gone_xyz.py` for the check.\n' > "$BR/repo/b4.md"
-BOUT4="$(python3 refcheck.py --sibling-root "$BR" "$BR/repo" b4.md 2>&1 || true)"
-if printf '%s' "$BOUT4" | grep -q 'never names it in bare text'; then
-  printf '  PASS  N40 an unnamed sibling still gets the #118 bare-prose hint (#140)\n'
-else
-  printf '  FAIL  N40 the #118 hint was lost for the case it was written for (#140)\n'; FAIL=1
-fi
+B4="$(bref b4.md)"
+b_say "$(has "$B4" 'never names it in bare text' && echo 1 || echo 0)" \
+  "N40 an unnamed sibling still gets the #118 bare-prose hint (#140)" \
+  "N40 the #118 hint was lost for the case it was written for (#140)"
+
+# N41 — the second CONTROL: a present target with the repo named must still just
+# resolve. Without it, every T-row above is satisfied by an oracle that reports
+# something for every cross-repo reference.
+printf 'The alpha repo holds it: `alpha/scripts/present.py` is the check.\n' > "$BR/repo/b9.md"
+B9="$(bref b9.md)"
+b_say "$(printf '%s' "$B9" | grep -A2 '== FINDINGS' | grep -qF 'total: 0' && echo 1 || echo 0)" \
+  "N41 a present target with the repo named resolves silently" \
+  "N41 a resolving cross-repo reference produced a finding"
+
+# --- ablations for the rows above. The commit that added T39-T41 CLAIMED these
+# runs and did not seed them, which is the gap docs/seeded-defects-and-ablations.md
+# exists to close. `!` before the pattern means it must STOP appearing.
+abl133() {  # label, old, new, doc, [!]pattern
+  local label="$1" old="$2" new="$3" doc="$4" pat="$5" neg=0 out
+  case "$pat" in !*) neg=1; pat="${pat#!}" ;; esac
+  cp refcheck.py "$WORK/m133.py"
+  if ! OLD="$old" NEW="$new" python3 - "$WORK/m133.py" <<'PY'
+import os, sys, pathlib
+p = pathlib.Path(sys.argv[1]); s = p.read_text()
+old, new = os.environ['OLD'], os.environ['NEW']
+if s.count(old) != 1:
+    sys.exit('mutation site occurs %d times, not once' % s.count(old))
+p.write_text(s.replace(old, new))
+PY
+  then printf '  FAIL  ablation %s could not be applied — its site has moved\n' "$label"; FAIL=1; return; fi
+  out="$(python3 "$WORK/m133.py" --sibling-root "$BR" "$BR/repo" "$doc" 2>&1 || true)"
+  if [ "$neg" = 1 ]; then
+    if printf '%s' "$out" | grep -qF "$pat"
+      then printf '  FAIL  ablation %s changed NOTHING — the row it guards is not measuring it\n' "$label"; FAIL=1
+      else printf '  PASS  ablation %s removes what its row asserts\n' "$label"; fi
+  else
+    if printf '%s' "$out" | grep -qF "$pat"
+      then printf '  PASS  ablation %s produces the failure its row forbids\n' "$label"
+      else printf '  FAIL  ablation %s changed NOTHING — the row it guards is not measuring it\n' "$label"; FAIL=1; fi
+  fi
+}
+# A13 — revert the remedy to draft 1. T39's needle must disappear.
+abl133 "A13 remedy back to draft 1" \
+  "'THIS reference, and at least two lines '" "'A LINE CARRYING NO UNQUALIFIED reference '" r0.md \
+  '!on or beside THIS reference'
+# A14 — collapse the #140 split. T41's absent-target reason must disappear and
+# the false bare-prose reason must come back; assert the latter, which is the
+# defect a reader would act on.
+abl133 "A14 collapse the #140 split" \
+  "if sib in named_siblings():" "if False:" b3.md \
+  'never names it in bare text'
+# A15 — drop the exists() check. T44's population must go back to being told
+# the file is gone.
+abl133 "A15 drop the exists() check" \
+  "if tail and (sib / tail).exists():" "if False:" b7.md \
+  'the target is gone or moved'
+# A16 — drop the hedge. T41c must stop passing.
+abl133 "A16 drop the whose-repo hedge" \
+  "'reference belongs to that repo at '" "'reference belongs there at '" b3.md \
+  '!IF the reference belongs to that repo'
+
 
 # --- #108 — a source file under a state directory is still source. ------------
 # Reported by an adopter running /audit-context with seeded positives: two

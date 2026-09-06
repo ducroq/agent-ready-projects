@@ -901,7 +901,7 @@ def check(root, sources, sibling_roots=None):
                 # identity of the finding changed: the tool's own instruction
                 # fixed one row and broke another. Hence "that carries no
                 # UNQUALIFIED reference" — the cheapest scope that survives.
-                # Seeded as T39/N39.
+                # Seeded as T39/T40/N39/T42/T43.
                 # ⚠️ ONLY (a). A second branch was written for "the head looks
                 # like a repo name and no such sibling is reachable" and was
                 # REMOVED, because that state is indistinguishable from a plain
@@ -932,17 +932,56 @@ def check(root, sources, sibling_roots=None):
                             # commoner of the two — a dead reference — sends the
                             # reader to edit prose forever on a deleted file.
                             if sib in named_siblings():
-                                why = ('UNRESOLVED (sibling `%s` is named in the '
-                                       'prose and resolved, but `%s` is not in '
-                                       'it — the target is gone or moved WITHIN '
-                                       'that repo; naming the repo again will '
-                                       'not help)' % (head, frag))
+                                # ⚠️ "no rung-4 hit" is NOT "the file is absent".
+                                # `_tree` filters PRUNE (which holds `target` and
+                                # `dist`) and rglob does not follow directory
+                                # symlinks, so a file that EXISTS in the sibling
+                                # can be unindexed. Asserting it is gone was a
+                                # confident wrong answer about the filesystem —
+                                # the thing `_sibling_hit` says is worse than a
+                                # miss. Ask the filesystem before claiming it.
+                                tail = frag.partition('/')[2]
+                                if tail and (sib / tail).exists():
+                                    why = ('UNRESOLVED (sibling `%s` is named in '
+                                           'the prose and `%s` EXISTS in it, but '
+                                           'this scan did not index it — it is '
+                                           'inside a pruned directory (%s) or '
+                                           'behind a symlink; the reference is '
+                                           'probably fine and this rung cannot '
+                                           'confirm it)'
+                                           % (head, frag, ', '.join(sorted(PRUNE))))
+                                else:
+                                    why = ('UNRESOLVED (sibling `%s` is named in '
+                                           'the prose and resolved, but `%s` is '
+                                           'not in it — the target is gone or '
+                                           'moved WITHIN that repo, IF the '
+                                           'reference belongs to that repo at '
+                                           'all; naming the repo again will not '
+                                           'help)' % (head, frag))
                             else:
+                                # THREE DRAFTS, and the first two shipped wrong
+                                # in opposite directions (#133). Rung 4's window
+                                # is `lines[i-1:i+2]` — see `para` — so the name
+                                # must be WITHIN one line of the reference it
+                                # rescues, and must NOT be within one line of any
+                                # OTHER unqualified reference, which it would
+                                # hand a new candidate. Draft 1 said "a line that
+                                # carries no UNQUALIFIED reference": satisfiable
+                                # exactly while still breaking the neighbour.
+                                # Draft 2 said "at least two lines from any
+                                # unqualified reference": that puts the name
+                                # outside its OWN reference's window, so the
+                                # remedy stopped working at all — measured, the
+                                # row stayed UNRESOLVED. Both drafts were checked
+                                # only against the estate that produced them.
+                                # Seeded T42 (draft 1's failure) and T43 (draft
+                                # 2's), so neither can come back silently.
                                 why = ('UNRESOLVED (sibling `%s` is on disk but '
                                        'the prose never names it in bare text — '
-                                       'name it in a line either side, outside '
-                                       'backticks, that carries no UNQUALIFIED '
-                                       'reference)' % head)
+                                       'name it outside backticks, on or beside '
+                                       'THIS reference, and at least two lines '
+                                       'from any OTHER unqualified reference)'
+                                       % head)
                 findings.append((src, frag,
                                  why if rung4_runnable else UNCONFIRMED))
 

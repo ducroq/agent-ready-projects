@@ -100,3 +100,50 @@ Of the checks, only the fence check survived CRLF, because it anchors at line st
 `\r` cannot reach. Fixed by the `sub(/\r$/, "")` rule. `core.autocrlf=true` — which the
 Git-for-Windows installer **pre-selects** — is what puts CRLF in the working tree in the first place.
 Lone CR remains a blind spot, and the step still says so.
+
+## The baseline fallback, and why it under-reported for eight releases (#149)
+
+`BASE=$(git rev-list --max-parents=0 HEAD | tail -1)` with `"$BASE"...HEAD` diffs
+from `merge-base(BASE, HEAD)` — which **is** the root commit — so the root's own
+content was excluded while the message announced *"reviewing the whole branch
+instead"*. Measured on scratch repos:
+
+```
+3 commits, 1 line each:  1 file changed, 2 insertions(+)      (of 3)
+1 commit, whole change:  every Step 1 command empty; git show --stat HEAD -> 1 file changed
+```
+
+The guard could not catch it, because `$BASE` **did** resolve — to the root. And
+the comment above the fallback claimed *"over-reporting is the safe direction for
+a review tool"* while the code under it under-reported by 100% in the one-commit
+case. That sentence stood in two more places in the same file after the runtime
+message was corrected, and a doc-accuracy lens found it there.
+
+**Rejected fix: the empty tree with a two-dot diff.** `git diff $(git hash-object
+-t tree /dev/null)..HEAD` genuinely reviews everything, but three-dot **rejects a
+tree** (`fatal: Invalid symmetric difference expression`) and the existing
+`$BASE^{commit}` guard rejects it too, so it needs a special-cased path at six
+call sites. Kept as the structurally correct option; not taken as a hotfix.
+
+**Why the marker is printed rather than only set.** A shell variable does not
+survive to the next tool call, and this one degrades toward *permitting* a clean
+result — lost, it reads unset and the terminator allows "nothing to review",
+which is the defect restored. Scrollback survives what the shell does not.
+
+**`|| :` on the rev-list assignment.** In a repo with no commits `git rev-list`
+exits 128 and `tail` exits 0; under `set -eo pipefail` the pipeline's 128 killed
+the shell *before* the abort, printing nothing at all. Measured in four modes;
+only `-eo pipefail` was broken — the mode Step 1's own preamble reasons about —
+and the fixture ran without `-e`, so it certified the ordering it could not test.
+
+## Three states, not two, and the one with no tell (#153)
+
+| state | `$BASE` resolves | fallback fires | reported |
+|---|---|---|---|
+| baseline unresolvable | no | yes | unresolved-baseline finding |
+| root-commit fallback | yes, to root | yes | a finding, via the printed marker |
+| **HEAD contained in `$BASE`** | **yes** | **no** | **"nothing to review"** |
+
+The third row was found by running this skill on a branch whose checkout a
+concurrent session had moved: every diff term was correctly empty because `HEAD`
+**was** `origin/master`. Reviewing by explicit ref range is immune to it.

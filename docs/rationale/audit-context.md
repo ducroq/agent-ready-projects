@@ -75,3 +75,30 @@ both, one of them is wrong.
 ### The third verdict is coarse in both directions
 
 - One unrelated clone next door is enough to make rung 4 count as having run for a reference naming a repo that is absent, and that reference is then reported as a defect.
+
+## The cross-repo remedy took three drafts, wrong in both directions (#133)
+
+Rung 4's candidate window is `para = ' '.join(lines[max(0, i-1):i+2])` — the
+reference's line and one either side. Two consequences pull against each other,
+and each of the first two drafts satisfied one and broke the other.
+
+| draft | wording | measured outcome |
+|---|---|---|
+| 1 | "on a line that carries no *unqualified* reference" | satisfiable exactly while still turning a **resolved** neighbour into `AMBIGUOUS (2 siblings)` — the content of the remedy line is not the discriminator |
+| 2 | "at least two lines away from any unqualified reference" | puts the name outside its **own** reference's window, so the row stays `UNRESOLVED` — the remedy stopped working at all |
+| 3 | "on or beside THIS reference, and at least two lines from any OTHER unqualified reference" | both rows resolve; the forbidden placement still reports |
+
+Seeded as T42 (draft 1's failure) and T43 (draft 2's), so neither can return
+silently. Draft 1 shipped; draft 2 was caught by running the remedy rather than
+reading it, which is the check #102's scar exists for.
+
+## "No rung-4 hit" is not "the file is absent" (#140, #154)
+
+`_tree` filters `PRUNE` — which holds `target` and `dist` — and `rglob` does not
+follow directory symlinks. So a file that **exists** in the named sibling can be
+unindexed, and the first version of the #140 message told the reader it was gone
+or moved. That is a confident wrong answer about the filesystem, which
+`_sibling_hit`'s own comment calls worse than a miss. The step now asks the
+filesystem with `(sib / tail).exists()` before making the claim, and reports
+present-but-unindexed as its own third cause. Seeded T44 (pruned directory) and
+T45 (directory symlink), with A15 removing the check to prove they measure it.
