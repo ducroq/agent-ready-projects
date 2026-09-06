@@ -147,3 +147,32 @@ and the fixture ran without `-e`, so it certified the ordering it could not test
 The third row was found by running this skill on a branch whose checkout a
 concurrent session had moved: every diff term was correctly empty because `HEAD`
 **was** `origin/master`. Reviewing by explicit ref range is immune to it.
+
+## The Step 5 statistic, and how it was wrong in the shipped copy
+
+v1.37.0 shipped *"of the findings classified as to origin, half were … 14 of 28,
+against 6 misses"* and a changelog line putting the share at 33% "against all 43
+counted findings". Measured against the ledger:
+
+```
+$ awk -F'\t' '$(1)~/^2026-/{ f+=$(9); if($(11)~/^[0-9]+$/&&$(12)~/^[0-9]+$/){c++; cf+=$(9); m+=$(11); i+=$(12)} } END{print f, c, cf, m, i}' memory/review-ledger.tsv
+178 rows-of-findings   11 classified rows   138 findings in them   13 missed   14 introduced
+```
+
+So **43 was the four-real-work-round subtotal, not "all counted findings"** (178),
+and **the classified subset is 138 findings, not 28** — the `review-bench` rows
+carry explicit `0`/`0` and are therefore classified. 14/138 is 10%; 14/178 is 8%.
+The 52% figure is sound and belongs to the introduced-or-missed pairs in four
+hand-picked rounds.
+
+⚠️ **The exclusion ran in the flattering direction, not the conservative one.**
+The ~110 seeded-benchmark findings excluded all carry `introduced = 0`, and they
+are what drag the share from 33% to 8%.
+
+**Found by an adopter, and the way it was found is the point.** Their
+doc-accuracy lens verified every Step 5 number as ACCURATE — against this page,
+where the same numbers were stated identically — while their adversarial lens
+refuted them against the TSV. **The prose was internally consistent and
+externally wrong, so the copy that ships to adopters was self-corroborating.**
+A documentation-only check passing on a data error, in the release whose headline
+is that review is worth its cost.
