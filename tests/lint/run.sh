@@ -10,7 +10,7 @@ ISSUES=0
 SKIPPED=0
 fail() { printf 'FAIL  %s\n' "$1"; ISSUES=$((ISSUES + 1)); }
 
-echo "[1/12] CLAUDE.md path references resolve on disk"
+echo "[1/13] CLAUDE.md path references resolve on disk"
 # The two documented maintainer dirs (.claude/, memory/) are gitignored, so their
 # CONTENTS are absent from every fresh clone — CI's included. A file reference under
 # one of them is exempt only when it is BOTH absent AND still gitignored: a tracked
@@ -136,7 +136,7 @@ elif [ "$r1_checked" -eq 0 ] && [ "$r1_dirs" -gt 0 ]; then
   fail "rule 1 extracted 0 FILE references while $r1_dirs directory reference(s) were found — the file pattern is matching nothing"
 fi
 
-echo "[2/12] memory/MEMORY.md index integrity"
+echo "[2/13] memory/MEMORY.md index integrity"
 # ⚠️ SKIPPED IS NOT A PASS. memory/ is gitignored maintainer-local state, so on a
 # fresh clone this file is absent and the rule can check NOTHING. Before #115 that
 # was silent: `grep` wrote "No such file or directory" to stderr, the loop read an
@@ -177,7 +177,7 @@ else
   printf '      %s index reference(s) and %s topic file(s) checked\n' "$r2_refs" "$r2_files"
 fi
 
-echo "[3/12] skill template embedded SKILL.md frontmatter"
+echo "[3/13] skill template embedded SKILL.md frontmatter"
 for f in templates/*.md; do
   grep -q 'SAVE AS:.*\.claude/skills/' "$f" || continue
   block=$(awk '/<!--/{c=1} c{print} /-->/{c=0}' "$f")
@@ -187,7 +187,7 @@ for f in templates/*.md; do
     || fail "$f: skill template missing \`description:\` in SAVE AS comment"
 done
 
-echo "[4/12] installed skills are loadable"
+echo "[4/13] installed skills are loadable"
 # Rule 3 checks that each template CARRIES installable frontmatter in its SAVE AS
 # comment. It cannot check that an install CONVERTED it. That gap is not theoretical:
 # an adopter repo was found holding all three skills copied verbatim, SAVE AS comment
@@ -220,7 +220,7 @@ for d in .claude/skills/*/; do
     || fail "$f: frontmatter has no non-empty \`description:\` — the agent is never told when to use it"
 done
 
-echo "[5/12] top-level YAML frontmatter closure"
+echo "[5/13] top-level YAML frontmatter closure"
 for f in templates/*.md templates/checklists/*.md memory/*.md; do
   [ -f "$f" ] || continue
   [ "$(head -1 "$f")" = '---' ] || continue
@@ -228,7 +228,7 @@ for f in templates/*.md templates/checklists/*.md memory/*.md; do
     || fail "$f: opens with \`---\` but no closing \`---\` within first 30 lines"
 done
 
-echo "[6/12] skill templates and reference installs agree"
+echo "[6/13] skill templates and reference installs agree"
 # Rules 3 and 4 check each side in isolation; neither compares them. Factored into
 # its own script so tests/fixtures/skill-template-sync/ can drive it against seeded
 # drift — a run over this repo finds nothing, which is also what a broken check
@@ -262,7 +262,7 @@ else
 fi
 rm -f "$sync_out" "$sync_err"
 
-echo "[7/12] a skill that provisions a canonical row must quote it"
+echo "[7/13] a skill that provisions a canonical row must quote it"
 # Factored out for the same reason rule 6 is: the check needs a fixture with
 # seeded true positives, and tests/lint/README.md's own "adding a rule" checklist
 # says so. The first draft of this rule was inline, had no fixture, and shipped a
@@ -281,7 +281,7 @@ else
 fi
 rm -f "$pq_out" "$pq_err"
 
-echo "[8/12] adopter-facing templates have not grown"
+echo "[8/13] adopter-facing templates have not grown"
 # The surface nobody measured. curate.md went 11,358 -> 37,971 bytes across
 # eight releases, more than half of it in one session, and the framework had no
 # instrument that would have said so. A ratchet rather than a budget: no
@@ -304,7 +304,7 @@ rm -f "$sz_out" "$sz_err"
 # rule forbids. The first draft died on `$9: unbound variable` under set -u —
 # and printed NOTHING, because the expansion fails before echo emits anything.
 # (`$0` had already expanded to the script path.)
-echo '[9/12] no bare $0-$9 in a skill body'
+echo '[9/13] no bare $0-$9 in a skill body'
 # The one class no runtime check in this repo can reach. Skill ARGUMENTS are
 # substituted into the skill BODY between the file and the model, so a bare
 # `$0` in an embedded awk program ships as the first argument word: #77, where
@@ -328,7 +328,7 @@ else
 fi
 rm -f "$dd_out" "$dd_err"
 
-echo '[10/12] no ablation that cannot kill anything'
+echo '[10/13] no ablation that cannot kill anything'
 # The narrowest of the three shapes reviews keep re-finding, and the only one
 # that is decidable lexically. Two forms: a mutation whose replacement equals its
 # target modulo whitespace, and an ablation declaring an empty kill set. Both
@@ -350,7 +350,7 @@ else
 fi
 rm -f "$vg_out" "$vg_err"
 
-echo '[11/12] no fenced bash block that an adopter copies fails to parse'
+echo '[11/13] no fenced bash block that an adopter copies fails to parse'
 # Rule 11 — #105. `templates/review-changes.md`'s Step 1.5 block carried an ASCII
 # apostrophe inside a single-quoted awk program; the apostrophe closed it and the
 # block was a shell syntax error for eight releases. Nothing here could see it:
@@ -375,7 +375,7 @@ else
 fi
 rm -f "$bp_out" "$bp_err"
 
-echo "[12/12] no private project name in a tracked file"
+echo "[12/13] no private project name in a tracked file"
 # ⚠️ SKIPPED IS NOT A PASS, and here it is the common case: the name list cannot
 # be tracked without publishing exactly what it protects, so it lives outside the
 # repo and an absent list means this rule checked NOTHING. That is reported as a
@@ -396,6 +396,30 @@ else
   done < "$pn_out"
 fi
 rm -f "$pn_out" "$pn_err"
+
+echo "[13/13] no maintainer-only path referenced from an adopter-installed surface"
+# Rule 13 — #139, promoted from a review finding per #127. `docs/rationale/`
+# holds THIS repo's litigation about its own skills; no template tells an adopter
+# to create it, so a skill body pointing there is dead on every install. v1.37.0
+# shipped five such pointers, v1.38.0 removed all five, and a change made HOURS
+# later re-created one in the same two files — found by a review round, which is
+# the cost this rule exists to stop paying. ⚠️ The denylist is ONE entry and
+# deliberately so: `CHANGELOG.md` (17 hits), `tests/lint/run.sh` and
+# `tests/fixtures/` are all legitimate on that surface, measured. Fixture at
+# tests/fixtures/maintainer-path/.
+mp_out=$(mktemp); mp_err=$(mktemp)
+bash tests/lint/maintainer-path.sh . >"$mp_out" 2>"$mp_err"; mp_rc=$?
+cat "$mp_err"
+if [ $mp_rc -gt 1 ]; then
+  fail "rule 13 checker could not run (exit $mp_rc) — this rule scanned nothing"
+elif ! grep -q 'adopter-installed file(s) scanned' "$mp_err"; then
+  fail "rule 13 checker produced no coverage line — this rule scanned nothing"
+else
+  while IFS= read -r line; do
+    [ -n "$line" ] && fail "$line"
+  done < "$mp_out"
+fi
+rm -f "$mp_out" "$mp_err"
 
 echo
 if [ "${SKIPPED:-0}" -gt 0 ]; then

@@ -41,6 +41,12 @@ It now reports **"no check ran on any line of this file"**. ⚠️ Not *"no line
 - The first rationale draft said an **"unopened"**-and-never-closed frontmatter triggers the guard. An unopened frontmatter never sets `infm`; every check runs normally. Refuted by measuring it.
 - The first assertion used `grep -qF` — a **substring** test — and the first ablation mutated the very literal that assertion grepped for, so it could not fail by construction. A message *appending* a false narrowing to the true one passed the whole suite green. The assertion is now an exact comparison and A6 appends rather than replaces, which is what makes it a measurement instead of a tautology.
 
+**Lint rule 13 — no maintainer-only path on an adopter-installed surface (#139, promoted per #127).** The dead-pointer class regressed **within a day** of the deletion-only fix that cleared it, in the same two files, and cost a full review round to find. That is the promotion criterion: a finding that recurs is paid every round, a check is written once. `tests/lint/maintainer-path.sh` scans `templates/` and `.claude/skills/` — tracked **plus untracked-not-ignored**, because rule 12 shipped with a tracked-only population and passed clean over its own fixture.
+
+⚠️ **The denylist is one entry, and that is a measurement, not caution.** Over the current surface `CHANGELOG.md` has 17 hits, plus `tests/lint/run.sh` and `tests/fixtures/` — all legitimate, since an adopter has their own changelog and the guarantee lens names files in the adopter's tree by design. A broad "maintainer path" rule would report every one. Add an entry only with a measurement showing it is never legitimate there.
+
+The class is at **0** in this repo, so a run over the real tree cannot distinguish a working rule from a disabled one. `tests/fixtures/maintainer-path/` seeds it: 3 positives (template, reference install, and an **untracked** file), 4 negatives including the two legitimate classes above and a declared exemption, exit-code cases for findings / clean / **empty population**, and 2 ablations whose kill sets are measured.
+
 **Also**: `templates/review-changes.md` shrank 206 bytes; `docs/rationale/` grew 1,687. The ratchet reports that transfer rather than counting it as a saving, and it is a transfer — bytes moved off a surface paid per invocation onto one read on demand, not removed. `CLAUDE.md`'s counts for this fixture become **commands**, having been wrong before this change added to them.
 
 
