@@ -225,15 +225,13 @@ The lenses below all read *content*: does this path exist, is this flag right, w
       prev = $(0)
     }
     END { if (fch != "") printf "%s: unclosed %s code fence\n", F, fch
-          # An unclosed frontmatter leaves `infm` set, so `infm { next }` swallows
-          # every remaining line and NO table is examined — the check then prints
-          # exactly what a clean run prints. That is the same silence the
-          # frontmatter rule was added to remove, in the one step whose purpose is
-          # catching corruption invisible in the diff (#103). Report the state
-          # rather than recovering from it: a file whose frontmatter never closes
-          # is malformed on its own, and guessing where it should have ended is
-          # how a check starts inventing findings.
-          if (infm) printf "%s: unclosed YAML frontmatter — NO table in this file was examined\n", F }
+          # An unclosed frontmatter leaves `infm` set, so `infm { next }` swallowed
+          # every remaining line and the check printed what a clean run prints —
+          # the silence this guard ended (#103). It reports the state rather than
+          # guessing where the frontmatter should have closed.
+          # ⚠️ It says NO CHECK RAN, not "no table": that `next` sits above the
+          # fence and emphasis blocks too, so all three are lost, not one (#144).
+          if (infm) printf "%s: unclosed YAML frontmatter — no check ran on any line of this file\n", F }
   ' "$f"
 done
 ```
@@ -242,7 +240,7 @@ The file list is the union of unstaged, staged, **everything committed on this b
 
 **The delimiter row defines the table, and only *excess* cells are reported.** GFM inserts empty cells when a row is short and discards them when a row is long, so a short row renders exactly as intended and is not a defect — a section-divider row like `| **PART ONE** |` inside a wide table is idiomatic, not corruption. A long row loses data.
 
-Hits come in three shapes: a row whose excess cells are discarded, a header that disagrees with its own delimiter row (which means GFM renders no table at all), and an unbalanced code fence. This includes pipes inside backticks — GFM splits a row into cells *before* it parses inline content, and its spec says so explicitly, so a `|` in an inline-code span breaks the row exactly like a bare one. Fix each (escape as `\|`, or move the command out of the table) before running the lenses.
+Hits come in five shapes: a row whose excess cells are discarded, a header that disagrees with its own delimiter row (which means GFM renders no table at all), an unbalanced code fence, two backticked tokens abutting `**` inside one bold span, and a frontmatter that opens and never closes. This includes pipes inside backticks: GFM splits a row into cells *before* parsing inline content. Fix each before running the lenses, **with the repair its shape calls for** — escaping as `\|` fixes only the table shapes. ⚠️ The frontmatter hit is a **denominator signal**: no check ran on any line of that file, so it means *not reviewed*, not *repair a table* (#150).
 
 **Treat a hit as real until you have looked at it, not as proven.** A hit says the row supplies more cells than the delimiter row defines, and GFM discards the excess. That is a loss only when the discarded cells carry content — `| 1 | 2 | |` against a two-column delimiter reports, and loses nothing. And it says nothing about whether you are looking at a table at all: `isdelim()` accepts a bare `---` and its guard is satisfied by a pipe in the *previous* line, so YAML frontmatter, a setext heading and a spaced `- - -` break can each report. Classes and repros in #52.
 

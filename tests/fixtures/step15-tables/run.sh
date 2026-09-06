@@ -38,7 +38,16 @@ printf -- '---\ndescription: Runs a | b\n---\n\nx | y\n--- | ---\n1 | 2 | 3\n' >
 # is invisible in the diff. The seeded row is the same lossy 3-against-2 as t1,
 # so the ONLY difference from a reported case is the missing closing `---`.
 printf -- '---\ndescription: unclosed\n\na | b\n--- | ---\n1 | 2 | 3\n'    > t7_unclosed_fm.md
-printf 'a | b\n--- | ---\n1 | 2 | 3\n'                                   > n3_fenced.md
+# T8/T9 — #144, reported by an adopter. T7 proves the guard FIRES; it says nothing
+# about whether the message is TRUE. `infm { next }` sits above the fence and
+# emphasis block as well as the table block, so an unclosed frontmatter loses all
+# three checks while the message named only tables. T9 is the control and is the
+# whole argument: the SAME body with the closing `---` present must report three
+# findings of three DIFFERENT kinds, so T8's single line is a measured loss and
+# not an empty body. The counts asserted below were run, not predicted.
+FMBODY='\na | b\n--- | ---\n1 | 2 | 3\nSee **the `src/**` and `docs/**` trees** for detail.\n```\nunclosed fence\n'
+printf -- "---\ndescription: x\n----$FMBODY" > t8_fm_loses_all.md
+printf -- "---\ndescription: x\n---$FMBODY"  > t9_fm_control.md
 printf '```\na | b\n--- | ---\n1 | 2 | 3\n```\n'                          > n3_fenced.md
 printf 'a | b\n--- | ---\n1 | 2 | | \n'                                   > t4_empty_excess.md
 printf 'a | b | c\n--- | ---\n1 | 2\n'                                     > t5_header_mismatch.md
@@ -57,11 +66,25 @@ printf '| **HIGH** | `templates/**`, `tests/**`, `scripts/**` | Full battery |\n
 run() { awk -v F="$1" -f "$WORK/check.awk" "$1"; }
 want_hit()   { if [ -n "$(run "$1")" ]; then printf '  PASS  %s %s\n' "$1" "$2"; else printf '  FAIL  %s reported nothing — %s\n' "$1" "$2"; FAIL=1; fi; }
 want_quiet() { if [ -z "$(run "$1")" ]; then printf '  PASS  %s %s\n' "$1" "$2"; else printf '  FAIL  %s reported [%s] — %s\n' "$1" "$(run "$1")" "$2"; FAIL=1; fi; }
+# want_hit cannot see a message that is WRONG, only one that is absent — #144
+# shipped under a green fixture for exactly that reason.
+# ⚠️ EXACT, not a substring. `grep -qF` passed a message that APPENDED a false
+# narrowing to the true one — re-asserting #144's own defect — and the whole suite
+# stayed green. Found by review, not by this suite. A6 below is the measurement.
+want_exact() { if [ "$(run "$1")" = "$2" ]; then printf '  PASS  %s %s\n' "$1" "$3"; else printf '  FAIL  %s said [%s], wanted EXACTLY [%s] — %s\n' "$1" "$(run "$1")" "$2" "$3"; FAIL=1; fi; }
+want_n()     { n=$(run "$1" | grep -c .); if [ "$n" = "$2" ]; then printf '  PASS  %s %s\n' "$1" "$3"; else printf '  FAIL  %s reported %s finding(s), wanted %s — %s\n' "$1" "$n" "$2" "$3"; FAIL=1; fi; }
 
 want_hit   t1_lf_lossy.md      "a lossy row under LF is reported"
 want_hit   t2_crlf_lossy.md    "a lossy row under CRLF is reported — the #52 defect: without the \\r strip NO table in the file is examined and the run is byte-identical to clean"
 want_hit   t3_fm_then_table.md "frontmatter is skipped WITHOUT disabling the rest of the file — the control on n2"
 want_hit   t7_unclosed_fm.md   "an unclosed frontmatter is REPORTED, not silent — without this the file's tables are all skipped and the run is byte-identical to clean (#103)"
+# ⚠️ t9 is in the ablate() population and NO ablation can zero it — it carries
+# three findings, so no single-check mutant empties it. Stated rather than
+# hidden, as n1 is: its value is the count assertion below, not the ablations.
+want_n     t9_fm_control.md   3 "CONTROL: closing --- present, this body yields THREE findings — table, emphasis and fence"
+want_n     t8_fm_loses_all.md 1 "identical body, --- typo'd: ONE finding, so two whole checks are lost and not just tables (#144)"
+EXPECT_FM="unclosed YAML frontmatter — no check ran on any line of this file"
+want_exact t8_fm_loses_all.md "t8_fm_loses_all.md: $EXPECT_FM" "the guard says NO CHECK RAN and nothing else: it claimed 'NO table' while also losing fence and emphasis (#144)"
 # ⚠️ n1 is killed by NO ablation here, and that is stated rather than hidden: a
 # clean CRLF table is silent whether or not the `\r` strip is present, because
 # without it the table is never entered. t2 is what carries the CRLF sensitivity.
@@ -100,7 +123,7 @@ if s.count(old) != 1: sys.exit('site occurs %d times, not once' % s.count(old))
 pathlib.Path(sys.argv[2]).write_text(s.replace(old, new))
 PY
   got=""
-  for f in t1_lf_lossy.md t2_crlf_lossy.md t3_fm_then_table.md t4_empty_excess.md t5_header_mismatch.md t6_emphasis.md t7_unclosed_fm.md n1_crlf_clean.md n2_frontmatter.md n3_fenced.md n4_glob_no_bold.md n5_bold_and_code.md n6_tier_row.md; do
+  for f in t1_lf_lossy.md t2_crlf_lossy.md t3_fm_then_table.md t4_empty_excess.md t5_header_mismatch.md t6_emphasis.md t7_unclosed_fm.md t8_fm_loses_all.md t9_fm_control.md n1_crlf_clean.md n2_frontmatter.md n3_fenced.md n4_glob_no_bold.md n5_bold_and_code.md n6_tier_row.md; do
     o="$(awk -v F="$f" -f "$WORK/mut.awk" "$f")"
     case "$f" in
       t*) [ -z "$o" ] && got="$got,$f" ;;
@@ -132,6 +155,30 @@ ablate "A4 silence the emphasis check" 'if (nrisk > 1 && index($(0), "`"))' 'if 
 # A5 reverts the >1 tightening to the >0 form that was actually written first.
 # It must break n6 — the risk-tier row — which is why the tightening exists.
 ablate "A5 emphasis rule ignores bold nesting" 'if (inb && substr(masked, i, 1) == "\001") nrisk++' 'if (substr(masked, i, 1) == "\001") nrisk++' "n6_tier_row.md"
+
+# A6 — the ONLY ablation that tests a MESSAGE rather than a firing. ablate() above
+# compares empty against non-empty, so it cannot see a finding whose TEXT is wrong,
+# which is how #144 shipped green: T7 asserted the guard fires and nothing asserted
+# what it said. Reverting the wording must turn want_out red while leaving the guard
+# firing — a mutation that silences it would be evidence about something else.
+msg_ablate() {
+  local label="$1" old="$2" new="$3" hits
+  OLD="$old" NEW="$new" python3 -c '
+import os, sys, pathlib
+s = pathlib.Path(sys.argv[1]).read_text()
+old, new = os.environ["OLD"], os.environ["NEW"]
+if s.count(old) != 1: sys.exit("site occurs %d times, not once" % s.count(old))
+pathlib.Path(sys.argv[2]).write_text(s.replace(old, new))
+' "$WORK/check.awk" "$WORK/msg.awk" || { printf '  FAIL  ablation %s could not be applied — its site has moved\n' "$label"; FAIL=1; return; }
+  hits="$(awk -v F=t8_fm_loses_all.md -f "$WORK/msg.awk" t8_fm_loses_all.md)"
+  if [ -z "$hits" ]; then printf '  FAIL  ablation %s silenced the guard — not a message-only mutation\n' "$label"; FAIL=1; return; fi
+  if [ "$hits" = "t8_fm_loses_all.md: $EXPECT_FM" ]; then
+    printf '  FAIL  ablation %s left the assertion GREEN — want_exact cannot detect an APPENDED false claim\n' "$label"; FAIL=1
+  else
+    printf '  PASS  ablation %s appends a false narrowing and want_exact catches it — a substring test would not\n' "$label"
+  fi
+}
+msg_ablate "A6 append a false narrowing to the guard message" "$EXPECT_FM" "$EXPECT_FM — but only the TABLE check matters here"
 
 echo
 [ "$FAIL" -eq 0 ] && echo "All seeded cases behaved correctly." || echo "SENSITIVITY REGRESSION — do not ship."

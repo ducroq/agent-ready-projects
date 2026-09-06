@@ -19,6 +19,31 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## Unreleased (proposed PATCH — v1.38.1)
+
+**The unclosed-frontmatter guard understated what it lost (#144).** Reported by an adopter. `review-changes` Step 1.5 printed *"unclosed YAML frontmatter — NO table in this file was examined"*. The `infm { next }` that swallows the file sits above the fence-tracking and emphasis blocks as well as the table block, so **all three checks are lost, not one**. Measured on one body written twice, the frontmatter opened at line 1 and closed, then the closing `---` typo'd as `----`:
+
+| closing `---` | findings |
+|---|---|
+| present | 3 — a lossy table row, an emphasis span, an unclosed fence |
+| typo'd | 1 — the frontmatter message |
+
+It now reports **"no check ran on any line of this file"**. ⚠️ Not *"no line was examined"*, which is the adopter's own field-tested wording and is still an overstatement: the `\r` strip and both frontmatter regexes do run on every line. What is measurable is that no *check* runs — every finding `printf` sits below that `next`, and END's fence rule reads a variable set only inside the skipped block. This is the Hard Constraint on absolutes in descriptions applied to a fix for a message that was wrong in the same way.
+
+**The neighbouring enumeration made the same understatement.** Step 1.5's prose said *"Hits come in three shapes"* and named the table, header and fence cases, omitting the emphasis finding shipped since #50 and the frontmatter guard itself — ten lines above the message being corrected. Now five, named.
+
+**Seeded**, since a message is a claim: `tests/fixtures/step15-tables/` gains **T8** (unclosed) with **T9 as its control** — the same body with the delimiter closed, asserting three findings of three different kinds, so T8's single line is a measured loss and not an empty body. Ablation **A6** is the only one in that suite testing a *message* rather than a firing.
+
+⚠️ **Four defects in this change were found by review, none by the suite, and two were created by the fixing.** Recorded because the pattern is the point:
+
+- The first fix wrote `typo'd` into a comment inside the single-quoted awk program. **Lint rule 11 caught it** — an adopter copying the block would have got a shell error.
+- The first draft paid for its size growth by moving prose into `docs/rationale/review-changes.md` **and pointing the skill at it** — re-creating the dead-pointer class that `beb37da` had removed from these exact files hours earlier in v1.38.0 (#139). `git grep -c docs/rationale -- templates/ .claude/skills/` returned 1 in each file where HEAD returned nothing. CLAUDE.md's #41 shape, one file over, same day.
+- The first rationale draft said an **"unopened"**-and-never-closed frontmatter triggers the guard. An unopened frontmatter never sets `infm`; every check runs normally. Refuted by measuring it.
+- The first assertion used `grep -qF` — a **substring** test — and the first ablation mutated the very literal that assertion grepped for, so it could not fail by construction. A message *appending* a false narrowing to the true one passed the whole suite green. The assertion is now an exact comparison and A6 appends rather than replaces, which is what makes it a measurement instead of a tautology.
+
+**Also**: `templates/review-changes.md` shrank 206 bytes; `docs/rationale/` grew 1,687. The ratchet reports that transfer rather than counting it as a saving, and it is a transfer — bytes moved off a surface paid per invocation onto one read on demand, not removed. `CLAUDE.md`'s counts for this fixture become **commands**, having been wrong before this change added to them.
+
+
 ## v1.38.0 (2026-09-06)
 
 **MINOR.** Three blocker fixes on adopter-facing surfaces, all found by review of the fixes for the *previous* three blockers, plus seven issues filed from adopter reports the same day. Checkable rather than counted: `git diff --name-only v1.37.0..v1.38.0 -- templates/ README.md adopt.md docs/GUIDE.md`.
@@ -446,7 +471,7 @@ syntax error near unexpected token `rest,'
 
 ⚠️ **Why it survived eight releases, which is the part worth keeping.** Running Step 1.5 internally means transcribing the awk into a fresh heredoc, and that always worked — so every in-house use of the step exercised a copy that never had the defect. Only an adopter copying the fenced block hit it, and what they got did not look like a framework bug from where they stood. Rule 6 could not see it either: both copies carried the same apostrophe, so they agreed perfectly. The step's own magnitude gate says *"any change to a shell script or an executable"* is always full depth — a fenced block in a template is neither, and nothing parsed it.
 
-**An unclosed YAML frontmatter silenced every table in the file (#103).** `infm` is set on a leading `---` and cleared on the closing one; with no closing delimiter `infm { next }` swallows the rest of the file and no table is examined — the check then prints exactly what a clean run prints, which is the silence the frontmatter rule was itself added to remove. Measured, same lossy row in three files: unclosed → silent, closed → reported, absent → reported. It now reports the unclosed frontmatter and says plainly that no table was examined, rather than guessing where the frontmatter should have ended.
+**An unclosed YAML frontmatter silenced every table in the file (#103).** `infm` is set on a leading `---` and cleared on the closing one; with no closing delimiter `infm { next }` swallows the rest of the file and no table is examined — the check then prints exactly what a clean run prints, which is the silence the frontmatter rule was itself added to remove. Measured, same lossy row in three files: unclosed → silent, closed → reported, absent → reported. It now reports the unclosed frontmatter and says plainly that no table was examined, rather than guessing where the frontmatter should have ended. ⚠️ **Superseded by #144, above**: that message named only tables, while the same `next` also lost the fence and emphasis checks.
 
 **Lint rule 11** (`tests/lint/block-parses.sh`) parses every fenced `bash`/`sh` block on an adopter-facing surface. **26 blocks measured; 2 failed** — one defect in two copies. The exemption is **declared, not guessed**: a block that cannot parse by design carries `# lint-skip: not-executable` on its first line, which is why `templates/release.md`'s `git add CHANGELOG.md <each file updated in Step 5>` now does.
 

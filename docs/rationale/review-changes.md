@@ -176,3 +176,22 @@ refuted them against the TSV. **The prose was internally consistent and
 externally wrong, so the copy that ships to adopters was self-corroborating.**
 A documentation-only check passing on a data error, in the release whose headline
 is that review is worth its cost.
+
+## The unclosed-frontmatter guard: the evidence behind its wording (#103, #144)
+
+The guard's own comment in the skill states the mechanism and the decision. This page carries only what an adopter should not have to read on every invocation: the measurement, and the wordings that were rejected.
+
+**Why the message says "no check ran" and not "no line was examined" (#144).** Reported by an adopter, who had carried a corrected wording as a declared deviation since 2026-08-28. Their wording — *"NO line in this file was examined"* — is an improvement on what shipped and is still not literally true: `{ sub(/\r$/, "") }` sits above `infm { next }` and runs on every line, as do both frontmatter regexes. What is true is that **no check** runs: all four finding `printf`s sit below that `next`, and END's fence rule reads `fch`, which is set only inside the skipped block. Given this repo's Hard Constraint on absolutes in descriptions, the narrower claim is the one that ships.
+
+**The measurement.** One body, written twice — the frontmatter opened at line 1 and closed, then with the closing `---` typo'd as `----`:
+
+| closing `---` | findings |
+|---|---|
+| present | 3 — a lossy table row, an emphasis span, an unclosed fence |
+| typo'd | 1 — the frontmatter message |
+
+⚠️ **Opened and never closed.** An *unopened* frontmatter never sets `infm`, so nothing is swallowed and every check runs normally; that case is outside the guard entirely. A draft of this section said "unopened" and was refuted by measuring it.
+
+The guard was never a false negative — it fired before and after. The defect was a reader acting on it believing tables were the only casualty: **a message that understates what it lost, inside the guard added to remove exactly that silence.**
+
+**Seeded at** `tests/fixtures/step15-tables/` as T8 with T9 as its control. Ablation A6 is the only one in that suite that tests a *message* rather than a firing, because `ablate()` scores cases by empty against non-empty and cannot see a finding whose text is wrong. ⚠️ A6's first draft was itself vacuous: it mutated the same literal the assertion grepped for, so it could not fail by construction, and the assertion it "proved" was a substring test that passed a message re-asserting #144's own false narrowing. Both were found by review, not by the suite.
