@@ -19,6 +19,42 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.38.0 (2026-09-06)
+
+**MINOR.** Three blocker fixes on adopter-facing surfaces, all found by review of the fixes for the *previous* three blockers, plus seven issues filed from adopter reports the same day. Checkable rather than counted: `git diff --name-only v1.37.0..v1.38.0 -- templates/ README.md adopt.md docs/GUIDE.md`.
+
+⚠️ **Adopter action: re-install the user-global skills, and re-copy `review-changes` if you carry it project-local.** An adopter who does not is not broken — they keep the defects below, one of which lets a review report a clean result on unreviewed content.
+
+🔴 **The headline: `review-changes` could certify a clean result on wholly unreviewed content, and had been able to for eight releases.** The baseline fallback set `$BASE` to the root commit, but `"$BASE"...HEAD` diffs from `merge-base(BASE, HEAD)` — which **is** the root — so the root's own content was excluded while the message announced *"reviewing the whole branch instead"*. Measured: a repo whose entire change is its first commit returns empty from **all four** Step 1 commands while `git show --stat HEAD` lists the file, and Step 1's terminator then says "nothing to review". `git init` plus one commit is the shape our own docs suggest for trying the skill out. The Step 1 guard could not catch it, because `$BASE` **did** resolve. Reported by an adopter's adversarial lens (#149).
+
+### The review of this release found 25 defects in it, five of them blockers — and two were created by the fixes being reviewed
+
+Four cold lenses, one round, on three fix-commits that had already passed twelve lint rules, fourteen fixture suites, CI and the author's read. **485k tokens, 168 tool calls, ~54 agent-minutes**, recorded as four rows in the review ledger.
+
+⭐ **The measurement that changes the policy**: **all four lenses found the top blocker**, so the "lenses return disjoint findings" claim carried from a single earlier observation is *not* the mechanism — and **adversarial found two blockers alone while shell-correctness found one alone**. A two-lens round ships a blocker whichever two you pick. What breadth buys is the defects nobody predicted. `templates/review-changes.md` Step 5 now says that instead.
+
+**The three blockers in the fixes:**
+
+1. ⚠️ **The `#118` cross-repo remedy took three drafts and the first two shipped wrong in opposite directions.** Rung 4's candidate window is `lines[i-1:i+2]`. Draft 1 scoped the remedy by the line's *content* (*"a line carrying no unqualified reference"*) — satisfiable exactly while still turning a **resolved** neighbour into `AMBIGUOUS`. Draft 2 scoped it by distance from *any* reference — which put the name outside its **own** reference's window, so **the remedy stopped working at all**. Draft 3 states both halves: on or beside *this* reference, at least two lines from any *other* unqualified one. Seeded T42 and T43, so neither wording can return silently (#133).
+2. ⚠️ **`UNRESOLVED` had three causes, not two.** `_tree` filters `PRUNE` — which holds `target` and `dist` — and `rglob` does not follow directory symlinks, so a file that **exists** in the named sibling was reported gone or moved. A confident wrong answer about the filesystem, which this step's own code calls worse than a miss. It now asks `(sib / tail).exists()` first and reports present-but-unindexed as its own cause (#140, #154).
+3. ⚠️ **The `ROOTFALLBACK` marker added for #149 failed OPEN across shells**, and one ablation **could never fail** — its must-die pattern was the unmutated outcome, and an identity mutation passed it. The marker is now printed as well as set, the terminator keys off the printed token, and `ablate` gains a `!pattern` form. **The first repair of that ablation was vacuous the same way**, in the fixture written to fix that shape.
+
+**And two more the fixture could not see, because it ran in the wrong environment:** under `set -eo pipefail` the empty-repo abort never fired — `git rev-list` exits 128, `tail` exits 0, pipefail killed the shell before the guard, printing nothing. The fixture ran without `-e`, so it had certified an ordering it could not test. Every row now runs in four shell modes.
+
+### Corrections to things this project had already published
+
+- 🔴 **v1.37.0's Step 5 statistic was wrong on a shipped surface.** It said *"of the findings classified as to origin … 14 of 28, against 6 misses"*, with 33% of "all 43 counted findings". The ledger classifies **11 rows / 138 findings / 13 misses**, and 43 was the four-real-work-round subtotal presented as the whole. **52% belongs to those four rounds and nothing wider; whole-ledger it is 8%**, because most rows are seeded-benchmark runs whose `introduced` is 0 **by construction** — ⚠️ so the exclusion ran in the *flattering* direction, not the conservative one. Found by an adopter whose **doc-accuracy lens verified every figure as ACCURATE** against `docs/rationale/review-changes.md`, where the same numbers were stated identically, while their adversarial lens refuted them against the TSV: **internally consistent, externally wrong, self-corroborating copy**. The claim now ships with the `awk` that re-derives it — in `$(N)` form, because lint rule 9 caught a bare `$1`/`$9` the argument substituter would have eaten (#77).
+- ⚠️ **Every dead `docs/rationale/` pointer is out of the adopter-installed surfaces** — 3 from `curate`, 2 from `review-changes`. They resolved in this repo and in no adopter's tree, so lint rule 1 read them as live in the only place it runs. Four estates reported or stripped them. `git grep -c 'docs/rationale/' -- templates/ .claude/skills/` returns nothing at this tag (#139).
+- **"over-reporting is the safe direction for a review tool"** stood twice more in the file whose runtime message had just been corrected to say the opposite. **"a synthetic four-repo estate"** was three.
+
+### Maintainer infrastructure
+
+- **New fixture `tests/fixtures/baseline-fallback/`** — the Step 1 block is *extracted* from the template, and every row runs in four shell modes. `MIN_GATES` was still 13 while 14 suites ran, so this release's own new fixture could have been deleted with the suite staying green; it is 14 now.
+- **Lint rule 10 parsed only single-quoted `ablate` arguments**, which is why the vacuous ablation shipped unseen. It reads both quote styles now, seeded four ways. ⚠️ One draft of a seeded row was itself wrong — a real mutation expected to be reported.
+- **`write_baseline` replaced its note with the next one**, so two of five raise reasons had vanished while the header promised they were "recorded below". Notes accumulate now, and the lost reasons are restored.
+
+⚠️ **The size budget was raised five times in one session and shrank once**, and the one shrink only happened because #139 forced a deletion. The fourth raise's reason says *"the last one that should ever be waved through"*; a fifth followed. **A budget whose escape hatch is always available and always taken is a log, not a gate** — registered as a hypothesis rather than fixed by guess, because every raise here paid for a correctness fix, which is the case a budget should yield to.
+
 ## v1.37.0 (2026-09-05)
 
 **MINOR.** Twelve issues closed (#107 #108 #109 #110 #116 #118 #119 #120 #121 #124 #125 #131) and new behaviour on every adopter-facing surface — checkable rather than counted, because a count of *four* stood in this header while more had already changed: `git diff --name-only v1.36.1..v1.37.0 -- templates/ README.md adopt.md docs/GUIDE.md`. New files too: `docs/seeded-defects-and-ablations.md` and five `docs/rationale/` pages.
