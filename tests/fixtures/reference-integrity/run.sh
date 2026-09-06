@@ -680,6 +680,47 @@ else
   printf '  FAIL  N35 a local break was given a cross-repo remedy it cannot use\n'; FAIL=1
 fi
 
+# --- #133 — the #118 remedy has a blast radius, and the string must say so. ---
+# Reported by an adopter estate and reproduced here: rung 4 builds its candidate
+# set from bare repo names in a WINDOW around a reference, and that window does
+# not belong to the row being fixed. Naming a repo to clear one row hands a new
+# candidate to every unqualified reference beside it. Isolated in its own tree
+# for the same reason as the blocks around it — extra neighbours trip X10.
+BR="$WORK/blastradius"; mkdir -p "$BR/repo/.git" "$BR/alpha/.git" "$BR/gamma/.git"
+: > "$BR/alpha/CHANGELOG.md"; : > "$BR/gamma/CHANGELOG.md"
+
+# T39 — the remedy string carries its scope. Without this the fix is one edit
+# away from being reverted by anyone who finds the clause wordy.
+if printf '%s' "$UOUT" | grep -q 'carries no UNQUALIFIED reference'; then
+  printf '  PASS  T39 the #118 remedy states the scope that keeps it safe (#133)\n'
+else
+  printf '  FAIL  T39 the #118 remedy is back to unconditional — it can break a neighbouring row (#133)\n'; FAIL=1
+fi
+
+# T40 — the collateral itself, asserted rather than described. An unqualified
+# reference that RESOLVES to one sibling becomes AMBIGUOUS when the remedy is
+# applied on the adjacent line. This is current, correct behaviour; it is seeded
+# so that a later change to rung 4's windowing cannot alter it silently while
+# the caveat above goes on claiming it.
+printf 'The alpha repo keeps one; see `CHANGELOG.md`.\nThe gamma repo also has a qualified `gamma/CHANGELOG.md` reference.\n' > "$BR/repo/b1.md"
+BOUT="$(python3 refcheck.py --sibling-root "$BR" "$BR/repo" b1.md 2>&1 || true)"
+if printf '%s' "$BOUT" | grep -F 'CHANGELOG.md' | grep -q 'AMBIGUOUS (2 siblings match'; then
+  printf '  PASS  T40 the remedy on a shared line turns a resolved row AMBIGUOUS — the blast radius is real (#133)\n'
+else
+  printf '  FAIL  T40 the blast radius did not reproduce; the #133 caveat now describes behaviour that is gone\n'; FAIL=1
+fi
+
+# N39 — the CONTROL, and the whole point of the scope clause: apply the same
+# remedy on a line that carries no unqualified reference and NOTHING is a
+# finding. Without this row T40 would be a fixture that only knows how to fail.
+printf 'The alpha repo keeps one; see `CHANGELOG.md`.\n\nThe gamma repo has its own, at `gamma/CHANGELOG.md`.\n' > "$BR/repo/b2.md"
+BOUT2="$(python3 refcheck.py --sibling-root "$BR" "$BR/repo" b2.md 2>&1 || true)"
+if printf '%s' "$BOUT2" | grep -A2 '== FINDINGS' | grep -q 'total: 0'; then
+  printf '  PASS  N39 the scoped remedy clears its row and creates no finding (#133)\n'
+else
+  printf '  FAIL  N39 the scoped remedy still produced a finding — the scope in the string does not work\n'; FAIL=1
+fi
+
 # --- #108 — a source file under a state directory is still source. ------------
 # Reported by an adopter running /audit-context with seeded positives: two
 # fabricated SOURCE names under data/ were both excused as "runtime state" and

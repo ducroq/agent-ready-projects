@@ -889,6 +889,19 @@ def check(root, sources, sibling_roots=None):
                 #   (a) the head looks like a repo name, a sibling of that name
                 #       IS reachable, but the prose never named it in bare text
                 #       — the gate declined it, and the fix is one sentence.
+                # ⚠️ The remedy has a BLAST RADIUS and the first version of this
+                # string did not say so (#133). Rung 4 builds its candidate set
+                # from bare repo names in a window around a reference, and the
+                # window does not belong to the row being fixed: naming a repo
+                # to clear THIS row can hand a new candidate to an unqualified
+                # reference in that window. Measured on a synthetic four-repo
+                # estate — an unqualified `CHANGELOG.md` that RESOLVED to one
+                # sibling became `AMBIGUOUS (2 siblings)` when the remedy was
+                # applied on the adjacent line. Total findings unchanged, the
+                # identity of the finding changed: the tool's own instruction
+                # fixed one row and broke another. Hence "that carries no
+                # UNQUALIFIED reference" — the cheapest scope that survives.
+                # Seeded as T39/N39.
                 # ⚠️ ONLY (a). A second branch was written for "the head looks
                 # like a repo name and no such sibling is reachable" and was
                 # REMOVED, because that state is indistinguishable from a plain
@@ -907,7 +920,8 @@ def check(root, sources, sibling_roots=None):
                         if sib is not None:
                             why = ('UNRESOLVED (sibling `%s` is on disk but the '
                                    'prose never names it in bare text — name it '
-                                   'in a line either side, outside backticks)'
+                                   'in a line either side, outside backticks, '
+                                   'that carries no UNQUALIFIED reference)'
                                    % head)
                 findings.append((src, frag,
                                  why if rung4_runnable else UNCONFIRMED))
