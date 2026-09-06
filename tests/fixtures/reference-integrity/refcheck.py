@@ -918,11 +918,31 @@ def check(root, sources, sibling_roots=None):
                         sib = next((x for x in siblings
                                     if x.name.lower() == head.lower()), None)
                         if sib is not None:
-                            why = ('UNRESOLVED (sibling `%s` is on disk but the '
-                                   'prose never names it in bare text — name it '
-                                   'in a line either side, outside backticks, '
-                                   'that carries no UNQUALIFIED reference)'
-                                   % head)
+                            # ⚠️ TWO failures reach this point and they need
+                            # different reasons (#140). The branch was gated on
+                            # "a sibling of that name is on disk", which is not
+                            # the same question as "did the bare-prose gate
+                            # decline?" — so a reference to a file that no
+                            # longer EXISTS in a sibling the prose already names
+                            # was told, confidently, that the prose never names
+                            # it. Reported by an adopter with a control (the same
+                            # sentence shape with a present target resolves), and
+                            # reproduced here. Two failures printing one reason
+                            # is bad; printing the reason that is wrong for the
+                            # commoner of the two — a dead reference — sends the
+                            # reader to edit prose forever on a deleted file.
+                            if sib in named_siblings():
+                                why = ('UNRESOLVED (sibling `%s` is named in the '
+                                       'prose and resolved, but `%s` is not in '
+                                       'it — the target is gone or moved WITHIN '
+                                       'that repo; naming the repo again will '
+                                       'not help)' % (head, frag))
+                            else:
+                                why = ('UNRESOLVED (sibling `%s` is on disk but '
+                                       'the prose never names it in bare text — '
+                                       'name it in a line either side, outside '
+                                       'backticks, that carries no UNQUALIFIED '
+                                       'reference)' % head)
                 findings.append((src, frag,
                                  why if rung4_runnable else UNCONFIRMED))
 

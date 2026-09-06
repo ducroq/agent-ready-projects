@@ -721,6 +721,39 @@ else
   printf '  FAIL  N39 the scoped remedy still produced a finding — the scope in the string does not work\n'; FAIL=1
 fi
 
+# --- #140 — the hint fired on the wrong cause. -------------------------------
+# The branch was gated on "a sibling of that name is on disk", which is not the
+# question the message answers. A reference to a file that is GONE from a
+# sibling the prose already names was told the prose never names it. Reported by
+# an adopter WITH A CONTROL — the same sentence shape with a present target
+# resolves — which is what makes it a finding rather than a guess. Reusing the
+# blastradius tree: alpha is on disk and holds no `scripts/gone_xyz.py`.
+mkdir -p "$BR/alpha/scripts"; : > "$BR/alpha/scripts/present.py"
+
+# T41 — repo NAMED in prose, target absent. The reason must be about the target.
+printf 'The alpha repo holds it: `alpha/scripts/gone_xyz.py` is the check.\n' > "$BR/repo/b3.md"
+BOUT3="$(python3 refcheck.py --sibling-root "$BR" "$BR/repo" b3.md 2>&1 || true)"
+if printf '%s' "$BOUT3" | grep -q 'is not in it — the target is gone or moved'; then
+  printf '  PASS  T41 a named sibling with an absent target gets the absent-target reason (#140)\n'
+else
+  printf '  FAIL  T41 a named sibling with an absent target is still told the prose never names it (#140)\n'; FAIL=1
+fi
+if printf '%s' "$BOUT3" | grep -q 'never names it in bare text'; then
+  printf '  FAIL  T41b the false reason is still printed for a repo the prose plainly names (#140)\n'; FAIL=1
+else
+  printf '  PASS  T41b the bare-prose reason is no longer printed when the prose names the repo (#140)\n'
+fi
+
+# N40 — the CONTROL that keeps the split honest: repo NOT named, target absent.
+# The original #118 hint must survive here, or the fix has simply deleted it.
+printf 'See `alpha/scripts/gone_xyz.py` for the check.\n' > "$BR/repo/b4.md"
+BOUT4="$(python3 refcheck.py --sibling-root "$BR" "$BR/repo" b4.md 2>&1 || true)"
+if printf '%s' "$BOUT4" | grep -q 'never names it in bare text'; then
+  printf '  PASS  N40 an unnamed sibling still gets the #118 bare-prose hint (#140)\n'
+else
+  printf '  FAIL  N40 the #118 hint was lost for the case it was written for (#140)\n'; FAIL=1
+fi
+
 # --- #108 — a source file under a state directory is still source. ------------
 # Reported by an adopter running /audit-context with seeded positives: two
 # fabricated SOURCE names under data/ were both excused as "runtime state" and
