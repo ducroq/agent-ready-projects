@@ -33,10 +33,15 @@ fi
 # legal branch name, and if it exists the check passes while BASE stays empty,
 # so the guard below fires with a diagnosis that is simply wrong. Measured.
 { [ -n "${BASE:-}" ] && git rev-parse --verify --quiet "$BASE^{commit}" >/dev/null; } || {
-  BASE=$(git rev-list --max-parents=0 HEAD 2>/dev/null | tail -1)
-  echo "BASELINE UNRESOLVED — reviewing the whole branch instead. Say so in the report." >&2
+  BASE=$(git rev-list --max-parents=0 HEAD 2>/dev/null | tail -1); ROOTFALLBACK=1
+  # Three-dot diffs from merge-base(BASE,HEAD) — the root — so the root's own
+  # content is EXCLUDED; a one-commit repo diffs to nothing. Abort first, or an
+  # empty repo is told to run `git show --stat` with no argument (#149).
+  : "${BASE:?no commits in this repository — nothing can be reviewed}"
+  { echo "BASELINE UNRESOLVED — fell back to root commit $BASE, whose OWN content"
+    echo "  \"\$BASE\"...HEAD EXCLUDES. Run 'git show --stat $BASE' too, and report"
+    echo "  the unresolved baseline as a FINDING — never as a clean result."; } >&2
 }
-: "${BASE:?no commits in this repository — nothing can be reviewed}"
 
 git diff --shortstat "$BASE"...HEAD    # committed on this branch
 git diff --shortstat                   # unstaged
@@ -104,7 +109,7 @@ If only LOW files changed **and the gate above does not escalate**, run Step 1.5
 
 **If a changed file matches no pattern, treat it as MEDIUM, and name it in the report under "Unclassified" even when a HIGH file in the same diff makes the tier moot.** The naming is the point: an unrecognized path is usually new shipped content whose tier nobody has decided yet, and it will keep arriving un-triaged until someone adds a row. Do not silently drop it, and do not default it to LOW. **If it is executable or is copied into an adopter's tree, escalate it to HIGH rather than leaving it at MEDIUM** — MEDIUM omits both the guarantee-preservation and shell-correctness lenses, which are exactly the two that shipped content needs.
 
-If no files changed, report "nothing to review" and stop — but only after `$BASE` resolved. A clean tree because everything is merged and a clean tree because the work is already pushed are indistinguishable from `git diff` alone, and the second is a full PR. If the baseline could not be resolved, that is the finding; report it instead of a clean result.
+If no files changed, report "nothing to review" and stop — but only after `$BASE` resolved **and `ROOTFALLBACK` is unset**. ⚠️ A fallback baseline *resolves* while excluding the root's own content, so an empty result under `ROOTFALLBACK` is the unresolved-baseline finding, never a clean tree (#149). A clean tree because everything is merged and a clean tree because the work is already pushed are indistinguishable from `git diff` alone, and the second is a full PR. If the baseline could not be resolved, that is the finding; report it instead of a clean result.
 
 ## Step 1.5 — Structural pre-check
 

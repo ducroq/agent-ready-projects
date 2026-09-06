@@ -2,9 +2,9 @@
 # Regenerate rows with: bash tests/lint/size-ratchet.sh . --update
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and is recorded below.
-# BUDGET 248237
+# BUDGET 248864
 # SPILL 18902
-# RAISED 2026-09-06 from 247969 to 248237: #140: UNRESOLVED had two causes printing one reason — a reference to a file gone from a sibling the prose already names was told the prose never names it. Adopter-reported with a control, reproduced; the second cause is +268 b on templates/audit-context.md, seeded as T41/T41b/N40
+# RAISED 2026-09-06 from 248237 to 248864: #149 (BLOCKER): review-changes could report a clean result on wholly unreviewed content — the root-commit fallback excluded the root, so a one-commit repo diffed to nothing and Step 1's terminator said 'nothing to review'. +627 b (measured; a draft of this line said +466, and the edit I called a trim was 77 b LARGER than what it replaced — third fabricated byte count in this session, same class as the defects being fixed) buys three runtime lines that name the excluded content and the companion command, plus a terminator clause the fallback cannot satisfy. THIRD RAISE TODAY: three correctness fixes to adopter-facing prose in one session, none paid by a shrink — if that keeps happening the budget is mis-calibrated, not the fixes. Seeded at tests/fixtures/baseline-fallback/
 templates/adr.md	2115
 templates/audit-context.md	43839
 templates/checklists/architect-checklist.md	1263
@@ -21,7 +21,7 @@ templates/project-file.md	6106
 templates/README.md	11196
 templates/release.md	19437
 templates/review-agent.md	5720
-templates/review-changes.md	34371
+templates/review-changes.md	34998
 templates/RUNBOOK.md	2795
 templates/test-fixtures/memory/decision-no-verify.md	185
 templates/test-fixtures/memory/observation-no-verify.md	185
