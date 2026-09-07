@@ -78,6 +78,25 @@ often enough to warrant its own automated rule.
 ablation that breaks the check *globally* looks identical to one that removes the specific
 guarantee under test, and you learn nothing about which.
 
+⚠️ **An ablation cannot fail if its kill-set is already failing.** This is the subtler
+sibling of the rule above, and it is the one that bit us. A typical ablation scores a
+case by *reported* against *silent*: mutate the check, and the case that should now go
+undetected must go silent. But if the unmutated check is **already** reporting on that
+case — because the guarantee is broken in the shipped code — then both the original and
+the mutant report, the sets match, and the ablation prints PASS. It is green precisely
+*because* the thing it guards is broken.
+
+We shipped that. A BOM-stripping guard was written with a length in units two `awk`
+implementations disagree about; it worked on the maintainer's machine and failed on CI.
+On the CI run where the guard was broken, the seeded case FAILED and its ablation
+**PASSED**, in the same log, four lines apart. The ablation was not measuring the guard;
+it was measuring whether the case reported at all, which it did, wrongly.
+
+Two things follow. **Read an ablation's PASS together with its own seeded case** — a PASS
+beside a FAIL on the same case is not evidence, it is an artefact. And **an ablation is
+only meaningful over an otherwise-green suite**, so a run with any failure should not be
+read for ablation results at all.
+
 ## What these instruments cannot do
 
 This is the part most write-ups omit, and it decides how much your numbers are worth.

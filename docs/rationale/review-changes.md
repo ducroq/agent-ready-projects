@@ -165,9 +165,29 @@ carry explicit `0`/`0` and are therefore classified. 14/138 is 10%; 14/178 is 8%
 The 52% figure is sound and belongs to the introduced-or-missed pairs in four
 hand-picked rounds.
 
+⚠️ **All six numbers above are the 2026-09-06 reading and every one of them has
+since moved.** At v1.39.0 the same command prints `219 14 159 13 24` — 219
+findings, 14 classified rows, 159 findings in them, 13 missed, **24 introduced**,
+so the pair share is **65%** and the whole-ledger share **11%**. Two things caused
+the jump, and only one of them is new data: the 2026-09-06 `CLAUDE.md`-cut rounds added **two**
+classified rows, and the session that ran five lenses on the evening of
+**2026-09-06** and shipped them as v1.39.0 the next morning **never appended any
+of those five rows** — including the round whose nine findings were nine-of-nine `introduced`,
+the single largest contribution to this statistic in the ledger's history. They
+were reconstructed from the subagent transcripts the next day; the row notes say
+so, and say that their `tokens` column is not measured the same way as any other
+row. **The instrument that measures whether review is worth its cost was missing
+the session that produced its headline number, and the shipped skill went on
+quoting the pre-gap figure for a release and a half.** This section is the second
+time the same paragraph has shipped a stale reading of the same command.
+
 ⚠️ **The exclusion ran in the flattering direction, not the conservative one.**
-The ~110 seeded-benchmark findings excluded all carry `introduced = 0`, and they
-are what drag the share from 33% to 8%.
+The seeded-benchmark findings excluded all carry `introduced = 0`, and they are
+what drag the share down. ⚠️ **The 33%-to-8% this paragraph used to quote was the
+2026-09-06 reading and is now 22%-to-11%** — `awk -F'\t' '$(1)~/^2026-/ &&
+$(5)!~/review-bench/{f+=$(9); i+=$(12)} END{print f, i}'` gives `109 24`. The
+caveat above is scoped *"all six numbers above"* and did not reach down here,
+which is how a correction leaves a stale number three lines below itself.
 
 **Found by an adopter, and the way it was found is the point.** Their
 doc-accuracy lens verified every Step 5 number as ACCURATE — against this page,
@@ -181,7 +201,7 @@ is that review is worth its cost.
 
 The guard's own comment in the skill states the mechanism and the decision. This page carries only what an adopter should not have to read on every invocation: the measurement, and the wordings that were rejected.
 
-**Why the message says "no check ran" and not "no line was examined" (#144).** Reported by an adopter, who had carried a corrected wording as a declared deviation since 2026-08-28. Their wording — *"NO line in this file was examined"* — is an improvement on what shipped and is still not literally true: `{ sub(/\r$/, "") }` sits above `infm { next }` and runs on every line. ⚠️ **That enumeration was written against a three-rule program and #151 made it a five-rule one** — the BOM test now shares the first action block, and two `fmpend` rules sit between the opener and `infm { next }`. Re-counted rather than carried forward: the `\r` strip and the BOM test both run on every line (the BOM test guarded by `NR == 1`, so its `substr` evaluates once); awk short-circuits `&&`, so `NR == 1 && …` never evaluates its regex past line 1; and the `fmpend` rules, the closing-delimiter regex and `infm { next }` are all bare-pattern tests that evaluate on every line but *act* on almost none. The paragraph this corrects is one whose own point is that rule-counting has to be counted. A draft of this paragraph said "as do both frontmatter regexes" — an absolute in a description, refuted by counting evaluations on mawk and busybox awk, inside the paragraph that invokes the constraint against it. What is true is that **no check** runs: all four *other* finding `printf`s sit below that `next` (counted as printf sites, of which there are five including the guard's own; the skill's "all three are lost" counts *blocks*, and its "five shapes" counts printf sites — the units differ and are now named), and END's fence rule reads `fch`, which is set only inside the skipped block. Given this repo's Hard Constraint on absolutes in descriptions, the narrower claim is the one that ships.
+**Why the message says "no check ran" and not "no line was examined" (#144).** Reported by an adopter, who had carried a corrected wording as a declared deviation since 2026-08-28. Their wording — *"NO line in this file was examined"* — is an improvement on what shipped and is still not literally true: `{ sub(/\r$/, "") }` sits above `infm { next }` and runs on every line. ⚠️ **That enumeration was written against a three-rule program and #151 made it a five-rule one** — the BOM test now shares the first action block, and two `fmpend` rules sit between the opener and `infm { next }`. Re-counted rather than carried forward: the `\r` strip and the BOM test both run on every line (the BOM test guarded by `NR == 1`, so its `sub()` evaluates once — ⚠️ **this said `substr` until `f8bc9e3` was reviewed, naming a construct that commit had already deleted**: the strip is `sub(/^\357\273\277/, "")`, and a paragraph whose thesis is *re-counted rather than carried forward* had carried its own count forward); awk short-circuits `&&`, so the frontmatter opener `NR == 1 && $(0) ~ /^---[ \t]*$/` never evaluates its regex past line 1; and the `fmpend` rules, the closing-delimiter regex and `infm { next }` are all bare-pattern tests that evaluate on every line but *act* on almost none. The paragraph this corrects is one whose own point is that rule-counting has to be counted. A draft of this paragraph said "as do both frontmatter regexes" — an absolute in a description, refuted by counting evaluations on mawk and busybox awk, inside the paragraph that invokes the constraint against it. What is true is that **no check** runs: all four *other* finding `printf`s sit below that `next` (counted as printf sites, of which there are five including the guard's own; the skill's "all three are lost" counts *blocks*, and its "five shapes" counts printf sites — the units differ and are now named), and END's fence rule reads `fch`, which is set only inside the skipped block. Given this repo's Hard Constraint on absolutes in descriptions, the narrower claim is the one that ships.
 
 **The measurement.** One body, written twice — the frontmatter opened at line 1 and closed, then with the closing `---` typo'd as `----`:
 

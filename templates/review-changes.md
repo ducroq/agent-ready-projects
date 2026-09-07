@@ -158,8 +158,8 @@ The lenses below all read *content*: does this path exist, is this flag right, w
     # it, so the frontmatter skip never fires (#151). Octal, not `\xef`: `\x` is a
     # gawk extension. ⚠️ A SUB, never `substr($(0), 1, 3)`: that hard-codes a length
     # in units awk does not agree on — bytes in mawk, CHARACTERS in gawk under a
-    # UTF-8 locale, where the BOM is one. The substr form passed a local mawk suite
-    # and failed on CI. The regex matches the same bytes under either reading.
+    # UTF-8 locale, where the BOM is one. MEASURED on mawk and busybox awk (nawk
+    # here is mawk), green on the CI awk the substr form failed on.
     { if (NR == 1) sub(/^\357\273\277/, "")
       sub(/\r$/, "") }              # CRLF: strip before anything reads the line,
                                      # or isdelim() never matches and no table in
@@ -469,7 +469,7 @@ The Unclassified list is not cosmetic and is not made moot by a HIGH file elsewh
 
 ## Step 5 — Fixing, and whether to run another round
 
-**Reviewing is not where the cost is. Fixing is.** On this framework's review ledger, across the **four real-work rounds classified as to origin**, half the findings were defects the previous round's own fixes created — 14 introduced against 13 missed, **52% of those pairs**. ⚠️ **That 52% belongs to those four rounds and nothing wider**: over the whole ledger the same 14 sit against **178** counted findings — 8% — because most rows are seeded-benchmark runs whose `introduced` is 0 by construction. **A benchmark round's zero is not evidence that fixing is safe; it is evidence that seeded defects do not have fixes.** Re-derive rather than trust — note `$(N)`, not `$N`, or the skill's own argument substituter eats the field refs (#77): `awk -F'\t' '$(1)~/^2026-/{f+=$(9); i+=$(12)} END{print i, f}' <ledger>`. Rounds appear to multiply because each round's fixes need another round to check them, so **a round cap may save nothing on its own — it can ship the introduced defects instead.**
+**Reviewing is not where the cost is. Fixing is.** On this framework's review ledger, across the findings classified `missed` or `introduced`, most were defects the previous round's own fixes created — 24 introduced against 13 missed, **65% of those pairs** (re-derived at v1.39.0). ⚠️ **That 65% is those pairs and nothing wider**: over the whole ledger the same 24 sit against **219** counted findings — 11% — because most rows are seeded-benchmark runs whose `introduced` is 0 by construction. **A benchmark round's zero is not evidence that fixing is safe; it is evidence that seeded defects do not have fixes.** Re-derive rather than trust — note `$(N)`, not `$N`, or the skill's own argument substituter eats the field refs (#77): `awk -F'\t' '$(1)~/^2026-/{f+=$(9); i+=$(12)} END{print i, f}' <ledger>`. Rounds appear to multiply because each round's fixes need another round to check them, so **a round cap may save nothing on its own — it can ship the introduced defects instead.**
 
 - **A fix is a change, and takes the tier of the file it lands in.** Treating it as a correction too small and too well-understood to re-read is self-certification in miniature: small is why loosenings hide, and knowing the intent is what stops you seeing the result.
 - **Re-read the steps that consume what you changed.** These defects live in the *relationship between* steps, which is why re-reading the fixed step alone finds nothing.

@@ -11,11 +11,16 @@
 # finding that recurred, costing a review each time, where a check costs nothing.
 #
 # ⚠️ THE DENYLIST IS DECLARED AND DELIBERATELY SHORT. Measured over the current
-# adopter-installed surface: `CHANGELOG.md` (17 hits), `tests/lint/run.sh` (3)
-# and `tests/fixtures/` are all LEGITIMATE — an adopter has their own changelog,
+# adopter-installed surface, in LINES, which is this rule's own unit -- it greps
+# with `grep -n -F` and reports one finding per line, so re-derive with
+# `grep -c docs/rationale <file>`: `CHANGELOG.md` (12), `tests/lint/run.sh` (1)
+# and `tests/fixtures/` are all LEGITIMATE -- an adopter has their own changelog,
 # and the guarantee lens names files in the adopter's tree by design. A broad
 # "maintainer path" denylist would report every one of them. Add an entry only
 # with a measurement showing it is never legitimate here.
+# ⚠️ The (3) that stood here for run.sh was never true at any commit (max 1,
+# introduced in d73df7e), and it quoted no unit while the two plausible units
+# differ: CHANGELOG.md is 12 lines but 17 occurrences.
 #
 # Exemption is DECLARED, never guessed (rule 11's lesson): put
 # `lint-skip: maintainer-path` on the same line.
