@@ -63,6 +63,38 @@ printf 'A **bolded phrase** with a plain `src/lib.py` token.\n'             > n5
 # reverts. 15 lines of this exact shape were reported before that test existed.
 printf '| **HIGH** | `templates/**`, `tests/**`, `scripts/**` | Full battery |\n' > n6_tier_row.md
 
+# --- #150 / #151, all four reported by adopters and all four reproduced here
+# before being fixed. Each seeds a class this repo holds ZERO instances of, so a
+# run over the real tree cannot tell a working guard from a disabled one.
+#
+# t11 — a fenced block indented FOUR spaces IS scanned as markdown, so its table
+# reports. That is a DOCUMENTED false positive, not an oversight (#150): three
+# attempts to widen the fence rule each bought a worse class — one SILENCED a whole
+# well-formed file — and the class has zero instances in a 5,168-file estate. This
+# row pins the documented behaviour so a fourth attempt has to argue with a test.
+printf -- '- item:\n\n    ```sh\n    | a | b |\n    |---|---|\n    | 1 | 2 | 3 |\n    ```\n' > t11_indent_fence_fp.md
+# n11 — 10 estate files open `---` then a `#` YAML comment. Deciding the
+# frontmatter on the first non-blank line reported their own frontmatter as a
+# malformed table, which is the #52 class the skip exists to prevent.
+printf -- '---\n# yaml-language-server: schema=x\ndescription: Runs a | b\n---\n\nprose\n' > n11_fm_comment.md
+# n12 — a QUOTED key is legal YAML and equally common.
+printf -- '---\n"description": Runs a | b\n---\n\nprose\n' > n12_fm_quoted.md
+# t10 — a leading `---` is a valid CommonMark thematic break. Opening the
+# frontmatter skip on line 1 alone silenced this whole WELL-FORMED file, losing a
+# genuine lossy row: the silencing direction, which is the one a denominator
+# guard must not have. Asserted with want_exact, because the pre-fix behaviour
+# also printed something — the WRONG thing — and want_hit cannot tell them apart.
+printf -- '---\n\n# Title\n\n| a | b |\n| - | - |\n| 1 | 2 | 3 |\n' > t10_hr_table.md
+# n9 — a UTF-8 BOM is invisible in every editor and defeats `NR == 1`, so the
+# frontmatter skip never fires and the file reports the EXACT false positive that
+# skip was added to remove.
+printf '\xef\xbb\xbf---\ndescription: a | piped value\n---\n\n# T\n' > n9_bom_fm.md
+# n10 — Obsidian writes `---`, a BLANK LINE, then the first key. Confirming the
+# frontmatter on line 2 alone — the fix as first proposed — reports these files'
+# own frontmatter as a malformed table. Two such files exist in a 5,168-file
+# estate, so the blank-line tolerance is measured, not defensive.
+printf -- '---\n\nkanban-plugin: a | b\n---\n\nprose\n' > n10_kanban_fm.md
+
 # AWKF is indirection with a purpose: it lets an ablation re-run the REAL
 # assertions against a mutated program instead of re-implementing them. A6's
 # first two drafts both scored their mutant with a private copy of the
@@ -116,6 +148,13 @@ want_hit   t6_emphasis.md       "two backticked **-globs inside one bolded phras
 want_quiet n6_tier_row.md       "a risk-tier row: bold in one CELL, a **-glob in another — no adjacency, and 28 such lines exist in this repo"
 want_quiet n4_glob_no_bold.md   "a **-glob with no bold on the line is not an emphasis risk"
 want_quiet n5_bold_and_code.md  "ordinary bold beside an ordinary code span — the shape this repo ships everywhere" 
+want_hit   t11_indent_fence_fp.md "a 4-space-indented fence IS scanned as markdown — the DOCUMENTED false positive, pinned so a widening has to argue with a test (#150)"
+want_quiet n11_fm_comment.md    "frontmatter opening with a YAML comment is still frontmatter (#151)"
+want_quiet n12_fm_quoted.md     "a quoted YAML key is still a key (#151)"
+want_quiet n9_bom_fm.md         "a BOM must not defeat the frontmatter skip (#151)"
+want_quiet n10_kanban_fm.md     "frontmatter with a BLANK LINE before the first key is still frontmatter (#151)"
+want_exact t10_hr_table.md "t10_hr_table.md:7: row has 3 cells, table defines 2 — the excess is dropped when rendered" \
+  "a leading --- is a THEMATIC BREAK: the file is well-formed and its lossy row must be reported, not silenced (#151)"
 
 # Ablations. Each reverts one guard; the kill sets are MEASURED by running them.
 ablate() {
@@ -128,7 +167,7 @@ if s.count(old) != 1: sys.exit('site occurs %d times, not once' % s.count(old))
 pathlib.Path(sys.argv[2]).write_text(s.replace(old, new))
 PY
   got=""
-  for f in t1_lf_lossy.md t2_crlf_lossy.md t3_fm_then_table.md t4_empty_excess.md t5_header_mismatch.md t6_emphasis.md t7_unclosed_fm.md t8_fm_loses_all.md t9_fm_control.md n1_crlf_clean.md n2_frontmatter.md n3_fenced.md n4_glob_no_bold.md n5_bold_and_code.md n6_tier_row.md; do
+  for f in t1_lf_lossy.md t2_crlf_lossy.md t3_fm_then_table.md t4_empty_excess.md t5_header_mismatch.md t6_emphasis.md t7_unclosed_fm.md t8_fm_loses_all.md t9_fm_control.md t10_hr_table.md t11_indent_fence_fp.md n1_crlf_clean.md n2_frontmatter.md n3_fenced.md n4_glob_no_bold.md n5_bold_and_code.md n6_tier_row.md n9_bom_fm.md n10_kanban_fm.md n11_fm_comment.md n12_fm_quoted.md; do
     o="$(awk -v F="$f" -f "$WORK/mut.awk" "$f")"
     case "$f" in
       t*) [ -z "$o" ] && got="$got,$f" ;;
@@ -148,7 +187,9 @@ ablate "A1 drop the CRLF strip"       'sub(/\r$/, "")' 'sub(/ZZZ$/, "")'  "t2_cr
 # the other two rules still consume both `---` lines and reset `prev`, so the body
 # alone is not the guard. Measured — the first draft mutated the body and killed
 # nothing, reading as a passing ablation over an unguarded rule.
-ablate "A2 never enter frontmatter"   'NR == 1 && $(0) ~ /^---[ \t]*$/' 'NR == 0 && $(0) ~ /^---[ \t]*$/' "n2_frontmatter.md"
+# Its kill set WIDENED when n9/n10 were seeded — the BOM and blank-line cases
+# both depend on this entry too. Re-measured, not carried forward.
+ablate "A2 never enter frontmatter"   'NR == 1 && $(0) ~ /^---[ \t]*$/' 'NR == 0 && $(0) ~ /^---[ \t]*$/' "n2_frontmatter.md,n9_bom_fm.md,n10_kanban_fm.md,n11_fm_comment.md,n12_fm_quoted.md"
 # A3 stubs the HEADER branch. It flipped NOTHING before t5 existed.
 # SILENCES the branch — a first draft rewrote its printf TEXT, which still printed
 # something, and `want_hit` only tests for non-empty output. A mutation that does
@@ -166,8 +207,11 @@ ablate "A5 emphasis rule ignores bold nesting" 'if (inb && substr(masked, i, 1) 
 # which is how #144 shipped green: T7 asserted the guard fires and nothing asserted
 # what it said. Reverting the wording must turn want_out red while leaving the guard
 # firing — a mutation that silences it would be evidence about something else.
+# Generalised from the t8-only form: A10 needs it too, because the PRE-FIX
+# behaviour on t10 also printed something — the unclosed-frontmatter message
+# instead of the table finding — and empty-vs-non-empty cannot tell those apart.
 msg_ablate() {
-  local label="$1" old="$2" new="$3" hits saved mutfail
+  local label="$1" file="$2" expect="$3" old="$4" new="$5" hits saved mutfail
   OLD="$old" NEW="$new" python3 -c '
 import os, sys, pathlib
 s = pathlib.Path(sys.argv[1]).read_text()
@@ -177,22 +221,42 @@ pathlib.Path(sys.argv[2]).write_text(s.replace(old, new))
 ' "$WORK/check.awk" "$WORK/msg.awk" || { printf '  FAIL  ablation %s could not be applied — its site has moved\n' "$label"; FAIL=1; return; }
   # The mutant must still FIRE. A mutation that silences the guard would be
   # evidence about something else entirely.
-  hits="$(awk -v F=t8_fm_loses_all.md -f "$WORK/msg.awk" t8_fm_loses_all.md)"
+  hits="$(awk -v F="$file" -f "$WORK/msg.awk" "$file")"
   if [ -z "$hits" ]; then printf '  FAIL  ablation %s silenced the guard — not a message-only mutation\n' "$label"; FAIL=1; return; fi
   # ⚠️ Score the mutant with want_exact ITSELF, not a copy of what it does. If
   # want_exact is ever weakened back to a substring test, this ablation goes red
   # — which is the whole point, and what two earlier drafts failed to do.
   saved=$FAIL; FAIL=0; AWKF="$WORK/msg.awk"
-  want_exact t8_fm_loses_all.md "t8_fm_loses_all.md: $EXPECT_FM" "(scored inside A6)" >/dev/null 2>&1
+  want_exact "$file" "$expect" "(scored inside $label)" >/dev/null 2>&1
   mutfail=$FAIL
   AWKF="$WORK/check.awk"; FAIL=$saved
   if [ "$mutfail" = "1" ]; then
-    printf '  PASS  ablation %s appends a false narrowing and want_exact — the real assertion, re-run — catches it\n' "$label"
+    printf '  PASS  ablation %s changes the MESSAGE while still firing, and want_exact — the real assertion, re-run — catches it\n' "$label"
   else
-    printf '  FAIL  ablation %s left want_exact GREEN: the assertion cannot detect an APPENDED false claim\n' "$label"; FAIL=1
+    printf '  FAIL  ablation %s left want_exact GREEN: the assertion cannot detect a WRONG message\n' "$label"; FAIL=1
   fi
 }
-msg_ablate "A6 append a false narrowing to the guard message" "$EXPECT_FM" "$EXPECT_FM — but only the TABLE check matters here"
+msg_ablate "A6 append a false narrowing to the guard message" \
+  t8_fm_loses_all.md "t8_fm_loses_all.md: $EXPECT_FM" \
+  "$EXPECT_FM" "$EXPECT_FM — but only the TABLE check matters here"
+
+# A7-A11 — one per guard added for #150/#151. Kill sets MEASURED by running each
+# mutant, never predicted.
+# A7/A8 guard the frontmatter DECIDING rule. Neither existed in the first draft of
+# this batch, which widened the fence rule instead; that widening was reverted
+# after review measured three separate regressions from it, so the row it would
+# have guarded is now t11 — an assertion that the false positive is still there.
+ablate "A7 a YAML comment decides the frontmatter" 'fmpend && $(0) ~ /^([ \t]*|[ \t]*#.*)$/ { next }' 'fmpend && $(0) ~ /^([ \t]*)$/ { next }' "n11_fm_comment.md"
+ablate "A8 a quoted key is not a key" 'if ($(0) ~ /^["\047]?[A-Za-z_][A-Za-z0-9_.-]*["\047]?[ \t]*:/)' 'if ($(0) ~ /^[A-Za-z_][A-Za-z0-9_.-]*[ \t]*:/)' "n12_fm_quoted.md"
+ablate "A9 drop the BOM strip" 'substr($(0), 1, 3) == "\357\273\277"' 'substr($(0), 1, 3) == "ZZZ"' "n9_bom_fm.md"
+ablate "A11 drop the blank line before the first key" 'fmpend && $(0) ~ /^([ \t]*|[ \t]*#.*)$/ { next }' 'fmpend && $(0) ~ /^([ \t]*#.*)$/ { next }' "n10_kanban_fm.md"
+# A10 is a MESSAGE ablation, not a firing one: reverting to "open on line 1
+# alone" leaves t10 printing the unclosed-frontmatter message, so ablate() would
+# score the mutant GREEN. That is the #144 failure shape, and it is why this one
+# is scored by re-running want_exact.
+msg_ablate "A10 open the frontmatter skip on line 1 alone" \
+  t10_hr_table.md "t10_hr_table.md:7: row has 3 cells, table defines 2 — the excess is dropped when rendered" \
+  '/^---[ \t]*$/ { fmpend = 1; next }' '/^---[ \t]*$/ { infm = 1; next }'
 
 echo
 [ "$FAIL" -eq 0 ] && echo "All seeded cases behaved correctly." || echo "SENSITIVITY REGRESSION — do not ship."

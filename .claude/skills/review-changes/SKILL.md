@@ -84,7 +84,7 @@ The tier above is set by *path*. Depth is also set by *size* — but size is the
 - **Any non-frontmatter edit to a reference install** (`.claude/skills/**`) — HIGH because a defect there ships to every install derived from it; that is as true of a three-line body edit as of a frontmatter one.
 - **Frontmatter edits to those same files** — removing one `---` silently unregisters a skill.
 
-  *Both bullets used to end a bolded phrase with a `**`-suffixed glob, and prettier corrupts that shape. **The rule worth remembering is the shape** — never end a bolded phrase with such a glob; put the path in a parenthetical, as above. Step 1.5 catches this exact shape.*
+  *Both bullets used to end a bolded phrase with a `**`-suffixed glob, and prettier corrupts that shape. **The rule worth remembering is the shape** — never end a bolded phrase with such a glob; put the path in a parenthetical, as above. Step 1.5 reports the TWO-token form of it and is silent on the one-token form, so the check is a backstop and **the shape is the thing to remember** (#151).*
 - **A new executable, or any new file in a HIGH path** — the tier for new content has not been decided yet.
 - **Any diff that removes or loosens a check** — a deleted guard, a weakened assertion, a broadened exclusion. Loosenings are characteristically a handful of lines, and this is the class the seeded-true-positives rule exists for.
 
@@ -143,7 +143,11 @@ The lenses below all read *content*: does this path exist, is this flag right, w
     # `$(0)`, never `\$0`: skill ARGUMENTS are substituted into the skill BODY, so a
     # bare `\$0` arrives as the first argument word and this program examines a
     # constant while printing what a clean run prints. See #77.
-    { sub(/\r$/, "") }               # CRLF: strip before anything reads the line,
+    # A UTF-8 BOM is invisible in an editor and defeats every `NR == 1` test under
+    # it, so the frontmatter skip never fires (#151). Octal, not `\xef`: `\x` is a
+    # gawk extension.
+    { if (NR == 1 && substr($(0), 1, 3) == "\357\273\277") $(0) = substr($(0), 4)
+      sub(/\r$/, "") }              # CRLF: strip before anything reads the line,
                                      # or isdelim() never matches and no table in
                                      # the file is examined. See #52.
     # YAML frontmatter, skipped whole: `isdelim()` accepts a bare `---` and its
@@ -151,10 +155,35 @@ The lenses below all read *content*: does this path exist, is this flag right, w
     # `description: Runs a | b` reported as a malformed table — and every SKILL.md
     # here has a `description:`. Preferred over requiring a pipe in the delimiter
     # row, which would reject the pipe-less rows GFM permits (#52).
-    NR == 1 && $(0) ~ /^---[ \t]*$/ { infm = 1; next }
+    # ⚠️ A leading `---` is ALSO a CommonMark thematic break, and opening the skip
+    # on it alone silenced whole well-formed files — the SILENCING direction (#151).
+    # Line 1 now only ARMS the skip; the first non-blank line decides, since real
+    # frontmatter usually opens with a YAML key. Blank lines and YAML COMMENTS do
+    # not decide — they are scanned past: Obsidian writes `---`, a blank, then the
+    # key, and 10 estate files open with a `#` comment. A quoted key counts.
+    # ⚠️ Residual cost, and it is a FALSE POSITIVE rather than lost detection: a
+    # frontmatter whose first deciding line is a block sequence, a `%YAML`
+    # directive or a spaced key is not recognised, and its closing `---` can then
+    # report as a delimiter row. `#` cannot be made to decide it — a YAML comment
+    # is indistinguishable from a heading, which is the shape #151 is about.
+    # `\047` is an apostrophe as OCTAL, and it has to be: a literal one would close
+    # the single-quoted shell string this whole program lives inside. Lint rule 11
+    # caught that, three times in one session (#105).
+    NR == 1 && $(0) ~ /^---[ \t]*$/ { fmpend = 1; next }
+    fmpend && $(0) ~ /^([ \t]*|[ \t]*#.*)$/ { next }
+    fmpend { fmpend = 0
+             if ($(0) ~ /^["\047]?[A-Za-z_][A-Za-z0-9_.-]*["\047]?[ \t]*:/) { infm = 1; next } }
     infm && $(0) ~ /^(---|\.\.\.)[ \t]*$/ { infm = 0; prev = ""; next }
     infm { next }
     {
+      # ⚠️ The 3-space strip is DELIBERATE, and re-confirmed by measurement rather
+      # than left alone. A fence indented four spaces is scanned as markdown — a
+      # documented false positive below (#150) — and THREE attempts to widen it
+      # each bought a worse class: opening at any indent SILENCED a whole file on a
+      # top-level indented code block; bounding the close relatively broke a
+      # balanced file on an 8-space marker; adding CommonMark no-info-string closes
+      # moved 18 files in a 5,168-file estate. The defect being fixed has ZERO
+      # instances in that estate. Noise you can see beats silence you cannot.
       bare = $(0); sub(/^ ? ? ?/, "", bare)
       if (bare ~ /^```/ || bare ~ /^~~~/) {
         c = substr(bare, 1, 1); n = 0
@@ -167,9 +196,12 @@ The lenses below all read *content*: does this path exist, is this flag right, w
       # Emphasis spans — the third construct with Step 1.5’s property: correct in
       # the diff, wrong when rendered (#50). Deliberately NARROW. The table check
       # reached a 39% false-positive rate before being anchored, so this reports
-      # only the shape actually observed to break: a backticked token whose
-      # content abuts `**`, sitting on a line that also carries bold OUTSIDE the
-      # backticks. A formatter can join the two runs and corrupt both. Broader
+      # only the shape actually observed to break: TWO backticked tokens whose
+      # content abuts `**`, inside one open bold run. A formatter can join the
+      # runs and corrupt both. ⚠️ The ONE-token form is what prettier 3.8.1 was
+      # measured to corrupt, and it passes here in silence: a BACKSTOP, not
+      # coverage (#151). Widening costs 33 hits over a 5,168-file estate — a
+      # precision change, measured and tracked as #158. Broader
       # rules (counting `**` per line, balancing across lines) were rejected —
       # they fire on ordinary bold and on multi-line spans.
       # Mask each code span to ONE character — \001 if its content abuts `**`,
@@ -231,9 +263,13 @@ The file list is the union of unstaged, staged, **everything committed on this b
 
 Hits come in five shapes: a row whose excess cells are discarded, a header that disagrees with its own delimiter row (which means GFM renders no table at all), an unbalanced code fence, two backticked tokens abutting `**` inside one bold span, and a frontmatter that opens and never closes. Fix each before running the lenses, **with the repair its shape calls for.** *Row and header*: escape as `\|`, or move the command out of the table — this includes pipes inside backticks, since GFM splits a row into cells *before* it parses inline content and its spec says so explicitly, so a `|` in an inline-code span breaks the row exactly like a bare one. *Fence*: close it. *Emphasis*: separate the two backticked tokens, or take one out of the bold run. ⚠️ *Frontmatter*: this one is a **denominator signal**, not a table defect — no check ran on any line of that file, so close the delimiter and **run Step 1.5 again**. Until you do, that file's real findings are unknown (#144, #150).
 
-**Treat a hit as real until you have looked at it, not as proven** — this applies to the *row* shape, the only one with a documented false-positive class. A row hit says the row supplies more cells than the delimiter defines and GFM discards the excess, which is a loss only when those cells carry content: `| 1 | 2 | |` against a two-column delimiter reports and loses nothing. It also says nothing about whether you are looking at a table at all — `isdelim()` accepts a bare `---` and its guard is satisfied by a pipe in the *previous* line, so frontmatter, a setext heading and a spaced `- - -` break can each report. Classes and repros in #52.
+**Treat a hit as real until you have looked at it, not as proven** — this applies to the *row* shape, the only one with a documented false-positive class. A row hit says the row supplies more cells than the delimiter defines and GFM discards the excess, which is a loss only when those cells carry content: `| 1 | 2 | |` against a two-column delimiter reports and loses nothing. It also says nothing about whether you are looking at a table at all — `isdelim()` accepts a bare `---` and its guard is satisfied by a pipe in the *previous* line, so a setext heading, a spaced `- - -` break and **frontmatter that does not begin at line 1** can each report. Classes and repros in #52. Frontmatter *at* line 1 no longer reports — the skip handles it — and that narrowing was measured, not assumed (#150).
 
-**Known blind spots, so a clean result is not read as more than it is**: tables inside blockquotes are not examined, nor is a table whose delimiter row is itself missing. The check finds lossy rows in well-formed tables; it is not a markdown validator. **Lone CR is still a blind spot** and a worse-behaved one: awk sees the whole file as a single record, so no table is examined and the fence check misreports — a lone-CR file whose fence is correctly *closed* is reported as unclosed.
+**Known blind spots, so a clean result is not read as more than it is**: tables inside blockquotes are not examined, nor is a table whose delimiter row is itself missing. The check finds lossy rows in well-formed tables; it is not a markdown validator. The emphasis guard is a **backstop, not coverage** — it needs two risky tokens in one bold run, and the one-token form goes unreported (#151, measured in #158). It also reads a double-backtick span as separate single-backtick ones, so prose *quoting* the shape can itself report (#159).
+
+**A fenced block indented four or more spaces is scanned as markdown, so a table inside it can report** — the ordinary shape in a list item (#150). A *documented* false positive, not an unfixed one: three attempts to widen the fence rule each bought a worse class, one of them silencing a whole well-formed file, and the class has **zero instances in the 5,168-file estate they were measured against**. Visible noise beat silent loss. **Frontmatter is the same trade**: one whose first deciding line is a block sequence, a `%YAML` directive or a spaced key is not recognised, and its closing `---` can report as a delimiter row.
+
+**Lone CR is still a blind spot, and the half worth naming is the quiet half.** awk sees the whole file as a single record, so nothing in it is examined. Which way that fails depends on where the first fence sits, and only one of the two is loud: with the fence as the file's first construct a correctly *closed* fence is reported as unclosed, but **with anything above it — a heading is enough — the file goes entirely silent**, and a genuine lossy row that the identical LF file reports is lost. Both measured (#150). The silent half is the one that matters, because it is indistinguishable from a clean run.
 
 The command prints nothing on a clean run — which is also what it prints when the file list was empty. **Report the count alongside the result** so the two are distinguishable:
 

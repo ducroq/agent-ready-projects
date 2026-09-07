@@ -43,6 +43,10 @@ mkdir -p "$W/repo/docs" "$W/repo/data" "$W/repo/node_modules/lodash" "$W/repo/me
 cd "$W/repo" && git init -q . && git config user.email f@x && git config user.name f
 printf 'data/\nnode_modules/\n' > .gitignore
 : > docs/real.md; : > memory/notes.md
+# The one input the directive arm's `/` guard protects: a REAL path whose
+# NAME carries an `=`. Without the guard it is skipped and its deadness — or
+# in this case its liveness — stops being checked at all.
+: > 'docs/eq=name.md'; : > docs/replacement.md
 : > data/narrative_risk.json                     # real, GITIGNORED
 echo '{}' > node_modules/lodash/package.json     # vendored
 : > src/a/helpers.py; : > src/b/helpers.py       # two answers
@@ -122,6 +126,16 @@ Home-relative and present under the overridden HOME: `~/fixture-home-marker/pres
 Windows drive path: `C:\devroot\project\notes.md`.
 Windows UNC path: `\\fileserver\share\spec.md`.
 Home-relative, absent: `~/nosuchdir-dead-reference-fixture/elsewhere.md`.
+Struck through, so GONE is the claim: ~~`docs/struck-gone.md`~~.
+> **Deleted**: `docs/deleted-gone.md`
+Negated existence probe: ! test -f `docs/negated-gone.md`.
+Negated, test first: test ! -f `docs/negated2-gone.md`.
+Negated, bracket form: [ ! -f `docs/negated3-gone.md` ].
+Deletion marker naming its LIVE replacement: **Deleted**: `docs/retired.md` — use `docs/replacement.md` instead.
+Struck here ~~`docs/both-ways.md`~~ and referenced LIVE here: `docs/both-ways.md`.
+Systemd directive value: `ExecStartPre=wait_for_edh.sh`.
+Systemd directive naming a real path: `ExecStart=/opt/nosuch/bin/run.sh`.
+Real file whose NAME carries an equals sign: `docs/eq=name.md`.
 EOF
 # An absolute path that IS on this host, so the arm's two branches both run. The
 # extractor's pattern excludes whitespace, so a $TMPDIR containing a space puts
@@ -254,11 +268,44 @@ want_why DEAD docs/sub/sub-doc.md "../nowhere/ghost.md" "doc-relative and resolv
 want_why DEAD docs/sub/sub-doc.md "../stray-outside.md" "doc-relative and resolves nowhere" "a stray file BESIDE the repo must not resolve a doc-relative reference"
 want_why "CANNOT VERIFY" docs/sub/sub-doc.md "../bundle.json" "names a directory, not a file" "same rule in the doc-relative arm, where it would otherwise be inside-the-tree DEAD"
 want "CANNOT VERIFY" "helpers.py" "two files answer to it — ambiguous, not resolved by iteration order"
+
+# #142 — an assertion that a file is ABSENT is not a dead reference. `audit-context`
+# Step 4 has skipped this class since v1.15.0 and this extractor did not, so two
+# shipped checkers gave the same input opposite dispositions. THREE spellings, and
+# the negated-existence one is the form the sibling checker still gets wrong (#155).
+want SKIPPED "docs/struck-gone.md"   "strikethrough is an assertion of absence"
+want SKIPPED "docs/deleted-gone.md"  "a prose deletion marker is the same assertion in another costume"
+want SKIPPED "docs/negated-gone.md"  "a negated existence probe asserts the file is GONE"
+# ⚠️ Two thirds of the "three spellings" claim was a COMMENT until these rows
+# existed: collapsing the alternation to `(?:!\s*test)` left the whole suite green.
+want SKIPPED "docs/negated2-gone.md" "test-first negation — the spelling the sibling checker still misses (#155)"
+want SKIPPED "docs/negated3-gone.md" "bracket negation — likewise"
+# ⚠️ THE TRUE POSITIVE for that loosening, and the reason it is span-scoped: the
+# SAME fragment struck once and referenced live once must stay DEAD. A skip keyed
+# on "appears in a marker anywhere" silences the live reference, which is how a
+# real deletion hides. Without this row the arm above is unmeasured in the only
+# direction that can cost anything.
+want DEAD "docs/both-ways.md"        "a marker must not silence a LIVE reference to the same file"
+# ⚠️ SPAN vs LINE, the second true positive and the one review found. A line
+# routinely retires one path and names its live replacement in the same sentence.
+# A first draft matched `\*\*Deleted\*\*:.*$` — to END OF LINE — and skipped
+# `docs/replacement.md` too, re-creating the exact divergence #142 exists to
+# remove, on the case `audit-context` had already measured (4 references dropped
+# on 2 lines). ⚠️ The first draft of this row used `docs/real.md`, which occurs
+# ELSEWHERE in the doc — so the whole-occurrence rule saved it and the ablation
+# reported "mutant changed nothing". A control that cannot fail measures nothing.
+resolves "docs/replacement.md"
+want SKIPPED "docs/retired.md"       "the marker binds the ONE token it names"
+# #141 — the decidable half. `ExecStartPre=wait_for_edh.sh` reached DEAD because
+# the cross-repo arm keys on a first segment an unqualified token does not have.
+want SKIPPED "ExecStartPre=wait_for_edh.sh" "a key=value directive is not a path"
+want "CANNOT VERIFY" "ExecStart=/opt/nosuch/bin/run.sh" "a directive naming a real path carries a slash, so an EARLIER arm decides it — the skip never sees it"
 # MUST RESOLVE SILENTLY
 resolves "docs/real.md"
 resolves "../real.md"     # from the non-root doc: doc-relative and live
 resolves "notes.md"
 resolves "narrative_risk.json"
+resolves "docs/eq=name.md"   # CONTROL for the directive arm: an `=` in a real NAME
 
 # ── ABLATIONS ────────────────────────────────────────────────────────────────
 # Every row above was green at v1.36.1 too — for the four rows this session
@@ -310,6 +357,30 @@ GHOST='DEAD: CLAUDE.md -> docs/ghost.md'
 # arm can only die if the mutant crashes, so it gates whole-EXTRACTOR damage and
 # not whole-arm damage. Deleting a whole arm turns several case rows red — that is
 # what those rows are for; the control is not doing that work.
+# #142 / #141 arms. Each is a LOOSENING — it moves inputs out of DEAD — so each is
+# ablated in both directions: delete the arm (its rows must go DEAD) and widen it
+# (the control it must not swallow must go red).
+ablate "absence-arm-deleted"     "if occ[frag][0] == occ[frag][1]:" "if False:" \
+       "DEAD: CLAUDE.md -> docs/struck-gone.md" "DEAD: CLAUDE.md -> docs/ghost.md"
+ablate "absence-arm-unscoped"    "if occ[frag][0] == occ[frag][1]:" "if occ[frag][1]:" \
+       '!DEAD: CLAUDE.md -> docs/both-ways.md' "SKIPPED: CLAUDE.md -> docs/struck-gone.md"
+# The marker must bind its own span, not the line it sits on.
+DEL_SPAN=$'re.compile(r\'\\*\\*Deleted\\*\\*:\\s*`[^`\\n]+`\')'
+DEL_LINE=$'re.compile(r\'\\*\\*Deleted\\*\\*:.*$\', re.M)'
+ablate "deleted-marker-line-scoped" "$DEL_SPAN" "$DEL_LINE" \
+       'SKIPPED: CLAUDE.md -> docs/replacement.md' "SKIPPED: CLAUDE.md -> docs/retired.md"
+# Two thirds of the "three spellings" claim ablated GREEN before the rows above.
+ablate "negation-one-spelling"   "(?:!\\s*test|test\\s+!|\\[\\s*!)" "(?:!\\s*test)" \
+       'DEAD: CLAUDE.md -> docs/negated2-gone.md' "SKIPPED: CLAUDE.md -> docs/negated-gone.md"
+ablate "directive-arm-deleted"   "if '=' in frag and '/' not in frag:" "if False:" \
+       "DEAD: CLAUDE.md -> ExecStartPre=wait_for_edh.sh" "DEAD: CLAUDE.md -> docs/ghost.md"
+# ⚠️ The first draft of this ablation used `ExecStart=/opt/...` as its row and
+# reported "mutant changed nothing": that fragment carries a slash, so the
+# cross-repo arm decides it long before the directive skip is reached, and the
+# guard being ablated is unreachable for it. A row that cannot flip measures
+# nothing. The live `=`-named file is the input the guard actually protects.
+ablate "directive-arm-any-equals" "if '=' in frag and '/' not in frag:" "if '=' in frag:" \
+       'SKIPPED: CLAUDE.md -> docs/eq=name.md' "SKIPPED: CLAUDE.md -> ExecStartPre=wait_for_edh.sh"
 ablate quarantine-loses-brace "'<*{['" "'<*'" \
   'DEAD: CLAUDE.md -> scripts/research/prop1_result_{cap25,capoff}.json' \
   'SKIPPED: CLAUDE.md -> memory/project_*.md'

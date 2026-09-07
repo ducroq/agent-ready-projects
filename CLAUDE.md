@@ -109,7 +109,8 @@ agent-ready-projects/
 │   │   ├── vacuous-guard.sh    <- Rule 10: an ablation that cannot kill anything (#79's shape)
 │   │   ├── block-parses.sh    <- Rule 11: a fenced bash block an adopter copies must
 │   │   │                         parse; exemption is DECLARED, not guessed (#105)
-│   ├── skill-sync.sh      <- Rule 6: templates/<name>.md vs .claude/skills/<name>/SKILL.md
+│   ├── skill-sync.sh      <- Rule 6: templates/<name>.md vs .claude/skills/<name>/SKILL.md;
+│   │                         fixture at tests/fixtures/skill-template-sync/
 │   │   └── dollar-digit.sh    <- Rule 9: a bare $0-$9 in a skill body is an argument word (#77)
 │   └── fixtures/              <- Seeded-defect fixtures: a check that finds nothing here is failing
 │       ├── reference-integrity/  <- Seeded breaks for audit-context Step 4. refcheck.py is an ORACLE,
@@ -136,11 +137,20 @@ agent-ready-projects/
 │       ├── dollar-digit/       <- Seeded `$N` forms for lint rule 9 (13 positives,
 │       │                          12 negatives, 7 structural, 5 truth-table, 10 ablations;
 │       │                          every ablation co-seeds a control the mutant must keep)
-│       ├── verify-runner/       <- Seeded claims + prose for curate's verify runner
-│       │                           (34 positives, 10 negatives, 4 malformed, 7 structural,
-│       │                            4 timing, 29 ablations)
-│       ├── dead-reference/      <- Seeded classes for curate Step 0.1's extractor: 40 rows,
-      │                          16 ablations. Most have actually bitten; FIVE are
+│       ├── verify-runner/       <- Seeded claims + prose for curate Step 0 sub-step 5's
+│       │ runner (#34; 34 positives, 10 negatives, 4 malformed,
+│       │ 7 structural, 4 timing, 29 ablations). EXTRACTS the
+│       │ runner from templates/curate.md, so it cannot drift.
+│       │ ~90s, the slowest check here and the only one with
+│       │ timing cases. Its README carries the rejected `\|`
+│       │ predicate and the THREE rounds that produced the
+│       │ rest — read before touching the extraction
+│       ├── dead-reference/      <- Seeded classes for curate Step 0.1's extractor. Counts
+      │                          are COMMANDS — "40 rows, 16 ablations" was stale here
+      │                          while the file held 35 and 15 (#93, fourth instance):
+      │                            rows  grep -cE '^(want|want_why|resolves) ' run.sh
+      │                            abl   grep -cE '^(\[ "\$ABS" = 1 \] && )?ablate ' run.sh
+      │                          Most have actually bitten; FIVE are
       │                          constructed and labelled as such. Rationale lives in
       │                          run.sh's header, NOT a README. Read before loosening —
       │                          the cross-repo disposition costs sensitivity knowingly,
@@ -177,7 +187,9 @@ agent-ready-projects/
       │                          draft ran without `-e`, so it certified what it could not test
       └── installer-release-guard/
 │                              <- Seeded git states for the installer's release guard
-│                                 (17 positives, 15 negatives, 32 ablation rows)
+│                                 (#33; 17 positives, 15 negatives, 32 ablation rows).
+│                                 Its README carries the two REJECTED predicates and
+│                                 why — read it before changing the comparison
 └── memory/                    <- Session memory (gitignored — maintainer-local)
     ├── MEMORY.md              <- Index + current state
     └── project_*.md           <- Topic files (migrated 2026-06-09 from user-level)
@@ -208,24 +220,16 @@ Listed here so the architecture diagram above is honest about what an adopter se
 | `docs/GUIDE.md` | Full reference |
 | `docs/verification-rationale.md` | Three structural principles + decision rules (v1.10.1) |
 | `docs/seeded-defects-and-ablations.md` | **The adopter-facing page for this repo's most-caught-with instruments** (v1.37.0, #130). Seed the failures a check must catch; then break the check and require the fixture to go red. Ships its own limits — recall against seeds is a lower bound, with the external evidence for that. ⚠️ **Linked from `README.md` and `docs/GUIDE.md`, deliberately**: `docs/verification-rationale.md` and `docs/verifying-what-we-write.md` were reachable from nothing, which is the failure #130 is about |
-| `templates/project-file.md` | Layer-1 project file template |
-| `templates/work-item.md` | Multi-session work tracking with built-in savepoint |
-| `templates/review-changes.md` | Diff-driven pre-commit review skill |
 | `templates/release.md` | Release skill — bump classification, preconditions, changelog entry; stops before tagging |
-| `templates/curate.md` | End-of-session curation skill |
-| `templates/audit-context.md` | Periodic structural audit skill |
 | `scripts/install-global-skills.sh` | Installs the user-global skills from tracked `.claude/skills/`, verifies they match, and with a root argument scans an estate for inert project-local copies. Refuses to install when the bytes it would copy are not what the highest release tag reachable from HEAD holds; fixture at `tests/fixtures/installer-release-guard/` |
 | `.claude/skills/` | Reference installs (tracked) — the frontmatter-correct source a global install is derived from |
 | `.github/workflows/checks.yml` | CI: `tests/lint/run.sh` + `tests/run-fixtures.sh`, every push and PR (#115). Its own header carries what it does *not* check |
 | `tests/run-fixtures.sh` | Runs every suite under `tests/fixtures/`, enumerated not listed. Refuses three silences: an empty population exits 2, an undeclared fixture dir with no runner FAILS, and one red suite never stops the other thirteen |
 | `tests/fixtures/clone-lint/` | Sensitivity of lint rules 1–2 **in the environments this repo is not developed in** — a checkout with no `memory/`, and (v1.37.0, N4) a tree that is **not a git work tree** at all, where `check-ignore` fails for a reason unrelated to the path. N4 asserts the skip line **and its count**, because a first draft printed one without the other. It also caught the over-correction: refusing to exempt all of `.claude/` re-created the original false FAIL for `.claude/settings.json`. Rule 1's fresh-clone exemption is a loosening, so T2/T3/T7 are the failures it must still catch; the rules are extracted from `tests/lint/run.sh`, not copied |
-| `tests/lint/skill-sync.sh` | Lint rule 6 — template↔reference-install drift; fixture at `tests/fixtures/skill-template-sync/` |
 | `tests/lint/size-ratchet.sh` | Lint rule 8 — a ratchet on adopter-facing template sizes; baseline in `size-baseline.tsv`, fixture at `tests/fixtures/size-ratchet/`. **Measures the smaller of the two costs**: a skill body is paid once per invocation and is prompt-cached, while the *read surface* a run consumes is fresh tokens every time and is 4–25× larger. See #46 |
 | `tests/lint/dollar-digit.sh` | Lint rule 9 — a bare `$0`–`$9` in a skill body. Skill *arguments* are substituted into the skill *body*, so a bare `$0` in an embedded awk program ships as the first argument word (#77). The one class no runtime check here can reach: rule 6 compares two files carrying the same `$0`, and every fixture runs the extracted program with substitution nowhere on the path. **The safe form is context-dependent** — `$(N)` in awk, `${N}` in shell, `\$N` in prose; `${0}` and `\$0` are awk syntax errors and shell `$(1)` fails silently at rc 0, all five measured by the fixture's T-cases. Fixture at `tests/fixtures/dollar-digit/` |
 | `tests/lint/private-names.sh` | Lint rule 12 — a private project name in a tracked file. **This repo is public and its author works in an estate of private repos**; names reached shipped `templates/`, released `CHANGELOG.md` entries and four fixtures before this existed, and `memory/gotcha-log.md` had already prescribed the rule one release earlier. ⚠️ **The name list is not tracked** — a tracked denylist publishes exactly what it protects — so it lives at `~/.config/agent-ready/private-names` (or `$AGENT_READY_PRIVATE_NAMES`) and an absent list is a reported SKIP, not a pass. Short and generic names are declared UNCHECKED rather than matched. Population is tracked **plus untracked-not-ignored**, so a new file is covered before it is committed — a tracked-only draft passed clean over this rule's own fixture and then reported it once committed. Fixture at `tests/fixtures/private-names/` |
 | `tests/lint/provision-quote.sh` | Lint rule 7 — the #42 class: a file that *provisions* a canonical row must quote it, not describe it by category. Rule 6 cannot see it, because the two `audit-context` copies agree with each other while contradicting `templates/project-file.md`. Fixture at `tests/fixtures/provisioning-quote/` |
-| `tests/fixtures/installer-release-guard/` | Seeded git states for the installer's release guard (#33). Its README carries the two rejected predicates and why — read before changing the comparison |
-| `tests/fixtures/verify-runner/` | Seeded claims and prose for `curate` Step 0 sub-step 5's runner (#34). It extracts the runner from `templates/curate.md` rather than copying it, so it cannot drift. ~90s — the slowest check here, and the only one with timing cases. Its README carries the rejected `\|` predicate and the three review rounds that produced the rest — read before touching the extraction |
 | `memory/MEMORY.md` | This repo's in-repo memory index (maintainer-local) |
 
 ## How to Work Here

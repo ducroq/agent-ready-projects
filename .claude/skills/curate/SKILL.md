@@ -37,6 +37,20 @@ import os, re, subprocess, sys
 from pathlib import Path
 EXT = r'md|py|sh|js|ts|tsx|jsx|json|yaml|yml|toml|ini|cfg|conf|txt|sql|rs|go|rb|java|c|h|cpp|css|html|env|lock|tsv|csv'
 UNIT = re.compile(r'\.(service|timer|socket|mount|path|target)$')
+# Absence assertions (#142). `audit-context` Step 4 has skipped this class since
+# v1.15.0 and this extractor did not, so two shipped checkers gave the SAME input
+# opposite dispositions — reported by an adopter who hit it twice, the second time
+# in the text they wrote to record the first. THREE spellings of the negation, not
+# one: `[ ! -f ]` and `test ! -f` are the forms that `! test -f` alone misses.
+# ⚠️ Each marker is scoped to its own SPAN, never to the line. The sibling step
+# measured that cost: line-scoping dropped 4 references on 2 lines in one adopter
+# repo, 3 of them load-bearing. A line routinely retires one path and names its
+# live replacement in the same sentence, so `**Deleted**:` binds the ONE backticked
+# token that follows it — a first draft here ran to end-of-line and silenced the
+# replacement, re-creating the divergence #142 exists to remove.
+ABSENT = [re.compile(r'(?:!\s*test|test\s+!|\[\s*!)\s+-[a-z]+\s+\S+'),
+          re.compile(r'\*\*Deleted\*\*:\s*`[^`\n]+`'),
+          re.compile(r'~~[^~\n]+~~')]
 PATH = re.compile(r'`([^`\s]+\.(?:' + EXT + r'))`')
 # `.resolve()` matters: outside a git repo this falls back to `.`, and
 # `Path('.') in Path('../x.md').parents` is True — so every `../` fragment read
@@ -72,7 +86,23 @@ for doc in sys.argv[1:]:
     d = root / doc
     if not d.is_file():
         print(f'CANNOT VERIFY: {doc} is not readable'); continue
-    for frag in dict.fromkeys(PATH.findall(d.read_text(errors='replace'))):
+    text = d.read_text(errors='replace')
+    # SPAN-scoped, so a deletion marker cannot silence a live neighbour: a fragment
+    # is skipped only when EVERY occurrence of it sits inside an absence assertion.
+    # Count first, decide after — the fragment loop below is de-duplicated and has
+    # no positions left to test.
+    gone = [m.span() for r in ABSENT for m in r.finditer(text)]
+    occ = {}
+    for m in PATH.finditer(text):
+        o = occ.setdefault(m.group(1), [0, 0])
+        o[0] += 1
+        o[1] += any(a <= m.start() and m.end() <= b for a, b in gone)
+    for frag in dict.fromkeys(PATH.findall(text)):
+        # An assertion that a file is GONE is not a dead reference — its absence is
+        # the whole point of the sentence, and reporting it asks the author to
+        # "fix" a line that is correct as written (#142).
+        if occ[frag][0] == occ[frag][1]:
+            skip.append((doc, frag, 'asserted ABSENT — the absence is the claim')); continue
         # `@file` is an inclusion sigil — but `lstrip` is a CHARACTER SET, so it also
         # ate the `@` of a scoped npm path and printed `types/node/index.d.ts`, text
         # the document never contained. Strip one leading `@`, and only as a fallback.
@@ -228,6 +258,13 @@ for doc in sys.argv[1:]:
         # A systemd unit NAME is not a file reference unless it carries a directory.
         if UNIT.search(frag) and '/' not in frag:
             skip.append((doc, frag, 'unit name, not a path')); continue
+        # ...and neither is a DIRECTIVE VALUE. `ExecStartPre=wait_for_edh.sh` is a
+        # unit-file line, not a path in this repo, and it reached DEAD because the
+        # cross-repo arm keys on a FIRST SEGMENT that an unqualified token does not
+        # have (#141). Only the unqualified form: a directive naming a real path
+        # (`ExecStart=/usr/bin/x`) still carries a `/` and is decided on it.
+        if '=' in frag and '/' not in frag:
+            skip.append((doc, frag, 'directive value, not a path')); continue
         # FILENAME-shaped, not extension-shaped: `env` in the whitelist captures
         # `process.env`, a ubiquitous code identifier no rung can ever resolve.
         # The sibling step solved this and states the test — keep such a token
@@ -259,6 +296,8 @@ PY
 ```
 
 ⚠️ **A `0 dead` line alone is not a result.** It cannot distinguish a clean index from an extractor that captured nothing — report all four counts, always.
+
+⚠️ **Prose that asserts a file is absent is a convention, not a marker, and the extractor cannot read it.** `! test -f`, `> **Deleted**:` and `~~strikethrough~~` are skipped — span-scoped, so a marker silences a fragment only where *every* occurrence of it sits inside one. But *"no `docs/GUIDE.md` counterpart here"* is an ordinary sentence, and nothing lexical separates it from a live reference; it is reported DEAD, correctly on its face and uselessly, since the absence is the point of the sentence (#142). **The fix is to drop the backticks** — an absent file is not a code reference — or to put the claim in one of the three shapes above. Reach for a convention here rather than a new marker: a marker cannot distinguish a path that is *quoted* from one that is *referenced* (#76).
 
 2. **Stale memory**: Check modification dates of memory files. Flag any not modified in 30+ days — they may be outdated. Read dates from the **filesystem**, e.g. `ls -l --time-style=+%Y-%m-%d memory/` or `stat -c '%y %n' memory/*.md`. **Look for the files before reading their dates, and say which set you read.** Where there is no `memory/` there is no Layer 3, and this project's equivalents are the ones the naming map gives for a tool without auto-memory — `docs/gotcha-log.md`, `docs/hypothesis-log.md`, `docs/work-items/` — plus the project file itself. Both example commands fail the same silent way on a directory that is not there: `stat` and `ls` each write to stderr and print nothing to stdout, which reads exactly like "nothing is stale".
 
