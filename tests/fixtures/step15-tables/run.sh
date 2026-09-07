@@ -85,7 +85,12 @@ printf -- '---\n"description": Runs a | b\n---\n\nprose\n' > n12_fm_quoted.md
 # guard must not have. Asserted with want_exact, because the pre-fix behaviour
 # also printed something — the WRONG thing — and want_hit cannot tell them apart.
 printf -- '---\n\n# Title\n\n| a | b |\n| - | - |\n| 1 | 2 | 3 |\n' > t10_hr_table.md
-# n9 — a UTF-8 BOM is invisible in every editor and defeats `NR == 1`, so the
+# n9 — ⚠️ THE ROW CI CAUGHT AND THIS MACHINE CANNOT. The first fix used
+# `substr($(0),1,3)`, which is bytes in mawk and CHARACTERS in gawk under a
+# UTF-8 locale — so it passed locally and failed on the runner, taking six
+# ablation kill-sets with it. There is no gawk here; do not read a green local
+# run as portability evidence for this row.
+# A UTF-8 BOM is invisible in every editor and defeats `NR == 1`, so the
 # frontmatter skip never fires and the file reports the EXACT false positive that
 # skip was added to remove.
 printf '\xef\xbb\xbf---\ndescription: a | piped value\n---\n\n# T\n' > n9_bom_fm.md
@@ -248,7 +253,7 @@ msg_ablate "A6 append a false narrowing to the guard message" \
 # have guarded is now t11 — an assertion that the false positive is still there.
 ablate "A7 a YAML comment decides the frontmatter" 'fmpend && $(0) ~ /^([ \t]*|[ \t]*#.*)$/ { next }' 'fmpend && $(0) ~ /^([ \t]*)$/ { next }' "n11_fm_comment.md"
 ablate "A8 a quoted key is not a key" 'if ($(0) ~ /^["\047]?[A-Za-z_][A-Za-z0-9_.-]*["\047]?[ \t]*:/)' 'if ($(0) ~ /^[A-Za-z_][A-Za-z0-9_.-]*[ \t]*:/)' "n12_fm_quoted.md"
-ablate "A9 drop the BOM strip" 'substr($(0), 1, 3) == "\357\273\277"' 'substr($(0), 1, 3) == "ZZZ"' "n9_bom_fm.md"
+ablate "A9 drop the BOM strip" 'if (NR == 1) sub(/^\357\273\277/, "")' 'if (NR == 0) sub(/^\357\273\277/, "")' "n9_bom_fm.md"
 ablate "A11 drop the blank line before the first key" 'fmpend && $(0) ~ /^([ \t]*|[ \t]*#.*)$/ { next }' 'fmpend && $(0) ~ /^([ \t]*#.*)$/ { next }' "n10_kanban_fm.md"
 # A10 is a MESSAGE ablation, not a firing one: reverting to "open on line 1
 # alone" leaves t10 printing the unclosed-frontmatter message, so ablate() would

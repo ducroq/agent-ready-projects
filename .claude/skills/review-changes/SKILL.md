@@ -145,8 +145,11 @@ The lenses below all read *content*: does this path exist, is this flag right, w
     # constant while printing what a clean run prints. See #77.
     # A UTF-8 BOM is invisible in an editor and defeats every `NR == 1` test under
     # it, so the frontmatter skip never fires (#151). Octal, not `\xef`: `\x` is a
-    # gawk extension.
-    { if (NR == 1 && substr($(0), 1, 3) == "\357\273\277") $(0) = substr($(0), 4)
+    # gawk extension. ⚠️ A SUB, never `substr($(0), 1, 3)`: that hard-codes a length
+    # in units awk does not agree on — bytes in mawk, CHARACTERS in gawk under a
+    # UTF-8 locale, where the BOM is one. The substr form passed a local mawk suite
+    # and failed on CI. The regex matches the same bytes under either reading.
+    { if (NR == 1) sub(/^\357\273\277/, "")
       sub(/\r$/, "") }              # CRLF: strip before anything reads the line,
                                      # or isdelim() never matches and no table in
                                      # the file is examined. See #52.
