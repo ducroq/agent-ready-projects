@@ -71,15 +71,21 @@ The loop covers the cases where `origin/HEAD` is absent: `git init` + `git remot
 
 Now run `git diff --stat "$BASE"...HEAD`, `git diff --stat` and `git diff --cached --stat` to see the changed files, and `git diff --summary -M "$BASE"...HEAD` alongside them. That was #64 surviving its own fix in the place nobody re-read. **`--stat` alone cannot see a mode change, a rename, a submodule, or a binary** — all four render as zero or near-zero lines, and three of them are carve-outs below. A carve-out you cannot observe is not in force; `--summary` without the baseline term cannot observe any of them on a pushed branch. Classify each changed file into a risk tier:
 
-| Tier | File patterns | Depth |
-|------|-------------|-------|
-| **HIGH** | `templates/**`, `adopt.md`, `/README.md`, `docs/GUIDE.md`, `docs/verification-rationale.md`, `tests/**`, `scripts/**`, `.claude/skills/**`, `.gitignore` | Full battery (3-4 lenses) |
-| **MEDIUM** | `CLAUDE.md`, `docs/**`, `templates/checklists/**`, `templates/test-fixtures/**` | Two lenses (adversarial + doc-accuracy) |
-| **LOW** | `CHANGELOG.md`, `memory/**`, `docs/work-items/**` | One lens (adversarial) |
+**Read `.claude/review-profile.md` now** — it holds this project's risk tiers,
+guarantee surfaces, test baseline and carve-outs. The tier table is **not** in this skill,
+deliberately: this file ships identically to every project, and a table of one project's
+paths silently classifies every other project's changes as LOW.
 
-`**` crosses directory levels; a leading `/` anchors to the repo root. **The most specific matching pattern wins** — `templates/checklists/foo.md` is MEDIUM, not HIGH, even though `templates/**` also matches it. Where no pattern is more specific than another, take the highest tier.
+⛔ **If `.claude/review-profile.md` does not exist, STOP and say so. Do not proceed on
+defaults, and do not invent a table.** There is no safe default: with no profile every path
+falls through to LOW, which is the one outcome indistinguishable from a review that ran and
+found the change unimportant. Report the missing profile as the result, and point the reader
+at `templates/review-profile.md` in the framework. Refusing is cheap; a silently-LOW battery
+on a HIGH change is what this skill exists to prevent.
 
-The HIGH row is the normative surface — everything an adopter consumes or executes. Four entries are easy to miss, and each is here because it burned someone: `scripts/**` is shell that runs on another machine; `.claude/skills/**` holds the reference installs adopters copy, so a defect there ships to every install derived from it; `/README.md` is anchored so it means *the repo's own* README, not every nested one; and `.gitignore` decides what is published at all — a one-line change there has exposed private content in a public repo.
+Classify each changed file using the profile's tier table, then apply the magnitude gate below.
+⚠️ **The gate's carve-outs are part of THIS file and always apply**; a profile may add to them
+but never remove one.
 
 ### Magnitude gate
 
@@ -304,7 +310,7 @@ For each lens, spawn a subagent with the specific prompt below. Run lenses concu
 
 **Invariant: every file named in the guarantee lens must sit in the HIGH row of Step 1.** The lens is HIGH-gated. A file it defines a guarantee for but that tiers below HIGH has a guarantee that can *never* be checked — and the report renders "no HIGH files changed" as a clean pass, so the failure is silent and looks like success. Whenever you add an entry to the guarantee lens, add its path to the HIGH row in the same edit; if a path does not deserve HIGH, it does not deserve a guarantee entry. Check the invariant in the direction that catches it: read each guarantee entry and find its tier, not the other way round.
 
-This matters most when you first adopt this skill. Both the tier table and the guarantee lens name files in *this* repo's tree, so you will rewrite both — and the two rewrites are easy to do independently. In the version shipped here the invariant happens to hold, so the template never demonstrates the constraint it depends on.
+⭐ **Both halves now live in `.claude/review-profile.md`, so the invariant is checkable inside one file** — that is the point of the split. It used to span the skill (tier table) and the lens (guarantees), which adopters rewrote independently and therefore inconsistently. Check it in the direction that catches it: read each guarantee entry in the profile and find its tier in the same file. ⚠️ A profile that lists a guarantee for a path tiered below HIGH has a guarantee that can never fire, and the report renders that as a clean pass.
 
 ### Lens: guarantee-preservation (HIGH only)
 
@@ -312,18 +318,9 @@ This matters most when you first adopt this skill. Both the tier table and the g
 You are reviewing changes to adopter-facing surfaces. These files carry
 guarantees — invariants that must hold for every downstream consumer.
 
-For each changed file, identify what it guarantees:
-- templates/work-item.md: five-section structure, no frontmatter, no lifecycle state machine
-- templates/curate.md: Steps 0-6 in order, work-item savepoint updates in Step 3
-- templates/audit-context.md: Steps 1-8 in order, work-item reachability in Step 5, framework-version drift in Step 6
-- docs/GUIDE.md: all claimed paths resolve, no broken anchors, version badge matches CHANGELOG
-- adopt.md: every step is executable by an agent that has only URLs and no clone; no step
-  instructs a copy that would strip frontmatter; assess/adopt/update stay three separate prompts
-- tests/lint/run.sh: deterministic checks, no network calls, explicit allowlists not blanket skips
-- scripts/*.sh: verifying and mutating modes stay distinct; a no-op run and a clean run are
-  distinguishable in the output; exits non-zero on the failure it exists to detect
-- templates/README.md: naming map covers all templates, tool-specific paths correct,
-  every skill carries its scope (user-global or project-local)
+For each changed file, identify what it guarantees. **The surfaces and their
+guarantees are listed under "Guarantee surfaces" in `.claude/review-profile.md`** —
+read that file; they are project-specific and are not reproduced here.
 
 For each guarantee: does the change preserve it? Flag any weakening.
 

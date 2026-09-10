@@ -19,6 +19,57 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.40.0 (candidate, unreleased)
+
+### `review-changes` becomes a user-global skill, with a per-repo profile
+
+🔴 **The problem this fixes was measured on an adopter, not imagined.** `review-changes` shipped
+project-local because its risk-tier table and guarantee lens named files in the adopting repo's
+tree. That made every adopter's copy a **re-mapped fork**, which `/update-drift` structurally
+cannot check: it compares project files by *stamp* and user-global skills by *bytes*, and a
+re-mapped project-local copy is neither. The method this file offered instead was to eyeball the
+diff — and the same sentence conceded that "eyeballing a 577-line diff is not a method".
+
+**Measured on an adopter (2026-09-10):** its copy had drifted to 768 lines against 475 here, and was
+missing the **second half of the #64 fix from v1.26.1 — eleven releases back**. Its Step 1 file-list
+command carried no `"$BASE"...HEAD` term, so the tier table, the Unclassified section and the report
+header saw only unstaged + staged work: on a pushed-but-unmerged branch the header read `0 files
+changed` while the magnitude gate one section later read `3`. That is #64's Round 3 recurring in a
+fork nobody could diff. The adopter had run `/update-drift` and it reported everything current,
+correctly, because that file is outside what it can see.
+
+**The split.** The skill body is now generic and names no project's files. Each repo carries
+`.claude/review-profile.md` (new `templates/review-profile.md`) holding its risk tiers, guarantee
+surfaces, test baseline and project-specific carve-outs.
+
+- **`review-changes` moves to `GLOBAL_SKILLS`** in `scripts/install-global-skills.sh`. One installed
+  copy serves every repo and is re-copied on each release like `curate`, `audit-context` and
+  `update-drift` — so drift becomes byte-detectable by the check that already exists.
+- ⛔ **The skill STOPS when a repo has no profile.** There is no safe default: with none, every path
+  falls through to LOW, which is indistinguishable from a review that ran and found the change
+  unimportant. Refusing is cheap; a silently-LOW battery on a HIGH change is the one failure this
+  skill exists to prevent.
+- ⭐ **The tier/guarantee invariant is now checkable inside one file.** "Every path named in the
+  guarantee lens must sit in the HIGH row" previously spanned the skill (table) and the lens
+  (guarantees), which adopters rewrote *independently* — so the invariant broke silently, and a
+  guarantee that can never fire renders as a clean pass. Both halves are in the profile now.
+
+**Adopter action required.** Copy `templates/review-profile.md` to `<repo>/.claude/review-profile.md`
+and move your tier table and guarantee list into it — they are already written, in your local skill
+copy. Then delete `<repo>/.claude/skills/review-changes/` and install the global via
+`scripts/install-global-skills.sh`. ⚠️ **Check the two halves against each other while you move
+them**: a guarantee whose path tiers below HIGH has been dead for as long as it has been there.
+
+### Also
+
+- **Size budget raised 257,614 → 260,183 bytes** (+2,569), recorded via `--raise-budget`, for
+  `templates/review-profile.md`. Per *adopter* the change is a reduction: a 768-line re-mapped local
+  skill becomes a 472-line global one plus a ~50-line profile.
+- `templates/README.md`, `docs/GUIDE.md` and `adopt.md` updated for the scope change. The GUIDE's
+  "Where a skill lives" row for `review-changes` said **"project-local, never global"** with a
+  rationale that the split has now removed; it is corrected rather than deleted, since the reasoning
+  was right for as long as it held.
+
 ## v1.39.0 (2026-09-07)
 
 ⚠️ **The bump moved from PATCH to MINOR while this entry was being written, and the reason is the v1.10.1 precedent read literally**: documentation-only changes are PATCH; **new behaviour is MINOR**. The #144 work this section opened with was a message and a prose fix, so PATCH was right for it. The adopter batch below adds new *behaviour* to two shipped skills — a BOM strip, a two-stage frontmatter decision, and two new skip arms in `curate`'s extractor — and an adopter pinned at v1.38.0 who upgrades gets different dispositions on inputs they already have. That is a MINOR, and calling it a PATCH would have understated it in the one file adopters read to decide whether to upgrade.

@@ -48,15 +48,19 @@ $3
 EOF
 }
 
+# DERIVED, never retyped: this fixture hardcoded the global set in three places and
+# all three broke when review-changes joined it in v1.40.0 — each failing as a
+# defect that was really the fixture's own staleness. Read it from the installer.
+FIXTURE_GLOBALS=$(sed -n 's/^GLOBAL_SKILLS="\([^"]*\)".*/\1/p' "$SCRIPT")
+[ -n "$FIXTURE_GLOBALS" ] || { echo "cannot read GLOBAL_SKILLS from $SCRIPT" >&2; exit 2; }
+
 mkrepo() {  # mkrepo <root> [untracked skill] [file-symlink skill] [dir-symlink skill]
   local root="$1" untracked="${2:-}" symlinked="${3:-}" dirlinked="${4:-}"
   mkdir -p "$root/scripts"
   cp "$SCRIPT" "$root/scripts/install-global-skills.sh"
   # The three global skills, plus one project-local skill and one ordinary file:
   # both exist so a case can dirty something the guard must NOT react to.
-  mkskill "$root" curate "Released body."
-  mkskill "$root" audit-context "Released body."
-  mkskill "$root" update-drift "Released body."
+  for _g in $FIXTURE_GLOBALS; do mkskill "$root" "$_g" "Released body."; done
   mkskill "$root" review-changes "Released body."
   echo "released readme" > "$root/README.md"
   # A source that IS a symlink, committed as one, pointing at a sibling outside
@@ -365,7 +369,11 @@ run_case N1-clean-at-tag INSTALL "curate: installed" m_none
 # A project-local skill mid-edit is the normal state of a working session. If it
 # refused here, sessions would learn to pass --force as a matter of routine and
 # the guard would be decoration.
-m_local_dirty() { printf 'Local edit.\n' >> "$1/.claude/skills/review-changes/SKILL.md"; }
+# `release`, not `review-changes`: the latter became GLOBAL in v1.40.0, and dirtying
+# a global source must REFUSE — which is the opposite of what this case asserts.
+# Pick a skill that is still in LOCAL_ONLY, or this case silently tests the
+# refusal path while claiming to test the permit path.
+m_local_dirty() { printf 'Local edit.\n' >> "$1/.claude/skills/release/SKILL.md"; }
 run_case N2-local-only-skill-dirty INSTALL "curate: installed" m_local_dirty
 
 m_other_dirty() { echo "unrelated edit" >> "$1/README.md"; }
@@ -569,7 +577,7 @@ root="$WORK/$id"; mkdir -p "$root"; mkrepo "$root"
 # unwritable parent, `mkdir -p` fails first and its own guard reports it, so the
 # case would measure the wrong check. Measured — that is what a first version of
 # this case did, and the cp-status ablation passed straight through it.
-for sk in curate audit-context update-drift; do
+for sk in $FIXTURE_GLOBALS; do
   mkdir -p "$root/ro/dest/$sk"; echo stale > "$root/ro/dest/$sk/SKILL.md"
   # The FILE must be unwritable, not just its directory: replacing an existing
   # file truncates it in place, which needs write on the file and not on the
@@ -668,8 +676,8 @@ check_case() {  # check_case <id> <dest-content: RELEASE|STALE> <want-rc> <needl
   local root="$WORK/$id" out rc
   mkdir -p "$root"; mkrepo "$root"
   # Populate the destination from the TAG, before the tree moves on.
-  mkdir -p "$root/dest/curate" "$root/dest/audit-context" "$root/dest/update-drift"
-  for s in curate audit-context update-drift; do
+  for s in $FIXTURE_GLOBALS; do mkdir -p "$root/dest/$s"; done
+  for s in $FIXTURE_GLOBALS; do
     g "$root" show "v1.0.0:.claude/skills/$s/SKILL.md" > "$root/dest/$s/SKILL.md"
   done
   [ "$what" = STALE ] && printf 'drifted in the install\n' >> "$root/dest/curate/SKILL.md"

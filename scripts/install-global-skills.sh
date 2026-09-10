@@ -36,8 +36,11 @@ INVOKED_FROM=$PWD          # captured BEFORE the cd: a relative scan root means
 cd "$(dirname "$SELF")/.." || { echo "cannot reach repo root" >&2; exit 2; }
 [ -d .claude/skills ] || { echo "not in the agent-ready-projects repo root: $(pwd)" >&2; exit 2; }
 
-GLOBAL_SKILLS="curate audit-context update-drift"     # generic method, relevant in every repo
-LOCAL_ONLY="review-changes release test-verify-memory"      # repo-specific, or only meaningful in some repos
+# review-changes joined the globals in v1.40.0: the risk tiers and guarantee
+# surfaces that made it repo-specific now live in each repo's
+# .claude/review-profile.md, so the skill body itself names no project's files.
+GLOBAL_SKILLS="curate audit-context update-drift review-changes"   # generic method, relevant in every repo
+LOCAL_ONLY="release test-verify-memory"      # repo-specific, or only meaningful in some repos
 
 # `set -u` would otherwise abort here with bash's own message and exit 1 — this
 # script's "N issue(s) found" code — under cron, systemd or `env -i`.

@@ -3,7 +3,7 @@
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and every raise is
 # recorded below, oldest first — notes accumulate and are never replaced.
-# BUDGET 257614
+# BUDGET 260183
 # SPILL 30306
 # RAISED 2026-09-06 from 247526 to 247969: #133: the #118 remedy string shipped unconditional and can turn a resolved reference into an AMBIGUOUS finding; the caveat that scopes it is +443 b on templates/audit-context.md, seeded as T39/T40/N39 (reason restored 2026-09-06 — write_baseline used to overwrite each note with the next)
 # RAISED 2026-09-06 from 247969 to 248237: #140: UNRESOLVED had two causes printing one reason. +268 b on templates/audit-context.md, seeded as T41/T41b/N40 (reason restored 2026-09-06)
@@ -19,6 +19,8 @@
 # ratcheted down 2026-09-07
 # ratcheted down 2026-09-07
 # ratcheted down 2026-09-07
+# RAISED 2026-09-10 from 257614 to 260183: v1.40.0: review-changes split into a generic global skill plus a per-repo .claude/review-profile.md. templates/review-profile.md is new adopter-facing surface (+2569 bytes net, after the skill shed its hardcoded tier table and guarantee list). Per ADOPTER the change is a reduction: a 768-line re-mapped local skill becomes a 472-line global one plus a ~50-line profile.
+# ratcheted down 2026-09-10
 templates/adr.md	2115
 templates/audit-context.md	43903
 templates/checklists/architect-checklist.md	1263
@@ -32,10 +34,11 @@ templates/gotcha-log.md	4886
 templates/hypothesis-log.md	3570
 templates/memory-index.md	3396
 templates/project-file.md	6106
-templates/README.md	11196
+templates/README.md	12042
 templates/release.md	19437
 templates/review-agent.md	5720
-templates/review-changes.md	40534
+templates/review-changes.md	39674
+templates/review-profile.md	2583
 templates/RUNBOOK.md	2795
 templates/test-fixtures/memory/decision-no-verify.md	185
 templates/test-fixtures/memory/observation-no-verify.md	185
