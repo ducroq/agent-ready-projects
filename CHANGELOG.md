@@ -19,7 +19,7 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.40.0 (candidate, unreleased)
+## v1.40.0 (2026-09-10)
 
 ### `review-changes` becomes a user-global skill, with a per-repo profile
 
