@@ -4,6 +4,11 @@
 # the canonical frontmatter-correct SKILL.md files were invisible to git and drifted
 # from templates/ without anything noticing.
 !.claude/skills/
+# Same reasoning for the framework's own review profile: review-changes reads it
+# at Step 1 and STOPS without one, so an untracked profile means the framework
+# cannot review itself on a fresh clone — and the file that demonstrates the
+# format to every adopter would be invisible to git.
+!.claude/review-profile.md
 # Anchored: this is the maintainer's own memory dir at the repo root, not every
 # directory named memory/ anywhere. Unanchored it also swallowed
 # templates/test-fixtures/memory/ — so any NEW fixture added there was silently
