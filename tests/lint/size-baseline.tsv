@@ -3,7 +3,7 @@
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and every raise is
 # recorded below, oldest first — notes accumulate and are never replaced.
-# BUDGET 260183
+# BUDGET 235437
 # SPILL 30306
 # RAISED 2026-09-06 from 247526 to 247969: #133: the #118 remedy string shipped unconditional and can turn a resolved reference into an AMBIGUOUS finding; the caveat that scopes it is +443 b on templates/audit-context.md, seeded as T39/T40/N39 (reason restored 2026-09-06 — write_baseline used to overwrite each note with the next)
 # RAISED 2026-09-06 from 247969 to 248237: #140: UNRESOLVED had two causes printing one reason. +268 b on templates/audit-context.md, seeded as T41/T41b/N40 (reason restored 2026-09-06)
@@ -21,8 +21,9 @@
 # ratcheted down 2026-09-07
 # RAISED 2026-09-10 from 257614 to 260183: v1.40.0: review-changes split into a generic global skill plus a per-repo .claude/review-profile.md. templates/review-profile.md is new adopter-facing surface (+2569 bytes net, after the skill shed its hardcoded tier table and guarantee list). Per ADOPTER the change is a reduction: a 768-line re-mapped local skill becomes a 472-line global one plus a ~50-line profile.
 # ratcheted down 2026-09-10
+# ratcheted down 2026-09-10
 templates/adr.md	2115
-templates/audit-context.md	43903
+templates/audit-context.md	19157
 templates/checklists/architect-checklist.md	1263
 templates/checklists/implement-checklist.md	1329
 templates/checklists/qa-checklist.md	1836

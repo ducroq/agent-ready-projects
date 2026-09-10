@@ -60,6 +60,25 @@ copy. Then delete `<repo>/.claude/skills/review-changes/` and install the global
 `scripts/install-global-skills.sh`. ⚠️ **Check the two halves against each other while you move
 them**: a guarantee whose path tiers below HIGH has been dead for as long as it has been there.
 
+### `audit-context` Step 4 shrinks by 82%: the spec moves beside the code
+
+Step 4 was **30,486 characters — 71% of that skill** — and it specified, in prose, an algorithm
+`tests/fixtures/reference-integrity/refcheck.py` already implements. Every audit loaded all of
+it and then ran the script anyway.
+
+- Step 4 is now **5.5k**: the invocation, a five-line gloss of the rungs so the report reads
+  without the spec, the three-outcome verdict, the report sections, and the liveness rule
+  (seed a break before trusting a short findings list).
+- The rules move to **`tests/fixtures/reference-integrity/SPEC.md`**, beside `refcheck.py` and
+  the `run.sh` that seeds the defects each one exists to catch — which is where someone
+  *changing* the checker looks. ⚠️ Two copies of one algorithm can disagree; the file says so
+  and names the script as authoritative.
+- The skill body drops **43,173 → 18.3k chars**. `docs/rationale/audit-context.md` is unchanged
+  and keeps its own role (superseded drafts and refuting measurements) — the split here is
+  spec-versus-invocation, not argument-versus-decision.
+
+Size baseline re-locked after the reduction so it cannot drift back.
+
 ### Also
 
 - **Size budget raised 257,614 → 260,183 bytes** (+2,569), recorded via `--raise-budget`, for
