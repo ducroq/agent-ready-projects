@@ -17,15 +17,18 @@
 | 2 | Authors real? | PASS | SRI Lab at ETH Zurich (sri.inf.ethz.ch). Vecherv is a known professor. LogicStar.ai co-affiliation. |
 | 3 | Venue real? | PASS | arXiv preprint (not peer-reviewed journal). Note: preprint, not peer-reviewed. |
 | 4 | Claims match scope? | PASS | Paper explicitly evaluates whether AGENTS.md files help coding agents. Scope is exact match. |
-| 5 | Exact location? | NEEDS WORK | Article cites "-3%" and "+4%" and "+19%" — secondary sources confirm general direction but exact figures need verification against full paper text. Multiple secondary sources (MarkTechPost, InfoQ, ClawSouls, Medium) cite consistent numbers. |
-| 6 | Read relevant section? | PARTIAL | Full paper PDF available at arxiv.org/pdf/2602.11988. Secondary sources consistently report: LLM-generated files reduce success ~3%, human-written improve ~4%, cost increase >19-20%. |
+| 5 | Exact location? | **PASS (closed 2026-09-12)** | Primary text of **both versions** retrieved and searched: `curl -s https://arxiv.org/html/2602.11988v1` and `…v2`, tags stripped, regex over the body. The v1 figures are real and exact — "an increase of 4% on average" (developer-provided), "a decrease of 3% on average" (LLM-generated), "at most 19%" (cost). ⚠️ **v2 SUPERSEDES ALL THREE.** |
+| 6 | Read relevant section? | **PASS (closed 2026-09-12)** | Read in full text, not via secondary sources. **v2 body: "Developer-provided context files improve agent performance by 2.4% on average (p = 21%), significantly outperforming LLM-generated ones (p = 3.8%)"** and **"leading to a significant (p-value < 0.001%) cost increase of 20% and 23% on average"**. The second benchmark was renamed AGENTbench → CTXbench between versions. |
 
-**Status:** VERIFIED with caveat
-**Caveat:** The -3% / +4% / +19% numbers are consistently cited across 5+ secondary sources (MarkTechPost, InfoQ, i-scoop, ClawSouls, Medium) but should be confirmed against the primary paper's results tables for exact context (which benchmark, which agent, aggregate vs per-model). The paper tests on SWE-bench and AGENTbench with multiple agents/LLMs.
+**Status:** ⚠️ **RE-VERIFIED AGAINST PRIMARY SOURCE 2026-09-12 — and the cited figures are SUPERSEDED.**
 
-**Action needed:** Article should note these are aggregate findings across multiple agents and benchmarks, not a single definitive number. Current phrasing is acceptable but could add "on average" or "across tested configurations."
+**What the re-check found.** The -3% / +4% / +19% figures were **correct for v1** and are exactly where the article said they were. **v2 (revised 23 June 2026) replaces them**: the developer-provided improvement is now **2.4% at p = 21%** — *not statistically significant* — while the cost increase is **20–23% at p < 0.001%**. The practitioner-facing summary therefore inverts: the benefit is not distinguishable from zero, the cost is about as solid as empirical work gets.
 
-**Claims verified:** S2-1 (citation exists), S2-3 (success rate reduction), S2-4 (success improvement + cost)
+🔴 **THE PROCESS FAILURE IS THE FINDING, and it is this log's own.** Step 5 said *"exact figures need verification against full paper text"* and Step 6 said **PARTIAL**. The overall status was nonetheless recorded **VERIFIED** and the registry marked S2-3/S2-4 **ESTABLISHED**, on the strength of **five agreeing secondary sources**. All five were paraphrasing **v1**. Agreement among secondary sources measures how widely one version propagated, **not whether it is current** — and no number of agreeing secondaries substitutes for the primary. The action box sat unticked from first writing until 2026-09-12; the check, when finally run, took under five minutes with `curl`.
+
+**Rule this produces:** a claim whose own verification log says PARTIAL or NEEDS WORK may not be rated ESTABLISHED. The rating must be the floor of its steps, not the mode.
+
+**Claims verified:** S2-1 (citation exists — PASS, unchanged). S2-3 and S2-4 — **superseded, see above; update before reuse**.
 
 ---
 
@@ -233,7 +236,7 @@
 |----|-------|----------|--------|
 | S1-5 | "MCP tool descriptions served as structured text that agents parse like markdown" is imprecise. MCP descriptions are text strings in JSON schema, not markdown. | SHOULD-FIX | Revise to: "MCP handles tool connections via JSON-RPC, with tool descriptions as structured text alongside markdown context." Or remove "like markdown" qualifier. |
 | S5-9 | Article says "828 schema validation tests" — actual count is 820 | MUST-FIX | Change to "820" or "800+" |
-| S2-3/S2-4 | ETH Zurich percentages (-3%, +4%, +19%) are from secondary sources, not confirmed against primary paper tables | CAVEAT | Consider adding "on average" or "across tested configurations." Acceptable as-is given 5+ consistent secondary sources. |
+| S2-3/S2-4 | ETH Zurich percentages (-3%, +4%, +19%) are from secondary sources, not confirmed against primary paper tables | 🔴 **CLOSED 2026-09-12 — and the caveat was load-bearing, not cosmetic** | Primary text of v1 and v2 retrieved and searched. Figures were correct **for v1** and are **superseded by v2**: +4% → **2.4% at p = 21% (not significant)**; cost now p < 0.001%. ⚠️ **"Acceptable as-is given 5+ consistent secondary sources" was the wrong disposition** — all five were paraphrasing v1, so their agreement measured propagation, not currency. |
 
 ### Claims Not Yet Independently Verified
 
