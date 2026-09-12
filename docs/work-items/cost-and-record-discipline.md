@@ -10,7 +10,13 @@ Goal: make the framework cheaper to run without cutting the review of the shippe
 
 ## Current Status
 
-**Savepoint 2026-09-12.** v1.41.0 is written and green but **uncommitted and untagged**. Everything below is planned, nothing started.
+**Savepoint 2026-09-12, second block.** v1.41.0 is tagged and pushed. A later `/update-drift` + `/audit-context` pass committed `76d6581` (**not pushed, no release**) and filed #170-#174.
+
+**Last action**: swept v1.40.0 re-scoping residue; replaced lint rule 1's hardcoded never-exempt list with derivation from `.gitignore` negations (fixture T14 + ablation A13 seed the rot case a literal cannot pass).
+
+**Next action**: two engineer decisions are blocking, both recorded on their issues — **#171** (does v1.41.1 carry the template stamp fix, or does v1.42.0?) and **#172** (`--raise-budget` on `templates/project-file.md`, or leave adopters a row that fires a refusing skill). Neither is startable without a call.
+
+**Blocker on Step 2 below**: `CLAUDE.md` now has ~120 characters of headroom against the 40,000 hard cap, so #173's inventory fixes cannot land until the reclamation pass does. The cap is now the binding constraint on that file, not judgement about what belongs in it.
 
 - [x] #127 shipped — `review-changes` Step 3.1, Mechanized table, `curate` reads it, `curate`'s Promoted extractor bounded
 - [x] Landscape doc re-verified and rewritten (2nd edition)
