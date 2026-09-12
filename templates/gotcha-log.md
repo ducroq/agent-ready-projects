@@ -74,3 +74,41 @@
 | YYYY-MM-DD | [a pattern that kept recurring] | **3** — YYYY-MM-DD first; YYYY-MM-DD again; YYYY-MM-DD after promotion | project file, [rule name] |
 
 -->
+
+## Mechanized
+
+<!-- Review findings promoted to a deterministic check. The destination for
+     `review-changes` Step 3.1. Separate from Promoted above because the
+     destinations differ: a gotcha becomes PROSE an agent reads, a review
+     finding becomes a CHECK that runs.
+
+     ⚠️ OCCURRENCES here does NOT mean what it means in Promoted above.
+     There it counts sightings from the first, including those before
+     promotion. Here it counts only sightings AFTER the row went `live`,
+     because before that there is no check to have failed. A `proposed`
+     row therefore reads `—`, and its sightings belong in prose beside
+     the table. The two columns share a name and not a definition.
+
+     STATUS:
+     - `proposed` — the shape is named, no check exists yet
+     - `live` — the check exists AND a seeded positive has made it go red.
+       Nothing becomes `live` on the author's read of it. A check that has
+       never caught anything is indistinguishable from one that does not
+       work, which is the whole reason the seeded case is required.
+     - `rejected` — triaged and judged NOT mechanizable; the Check cell
+       carries the reason (`needs intent`, `one-off`). Kept, not deleted:
+       a shape rejected twice is a shape to look at again
+     - `retired` — the class can no longer occur; say what removed it
+
+     OCCURRENCES counts sightings AFTER the row went `live` — the signal
+     this table exists to make visible. A lens finding a class its own
+     live check covers means the check does not fire on the real shape,
+     is scoped to the wrong population, or was never wired into the run.
+     Investigate the check, not the finding.
+
+| Date | Finding shape | Check | Status | Occurrences |
+|------|---------------|-------|--------|-------------|
+| YYYY-MM-DD | [the shape, one sentence] | `tests/lint/foo.sh` | live | 0 |
+| YYYY-MM-DD | [a shape named but not yet built] | — | proposed | — |
+
+-->

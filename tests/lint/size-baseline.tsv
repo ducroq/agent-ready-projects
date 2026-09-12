@@ -3,7 +3,7 @@
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and every raise is
 # recorded below, oldest first — notes accumulate and are never replaced.
-# BUDGET 235437
+# BUDGET 241145
 # SPILL 30306
 # RAISED 2026-09-06 from 247526 to 247969: #133: the #118 remedy string shipped unconditional and can turn a resolved reference into an AMBIGUOUS finding; the caveat that scopes it is +443 b on templates/audit-context.md, seeded as T39/T40/N39 (reason restored 2026-09-06 — write_baseline used to overwrite each note with the next)
 # RAISED 2026-09-06 from 247969 to 248237: #140: UNRESOLVED had two causes printing one reason. +268 b on templates/audit-context.md, seeded as T41/T41b/N40 (reason restored 2026-09-06)
@@ -22,6 +22,8 @@
 # RAISED 2026-09-10 from 257614 to 260183: v1.40.0: review-changes split into a generic global skill plus a per-repo .claude/review-profile.md. templates/review-profile.md is new adopter-facing surface (+2569 bytes net, after the skill shed its hardcoded tier table and guarantee list). Per ADOPTER the change is a reduction: a 768-line re-mapped local skill becomes a 472-line global one plus a ~50-line profile.
 # ratcheted down 2026-09-10
 # ratcheted down 2026-09-10
+# RAISED 2026-09-12 from 235437 to 238447: #127: review-changes gains Step 3.1 (mechanization triage) + a Mechanized report section, and templates/gotcha-log.md gains the Mechanized table it writes to. +3010 b, NEW CAPABILITY not a correctness fix. ELEVENTH raise -- `grep -c '^# RAISED' tests/lint/size-baseline.tsv` returns 11; a draft of this note said TENTH, in the release whose whole subject is a stale literal count. A shrink WAS attempted and NOT found, and the attempt was narrower than the first draft claimed: review-changes.md's 12 PROSE paragraphs over 700 b are instruction, but its two largest blocks are FENCED BASH of 8441 b and 2438 b -- 26% of the file, and the shrink search did not address them. (The 'paragraphs are instruction, not archaeology' finding is recorded at line 16 of THIS file, not in CLAUDE.md as a draft said.) The redundant Step 5 bullet was shrunk to a pointer, 333 -> 223 b, already netted in. New prose tightened by 242 b before raising -- an intra-session figure with no commit behind it, so unverifiable rather than wrong. *** THE INSTRUMENT CANNOT SEE THIS CHANGE'S PAYOFF, and that is the honest entry: rule 8 measures bytes of adopter-facing surface, while #127's benefit is tokens per review round (224k-557k measured, memory/review-ledger.tsv). Rule 8's own header already records that it measures the smaller of the two costs (#46). So rule 8 resists every #127-shaped change by construction -- it prices the surface, not the loop. Do not read this raise as the budget being mis-calibrated; read it as the budget being scoped to one of two costs. *** H-022 DIRECTION: NEITHER BUCKET, and a draft of this note said CONFIRMS. H-022's rule: confirm needs 'three or more raises for NEW CONTENT WITHOUT an attempted shrink' -- a shrink was attempted, and this is one raise, so both conjuncts fail. Refute needs 'raises confined to correctness fixes WITH SHRINKS FOUND' -- none was found, so that fails too. Failing the refute condition does NOT satisfy the confirm condition; the draft's reasoning was a non sequitur. *** H-022 ALREADY CARRIES A PARAGRAPH headed 'Direction, and it is NEITHER bucket -- two drafts of the raise note claimed opposite ones'. This is the THIRD draft to claim a bucket the rule does not license, and the third to be caught by a review lens rather than by re-reading. That recurrence is the (c) datum H-022's method asks for, and it is worth more than this raise's bytes.
+# RAISED 2026-09-12 from 238447 to 241145: #127 (v1.41.0), ELEVENTH raise -- `grep -c '^# RAISED' tests/lint/size-baseline.tsv` returns 11; a draft said TENTH, in the release whose subject is stale literal counts. Covers the #127 mechanism AND the fixes a 3-lens review round found in it: curate's Promoted extractor bounded (it read 11 rows where 7 exist once any section followed Promoted), curate gains the read that stops the new table being write-only, the GitHub URL that stops a user-global skill citing a repo-relative docs/ path (#139's class, one directory from the rule built for it), the Step 5 bullet's contract fixed in both directions, and the Occurrences semantics split from Promoted's. *** SHRINK ATTEMPTED, NOT FOUND, and the attempt was narrower than a draft claimed: review-changes.md's 12 PROSE paragraphs over 700 b are instruction, but its two largest blocks are FENCED BASH at 8441 b and 2438 b -- 26% of the file, unexamined by the search. The 'paragraphs are instruction, not archaeology' finding is at line 16 of THIS file, not in CLAUDE.md as a draft said. New prose was tightened twice (242 b, then a further ~400 b) before raising; the only shrink with a commit behind it is the Step 5 bullet at 333 -> 223 b. *** H-022 DIRECTION: NEITHER BUCKET. Confirm needs three or more raises for new content WITHOUT an attempted shrink; refute needs shrinks FOUND. One raise, shrink attempted, none found. A draft recorded CONFIRMS via a non sequitur -- failing refute does not satisfy confirm -- and H-022 ALREADY carries a paragraph headed 'Direction, and it is NEITHER bucket: two drafts of the raise note claimed opposite ones'. This was the THIRD such draft and the third caught by a lens rather than by re-reading. That recurrence is the (c) datum H-022 asks for and is worth more than these bytes. *** RULE 8 CANNOT SEE THIS CHANGE'S PAYOFF: it prices surface bytes; #127's benefit is tokens per round (ledger: 121k-485k per round, re-derived 2026-09-12; the widely-quoted 557,442 is an ADOPTER's session from a comment on #126, not this ledger, and two drafts cited it as ours). This round itself cost 359,568 tokens across three lenses and found five blockers.
 templates/adr.md	2115
 templates/audit-context.md	19157
 templates/checklists/architect-checklist.md	1263
@@ -30,15 +32,15 @@ templates/checklists/qa-checklist.md	1836
 templates/checklists/README.md	1097
 templates/checklists/test-checklist.md	1234
 templates/coordination.md	3909
-templates/curate.md	70850
-templates/gotcha-log.md	4886
+templates/curate.md	71669
+templates/gotcha-log.md	6849
 templates/hypothesis-log.md	3570
 templates/memory-index.md	3396
 templates/project-file.md	6106
 templates/README.md	12042
 templates/release.md	19437
 templates/review-agent.md	5720
-templates/review-changes.md	39674
+templates/review-changes.md	42600
 templates/review-profile.md	2583
 templates/RUNBOOK.md	2795
 templates/test-fixtures/memory/decision-no-verify.md	185

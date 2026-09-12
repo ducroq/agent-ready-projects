@@ -322,7 +322,11 @@ PY
 
    ```
    grep -nE '^#{2,3} ' <log>                 # entries: date, title, status, line number
-   awk '/^#+ Promoted/,0' <log> | grep '^|'  # the table: what has already been resolved or promoted
+   # Bounded at the next same-or-shallower heading. `,0` ran to EOF and swallowed any
+   # later section: 11 rows read where 7 exist. Level-aware, because entries nest as
+   # `###` under `## Promoted` — exiting at ANY heading returns zero rows there.
+   awk '/^#+ Promoted/ && !f { f=1; match($(0),/^#+/); n=RLENGTH; next }
+        f && /^#+ / { match($(0),/^#+/); if (RLENGTH<=n) exit } f' <log> | grep '^|'
    grep -c '^\*\*Problem\*\*' <log>          # ground truth: entry count, obtained a different way
    ```
 
@@ -610,6 +614,8 @@ Scan the gotcha log's headers and its Promoted table for entries that have recur
 - If approved, add it to the destination and update the Promoted table in the gotcha log
 
 **Then check the promoted patterns against this session, and increment the Occurrences count for any that recurred.** Do this every session, not only when something is newly promoted.
+
+**Read the Mechanized table too, if the log has one** — same extractor, `Mechanized` for `Promoted`. Written by `review-changes` Step 3.1: review findings promoted to deterministic checks. Report any row still `proposed` after several sessions (a check nobody built), and increment Occurrences on a `live` row whose shape recurred — that is the signal the check does not fire on the real shape. ⚠️ Unread, the table is write-only: a live check that stopped firing looks exactly like one that works.
 
 **Which step owns the count.** Step 1 notes a recurrence on the entry itself; this step is what carries it into the Promoted table. The two are not redundant and must not disagree — the entry records *that* it happened again, the table is the running total, and the table is the number anything else cites. When they conflict, reconcile to the entries and say so in the report. Date each recurrence in the cell rather than only bumping the number, so a rate is readable and not just a total.
 

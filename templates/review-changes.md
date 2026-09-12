@@ -435,6 +435,21 @@ For each finding:
 If any BLOCKER: recommend fixing before commit.
 If only WARNING/NOTE: recommend the user review and decide.
 
+## Step 3.1 — Mechanization triage
+
+Run this on the findings already in context. It spawns no subagent and needs no new context — it costs the output tokens of the triage itself and nothing more.
+
+For **each** finding, answer one question: **could a deterministic check have found this?**
+
+- **Yes** — name what it greps, parses or runs, and the file it lands in. A shape you can state in one sentence is usually scriptable; one that needs the diff's intent is not.
+- **No** — say why, in four words or fewer (`needs intent`, `one-off`, `judgment call`). A blank is not an answer; it is indistinguishable from a finding nobody triaged.
+
+⚠️ **Naming a check is not writing one, and the row is not done until the check fires on a seeded case.** A check that has never caught anything is indistinguishable from one that does not work — the method is at <https://github.com/ducroq/agent-ready-projects/blob/master/docs/seeded-defects-and-ablations.md> — a URL, not a repo-relative path: this skill is user-global and runs with the cwd of whatever repo is under review, where `docs/` is someone else's tree. Record the named check in the gotcha log's **Mechanized** table as `proposed` — the log is wherever your project keeps it (`memory/gotcha-log.md`, `docs/gotcha-log.md`; `templates/README.md` has the map). It becomes `live` only once a seeded positive has made it go red.
+
+⚠️ **Write a `proposed` row's check path in backticks with a leading `⊘`** — `⊘ tests/lint/count-commands.sh`. The file does not exist yet, and a reference-integrity audit reports a path that does not resolve. The marker is what tells the auditor this is a declared placeholder rather than a dead link; without it every proposed row becomes a standing false finding, which trains readers to dismiss that audit.
+
+**Why a step and not advice.** A finding that becomes a check is paid once; a finding that stays a finding is paid every round, forever, at full lens price. It is the one lever that *plausibly* makes review cheaper **and** better rather than trading one against the other — the axes you might cut instead (lenses, independence) each have measured evidence they buy something, and round count is the one axis nothing here contradicts. ⚠️ **This lever itself is unmeasured**: an expectation, not a result.
+
 ## Step 4 — Report
 
 ```
@@ -452,6 +467,17 @@ If only WARNING/NOTE: recommend the user review and decide.
 Never omit this section. An empty one is evidence the check ran; a missing one
 is indistinguishable from a check that was skipped.]
 
+### Mechanizable
+
+[One row per finding above, by number. Never omit this section: an empty one is
+evidence the triage ran, a missing one is indistinguishable from a triage that
+was skipped.]
+
+| # | Check it becomes, or why not | Status |
+|---|------------------------------|--------|
+| 1 | `grep -c ...` in tests/lint/<rule>.sh | proposed |
+| 2 | needs intent | — |
+
 ### Summary
 
 - **Structural pre-check**: [N] markdown files checked, [N] problems
@@ -459,6 +485,7 @@ is indistinguishable from a check that was skipped.]
 - **Blockers**: [N] (must fix before commit)
 - **Warnings**: [N]
 - **Notes**: [N]
+- **Mechanizable**: [N] of [M] findings; [K] rows added to the Mechanized table
 - **Verdict**: [READY TO COMMIT | FIX BLOCKERS FIRST | REVIEW WARNINGS]
 ```
 
@@ -480,4 +507,4 @@ State the lens set and the ceiling **before** starting; record the cost after. L
 - **Decide the lens set up front.** Stopping a reviewer part-way spends its cost to that point and returns nothing. A lens not worth its cost should not be started.
 - **Never run a lens for a class a deterministic check covers *completely*.** Partial coverage is not coverage: where the tier table mandates a lens and a check covers only part of its class, the tier table wins — say which part the check already settled, and let the lens have the rest.
 - ⚠️ **Do not economise by collapsing lenses into the author's own context.** This is about *whose context* the reviewer holds, not how many run: one independent reviewer instead of four is a legitimate saving, and the magnitude gate prescribes exactly that for small diffs. Asking the questions inside the context that wrote the change is not — that reviewer holds the author's blind spots, the failure this skill exists to prevent. Measured twice: two lenses once returned **disjoint** findings; and on a four-lens round every lens found the top blocker while **two of them each found a blocker no other lens did**. Breadth buys the defects nobody predicted — not disjointness.
-- **Promote a recurring finding to a deterministic check instead of catching it again.** A check is written once and costs a fraction of a review per run; a finding that stays a finding is paid every round. Of the levers here it is the one that plausibly makes review cheaper *and* better, rather than trading one against the other.
+- **Promote rather than re-catch.** Step 3.1 triages each round's findings into checks; this is where the loop closes. **Read the Mechanized table in Step 1, before choosing lenses** — not here, which is read before Step 3.1 has ever run. ⚠️ A `live` row is not a reason to drop a lens the tier table mandates: it covers one *shape*, a lens covers a *class*, and the bullet above governs — partial coverage is not coverage. Use it to narrow a lens's scope, never to skip one.
