@@ -10,7 +10,7 @@ half is testable.
 
 ## What it seeds
 
-**Case counts, re-measured 2026-09-03** (`grep -oE '\bT[0-9]+[a-z]?\b' run.sh | sort -u | wc -l`, and the same for `N`): **27 T-cases** and **28 N-cases**; `grep -c '^ablate "' run.sh` gives **12 ablations**. #102 added T28, T29 and N32. The numbering is not contiguous and cannot be written as a range — there is no T6, T20, N4, N5 or N29–N31 — so quote the command, never a span. ⚠️ **T28 and T29 are needled on the PATH, not the reason**, which T21's rule normally forbids: the oracle prints `UNRESOLVED` both when the gate declines a reference and when the target is absent, so no reason string separates them, and a needle carrying the reason is keyed on column padding that moves with the path length. The discriminator is an existence check on the two target files instead. The enumeration below is the original eleven and is kept for the reasoning, not as a census; treat any number in prose here as dated unless it carries a command.
+**Case counts, re-measured 2026-09-12** (`grep -oE '\bT[0-9]+[a-z]?\b' run.sh | sort -u | wc -l`, and the same for `N`): **40 T-cases** and **37 N-cases**; `grep -c '^ablate "' run.sh` gives **12 ablations**; `grep -cE '^  "X[0-9]+ ' run.sh` gives **18 X rows**. ⚠️ **This line said 27 and 28 from 2026-09-03 until 2026-09-12, with the re-deriving command sitting beside the stale digits the whole time.** That is why the check proposed in `memory/gotcha-log.md` is *does the stated number equal what the command returns*, not *is a command present* — the weaker predicate passes this very file. #102 added T28, T29 and N32. The numbering is not contiguous and cannot be written as a range — there is no T6, T20, N4, N5 or N29–N31 — so quote the command, never a span. ⚠️ **T28 and T29 are needled on the PATH, not the reason**, which T21's rule normally forbids: the oracle prints `UNRESOLVED` both when the gate declines a reference and when the target is absent, so no reason string separates them, and a needle carrying the reason is keyed on column padding that moves with the path length. The discriminator is an existence check on the two target files instead. The enumeration below is the original eleven and is kept for the reasoning, not as a census; treat any number in prose here as dated unless it carries a command.
 
 The original eleven genuine breaks that must be reported:
 
@@ -32,7 +32,7 @@ negated existence assertion (N6), a struck path (N7) — and, the one that makes
 span-scoping load-bearing, N7's **live successor named on the same line**, which
 line-scoped skipping would have dropped.
 
-## The exit-status table (X1–X16, added for #93)
+## The exit-status table (X rows, added for #93 — count with `grep -cE '^  "X[0-9]+ ' run.sh`)
 
 Everything above asserts what the report **says**. Nothing asserted what the run
 **returns** — `run.sh` discarded the status with `|| true` at all three call

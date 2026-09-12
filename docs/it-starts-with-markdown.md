@@ -39,12 +39,27 @@ This is the single most practical insight in context engineering: auto-loaded fi
 
 ### Be surgical — or pay the cost
 
-The ETH Zurich study (Gloaguen et al., arXiv:2602.11988, February 2026) tested whether AGENTS.md files actually help across multiple coding agents and benchmarks. The findings are sobering:
+The ETH Zurich study (Gloaguen, Mündler, Müller, Raychev and Vechev, *"Evaluating AGENTS.md: Are Repository-Level Context Files Helpful for Coding Agents?"*, [arXiv:2602.11988](https://arxiv.org/abs/2602.11988)) tested whether context files actually help, across multiple agents and models. ⚠️ **Cite v2 (revised 23 June 2026), not v1** — the numbers changed, and the change is the interesting part. From the v2 abstract:
 
-- **LLM-generated context files reduced task success rates by an average of 3%.** Agents followed unnecessary instructions — running extra tests, performing quality checks that weren't needed — making tasks harder, not easier.
-- **Human-written files improved success by 4% on average** — but increased inference costs by over 19%, because agents spent more tokens processing the additional context.
+> "Surprisingly, we find that providing context files does not generally improve task success rates, while increasing inference cost by over 20% on average. This observation holds across different LLMs, coding agents, and for both LLM-generated and developer-committed context files."
 
-The lesson: more context is not better context. Only include what the agent cannot infer from the code itself. Hard constraints ("never modify migration files after staging"), non-obvious conventions ("the CMS strips slug fields from JSON on save — all loaders must derive slugs from filenames"), and task-triggered pointers to deeper docs. Everything else burns tokens and can actively mislead the agent.
+**The sharpest finding is in the v2 body, and it is about significance rather than size:**
+
+> "Developer-provided context files improve agent performance by 2.4% on average (p = 21%), significantly outperforming LLM-generated ones (p = 3.8%)."
+
+> "…leading to a significant (p-value < 0.001%) cost increase of 20% and 23% on average, respectively."
+
+Read those together: **the benefit is not statistically distinguishable from zero (p = 21%); the cost increase is about as solid as empirical results get (p < 0.001%).** So a hand-written context file is better than an LLM-generated one — that part is significant — but "better than nothing" is not established.
+
+⚠️ **Earlier versions of this page cited "3% worse / 4% better / 19% cost".** Those are real figures from the **v1** body (Feb 2026) and were correct when written; v2 supersedes them, and the +4% became +2.4% at p = 21%. If you have quoted the older numbers anywhere, they now overstate the case for context files.
+
+The one thing the paper positively recommends is also its bluntest line about what *not* to write:
+
+> "…while instructions in the context files are well followed by coding agents, repository overviews, although popular and recommended by model providers, are not helpful."
+
+> "We conclude that while context files are useful for specifying non-standard coding practices, any attempts to improve performance should be rigorously evaluated before deployment."
+
+The lesson: more context is not better context, and a repository overview is the specific thing measured not to help. Only include what the agent cannot infer from the code itself. Hard constraints ("never modify migration files after staging"), non-obvious conventions ("the CMS strips slug fields from JSON on save — all loaders must derive slugs from filenames"), and task-triggered pointers to deeper docs. Everything else burns tokens and can actively mislead the agent.
 
 ## Beyond one session: layered memory
 

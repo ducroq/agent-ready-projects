@@ -16,7 +16,7 @@
 **Registry entries:** S2-1 through S2-4
 **Dominant type:** CLAIM (research findings)
 **Confidence range:** ESTABLISHED (ETH Zurich data)
-**Language:** Report exact numbers, cite precisely. "Reduced success rates by 3%" not "reduced success rates."
+**Language:** Report exact numbers, cite precisely — **and pin the version.** ⚠️ This guide's own example used to be *"Reduced success rates by 3%"*; that figure is from **v1** of arXiv:2602.11988 and was superseded by **v2** on 2026-06-23, while this guide went on citing it as the model of precision. **An exact number with no version is precise and wrong.** Write "v2, 2.4% at p = 21%", not "2.4%".
 **Watch for:** Oversimplifying the ETH Zurich findings — the study is nuanced (LLM-generated vs human-written have different effects).
 
 ### Section 3: Beyond the Project File — Layered Memory
@@ -61,7 +61,7 @@
 
 | Entry | Current Language | Tier | Correct? |
 |-------|-----------------|------|----------|
-| S2-3 | "reduced success rates by 3%" | ESTABLISHED | Yes — direct report of peer-reviewed data |
+| S2-3 | "reduced success rates by 3%" | ~~ESTABLISHED~~ **SUPERSEDED** | ⚠️ **No, twice over.** The figure is v1 and v2 replaced it; and the paper is an **arXiv preprint, not peer-reviewed** — this repo's own verification log records exactly that at Step 3, so this row contradicted a sibling file from the day it was written |
 | S5-1 | "None solve multi-user-multi-agent coordination" | SUPPORTED | Check — should be "As of April 2026, no surveyed framework..." |
 | S5-2 | "No open-source system supports shared team memory" | SUPPORTED | Check — add "surveyed" qualifier |
 | S1-6 | "Markdown is how LLMs were trained to understand structure" | SUPPORTED | Check — oversimplification? LLMs were trained on many formats |

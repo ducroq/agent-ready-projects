@@ -46,7 +46,11 @@ The implication for documentation design:
 2. **Push detail below the cliff.** Operational procedures, historical context, architectural decisions — all belong in separate files. The project file points to them.
 3. **Use task-triggered pointers, not descriptive links.** The "Before You Start" table in your project file should map tasks to docs, not topics to docs.
 
-A project file that tries to contain everything becomes the thing the ETH Zurich study warned about: context that makes agents worse, not better (Gloaguen et al., arXiv:2602.11988). They found that LLM-generated context files *reduced* task success rates by 3% — agents followed unnecessary instructions and ran extra checks that made tasks harder.
+A project file that tries to contain everything becomes the thing the ETH Zurich study measured (Gloaguen et al., [arXiv:2602.11988](https://arxiv.org/abs/2602.11988), **v2, June 2026**). Its abstract is specific about which part fails, and it is the part a sprawling project file is made of:
+
+> "…while instructions in the context files are well followed by coding agents, repository overviews, although popular and recommended by model providers, are not helpful."
+
+Instructions land; **overviews do not**. And the cost is not in doubt even where the benefit is — v2 measures the success improvement at 2.4% with **p = 21%** (not significant) against a cost increase of 20–23% at **p < 0.001%**. ⚠️ v1 of that paper reported "3% worse / 4% better / 19% cost"; those figures are superseded.
 
 The fix isn't less documentation. It's documentation in the right place, loaded at the right time.
 

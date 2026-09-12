@@ -25,8 +25,8 @@
 
 | ID | Claim | Risk if Wrong |
 |----|-------|---------------|
-| S2-3 | ETH Zurich: LLM-generated context files reduced success by 3% | Core evidence for "be surgical" argument collapses |
-| S2-4 | ETH Zurich: human-written files improved success by 4%, cost +19% | Same — nuanced position depends on both numbers |
+| S2-3 | ETH Zurich: LLM-generated context files reduced success by 3% ⚠️ **v1 figure, superseded** | Core evidence for "be surgical" argument collapses |
+| S2-4 | ETH Zurich: human-written files improved success by 4%, cost +19% ⚠️ **v1 figure, superseded — v2 gives 2.4% at p = 21%, not significant** | Same — nuanced position depends on both numbers. ⚠️ **The "nuanced position" is weaker than when written**: only the cost half survives at significance |
 | S5-1 | All major multi-agent frameworks solve single-user only | Central gap claim — if any solves multi-user, argument weakens |
 | S5-2 | No open-source shared memory system supports team governance | Central gap claim |
 | S5-3 | OWASP Top 10 for Agentic Applications released December 2025 | Temporal claim anchoring landscape context |
@@ -83,10 +83,10 @@
 
 | ID | Statement | Type | Priority | Confidence | Source | Source Tier | Status |
 |----|-----------|------|----------|------------|--------|-------------|--------|
-| S2-1 | ETH Zurich study is Gloaguen et al., arXiv:2602.11988, February 2026 | CLAIM | P1 | ESTABLISHED | arXiv:2602.11988 | A | [ ] |
+| S2-1 | ETH Zurich study is Gloaguen et al., arXiv:2602.11988 — v1 Feb 2026, **v2 23 Jun 2026** | CLAIM | P1 | ESTABLISHED (re-checked 2026-09-12) | arXiv:2602.11988 | A | [x] |
 | S2-2 | Every agent tool has files it auto-loads and everything else is invisible until read | CLAIM | P2 | SUPPORTED | OWN WORK (28+ projects) | E | [ ] |
-| S2-3 | LLM-generated context files reduced success rates by 3% | CLAIM | P0 | ESTABLISHED | Gloaguen et al. 2026, arXiv:2602.11988 | A | [ ] |
-| S2-4 | Human-written files improved success by 4% but increased inference costs by 19% | CLAIM | P0 | ESTABLISHED | Gloaguen et al. 2026, arXiv:2602.11988 | A | [ ] |
+| S2-3 | ~~LLM-generated context files reduced success rates by 3%~~ **SUPERSEDED by v2**: LLM-generated significantly worse than developer-provided, p = 3.8% | CLAIM | P0 | **RE-VERIFIED 2026-09-12 vs primary (v1 AND v2)** | Gloaguen et al., arXiv:2602.11988 **v2** | A | [x] |
+| S2-4 | ~~Human-written files improved success by 4%, cost +19%~~ **SUPERSEDED by v2**: improvement **2.4%, p = 21% — NOT SIGNIFICANT**; cost +20–23% at p < 0.001% | CLAIM | P0 | **RE-VERIFIED 2026-09-12 vs primary** | Gloaguen et al., arXiv:2602.11988 **v2** | A | [x] |
 
 ### Section 3: Beyond the Project File — Layered Memory
 
@@ -171,7 +171,7 @@
 
 | Source | Claims | What to Check | Status |
 |--------|--------|---------------|--------|
-| Gloaguen et al. 2026, arXiv:2602.11988 | S2-1, S2-3, S2-4 | Paper exists, exact percentages (-3%, +4%, +19%), Feb 2026 date | [ ] |
+| Gloaguen et al., arXiv:2602.11988 **v1 Feb 2026 / v2 Jun 2026** | S2-1, S2-3, S2-4 | Paper exists ✅; percentages (-3%, +4%, +19%) confirmed in **v1 body** ✅ and **SUPERSEDED by v2** (2.4%, p = 21%) ⚠️; pin the version on reuse | [x] **verified vs primary 2026-09-12** |
 | OWASP Agentic Top 10 | S5-3 | Dec 2025 release date, URL resolves | [ ] |
 | Microsoft Agent Governance Toolkit | S5-4 | April 2026 release, GitHub repo exists | [ ] |
 | Visual Studio Magazine article | S1-3, S1-4 | Feb 24 2026 date, VS2026 markdown/Mermaid claims | [ ] |

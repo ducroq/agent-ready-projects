@@ -68,7 +68,7 @@ Every verifiable statement gets a row:
 
 | ID | Statement | Type | Priority | Confidence | Source | Status |
 |----|-----------|------|----------|------------|--------|--------|
-| S2-3 | LLM-generated context files reduced success rates by 3% | CLAIM | P0 | ESTABLISHED | Gloaguen et al. 2026, arXiv:2602.11988 | [x] |
+| S2-3 | ~~LLM-generated context files reduced success rates by 3%~~ ⚠️ **v1 figure, SUPERSEDED by v2 (2026-06-23)** | CLAIM | P0 | RE-VERIFIED vs primary 2026-09-12 | Gloaguen et al., arXiv:2602.11988 **v2** | [x] |
 | S5-1 | No surveyed multi-agent framework addresses multi-user coordination | ARGUMENT | P0 | SUPPORTED | Web research April 2026 | [x] |
 | S5-9 | The case-study project had 17 ADRs and 820 tests | CLAIM | P2 | ESTABLISHED | Repo inspection | [x] |
 
@@ -101,7 +101,7 @@ Eight sources, six steps each. Step 0 (quick web search + DOI resolution) catche
 | 7 | modelcontextprotocol.io | PASS | 6/6 | Verified (triggered article revision) |
 | 8 | Cooperative AI report | PASS | 6/6 | Verified |
 
-Source 1 (ETH Zurich) has a caveat: the specific percentages (-3%, +4%, +19%) are reported consistently across five secondary sources (MarkTechPost, InfoQ, i-scoop, ClawSouls, Medium) but ideally should be confirmed against the paper's results tables for exact context — which benchmark, which agent configuration, aggregate vs per-model. The article added "on average" and "across tested configurations" qualifiers to reflect this.
+🔴 **Source 1 (ETH Zurich) — the caveat was right, was not acted on, and the claim went stale.** The original text read: *the specific percentages (-3%, +4%, +19%) are reported consistently across five secondary sources (MarkTechPost, InfoQ, i-scoop, ClawSouls, Medium) but ideally should be confirmed against the paper's results tables for exact context — which benchmark, which agent configuration, aggregate vs per-model. The article added "on average" and "across tested configurations" qualifiers to reflect this.
 
 Source 7 (MCP spec) passed all six steps but triggered the imprecise claim correction (Error 2 above). The checklist doesn't just verify sources exist — Step 4 ("does the claim match the paper's scope?") catches cases where a real source is used to support a claim it doesn't actually make.
 
