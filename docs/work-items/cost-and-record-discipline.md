@@ -16,11 +16,16 @@ Goal: make the framework cheaper to run without cutting the review of the shippe
 - [x] Landscape doc re-verified and rewritten (2nd edition)
 - [x] ETH paper (arXiv:2602.11988) re-verified against **primary text of both versions**; v1 figures superseded by v2 across 7 files
 - [x] Review round recorded in `memory/review-ledger.tsv` (3 rows, 2026-09-12)
+- [x] **v1.41.0 committed, merged, tagged, pushed; globals refreshed and verified carrying the fixes**
+- [x] Version badges unstuck: `README.md` and `docs/GUIDE.md` were at **1.28.0**, thirteen releases stale; template stamps and `CLAUDE.md` bumped to v1.41.0
+- [x] `docs/GUIDE.md:506` self-contradiction fixed — it said install `review-changes` user-globally *and* "Never install it user-globally" in adjacent sentences. v1.40.0 residue: the "never" rationale (risk tiers name one tree) stopped being true when the tiers moved to the profile
+- [x] #127 closed naming the adopter-installed files; #126 given the measured round; H-027 and H-028 registered
+- [ ] **Estate cleanup (#169)** — 13 inert project-local `review-changes` copies, shadowed since v1.40.0. ⚠️ Check each for local modifications *before* deleting; keep every `.claude/review-profile.md`
 - [ ] **COMMIT v1.41.0** — 13/13 lint, 16/16 fixtures green. Then tag per `templates/release.md`, then refresh globals (`scripts/install-global-skills.sh`) since the guard requires a pushed+verified tag
 - [ ] **Step 1 — stale-number check.** See Decisions for the design turn; read it before building
 - [ ] **Step 2 — bring `CLAUDE.md` under its own cap.** 38,600 chars measured `wc -m`, soft flag 35,000. We are the main violator of our own Layer 1 rule
 - [ ] **Step 3 — make `memory/` navigable.** Add headings to the 5 opaque files; split `MEMORY.md` Current State
-- [ ] **Step 4 — rating-floor check.** A claim whose verification log records PARTIAL/NEEDS WORK may not be rated ESTABLISHED
+- [ ] **Step 4 — rating-floor check (#168).** A claim whose verification log records PARTIAL/NEEDS WORK may not be rated ESTABLISHED. Seed with the Gloaguen block as it stood before 2026-09-12 — a known true positive the current arrangement passed
 - [ ] **Step 5 — one narrow round, recorded.** The missing half of #126's comparison. Costs nothing extra: record what happens
 - [ ] **Decide: how big should the record be?** User's call, see Open Questions
 
