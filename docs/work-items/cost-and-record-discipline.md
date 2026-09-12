@@ -14,9 +14,15 @@ Goal: make the framework cheaper to run without cutting the review of the shippe
 
 **Last action**: swept v1.40.0 re-scoping residue; replaced lint rule 1's hardcoded never-exempt list with derivation from `.gitignore` negations (fixture T14 + ablation A13 seed the rot case a literal cannot pass).
 
-**Next action**: two engineer decisions are blocking, both recorded on their issues — **#171** (does v1.41.1 carry the template stamp fix, or does v1.42.0?) and **#172** (`--raise-budget` on `templates/project-file.md`, or leave adopters a row that fires a refusing skill). Neither is startable without a call.
+**Next action — DECIDED 2026-09-12, run in this order.** Nothing below is blocked on a call any more; reasons are on the issues.
 
-**Blocker on Step 2 below**: `CLAUDE.md` now has ~120 characters of headroom against the 40,000 hard cap, so #173's inventory fixes cannot land until the reclamation pass does. The cap is now the binding constraint on that file, not judgement about what belongs in it.
+1. **`CLAUDE.md` reclamation pass (Step 2 below).** First, because it gates step 3. Headroom is **126 characters** against the 40,000 hard cap (`{ wc -m CLAUDE.md; wc -m "$HOME/.claude/projects/<slug>/memory/MEMORY.md"; }`). Until this lands, correct fixes cannot be written down.
+2. **#172** — `--raise-budget` on `templates/project-file.md`, then add the profile requirement to the *Before committing* row. Decided rather than trimmed: the file has no reclaimable padding (measured), and the only ~60 spare bytes are #68's own fix. ⚠️ HIGH tier — full battery, and check #157 (`--update` erases the moved-bytes warning).
+3. **#173** — the `docs/GUIDE.md` row for `update-drift` (absent entirely), then the `CLAUDE.md` inventories once step 1 has made room.
+4. **#174** — the `⊘` marker: `refcheck.py` **and** `templates/audit-context.md` Step 4, or it is the #92 oracle-only trap. Seed a `⊘` case first; the class is at zero in the fixture.
+5. **Then cut v1.42.0**, which carries #171's stamp correction automatically. **No v1.41.1** — decided; see #171.
+
+⚠️ **#171's durable half is the check, not the release**: a lint rule asserting the stamp equals the highest reachable release tag (or is exactly one ahead, mid-release). Needs a seeded fixture — the live tree is clean for this class. Fix `memory/MEMORY.md`'s `STAMP AGREES` probe in the same change: it reads the working tree and was **green on the run that found the divergence** (H-023, fourth instance).
 
 - [x] #127 shipped — `review-changes` Step 3.1, Mechanized table, `curate` reads it, `curate`'s Promoted extractor bounded
 - [x] Landscape doc re-verified and rewritten (2nd edition)
