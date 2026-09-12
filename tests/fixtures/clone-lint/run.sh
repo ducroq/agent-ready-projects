@@ -14,7 +14,7 @@
 # Rule 1 was fixed by ADDING AN EXEMPTION, which makes the check more permissive,
 # and this repo's own constraint says a loosening ships with seeded true positives
 # or not at all: "a run that finds nothing cannot distinguish a fixed check from a
-# disabled one." T2, T3 and T7 are the failures the exemption must still catch.
+# disabled one." T2, T3, T7, T13 and T14 are the failures the exemption must still catch.
 #
 # The rules under test are EXTRACTED from tests/lint/run.sh, never copied, so this
 # fixture cannot drift from the thing it measures (the tests/fixtures/verify-runner
@@ -78,6 +78,28 @@ MD
 # rule must SKIP itself and say so, and the skip must be COUNTED: a first draft
 # printed the line without incrementing, so the summary under-reported.
 d=$(mkrepo N4); clone_shape "$d"; rm -rf "$d/.git"
+
+# T13 — a tracked, .gitignore-NEGATED file under .claude/ that is NOT under
+# skills/. Outside a git work tree the skip cannot ask git, so the never-exempt
+# arm has to name it literally or it takes the exemption that arm exists to deny.
+# Latent until CLAUDE.md began referencing `.claude/review-profile.md` (v1.40.0
+# split review-changes' tiers into it); before that the arm's only tracked
+# member was under skills/ and the gap could not be reached.
+d=$(mkrepo T13); clone_shape "$d"
+printf '/memory/\n.claude/*\n!.claude/skills/\n!.claude/review-profile.md\n' > "$d/.gitignore"
+echo 'Tiers: `.claude/review-profile.md`' >> "$d/CLAUDE.md"
+rm -rf "$d/.git"
+
+# T14 — a .gitignore negation the RULE HAS NEVER HEARD OF. Nothing in tests/lint
+# mentions `.claude/agents/`; the rule learns it is tracked by reading .gitignore.
+# This is the case a static allowlist fails by construction — run.sh's own header
+# says such a list "drifts silently the first time a path is added", and the first
+# draft of this fix WAS that list. If this case ever needs the rule edited to pass,
+# the derivation has been replaced by a literal again.
+d=$(mkrepo T14); clone_shape "$d"
+printf '/memory/\n.claude/*\n!.claude/skills/\n!.claude/agents/\n' > "$d/.gitignore"
+echo 'Agents: `.claude/agents/reviewer.md`' >> "$d/CLAUDE.md"
+rm -rf "$d/.git"
 
 d=$(mkrepo T1); clone_shape "$d"; echo 'Missing: `docs/nowhere.md`' >> "$d/CLAUDE.md"
 d=$(mkrepo T2); clone_shape "$d"; echo 'Install: `.claude/skills/curate/SKILL.md`' >> "$d/CLAUDE.md"
@@ -144,6 +166,8 @@ expect() { # $1 case, $2 output
   case "$c" in
     T1) grep -q 'docs/nowhere.md' <<<"$o" ;;
     T2) grep -q '.claude/skills/curate/SKILL.md' <<<"$o" ;;
+    T13) grep -q 'references `.claude/review-profile.md` but it does not exist' <<<"$o" ;;
+    T14) grep -q 'references `.claude/agents/reviewer.md` but it does not exist' <<<"$o" ;;
     T3) grep -q 'references `memory/MEMORY.md` but it does not exist' <<<"$o" ;;
     T7) grep -q 'docs/generated/out.md' <<<"$o" ;;
     T4) grep -q 'project_gone.md' <<<"$o" ;;
@@ -165,10 +189,12 @@ expect() { # $1 case, $2 output
         && grep -q 'not inside a git work tree' <<<"$o" ;;
   esac
 }
-CASES="T1 T2 T3 T7 T4 T5 T6 T8 T9 T10 T11 T12 N1 N2 N3 N4"
+CASES="T1 T2 T13 T14 T3 T7 T4 T5 T6 T8 T9 T10 T11 T12 N1 N2 N3 N4"
 declare -A WHY=(
   [T1]="an absent non-maintainer file is still a FAIL"
   [T2]=".claude/skills/ is tracked, so its files are never exempt"
+  [T13]="a tracked negated .claude/ file OUTSIDE skills/ is never exempt either, where git cannot be asked"
+  [T14]="a negation the rule never heard of is still never exempt — derived from .gitignore, not listed"
   [T3]="absent is not enough — the path must also be gitignored"
   [T7]="the exemption is allowlisted to memory/ and .claude/, not to anything git ignores"
   [T4]="rule 2 still catches a dangling index pointer where it can run"
@@ -216,7 +242,7 @@ ablate() { # $1 label, $2 sed program, $3... kill set
 # A1 — the .claude/ arm without its gitignore test. .claude/skills/ matches the
 # .claude/* prefix and is saved ONLY by check-ignore reading .gitignore's negation,
 # which is not visible in the rule's text.
-ablate A1 's|^      if git check-ignore -q "$path" 2>/dev/null; then|      if true; then|' T2
+ablate A1 's|^      if git check-ignore -q "$path" 2>/dev/null; then|      if true; then|' T2 T13 T14
 # A11 — the memory/ arm without its gitignore test, so absence alone exempts.
 ablate A11 's|if \[ ! -d memory \] && git check-ignore -q "$path" 2>/dev/null; then|if [ ! -d memory ]; then|' T3
 # A2 — exempt anything gitignored and absent, dropping the maintainer-dir allowlist.
@@ -224,7 +250,7 @@ ablate A11 's|if \[ ! -d memory \] && git check-ignore -q "$path" 2>/dev/null; t
 # .claude/ arm becomes unreachable, so a populated checkout starts failing on the
 # gitignored .claude/settings.json it is supposed to excuse. The two arms are not
 # independent, which is only visible from the kill set.
-ablate A2 's|^    memory/\*)|    *)|' N2 T7
+ablate A2 's|^    memory/\*)|    *)|' N2 T7 T13 T14
 # A3 — skip WITHOUT counting it: the run then prints no SKIPPED summary, so a
 # rule that checked nothing reads as a rule that passed.
 # ⚠️ The substitution is unanchored and therefore hits EVERY skip counter, not
@@ -265,6 +291,10 @@ ablate A8 '/^if \[ ! -f CLAUDE.md \]; then$/,/^fi$/d' T9 T10
 # A9 — drop rule 2's zero-coverage gate. T8 survives it: a prefixed pointer is
 # extracted now, so it fails on the dangling file, not on the coverage.
 ablate A9 '/^  if \[ "$r2_refs" -eq 0 \] && \[ "$r2_files" -gt 0 \]; then$/,/^  fi$/d' T11
+# A13 — disable the derivation. Both .claude/ cases must die: T13 (a negation
+# the rule once hardcoded) and T14 (one it never knew). If this ever kills only
+# T13, the literal has come back.
+ablate A13 's#^negated() {#negated() { return 1;#' T13 T14
 
 echo
 [ "$FAIL" -eq 0 ] && echo "All seeded cases behaved correctly." || echo "SENSITIVITY REGRESSION — do not ship."

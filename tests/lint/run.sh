@@ -15,7 +15,8 @@ echo "[1/13] CLAUDE.md path references resolve on disk"
 # CONTENTS are absent from every fresh clone — CI's included. A file reference under
 # one of them is exempt only when it is BOTH absent AND still gitignored: a tracked
 # file that was deleted still FAILs, a file under any other path still FAILs, and
-# `.claude/skills/` is negated in .gitignore so its files are never exempt.
+# a path negated in .gitignore is tracked, so it is never exempt — the never-exempt
+# set is DERIVED from those negations, not listed here.
 # The exemption is COUNTED AND REPORTED, never silent — an exempted reference is a
 # reference nobody checked, and this rule reported four FAILs on every fresh clone
 # before the exemption existed, which is part of why it was never in CI (#115).
@@ -48,6 +49,25 @@ if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
 else
   R1_SKIPPED=0
 fi
+# A `!` line in .gitignore un-ignores a path, so anything matching one is TRACKED
+# and present in every export — it must never take the maintainer-local exemption.
+# DERIVED, not listed: the trade stated above says a static allowlist "drifts
+# silently the first time a path is added", and this arm is the place that would
+# happen. It did: `.claude/review-profile.md` was added to .gitignore in v1.40.0
+# and a hardcoded list did not learn about it. .gitignore is an ordinary file and
+# is readable outside a work tree, which is the only environment this branch is
+# for, so nothing here has to ask git.
+negated() {
+  [ -f .gitignore ] || return 1
+  local n neg
+  neg=$(grep -E '^!' .gitignore 2>/dev/null | sed 's#^!##; s#/$##')
+  [ -n "$neg" ] || return 1
+  while IFS= read -r n; do
+    [ -n "$n" ] || continue
+    case "$1" in "$n"|"$n"/*) return 0 ;; esac
+  done <<< "$neg"
+  return 1
+}
 r1_checked=0; r1_exempt=0; r1_dirs=0; r1_dir_exempt=0
 while IFS= read -r path; do
   r1_checked=$((r1_checked + 1))
@@ -68,22 +88,21 @@ while IFS= read -r path; do
     # .claude/ cannot use that test: the directory exists in every clone, because
     # .claude/skills/ is tracked. So it stays per-file, and the residual gap is
     # DECLARED rather than hidden — a stale pointer to a renamed .claude/ file is
-    # not caught. There are none today (all four exemptions in CI are memory/), and
-    # .claude/skills/ is negated in .gitignore, so its files are never exempt.
+    # not caught. Every path .gitignore NEGATES is exempt from the exemption —
+    # derived below, so adding a negation does not require editing this rule.
     .claude/*)
       # ⚠️ The skip splits this arm in two, and BOTH halves were got wrong once.
-      # `.claude/skills/` is NEGATED in .gitignore, so it is tracked and PRESENT
-      # in a tarball — a dangling pointer under it is a real break whether or not
-      # git can be asked, and exempting it under the skip silently excused the
-      # one class the negation exists to keep checked. Everything else under
-      # `.claude/` IS gitignored and legitimately absent, so refusing to exempt
-      # it re-created #125's original symptom for a different path: a false FAIL
-      # on `.claude/settings.json`, which is exactly what the skip is for. The
+      # A path NEGATED in .gitignore is tracked and PRESENT in a tarball — a
+      # dangling pointer to it is a real break whether or not git can be asked,
+      # and exempting it under the skip silently excused the one class the
+      # negation exists to keep checked. Everything else under `.claude/` IS
+      # gitignored and legitimately absent, so refusing to exempt it re-created
+      # #125's original symptom for a different path: a false FAIL on
+      # `.claude/settings.json`, which is exactly what the skip is for. The
       # clone-lint fixture caught that second error in CI, not locally.
-      case "$path" in
-        .claude/skills/*) : ;;                      # never exempt: tracked
-        *) if [ "$R1_SKIPPED" -eq 1 ]; then r1_exempt=$((r1_exempt + 1)); continue; fi ;;
-      esac
+      if ! negated "$path" && [ "$R1_SKIPPED" -eq 1 ]; then
+        r1_exempt=$((r1_exempt + 1)); continue
+      fi
       if git check-ignore -q "$path" 2>/dev/null; then
         r1_exempt=$((r1_exempt + 1)); continue
       fi ;;

@@ -20,10 +20,10 @@ Goal: make the framework cheaper to run without cutting the review of the shippe
 - [x] Version badges unstuck: `README.md` and `docs/GUIDE.md` were at **1.28.0**, thirteen releases stale; template stamps and `CLAUDE.md` bumped to v1.41.0
 - [x] `docs/GUIDE.md:506` self-contradiction fixed — it said install `review-changes` user-globally *and* "Never install it user-globally" in adjacent sentences. v1.40.0 residue: the "never" rationale (risk tiers name one tree) stopped being true when the tiers moved to the profile
 - [x] #127 closed naming the adopter-installed files; #126 given the measured round; H-027 and H-028 registered
-- [ ] **Estate cleanup (#169)** — 13 inert project-local `review-changes` copies, shadowed since v1.40.0. ⚠️ Check each for local modifications *before* deleting; keep every `.claude/review-profile.md`
+- [ ] **Estate cleanup (#169)** — inert project-local `review-changes` copies, shadowed since v1.40.0. The count is a COMMAND, not a digit — it moved 13→12 mid-session on 2026-09-12 while remediation ran in a sibling repo: `bash scripts/install-global-skills.sh --check ~/repos | grep -c 'inert local copy'` — the bare `--check` tail counts ALL issues, not just these. ⚠️ Check each for local modifications *before* deleting; keep every `.claude/review-profile.md`
 - [ ] **COMMIT v1.41.0** — 13/13 lint, 16/16 fixtures green. Then tag per `templates/release.md`, then refresh globals (`scripts/install-global-skills.sh`) since the guard requires a pushed+verified tag
 - [ ] **Step 1 — stale-number check.** See Decisions for the design turn; read it before building
-- [ ] **Step 2 — bring `CLAUDE.md` under its own cap.** 38,600 chars measured `wc -m`, soft flag 35,000. We are the main violator of our own Layer 1 rule
+- [ ] **Step 2 — bring `CLAUDE.md` under its own cap.** Soft flag 35,000; measure with `wc -m CLAUDE.md` (a digit here goes stale on the next edit to that file — it did, same day). We are the main violator of our own Layer 1 rule
 - [ ] **Step 3 — make `memory/` navigable.** Add headings to the 5 opaque files; split `MEMORY.md` Current State
 - [ ] **Step 4 — rating-floor check (#168).** A claim whose verification log records PARTIAL/NEEDS WORK may not be rated ESTABLISHED. Seed with the Gloaguen block as it stood before 2026-09-12 — a known true positive the current arrangement passed
 - [ ] **Step 5 — one narrow round, recorded.** The missing half of #126's comparison. Costs nothing extra: record what happens
@@ -36,7 +36,7 @@ Goal: make the framework cheaper to run without cutting the review of the shippe
 | Review round, 3 lenses | **359,568 tok / 45 findings / 5 blockers** | `memory/review-ledger.tsv`, rows dated 2026-09-12 |
 | Per-round range, real work | **121k–485k tok**; max 485,021 (4 lenses) | ledger, re-derived 2026-09-12 |
 | ⚠️ The quoted **557,442** | **NOT ours** — an adopter's round, from a comment on #126 | `grep -c 557442 memory/review-ledger.tsv` → 0 |
-| `CLAUDE.md` | 38,600 chars | `wc -m CLAUDE.md` |
+| `CLAUDE.md` | run the command | `wc -m CLAUDE.md` |
 | `memory/MEMORY.md` | 68,351 chars, **5 headings**; Current State = 245 lines / 58,680 chars = **86% of the file** | `grep -c '^#\{1,4\} '` |
 | memory corpus | ~477 KB / 160 headings | `wc -m memory/*.md` |
 | templates surface | 241,145 b budget after the 11th raise | `bash tests/lint/size-ratchet.sh .` |
