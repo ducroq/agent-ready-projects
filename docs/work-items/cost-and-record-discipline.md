@@ -149,7 +149,26 @@ Every one of these was a number that no longer matched the thing it counted, and
 
   🔴 **THE INSTRUMENT-VS-APPLICATION HYPOTHESIS IS REFUTED — measured 2026-09-13, same day it was registered, by the reporter's proposed command.** It predicted this log would be identifier-**rich**. Measured: `grep -E '^### ' memory/gotcha-log.md | grep -c '\`'` → **8 of 97 = 8%**, against the adopter's **27 of 96 = 28%**. Ours is **three and a half times poorer** in named constructs — the opposite of the prediction, at the magnitude that decides it. Registered and killed inside one session; the entry is kept because *it was cheap to refute and was asserted before anyone spent the one command*.
 
-  ⭐ **What replaces it is the reporter's, and it is better: TENSE, not domain.** Rule 1 fired only **2 of 12** here (17%), *below* their 28% ceiling — four of our six mechanisms came through **rule 2**, the *X causes Y* / *X is indistinguishable from Y* form. So this log does not score by naming things; it scores by writing **timeless propositions**. Measured: only **24 of 97 (25%)** of our headings carry a past-tense verb, so three quarters are propositions. Theirs are past-tense first-person incident reports throughout.
+  ⭐ **What replaces it is the reporter's, and it is better: TENSE, not domain.** Rule 1 fired only **2 of 12** here (17%), *below* their 28% ceiling — four of our six mechanisms came through **rule 2**, the *X causes Y* / *X is indistinguishable from Y* form. So this log does not score by naming things; it scores by writing **timeless propositions**. ⚠️ **BOTH SIDES OF THIS COMPARISON WERE FIRST STATED WRONG, AND THE INSTRUMENT MISMATCH WAS MINE.**
+
+  - **My 75% was a verb-list proxy** (`grep -cE '\b(was|were|went|shipped|…)\b'` → 24 of 97 carry a past-tense verb). The reporter's 39% is **hand classification**. Comparing the two was the mismatched-instrument error this repo has a Hard Constraint about, and I made it while quoting their number.
+  - **Their "throughout" was an assertion, not a measurement** — self-corrected when measured: **37 proposition / 58 incident / 1 unclassifiable = 39%**.
+
+  **Hand-classified all 97 of ours under their definition** (proposition = timeless claim; incident = narrated occasion): **53 proposition / 44 incident = 55%**, with **~23 borderline (24%)**.
+
+  | | proposition | instrument |
+  |---|---|---|
+  | here | **55%** | hand, all 97 |
+  | adopter | **39%** | hand, all 96 |
+  | ~~here~~ | ~~75%~~ | ~~verb-list proxy — withdrawn~~ |
+
+  **The direction survives and the magnitude does not: 16 points, not the 36 the proxy implied.** My proxy overstated our proposition rate by 20 points and I fed it into the shared record before anyone hand-counted. The tense mechanism is still the live explanation; it is a weaker effect than either of us published.
+
+  ⭐ **INDEPENDENT SUPPORT NOBODY DESIGNED, from the adopter's file split:** archive (pre-2026-09, 52 entries) **46%** proposition; live log (2026-09 on, 44 entries) **30%**. **Their log became more incident-shaped as sessions got busier** — exactly what a mechanism costing *a second act of thought at write time* predicts. Neither repo chose that trend; it fell out of splitting by date.
+
+  ⚠️ **Consequence for the convention, and it is the reporter's:** a rule asking for a proposition asks for the thing that is dropped first under load. So *"ask for a proposition, not a name"* settles **what** to ask for and says nothing about **when**. A convention applied at write time will decay; applied at **curate** time — when someone is already rereading headings with the body in front of them — it might not. Explicitly a guess.
+
+  ⚠️ **THE "ONE-THIRD INSTABILITY" IS NOT SUPPORTED BY THREE MEASUREMENTS, AND ONE OF THEM CONTRADICTS IT.** Rubric close calls here 4 of 12 (33%); this hand classification ~23 of 97 (24%); the reporter's hand classification **8 of 96 (8%)**, which they reported as *"the same one-third instability"* — it is not, by their own numbers. Three classifiers give 33%, 24%, 8%. **The instability is real and its magnitude is unmeasured.** Do not publish a fraction.
 
   **Consequence, and it is the actionable one:** the convention is expensive for adopters not because their subject matter lacks names, but because **a log written at the moment of the incident comes out in the past tense, and turning an incident into a proposition is a second act of thought the writer does not feel they have time for.** So #180's convention should ask for a **PROPOSITION, not a NAME**. That is a claim about writing rather than about domain, and it is testable on any log.
 
