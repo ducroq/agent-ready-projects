@@ -66,10 +66,12 @@ Goal: make the framework cheaper to run without cutting the review of the shippe
 
 | | this repo | adopter (#178) |
 |---|---|---|
-| entries | 97 | 89 |
-| heading carries `[RESOLVED` | **0** | 52 (58%) |
+| entries | 97 | **88** |
+| heading carries `[RESOLVED` | **0** | 52 (**59.1%**) |
 | size | 126,144 chars | 178,616 |
 | dated before the current month | 72 | 55 |
+
+⚠️ **The denominator is 88, not the 89 #178 reports** — corrected at source 2026-09-13 by the reporter, who reconciled two ways (`grep -cE '^### '` = 88 and `grep -c '^\*\*Problem\*\*'` = 88; 90 headings less 2 section headings). So 59.1%, not 58%. **There is no split script**: the split was done inline and never committed, and the reporter declined to reconstruct one — *a reconstruction would be a different instrument wearing the name of the one that produced the number*. What exists is the predicate, re-derived and exact against the archive: over `^### ` headings, take the `(YYYY-MM-DD)`, move if the date precedes the cutoff **and** the heading matches neither `\[OPEN` nor `\[PARKED` → moves 52, keeps 36.
 
 Commands: `grep -c '^### ' memory/gotcha-log.md`, `grep -cE '^### .*\[RESOLVED'`, `wc -m`. **A positive would be a heading of the form `### … (2026-08-12) [RESOLVED]`**, which is what `templates/gotcha-log.md:11` prescribes. The convention actually in use here is `[PROMOTED]` (2 headings) and `[xN — date]` (12); status is written into `**Fix**` bodies instead — the exact placement the template calls invisible to curation. `memory/gotcha-log.md:233` carries "✅ RESOLVED 2026-08-25" in a body.
 
@@ -126,6 +128,18 @@ Every one of these was a number that no longer matched the thing it counted, and
 
 ## Decisions
 
+- ⭐ **[2026-09-13] #180 heading-classification rubric — PUBLISHED BEFORE THE POPULATION WAS READ.** Written blind, on purpose: the reporter's own "3 of 4" cannot be reproduced (they re-classify their four as 2 of 4), and the disagreement is a judgement call with no recorded rubric. Sent to them for **blind classification of their four** against this text, so the result is two independent classifications of one population rather than one instrument run twice.
+
+  A heading **NAMES A MECHANISM** if it identifies the causal element — the construct, rule or property that produced the behaviour — well enough that a reader could recognise a recurrence *from the heading alone, without opening the body*. Apply in order, stop at the first that decides:
+
+  1. Does the heading contain a **named artefact** — a code construct, flag, function, file type, tool or API — and is that artefact **the thing that malfunctioned**, not merely where it was observed? → MECHANISM.
+  2. Does the heading state a **general rule** of the form *X causes Y* or *X is indistinguishable from Y*, where X is a **property** rather than an event? → MECHANISM.
+  3. Otherwise it describes what was observed — a wrong output, a count, a failure, a surprise — without saying what produced it. → SYMPTOM.
+
+  ⚠️ **Tie-breaker: disagreement resolves to SYMPTOM.** The claim under test is that the heading is matchable by a header-only read; a heading needing argument to be called a mechanism will not be matched under time pressure. This makes the instrument conservative, which biases *against* #180's thesis — deliberately, since this repo would be adopting it.
+
+  ⚠️ **The rubric is itself unmeasured.** It has an inter-rater agreement of exactly zero observations right now. The blind cross-classification is what gives it one, and if the two of us disagree on more than one heading of eight, the rubric is the finding and #180's number is not recoverable at this n.
+
 - ⭐ **[2026-09-13] Retirement destination: an archive file beside each source.** `gotcha-log-archive.md` next to the log, `hypothesis-log-archive.md` next to the hypothesis log. Maintainer's call. Rationale: two local precedents already do this — `memory/project_hypotheses_closed.md` (2026-09-06) and the adopter's own split (#178) — so it ships as a *described* pattern, not a new invention. Rejected: one `memory/archive/` for every layer (no precedent, a new pattern to get right) and delete-and-rely-on-git (loses grep, and the log's whole value is being greppable when stuck). Selection is **dated before the cutoff AND `[RESOLVED` prefix**; never `[OPEN]`/`[PARKED]`; tables stay in the live file; **the split moves, it does not summarise**, verified by #178's check with a seeded control.
 - 🔴 **[2026-09-13] Consequence: this repo cannot run that split yet.** The predicate selects on `[RESOLVED`, and **this log has 97 entries and zero of them carry it** (`grep -cE '^### .*\[RESOLVED' memory/gotcha-log.md` → 0). So archiving here is blocked behind a marking pass that has never happened — which is the same pass #180 wants (headings rewritten to name the mechanism). **Do both in one read of the log, not two.** ⚠️ And do not ship the pattern to `templates/` on a dry run: applied to our own log today it would move **zero entries**, which is indistinguishable from a broken selector. Mark first, then measure the split, then ship.
 - **[2026-09-13] `Retire` currently means two different things and the guide contradicts itself in adjacent lines** (`docs/GUIDE.md:378` "moves them out" / :379 "don't delete"). Fixing the word is part of this change, not a separate one: deletion for topic-file and memory-index entries, **move to the archive** for the gotcha and hypothesis logs.
@@ -142,7 +156,7 @@ Every one of these was a number that no longer matched the thing it counted, and
 - **How big should the record be?** 477 KB memory + ledger + hypothesis log + claim registry + verification log + 11 raise notes. Each was justified; together they are what review now spends most of its money on. Keep-and-mechanize, or prune hard. **This is the maintainer's call, not the agent's.**
 - ~~What is the retirement destination?~~ **ANSWERED 2026-09-13** — archive file beside each source; see Decisions.
 - **Does Cluster B (#178/#179/#180) ride in v1.42.0 or follow it?** It is the same surface as the step-1 reclamation pass, so doing them separately means two full batteries on `templates/curate.md`. Doing them together makes v1.42.0 a much larger MINOR.
-- **Before adopting #180's heading convention, run the experiment it names.** It costs little and it is the only thing that would settle the claim: rewrite the headings of this repo's three re-implementations of the same bug to name the mechanism, then check whether a header-only read surfaces the match. #180 says explicitly it could not run this from outside.
+- 🔴 **#180's "3 of 4" DOES NOT REPRODUCE, and the experiment needs a published rubric before it is run.** Established 2026-09-13 with the reporter. Two independent problems. **(1) No record**: the population, the intervention and the claim landed in one commit — a fourth recurrence marker was added, two of the four headings were rewritten to name mechanisms, and the "3 of 4" sentence was written, all together. So the claim describes pre-rewrite text and is false against its own file afterwards; it is an internal-consistency argument, not a measurement. **(2) The reporter re-classified their own four pre-rewrite headings and got 2 of 4, not 3.** The swing entry is a judgement call — whether *"writing about a path makes a reference to it"* names a mechanism or states the observation. **That disagreement IS the finding**: n=4 with a subjective classifier and no recorded rubric is much softer than "3 of 4" sounds. ⚠️ **Publish the rubric before classifying anything**, or the two repos produce two instruments and no way to compose them. The reporter has offered to classify their four **blind** against our rubric, which turns one instrument run twice into two independent classifications of one population — take that offer.
 - **Should `docs/archive/LANDSCAPE.md` carry a supersession marker?** Left untouched 2026-09-12 — archived under the 2026-04-14 pivot, and rewriting archived material may be worse than leaving it.
 - **Is "ask two or three claims per release" worth formalising?** On 2026-09-12 the maintainer caught two errors three lenses missed, by asking *"is that true?"* of one sentence. The lenses verified citations **resolved**; the question was whether they **said what was claimed**. Different question, much cheaper, better hit rate. Unclear whether it survives being turned into a step.
 
