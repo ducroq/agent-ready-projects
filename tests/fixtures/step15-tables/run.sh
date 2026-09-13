@@ -19,7 +19,6 @@
 # READ BEFORE LOOSENING BOLD-NESTING: the emphasis rule took three drafts, each
 # refuted over THIS REPO (28 hits, then 15, then 1) — and every draft passed
 # this fixture. The corpus was the stronger instrument (#50, #52, #103, #144).
-set -u# Exit: 0 all seeded cases behaved, 1 a regression.
 set -u
 cd "$(dirname "$0")/../../.." || exit 2
 TPL="templates/review-changes.md"

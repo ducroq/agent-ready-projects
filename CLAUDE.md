@@ -4,7 +4,7 @@ The source framework that teaches the layered memory method for AI coding agents
 
 - **Type**: Public methodology repo (guide + templates + skills)
 - **License**: MIT
-- **agent-ready-projects** (this repo): **v1.41.0 is the highest release (2026-09-12), tagged and pushed.** Proposed next bump **MINOR**. Session narrative lives in `memory/MEMORY.md` Current State; per-release detail in `CHANGELOG.md`. **The eight measured lessons this repo keeps re-deriving — the through-line — are the first block of `memory/MEMORY.md` Current State**, which the Before You Start table already routes you to on pickup. They were inlined here until 2026-09-06. List-ifying it reclaimed 771 characters and the **set was still 41,048 against a 40,000 hard cap**, so it moved out entirely. ⚠️ **No current size is recorded here** — a size claim about this file goes stale on the next edit *to this file* (bullet 7 of the list being relocated). Measure, in characters — `wc -c` is bytes and reads ~2% high: `{ wc -m CLAUDE.md; wc -m "$HOME/.claude/projects/<slug>/memory/MEMORY.md"; }`. **Two budgets:** `templates/audit-context.md` flags *this file* over 35,000 (soft) / 40,000 (hard); the cap that bit here is 40,000 on the **auto-loaded set**, which this file alone was under the whole time. ✅ **Back under the 35,000 soft flag 2026-09-13** by deleting, not compressing: the `tests/` block restated each fixture's rationale, and the rationale already lives in the fixture's own `README.md` or the comment header of its runner, where whoever is about to loosen a check is already looking. The duplicate had rotted — the copy of `reference-integrity`'s T/N commands kept here returned 38/35 against a true 40/37. **Do not re-inline reference material to make it handy; that is how this file got here.**
+- **agent-ready-projects** (this repo): **v1.41.0 is the highest release (2026-09-12), tagged and pushed.** Proposed next bump **MINOR**. Session narrative lives in `memory/MEMORY.md` Current State; per-release detail in `CHANGELOG.md`. **The eight measured lessons this repo keeps re-deriving — the through-line — are the first block of `memory/MEMORY.md` Current State**, which the Before You Start table already routes you to on pickup. They were inlined here until 2026-09-06. List-ifying it reclaimed 771 characters and the **set was still 41,048 against a 40,000 hard cap**, so it moved out entirely. ⚠️ **No current size is recorded here** — a size claim about this file goes stale on the next edit *to this file* (bullet 7 of the list being relocated). Measure, in characters — `wc -c` is bytes and reads ~2% high: `{ wc -m CLAUDE.md; wc -m "$HOME/.claude/projects/<slug>/memory/MEMORY.md"; }`. **Two budgets:** `templates/audit-context.md` flags *this file* over 35,000 (soft) / 40,000 (hard); the cap that bit here is 40,000 on the **auto-loaded set**, which this file alone was under the whole time. ⚠️ **Reclaimed 2026-09-13 — and it did NOT clear the soft flag.** No digit: the first draft of this sentence recorded one and it went stale the same session, which is what the sentence two clauses up predicts. `templates/audit-context.md` Step 1 owns the 35,000 threshold and budgets in **bytes** deliberately, so `/audit-context` still flags this file even at the character count `wc -m` reports. Two instruments for one number — this bullet says `wc -m`, Step 1 says `wc -c` — and that is not settled here. The method was deleting, not compressing: the `tests/` block restated each fixture's rationale, and the rationale already lives in the fixture's own `README.md` or the comment header of its runner, where whoever is about to loosen a check is already looking. The duplicate had rotted — the copy of `reference-integrity`'s T/N commands kept here returned 38/35 against a true 40/37. **Do not re-inline reference material to make it handy; that is how this file got here.**
 
 > Live project state (current threads, deferred items, surfaced patterns) lives in `memory/MEMORY.md` (maintainer-local — see *What is intentionally not shipped* below). Release notes live in `CHANGELOG.md`.
 
@@ -79,6 +79,9 @@ agent-ready-projects/
 │   ├── curate.md              <- End-of-session curation skill
 │   ├── audit-context.md       <- Periodic structural audit skill
 │   ├── review-changes.md      <- Diff-driven pre-commit review skill (v1.12.0)
+│   ├── review-profile.md     <- The per-repo half of review-changes (v1.40.0): risk tiers
+│   │                             and guarantee surfaces. Installed at .claude/review-profile.md
+│   │                             — the SAME path for every tool, per templates/README.md
 │   ├── release.md             <- Release skill: bump classification + preconditions, stops before publishing
 │   ├── update-drift.md        <- Drift skill: triage the releases a project is behind; user-global
 │   ├── adr.md                 <- Architecture Decision Record template
@@ -98,13 +101,17 @@ agent-ready-projects/
 │                                 workflow exists to remove. Green means the deterministic checks
 │                                 passed; it does NOT mean reviewed
 ├── tests/                     <- Self-tests for this repo (Phase A: structural lint)
-│                                 ⚠️ EVERY rationale below lives in the file itself — a fixture's
-│                                 README.md, or the comment header of its run.sh. READ IT BEFORE
-│                                 LOOSENING ANYTHING: which predicates were REJECTED and why, which
-│                                 rows are constructed vs. have actually bitten, and the counts,
-│                                 which are COMMANDS and not digits (#93). Nothing is restated
-│                                 here — a duplicate rots, and the copy of reference-integrity's
-│                                 T/N commands that stood here returned 38/35 against a true 40/37
+│                                 ⚠️ Rationale lives in the file itself — a fixture's README.md, or
+│                                 its runner's comment header. READ IT BEFORE LOOSENING ANYTHING:
+│                                 rejected predicates, constructed-vs-bitten rows, and the
+│                                 read-before-loosening warnings. Per-fixture case DIGITS were
+│                                 DROPPED here rather than moved, deliberately — a digit rots, and
+│                                 most fixtures carry no census count at all; three now carry the
+│                                 re-deriving command instead (#93). ⚠️ Key Paths below still
+│                                 restates five of these entries — known duplication, not denied.
+│                                 The copy of reference-integrity's T/N commands that stood here
+│                                 returned 38/35 against a true 40/37 — a duplicated command that
+│                                 rotted, which is the whole argument for not keeping one
 │   ├── lint/                  <- Deterministic structural checks (no LLM); catalog in lint/README.md
 │   │   ├── skill-sync.sh      <- Rule 6:  templates/<name>.md vs .claude/skills/<name>/SKILL.md
 │   │   ├── provision-quote.sh <- Rule 7:  provisioning a canonical row without quoting it (#42)
@@ -123,8 +130,8 @@ agent-ready-projects/
 │       ├── provisioning-quote/   <- lint rule 7
 │       ├── size-ratchet/         <- lint rule 8, plus the #131 spill rows
 │       ├── dollar-digit/         <- lint rule 9
+│       ├── vacuous-guard/        <- lint rule 10
 │       ├── block-parses/         <- lint rule 11
-│       ├── vacuous-guard/       <- lint rule 10
 │       ├── private-names/        <- lint rule 12; its own name list is synthetic
 │       ├── maintainer-path/      <- lint rule 13; the class is at ZERO in the real tree
 │       ├── clone-lint/           <- lint rules 1-2 in the environments this repo is NOT developed in
@@ -169,7 +176,7 @@ Listed here so the architecture diagram above is honest about what an adopter se
 | `scripts/install-global-skills.sh` | Installs the user-global skills from tracked `.claude/skills/`, verifies they match, and with a root argument scans an estate for inert project-local copies. Refuses to install when the bytes it would copy are not what the highest release tag reachable from HEAD holds; fixture at `tests/fixtures/installer-release-guard/` |
 | `.claude/skills/` | Reference installs (tracked) — the frontmatter-correct source a global install is derived from |
 | `.github/workflows/checks.yml` | CI: `tests/lint/run.sh` + `tests/run-fixtures.sh`, every push and PR (#115). Its own header carries what it does *not* check |
-| `tests/run-fixtures.sh` | Runs every suite under `tests/fixtures/`, enumerated not listed. Refuses three silences: an empty population exits 2, an undeclared fixture dir with no runner FAILS, and one red suite never stops the other thirteen |
+| `tests/run-fixtures.sh` | Runs every suite under `tests/fixtures/`, enumerated not listed. Refuses three silences: an empty population exits 2, an undeclared fixture dir with no runner FAILS, and one red suite never stops the rest (a digit here rots the next time a suite is added — it said thirteen against fourteen) |
 | `tests/fixtures/clone-lint/` | Sensitivity of lint rules 1–2 **in the environments this repo is not developed in** — a checkout with no `memory/`, and (v1.37.0, N4) a tree that is **not a git work tree** at all, where `check-ignore` fails for a reason unrelated to the path. N4 asserts the skip line **and its count**, because a first draft printed one without the other. It also caught the over-correction: refusing to exempt all of `.claude/` re-created the original false FAIL for `.claude/settings.json`. Rule 1's fresh-clone exemption is a loosening, so T2/T3/T7 are the failures it must still catch; the rules are extracted from `tests/lint/run.sh`, not copied |
 | `tests/lint/size-ratchet.sh` | Lint rule 8 — a ratchet on adopter-facing template sizes; baseline in `size-baseline.tsv`, fixture at `tests/fixtures/size-ratchet/`. **Measures the smaller of the two costs**: a skill body is paid once per invocation and is prompt-cached, while the *read surface* a run consumes is fresh tokens every time and is 4–25× larger. See #46 |
 | `tests/lint/dollar-digit.sh` | Lint rule 9 — a bare `$0`–`$9` in a skill body. Skill *arguments* are substituted into the skill *body*, so a bare `$0` in an embedded awk program ships as the first argument word (#77). The one class no runtime check here can reach: rule 6 compares two files carrying the same `$0`, and every fixture runs the extracted program with substitution nowhere on the path. **The safe form is context-dependent** — `$(N)` in awk, `${N}` in shell, `\$N` in prose; `${0}` and `\$0` are awk syntax errors and shell `$(1)` fails silently at rc 0, all five measured by the fixture's T-cases. Fixture at `tests/fixtures/dollar-digit/` |

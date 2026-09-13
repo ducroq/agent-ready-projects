@@ -28,8 +28,9 @@ framework: agent-ready-projects v1.41.0   # a NUMBER, not a status — never wri
 
      The template paths below carry a `placeholder` marker because they live in
      the FRAMEWORK repo, not in yours: unmarked, this file's own reference check
-     reports five permanent broken references in the one artifact that is loaded
-     every session. (The marker is named in backticks here on purpose — written
+     reports one permanent broken reference per marked path, in the one artifact
+     loaded every session — no digit, because that count changes every time a
+     row is added. (The marker is named in backticks here on purpose — written
      bare, this sentence would itself be read as a marker in use and reported as
      covering no path. Measured on this very comment.) -->
 
@@ -38,7 +39,7 @@ framework: agent-ready-projects v1.41.0   # a NUMBER, not a status — never wri
 | Making architectural decisions | `docs/adr/README.md` — decision index |
 | Changing deployment or infra | `docs/RUNBOOK.md` — operational how-to |
 | Stuck or debugging something weird | `memory/gotcha-log.md` — problem-fix archive |
-| **Before committing** | Diff-driven review, lenses chosen by what changed — `/review-changes` where your tool has skills, otherwise paste `templates/review-changes.md` <!-- placeholder --> as a prompt. This row is what fires it: nothing else prompts either party mid-flow. |
+| **Before committing** | Diff-driven review, lenses chosen by what changed — `/review-changes` where your tool has skills, otherwise paste `templates/review-changes.md` <!-- placeholder --> as a prompt. This row is what fires it: nothing else prompts either party mid-flow. ⚠️ Since v1.40.0 it needs a per-repo **review profile** at `.claude/review-profile.md` — the same path whatever your tool, per `templates/README.md` <!-- placeholder -->. Copy `templates/review-profile.md` <!-- placeholder --> and fill it in; without one it STOPS rather than reviewing at LOW. |
 | Ending a session | `memory/gotcha-log.md` — review, promote patterns, retire stale entries. Then `/curate`, or paste `templates/curate.md` <!-- placeholder -->. |
 | Periodic — monthly, after restructuring, and when cutting a release | `/audit-context` (structural health across the layers) and `/release` (bump classification, preconditions, changelog draft; stops before tagging), or paste `templates/audit-context.md` <!-- placeholder --> / `templates/release.md` <!-- placeholder --> |
 <!-- Optional: add if you're using the workflow checklists from templates/checklists/

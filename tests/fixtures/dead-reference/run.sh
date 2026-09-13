@@ -24,10 +24,20 @@
 # CLAUDE.md while this file held 35 and 15 (#93, fourth instance of that class),
 # so re-derive rather than quote:
 #
-#   rows  grep -cE '^(want|want_why|resolves) ' run.sh
+#   rows  grep -cE '^(\[ "\$ABS" = 1 \] && )?(want|want_why|resolves) ' run.sh
 #   abl   grep -cE '^(\[ "\$ABS" = 1 \] && )?ablate ' run.sh
 #
-# Most rows have actually bitten; FIVE are constructed and labelled as such.
+# Most rows have actually bitten. A row that did NOT carries a warning-sign
+# label at the head of its note; that label is the only signal, so count it
+# rather than quoting a digit. The final letter is bracketed so that this
+# comment block cannot match itself — an unbracketed pattern returned 3
+# against 1 real label the moment it was written:
+#
+#   grep -cE 'A CONSTRUCTED cas[e]' run.sh
+#
+# ⚠️ CLAUDE.md carried "FIVE are constructed and labelled as such" until
+# 2026-09-13, while exactly ONE row bore the label. Either four labels were
+# never written or the digit was always wrong; only the label is checkable.
 # READ BEFORE LOOSENING: the cross-repo disposition costs sensitivity knowingly,
 # and the brace skip's cost was measured with the wrong instrument once already
 # (#121).
