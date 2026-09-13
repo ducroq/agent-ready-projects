@@ -4,7 +4,7 @@ The source framework that teaches the layered memory method for AI coding agents
 
 - **Type**: Public methodology repo (guide + templates + skills)
 - **License**: MIT
-- **agent-ready-projects** (this repo): **v1.41.0 is the highest release (2026-09-12), tagged and pushed.** Proposed next bump **MINOR**. Session narrative lives in `memory/MEMORY.md` Current State; per-release detail in `CHANGELOG.md`. **The eight measured lessons this repo keeps re-deriving — the through-line — are the first block of `memory/MEMORY.md` Current State**, which the Before You Start table already routes you to on pickup. They were inlined here until 2026-09-06. List-ifying it reclaimed 771 characters and the **set was still 41,048 against a 40,000 hard cap**, so it moved out entirely. ⚠️ **No current size is recorded here** — a size claim about this file goes stale on the next edit *to this file* (bullet 7 of the list being relocated). Measure, in characters — `wc -c` is bytes and reads ~2% high: `{ wc -m CLAUDE.md; wc -m "$HOME/.claude/projects/<slug>/memory/MEMORY.md"; }`. **Two budgets:** `templates/audit-context.md` flags *this file* over 35,000 (soft) / 40,000 (hard); the cap that bit here is 40,000 on the **auto-loaded set**, which this file alone was under the whole time. ⚠️ This file is over the 35,000 soft flag — known debt, and `/audit-context` will say so.
+- **agent-ready-projects** (this repo): **v1.41.0 is the highest release (2026-09-12), tagged and pushed.** Proposed next bump **MINOR**. Session narrative lives in `memory/MEMORY.md` Current State; per-release detail in `CHANGELOG.md`. **The eight measured lessons this repo keeps re-deriving — the through-line — are the first block of `memory/MEMORY.md` Current State**, which the Before You Start table already routes you to on pickup. They were inlined here until 2026-09-06. List-ifying it reclaimed 771 characters and the **set was still 41,048 against a 40,000 hard cap**, so it moved out entirely. ⚠️ **No current size is recorded here** — a size claim about this file goes stale on the next edit *to this file* (bullet 7 of the list being relocated). Measure, in characters — `wc -c` is bytes and reads ~2% high: `{ wc -m CLAUDE.md; wc -m "$HOME/.claude/projects/<slug>/memory/MEMORY.md"; }`. **Two budgets:** `templates/audit-context.md` flags *this file* over 35,000 (soft) / 40,000 (hard); the cap that bit here is 40,000 on the **auto-loaded set**, which this file alone was under the whole time. ✅ **Back under the 35,000 soft flag 2026-09-13** by deleting, not compressing: the `tests/` block restated each fixture's rationale, and the rationale already lives in the fixture's own `README.md` or the comment header of its runner, where whoever is about to loosen a check is already looking. The duplicate had rotted — the copy of `reference-integrity`'s T/N commands kept here returned 38/35 against a true 40/37. **Do not re-inline reference material to make it handy; that is how this file got here.**
 
 > Live project state (current threads, deferred items, surfaced patterns) lives in `memory/MEMORY.md` (maintainer-local — see *What is intentionally not shipped* below). Release notes live in `CHANGELOG.md`.
 
@@ -98,99 +98,43 @@ agent-ready-projects/
 │                                 workflow exists to remove. Green means the deterministic checks
 │                                 passed; it does NOT mean reviewed
 ├── tests/                     <- Self-tests for this repo (Phase A: structural lint)
-│   ├── lint/                  <- Deterministic structural checks (no LLM)
-│   │   ├── private-names.sh   <- Rule 12: a private project name in a tracked file.
-│   │   │                         The name list is deliberately NOT tracked (it would
-│   │   │                         publish what it protects), so an absent list is a
-│   │   │                         reported SKIP, never a pass
-│   │   ├── maintainer-path.sh <- Rule 13: `docs/rationale/` cited from a surface
-│   │   │                         adopters install. Regressed a DAY after the fix that
-│   │   │                         cleared it (#139) — a check now, not a review finding
-│   │   │                         (#127). Denylist is ONE entry, measured
-│   │   ├── vacuous-guard.sh    <- Rule 10: an ablation that cannot kill anything (#79's shape)
-│   │   ├── block-parses.sh    <- Rule 11: a fenced bash block an adopter copies must
-│   │   │                         parse; exemption is DECLARED, not guessed (#105)
-│   ├── skill-sync.sh      <- Rule 6: templates/<name>.md vs .claude/skills/<name>/SKILL.md;
-│   │                         fixture at tests/fixtures/skill-template-sync/
-│   │   └── dollar-digit.sh    <- Rule 9: a bare $0-$9 in a skill body is an argument word (#77)
-│   └── fixtures/              <- Seeded-defect fixtures: a check that finds nothing here is failing
-│       ├── reference-integrity/  <- Seeded breaks for audit-context Step 4. refcheck.py is an ORACLE,
-│       │                          NOT normative and never installed — fix Step 4 too (#92).
-│       │                          Counts are COMMANDS, not numbers — both were stale
-│       │                          before #102, a draft of that fix replaced one with a
-│       │                          differently-wrong number, and they went stale again
-│       │                          in v1.37.0 the moment cases were added:
-│       │                            T ids  grep -oE '\bT[0-9]+\b' run.sh | sort -u | wc -l
-│       │                            N ids  grep -oE '\bN[0-9]+\b' run.sh | sort -u | wc -l
-│       │                            X      grep -cE '^  "X[0-9]+ ' run.sh
-│       │                            abl    grep -cE '^ablate ' run.sh
-│       │                          (#93, #102). The isolation and enumeration guards are
-│       │                          separate from the X rows
-│       ├── skill-template-sync/  <- Seeded drift for lint rule 6 (17 positives, 7 negatives)
-│       ├── provisioning-quote/  <- Seeded drift for lint rule 7 (9 positives, 4 negatives)
-│       ├── size-ratchet/       <- Seeded growth for lint rule 8, plus the #131 spill
-│       │                          rows: `grep -cE '^(run_case|spill_case|ablate) '`
-│       ├── block-parses/      <- Seeded blocks for lint rule 11 (4 positives, 4 negatives,
-│       │                          2 ablations; N4 is the file-ordinal collision control)
-│       ├── private-names/      <- Seeded names for lint rule 12 (4 positives, 5 negatives,
-│       │                          3 skip-disposition rows, 8 ablations). Its own name list
-│       │                          is synthetic — the real one is NEVER tracked
-│       ├── dollar-digit/       <- Seeded `$N` forms for lint rule 9 (13 positives,
-│       │                          12 negatives, 7 structural, 5 truth-table, 10 ablations;
-│       │                          every ablation co-seeds a control the mutant must keep)
-│       ├── verify-runner/       <- Seeded claims + prose for curate Step 0 sub-step 5's
-│       │ runner (#34; 34 positives, 10 negatives, 4 malformed,
-│       │ 7 structural, 4 timing, 29 ablations). EXTRACTS the
-│       │ runner from templates/curate.md, so it cannot drift.
-│       │ ~90s, the slowest check here and the only one with
-│       │ timing cases. Its README carries the rejected `\|`
-│       │ predicate and the THREE rounds that produced the
-│       │ rest — read before touching the extraction
-│       ├── dead-reference/      <- Seeded classes for curate Step 0.1's extractor. Counts
-      │                          are COMMANDS — "40 rows, 16 ablations" was stale here
-      │                          while the file held 35 and 15 (#93, fourth instance):
-      │                            rows  grep -cE '^(want|want_why|resolves) ' run.sh
-      │                            abl   grep -cE '^(\[ "\$ABS" = 1 \] && )?ablate ' run.sh
-      │                          Most have actually bitten; FIVE are
-      │                          constructed and labelled as such. Rationale lives in
-      │                          run.sh's header, NOT a README. Read before loosening —
-      │                          the cross-repo disposition costs sensitivity knowingly,
-      │                          and the brace skip's cost was measured with the wrong
-      │                          instrument once already (#121)
-      ├── review-bench/        <- Seeded defects for measuring a REVIEW CONFIG, not a
-      │                          checker (H-016). 7 historically-real classes, a clean
-      │                          control for precision, a mechanical scorer. Its recall
-      │                          numbers are a LOWER BOUND — read its threats section:
-      │                          its seeds are the classes the AUTHOR thought of
-      ├── maintainer-path/    <- Seeded pointers for rule 13. The class is at ZERO here,
-      │                          so a real-tree run cannot tell a working rule from a
-      │                          disabled one: 3 positives (one UNTRACKED), 4 negatives,
-      │                          3 exit-code rows, 2 ablations
-      ├── step15-tables/       <- Seeded tables, CRLF, frontmatter and emphasis for
-      │                          review-changes Step 1.5 (#50, #52, #103, #144). Its
-      │                          emphasis rule took three drafts, each refuted over
-      │                          THIS REPO (28 hits, 15, 1) — every draft passed the
-      │                          fixture. Read that before loosening bold-nesting.
-      │                          Counts are COMMANDS: the
-      │                          numbers here were already wrong before #144 added
-      │                          cases (#93's class, third fixture to hit it):
-      │                            t/n  grep -oE '\b[tn][0-9]+_[a-z0-9_]+\.md\b' run.sh | sort -u | wc -l
-      │                            abl  grep -cE '^[a-z_]*ablate[a-z_]* ' run.sh
-      │                          (both widened after a review showed the first
-      │                          drafts missed a digit in a name and a renamed
-      │                          ablation helper, silently)
-      │                          The awk is EXTRACTED from the template, not copied,
-      │                          so it cannot drift
-      ├── baseline-fallback/    <- Seeded git states for review-changes Step 1's baseline
-      │                          fallback (#149). The block is EXTRACTED from the template,
-      │                          and every row runs in FOUR shell modes — the defect lived
-      │                          only in `set -eo pipefail`, and this fixture's own first
-      │                          draft ran without `-e`, so it certified what it could not test
-      └── installer-release-guard/
-│                              <- Seeded git states for the installer's release guard
-│                                 (#33; 17 positives, 15 negatives, 32 ablation rows).
-│                                 Its README carries the two REJECTED predicates and
-│                                 why — read it before changing the comparison
+│                                 ⚠️ EVERY rationale below lives in the file itself — a fixture's
+│                                 README.md, or the comment header of its run.sh. READ IT BEFORE
+│                                 LOOSENING ANYTHING: which predicates were REJECTED and why, which
+│                                 rows are constructed vs. have actually bitten, and the counts,
+│                                 which are COMMANDS and not digits (#93). Nothing is restated
+│                                 here — a duplicate rots, and the copy of reference-integrity's
+│                                 T/N commands that stood here returned 38/35 against a true 40/37
+│   ├── lint/                  <- Deterministic structural checks (no LLM); catalog in lint/README.md
+│   │   ├── skill-sync.sh      <- Rule 6:  templates/<name>.md vs .claude/skills/<name>/SKILL.md
+│   │   ├── provision-quote.sh <- Rule 7:  provisioning a canonical row without quoting it (#42)
+│   │   ├── size-ratchet.sh    <- Rule 8:  adopter-facing templates growing unmeasured
+│   │   ├── dollar-digit.sh    <- Rule 9:  a bare $0-$9 in a skill body is an argument word (#77)
+│   │   ├── vacuous-guard.sh   <- Rule 10: an ablation that cannot kill anything (#79's shape)
+│   │   ├── block-parses.sh    <- Rule 11: a fenced bash block an adopter copies must parse (#105)
+│   │   ├── private-names.sh   <- Rule 12: a private project name in a tracked file. The name list
+│   │   │                         is deliberately NOT tracked, so an absent list is a SKIP, never a pass
+│   │   └── maintainer-path.sh <- Rule 13: `docs/rationale/` cited from a surface adopters install (#139)
+│   └── fixtures/              <- Seeded-defect fixtures: a check that finds nothing here is failing.
+│       │                         One line each; the file is the reference
+│       ├── reference-integrity/  <- audit-context Step 4. refcheck.py is an ORACLE — not normative,
+│       │                            never installed, so a fix here is not a fix (#92)
+│       ├── skill-template-sync/  <- lint rule 6
+│       ├── provisioning-quote/   <- lint rule 7
+│       ├── size-ratchet/         <- lint rule 8, plus the #131 spill rows
+│       ├── dollar-digit/         <- lint rule 9
+│       ├── block-parses/         <- lint rule 11
+│       ├── vacuous-guard/       <- lint rule 10
+│       ├── private-names/        <- lint rule 12; its own name list is synthetic
+│       ├── maintainer-path/      <- lint rule 13; the class is at ZERO in the real tree
+│       ├── clone-lint/           <- lint rules 1-2 in the environments this repo is NOT developed in
+│       ├── verify-runner/        <- curate Step 0 sub-step 5's runner (#34). ~90s, the slowest here
+│       ├── dead-reference/       <- curate Step 0.1's extractor
+│       ├── step15-tables/        <- review-changes Step 1.5 (#50, #52, #103, #144)
+│       ├── baseline-fallback/    <- review-changes Step 1's baseline fallback (#149)
+│       ├── installer-release-guard/ <- the installer's release guard (#33)
+│       └── review-bench/         <- measures a REVIEW CONFIG, not a checker (H-016). NOT a gate:
+│                                    no pass/fail, and its recall numbers are a LOWER BOUND
 └── memory/                    <- Session memory (gitignored — maintainer-local)
     ├── MEMORY.md              <- Index + current state
     └── project_*.md           <- Topic files (migrated 2026-06-09 from user-level)

@@ -6,6 +6,20 @@
 # verify-runner fixture. A copy would pass while the template rotted.
 #
 # Exit: 0 all seeded cases behaved, 1 a regression.
+#
+# CASE COUNTS ARE COMMANDS, NOT DIGITS. The digits carried in CLAUDE.md were
+# already wrong before #144 added cases (#93's class, third fixture to hit it):
+#
+#   t/n  grep -oE '\b[tn][0-9]+_[a-z0-9_]+\.md\b' run.sh | sort -u | wc -l
+#   abl  grep -cE '^[a-z_]*ablate[a-z_]* ' run.sh
+#
+# Both patterns were WIDENED after a review found the first drafts silently
+# missed a digit in a name and a renamed ablation helper.
+#
+# READ BEFORE LOOSENING BOLD-NESTING: the emphasis rule took three drafts, each
+# refuted over THIS REPO (28 hits, then 15, then 1) — and every draft passed
+# this fixture. The corpus was the stronger instrument (#50, #52, #103, #144).
+set -u# Exit: 0 all seeded cases behaved, 1 a regression.
 set -u
 cd "$(dirname "$0")/../../.." || exit 2
 TPL="templates/review-changes.md"

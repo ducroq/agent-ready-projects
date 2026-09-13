@@ -19,6 +19,18 @@
 #
 # The program is EXTRACTED from templates/curate.md, never copied, so it cannot
 # drift from the shipped surface.
+#
+# CASE COUNTS ARE COMMANDS, NOT DIGITS. "40 rows, 16 ablations" was written into
+# CLAUDE.md while this file held 35 and 15 (#93, fourth instance of that class),
+# so re-derive rather than quote:
+#
+#   rows  grep -cE '^(want|want_why|resolves) ' run.sh
+#   abl   grep -cE '^(\[ "\$ABS" = 1 \] && )?ablate ' run.sh
+#
+# Most rows have actually bitten; FIVE are constructed and labelled as such.
+# READ BEFORE LOOSENING: the cross-repo disposition costs sensitivity knowingly,
+# and the brace skip's cost was measured with the wrong instrument once already
+# (#121).
 set -u
 ROOT="$(cd "$(dirname "$0")/../../.." && pwd)" || exit 2
 W="$(mktemp -d)"; trap 'rm -rf "$W"' EXIT

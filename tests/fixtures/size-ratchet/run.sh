@@ -15,6 +15,11 @@
 # because "record why and --update" is free. The unit is now the TOTAL budget,
 # growth must be paid for by a shrink, and --update cannot raise the ceiling.
 # Two cases below are inverted from the old version and say so.
+#
+# CASE COUNTS ARE COMMANDS, NOT DIGITS (#93). Includes the #131 spill rows:
+#
+#   grep -cE '^(run_case|spill_case|ablate) ' run.sh
+set -u# Two cases below are inverted from the old version and say so.
 set -u
 cd "$(dirname "$0")"
 CHECK="$(cd ../../lint && pwd)/size-ratchet.sh"
