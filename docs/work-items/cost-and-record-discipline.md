@@ -164,7 +164,22 @@ Every one of these was a number that no longer matched the thing it counted, and
 
   **The direction survives and the magnitude does not: 16 points, not the 36 the proxy implied.** My proxy overstated our proposition rate by 20 points and I fed it into the shared record before anyone hand-counted. The tense mechanism is still the live explanation; it is a weaker effect than either of us published.
 
-  ⭐ **INDEPENDENT SUPPORT NOBODY DESIGNED, from the adopter's file split:** archive (pre-2026-09, 52 entries) **46%** proposition; live log (2026-09 on, 44 entries) **30%**. **Their log became more incident-shaped as sessions got busier** — exactly what a mechanism costing *a second act of thought at write time* predicts. Neither repo chose that trend; it fell out of splitting by date.
+  🔴 **THE TEMPORAL EVIDENCE IS DEAD — the two logs trend in OPPOSITE directions, and the adopter's trend has a confound its own author found.**
+
+  Their split looked like independent support: archive (pre-2026-09) **46%** proposition, live log **30%** — a log becoming more incident-shaped as sessions got busier, which is what a mechanism costing *a second act of thought at write time* predicts. ⚠️ **But their archive was SELECTED, not sampled**: the split moved entries that were pre-September **and resolved**. If a retire pass rewrites headings into propositions on the way to closing them — which is what a retire pass *does*, and what they did to two headings in the #180 commit — then 46 vs 30 measures **curation, not writing conditions**, and the reading inverts: curation *raises* proposition rate by ~16 points. That is evidence for the *when* answer by a different route and **no evidence at all for load at write time**. Their finding, on their own trend, and they left the settling command unrun with a December date on it rather than run it in the session that wanted the answer.
+
+  ⭐ **Ours is the unconfounded instrument and it points the other way.** This log has **never been split**, so an entry-date trend here carries no archive boundary. Splitting the hand classification **made before this question was posed**, so it cannot be motivated:
+
+  | | pre-2026-09 | 2026-09 on |
+  |---|---|---|
+  | here (one unsplit file, n=72 / 25) | 51% | **64%** |
+  | adopter (archive vs live, n=52 / 44) | 46% | **30%** |
+
+  **+13 here against −16 there.** The write-time-load mechanism has support from neither log once the confound is named.
+
+  ⚠️ **Our own confound, stated rather than waited for:** this repo's September work *is* measurement discipline, so recent entries are about instruments and rules — subject-matter drift, not writing conditions, would produce the same rise. n=25 for the later bucket. **Neither trend is clean; they merely fail in different directions.**
+
+  **What survives:** the cross-sectional difference (55% here vs 39% there, both hand-counted) and the claim that the convention should ask for a proposition. **What does not:** any temporal claim about load, and any use of 46→30 as evidence in #180.
 
   ⚠️ **Consequence for the convention, and it is the reporter's:** a rule asking for a proposition asks for the thing that is dropped first under load. So *"ask for a proposition, not a name"* settles **what** to ask for and says nothing about **when**. A convention applied at write time will decay; applied at **curate** time — when someone is already rereading headings with the body in front of them — it might not. Explicitly a guess.
 
