@@ -128,6 +128,27 @@ Every one of these was a number that no longer matched the thing it counted, and
 
 ## Decisions
 
+- 🔴 **[2026-09-13] OUR OWN POPULATION UNDER v2 STRICT: 6 of 12 symptom — so "the convention problem is total" does NOT generalise.** Population: the 12 `###` headings carrying `[xN` in `memory/gotcha-log.md` (`grep -nE '^### .*\[x[0-9]'`). ⚠️ **Not a blind classification** — I had already read their four verdicts. Declared, not hidden.
+
+  | verdict | heading (abbrev) | deciding rule |
+  |---|---|---|
+  | MECHANISM | A seeded negative that cannot fail proves nothing | 2 — property → consequence |
+  | MECHANISM | An apostrophe inside a single-quoted `awk` program | 1 — ⚠️ CLOSE |
+  | MECHANISM | The obvious fix for a substituted token contains the token | 2 — ⚠️ CLOSE |
+  | MECHANISM | Prose about a checker is input to that checker | 2 — clearest in the set |
+  | MECHANISM | A negative measured with a mismatched instrument reads as a real absence | 2 — the *X is indistinguishable from Y* form exactly |
+  | MECHANISM | A `set -e` abort silently skips every later assertion | 1 — clearest rule-1 pass; `set -e` is greppable and is what malfunctioned |
+  | SYMPTOM | Private repo names re-entered the public repo after the sweep | 3 — event narration |
+  | SYMPTOM | A new negative was satisfied by an existing positive's output | 3 — event |
+  | SYMPTOM | A string index matched the heading's own prose mention | 3 — ⚠️ and this IS the self-reference class, whose own heading does not name it as a property |
+  | SYMPTOM | A correction ships and the superseded sentence stays | 3 — ⚠️ CLOSE, general present reads as a rule; tie-breaker took it |
+  | SYMPTOM | A working-tree `grep` was used to claim what an adopter can get | 3 — ⚠️ CLOSE, past-tense event; tie-breaker took it |
+  | SYMPTOM | Ablation rows went stale inside the change that grew the fixture | 3 — event |
+
+  **50% here against 100% there.** The claim *"the convention problem is total"* holds in their population and **fails in ours** — do not ship #180's convention on the totality claim. ⚠️ **4 of 12 are CLOSE CALLS decided by the tie-breaker or one word of rule 1** — a third of the population, which is the same free-parameter sensitivity they found, reproduced independently at a larger n. **That is the finding worth publishing: the classifier is unstable at roughly a third of any population, in both repos.**
+
+  Untested hypothesis for the gap, registered rather than asserted: this log is mostly about *instruments*, where the mechanism is a named construct (`set -e`, `awk`, `$0`), while an adopter's log is mostly about *application behaviour*, where it is not. If that is the cause, #180's convention is cheap here and expensive there — the opposite of how it reads.
+
 - ⭐ **[2026-09-13] #180 heading-classification rubric — PUBLISHED BEFORE THE POPULATION WAS READ.** Written blind, on purpose: the reporter's own "3 of 4" cannot be reproduced (they re-classify their four as 2 of 4), and the disagreement is a judgement call with no recorded rubric. Sent to them for **blind classification of their four** against this text, so the result is two independent classifications of one population rather than one instrument run twice.
 
   A heading **NAMES A MECHANISM** if it identifies the causal element — the construct, rule or property that produced the behaviour — well enough that a reader could recognise a recurrence *from the heading alone, without opening the body*. Apply in order, stop at the first that decides:
@@ -138,7 +159,23 @@ Every one of these was a number that no longer matched the thing it counted, and
 
   ⚠️ **Tie-breaker: disagreement resolves to SYMPTOM.** The claim under test is that the heading is matchable by a header-only read; a heading needing argument to be called a mechanism will not be matched under time pressure. This makes the instrument conservative, which biases *against* #180's thesis — deliberately, since this repo would be adopting it.
 
-  ⚠️ **The rubric is itself unmeasured.** It has an inter-rater agreement of exactly zero observations right now. The blind cross-classification is what gives it one, and if the two of us disagree on more than one heading of eight, the rubric is the finding and #180's number is not recoverable at this n.
+  ⚠️ **v1 was unmeasured. It now has one cross-classification and the result is below.**
+
+- ⭐ **[2026-09-13] RUBRIC v2 — "named" is PINNED STRICT: an identifier a reader could grep for.** `next/dynamic`, `isUnscored()`, `$0`, `[^>]*` qualify. A construct *category* does not: *"a deploy-detector"*, *"predicate"*, *"a path"* are categories and fall to rule 3. Worked example each side, per the reporter's v2 request.
+
+  **Why strict, and this is their argument not mine:** a header-only read under time pressure matches on **tokens**, not on whether a phrase can be argued into naming a cause. And a loose "named" quietly undoes the tie-breaker's bias — the rubric would read as conservative while classifying leniently.
+
+- 🔴 **[2026-09-13] #180's RATIO IS NOT PUBLISHABLE; #180's CLAIM SURVIVES AND GOT STRONGER.** Three methods over one closed population of four (4 recurrence-marked entries in 41):
+
+  | method | result |
+  |---|---|
+  | published 2026-09-12, method unrecorded | 3 of 4 symptom |
+  | reporter's intuitive re-read, no rubric | 2 of 4 |
+  | rubric v1, strict reading of "named" | **4 of 4** |
+
+  **The entire 2-to-4 spread rides on one undefined word in the rule that decides first.** Relax "named" to admit construct categories and headings 3 and 4 both flip, reproducing the intuitive 2 of 4 exactly. ⚠️ **That is why the original measurement was irreproducible** — *"names a mechanism"* has a free parameter and each classifier silently chose a different value. The finding is one level up from the ratio.
+
+  ⚠️ **Direction matters and cuts toward #180**: 4 of 4 under a rubric deliberately biased *against* it means the convention problem is **total** in that population. Publish the irreproducibility of the ratio; do **not** weaken the claim on it. One of the four verdicts is flagged CONTAMINATED by the reporter — I had leaked a worked example — and is excluded from any blind count.
 
 - ⭐ **[2026-09-13] Retirement destination: an archive file beside each source.** `gotcha-log-archive.md` next to the log, `hypothesis-log-archive.md` next to the hypothesis log. Maintainer's call. Rationale: two local precedents already do this — `memory/project_hypotheses_closed.md` (2026-09-06) and the adopter's own split (#178) — so it ships as a *described* pattern, not a new invention. Rejected: one `memory/archive/` for every layer (no precedent, a new pattern to get right) and delete-and-rely-on-git (loses grep, and the log's whole value is being greppable when stuck). Selection is **dated before the cutoff AND `[RESOLVED` prefix**; never `[OPEN]`/`[PARKED]`; tables stay in the live file; **the split moves, it does not summarise**, verified by #178's check with a seeded control.
 - 🔴 **[2026-09-13] Consequence: this repo cannot run that split yet.** The predicate selects on `[RESOLVED`, and **this log has 97 entries and zero of them carry it** (`grep -cE '^### .*\[RESOLVED' memory/gotcha-log.md` → 0). So archiving here is blocked behind a marking pass that has never happened — which is the same pass #180 wants (headings rewritten to name the mechanism). **Do both in one read of the log, not two.** ⚠️ And do not ship the pattern to `templates/` on a dry run: applied to our own log today it would move **zero entries**, which is indistinguishable from a broken selector. Mark first, then measure the split, then ship.
