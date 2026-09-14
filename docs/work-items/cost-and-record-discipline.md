@@ -46,7 +46,25 @@ Goal: make the framework cheaper to run without cutting the review of the shippe
 - [x] ✅ **v1.42.0 RELEASED 2026-09-14** — `ab999f2`, tagged `v1.42.0` (annotated), pushed, verified live with an exact-ref check. Globals refreshed **after** verification: `audit-context` and `review-changes` reinstalled, `curate` and `update-drift` already current (the installer derives the install, so `update-drift`'s SAVE AS edit changed no installed byte). Preconditions: 13/13 lint, 15 of 16 fixture suites with 1 declared not-a-gate, 0 failed. **#171 fixed by construction** — stamps bumped in the tagged commit, verified via `git show <tag>:<path>` rather than the tree. ⚠️ The release was larger than the changelog described: the 2026-09-12 residue sweep had landed after the v1.41.0 tag with no entry, and was folded in at Step 4 rather than shipped undocumented.
 - [ ] **Step 1 — stale-number check.** See Decisions for the design turn; read it before building
 - [x] **Step 2 — bring `CLAUDE.md` under its own cap.** DONE 2026-09-13, `dac4ad2`. 34,753 chars. ⚠️ **Do not re-inline reference material to make it handy** — that is how the file got to 38,750, and the inlined copy was wrong.
-- [ ] **Step 3 — make `memory/` navigable.** Add headings to the 5 opaque files; split `MEMORY.md` Current State
+- [x] ✅ **Step 3 (first half) — DONE 2026-09-14: the auto-loaded set cut 32%, 116,501 → 79,138 chars.**
+  Everything from 2026-09-06 and earlier moved to `memory/project_history_to_2026_09_06.md` (39,684 chars):
+  the index was carrying a second narrative beside the `project_session_*.md` files that already held the
+  first. Precedent: the identical move on 2026-08-27. **All 17 verify probes accounted for by name before
+  and after** — `curate` Step 0 sub-step 5 scans memory *files*, plural, so none left scope. Lint rule 2
+  caught two topic files orphaned by the move; both now routed from the Topic Files table.
+  `CLAUDE.md` 37,987 → 36,162 by collapsing five Key Paths rows that restated `tests/lint/README.md`,
+  a duplication the file itself had flagged and not acted on.
+  ⚠️ **STILL ~2× THE 40,000 CAP.** `CLAUDE.md` is now the larger half at 36,162 and the cap is on the
+  SET. Getting under it means roughly halving the project file, which is an orientation decision, not a
+  deletion one — do not do it by shaving prose.
+- [x] ✅ **Review scope narrowed 2026-09-14 (`.claude/review-profile.md`).** `docs/**` and
+  `docs/rationale/**` dropped MEDIUM → LOW, so the doc-accuracy lens no longer runs over prose about our
+  own history. **Measured basis**: across two batteries that day, of ~18 findings **8 were shipped
+  behaviour and 9 were about the record**, and every blocker in both was in `templates/` or
+  `.claude/skills/`. The trade is stated in the profile: a wrong number in `docs/rationale/` now survives
+  longer, which is acceptable where nothing executes it.
+  ⚠️ **Unmeasured until the next release**: whether this actually reduces spend, or only moves it.
+- [ ] **Step 3 (second half) — add headings to the 5 opaque memory files**
 - [ ] **Step 4 — rating-floor check (#168).** A claim whose verification log records PARTIAL/NEEDS WORK may not be rated ESTABLISHED. Seed with the Gloaguen block as it stood before 2026-09-12 — a known true positive the current arrangement passed
 - [ ] **Step 5 — one narrow round, recorded.** The missing half of #126's comparison. Costs nothing extra: record what happens
 - [ ] **Decide: how big should the record be?** User's call, see Open Questions
