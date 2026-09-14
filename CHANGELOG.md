@@ -19,6 +19,96 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.43.0 (2026-09-14)
+
+Fifteen issues across four adopter-facing surfaces, every one a check that returned a wrong
+answer with nothing signalling it. MINOR: several new documented behaviours and one genuinely
+new artifact, and no existing consumer has to act.
+
+### `audit-context` Step 4 / the reference-integrity checker
+
+⚠️ **`tests/fixtures/reference-integrity/refcheck.py` is Step 4's RUNTIME, not an oracle**, and
+has been since v1.40.0 when that step began telling adopters to run it. Three surfaces still
+described it as never-installed — which was the disposition rule six open issues had been
+triaged under (#185).
+
+- **#175** — `.mts`, `.mjs`, `.cjs`, `.cts` added to the extension whitelist. A broken reference
+  to `vitest.config.mts` reported CLEAN because it was never extracted.
+- **#165 / #176** — a bare compound-extension noun (`` `.d.ts` ``) is no longer reported as an
+  unresolved path. A `COMPOUND_EXT` denylist seeded with `d.ts` alone; the shape-based rule was
+  measured against the reporter's own 33-repo table first and **also silences `.meta.json` and
+  `.key.json`**, both real filenames.
+- **#177 (point 3)** — every excused placeholder now names the rung that excused it. Rungs 3 and
+  4 previously excused a path with no reason printed, so a wrong marker was invisible.
+  Adjudicating below rung 1 is deliberately NOT the fix: that is what #56 removed.
+- **#122** — a new `PATH SHAPES NOT EXTRACTED` report section names six shapes that are outside
+  the extractor's population (brace, bracket, root-absolute, home-relative, Windows, UNC), each
+  labelled. They are not findings; nothing there is known to be wrong, only unchecked.
+
+⚠️ **#154 was implemented and REVERTED before shipping.** Extending `PRUNE` does not reach the
+defect it was filed for — rung 1 is a bare existence check that never consults the walk — and a
+git-based population contradicts `SPEC.md`'s rung-2 rule, taking this repo from 27 findings to
+87, 54 of them `memory/*` files that are gitignored-and-present by design. Detail on the issue.
+
+### `review-changes`
+
+- **#145** — Step 1 now lists untracked files and counts their lines. No `git diff` variant
+  lists a file git has not seen, while the magnitude gate carved out "any new file in a HIGH
+  path" — a class the step could not observe.
+- **#153** — a diagnostic for HEAD already contained in `$BASE`. The baseline resolves, no
+  fallback fires, and the BASE-dependent term is legitimately empty, so unreviewed commits
+  reported as a clean review. Excludes the equality case, or it fires on every default-branch run.
+- **#164** — the octal BOM strip does not fire under one-true-awk in a UTF-8 locale. A comment
+  fix, not a code fix: the direction is safe and all three alternatives were checked and declined.
+- **#166** — `templates/review-profile.md` gains **Project lenses**, **Project additions to the
+  shipped lens prompts**, and **Project procedure kept with the profile**; Steps 1 and 2 read
+  them. The v1.40.0 split assumed a project's half is data, and an adopter who had added lenses
+  lost one silently.
+- **#188** — `docs/seeded-defects-and-ablations.md` gains the adjacency class: a guard that
+  measures something NEXT to its claim returns a plausible number, which is why it ships where a
+  guard measuring nothing would not.
+
+### `update-drift`
+
+- **#134** — a third matcher for the connector-carried commit pin (`(vv/, commit d89ec62)`), the
+  form a human actually writes. Letters are allowed between the name and the connector, never
+  between the connector and the hash.
+- **#135** — a `bash -n` rung: extract a changed fenced block and parse both the version you are
+  leaving and the one you are taking. The only arm of this that does not depend on the framework.
+- **#136** — never hardcode the version a probe corroborates; derive it from the stamp. Ships a
+  stamp probe, which existed nowhere before, with a three-outcome verdict.
+
+### `release` and `gotcha-log`
+
+- **#136, second half** — `templates/release.md`'s tag precondition carried
+  `… && echo "TAG EXISTS — STOP" || echo "free"`, which exits 0 on **both** branches. Replaced
+  with a function whose exit status carries the verdict: 0 free, 1 taken, 2 undecidable.
+- `templates/gotcha-log.md`'s entry-length rule said "keep it to 2-3 lines" while `curate` called
+  that the old rule and unenforceable. Now the measured one: ~700-1,200 characters is normal,
+  ~3,000 is the signal.
+
+### Consumer notes
+
+**No action required.** Everything here is additive or a correction; a profile written before
+v1.43.0 has none of the three new sections and that is not an error.
+
+**If you carry an adapted copy of a skill**, do not re-copy — grep for these and add what is
+missing: `HEAD IS CONTAINED IN` and `ls-files --others --exclude-standard` in `review-changes`
+Step 1; `prose commit pins` and `bash -n` in `update-drift` Steps 0 and 3; `stampcheck` in
+`curate` Step 0.5; `tagfree` in `release` Step 3.
+
+**If you copied `templates/gotcha-log.md`**, its entry-length rule changed — a copied template
+never updates itself, so this correction reaches only those who re-read it (#190).
+
+⚠️ **`refcheck.py` fixes now reach you.** If you run `audit-context` Step 4 against the
+framework clone, pull it.
+
+### Versioning rationale
+
+Rule 1 does not fire: no existing consumer must act. Rule 2 does — new documented behaviours
+(matchers, rungs, report sections) and one new artifact (the stamp probe). MINOR, following the
+v1.10.1 precedent that new patterns and behaviours are MINOR while corrections alone are PATCH.
+
 ## v1.42.0 (2026-09-14)
 
 **Adopters were being told to install skills in a way that silently does not work, and three inventories never mentioned the skill whose job is telling you that you are behind.** MINOR: new documented conventions to adopt — a marker syntax where `audit-context` had none, a version-control rule for Layer-4 logs, and install instructions for `update-drift` that existed nowhere an adopter reads. Nothing is removed or renamed and no existing consumer breaks, so rule 1 does not fire; the precedent is **v1.28.0 / #68**, a shipped surface that named none of the skills, fixed by naming them, released MINOR.
