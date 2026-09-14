@@ -19,6 +19,7 @@ for d in repo sibling-repo docs; do (cd "$d" && git init -q . && git config user
 
 cd repo
 printf 'data/*\n!data/.gitkeep\n.claude/\n' > .gitignore
+mkdir -p src/checks && touch src/checks/row_tail_real.py
 touch src/utils/redaction.py src/utils/time_utils.py src/models/temporal.py \
       src/utils/helpers.py src/lib/helpers.py data/.gitkeep docs/ARCHITECTURE.md \
       packages/worker/config/settings.py infra/main.tf analysis/index.qmd config/live.env
@@ -106,6 +107,32 @@ and register it.
 
 T14: a marker on a line carrying no path at all is an ineffective marker, and
 silently doing nothing is the failure mode. <!-- placeholder -->
+
+T46 (#174): a U+2298 confers NOTHING. It was prescribed by `review-changes`
+Step 3.1 for a whole release and never implemented here, so every row carrying
+it was a standing false finding while its author believed the finding
+suppressed. The glyph sits in the TRAILING position -- where the working
+`<!-- placeholder -->` goes -- deliberately: a first draft put it in the
+leading position, where the case could not tell "this glyph is unimplemented"
+from "any marker before its path confers nothing", and where teaching the
+checker the glyph the obvious way left the case GREEN. Measured both ways.
+
+| shape | expected |
+|---|---|
+| `src/checks/never_built.sh` ⊘ | reported, identical to no marker |
+
+T47/N42 (#174) — the marker INSIDE a table cell, which is the shape the
+Mechanized table needs and which nothing seeded before this: the fixture
+carried 23 markers and ZERO on a table row. N42 is the prescribed placement,
+immediately after the path in the same cell. T47 is the placement the
+prescription warns against -- parked at the end of the row, where span-scoping
+attaches it to the LAST path instead, so the path the author meant to excuse
+stays a finding and the marker is spent silently on something else.
+
+| Date | Finding | Check it becomes | Status |
+|---|---|---|---|
+| 2026-09-14 | N42 marker in the same cell | `src/checks/cell_marked.sh` <!-- placeholder --> | proposed |
+| 2026-09-14 | T47 marker parked at end of row | `src/checks/cell_unmarked.sh` lands in `checks/row_tail_real.py` | <!-- placeholder --> |
 
 A work item lives at `docs/work-items/<slug>.md`, and a filter's config at
 `filters/<name>/<version>/config.yaml`. Both announce themselves; neither needs

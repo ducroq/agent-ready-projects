@@ -162,6 +162,8 @@ The public framework — `README.md`, `adopt.md`, `docs/`, `templates/`, `CHANGE
 
 Listed here so the architecture diagram above is honest about what an adopter sees on `git clone` versus what the maintainer has on disk.
 
+⚠️ **`memory/` has its own local-only git history** (2026-09-14) — `git -C memory log`, never pushed, no remote. It stays gitignored here: **11 of the 34 names rule 12 checks appear somewhere under it** (the list holds 38; four are UNCHECKED as too short), and lint rule 12 has never scanned any of it, because ignored files are not in its population. The history exists because *how did this log change over time* was unanswerable — which blocked #178's own verification and left unrunnable the arithmetic gate that would have settled #180's temporal half, while the adopter who filed #178 could answer it because theirs is tracked. **Use it before asserting anything about how an entry or a heading got that way.**
+
 ## Key Paths
 
 | Path | What it is |

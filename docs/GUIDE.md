@@ -383,6 +383,15 @@ A concrete example: "staging migration fails with timeout" appears in the gotcha
 
 This keeps the gotcha log as a complete record while surfacing the most important lessons into always-loaded context.
 
+⚠️ **"It's history" is a claim about a file that has one — give your gotcha log a history, and decide that deliberately.** The retirement rules above say *don't delete, it's history*, and the questions you will actually ask of that history are about **change**, not about the current text: did a retire pass rewrite these headings on the way to closing them; when did this entry's status really move; was every entry present before a split present exactly once after. The working tree answers none of them. A log with no history cannot answer them **ever**, and does so silently — it looks identical to one that can.
+
+- **Log in a tracked directory** — you already have it, and nothing here applies.
+- **Log in an ignored directory** — because it names private repositories, customers or people, or because it is simply maintainer-local — then `git init` **inside that directory** and never add a remote. The same questions become answerable and nothing is published.
+
+⛔ **Do not resolve it the other way — by tracking an ignored log — without looking inside it first.** A denylist your linter enforces on tracked files has never scanned an ignored one, because ignored files are not in its population: the check that would catch the leak is structurally blind to exactly the directory you are about to publish. Measured while writing this: in the repository that ships this guide, **11 of the 34 names rule 12 checks (of 38 on the list; four are UNCHECKED as too short or generic) appear somewhere under its ignored `memory/` directory**, and its lint rule for that class had never read a byte of it.
+
+This is a gap in the method as published, not a detail of one repo's setup: an adopter and this repo hit the same wall from opposite sides — they could answer a question about how their log had changed because theirs is tracked, and the repo that ships this guide could not answer it about its own.
+
 ## How Agents Self-Navigate
 
 The auto-loaded files work together as a navigation system. Here's how it looks in Claude Code (other tools have equivalent structures — see [Tool-Specific Setup](#tool-specific-setup)):

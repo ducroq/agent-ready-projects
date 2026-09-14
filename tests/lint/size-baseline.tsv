@@ -3,7 +3,7 @@
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and every raise is
 # recorded below, oldest first — notes accumulate and are never replaced.
-# BUDGET 241481
+# BUDGET 243231
 # SPILL 30306
 # RAISED 2026-09-06 from 247526 to 247969: #133: the #118 remedy string shipped unconditional and can turn a resolved reference into an AMBIGUOUS finding; the caveat that scopes it is +443 b on templates/audit-context.md, seeded as T39/T40/N39 (reason restored 2026-09-06 — write_baseline used to overwrite each note with the next)
 # RAISED 2026-09-06 from 247969 to 248237: #140: UNRESOLVED had two causes printing one reason. +268 b on templates/audit-context.md, seeded as T41/T41b/N40 (reason restored 2026-09-06)
@@ -29,8 +29,14 @@
 # RAISED 2026-09-14 from 241445 to 241494: #173 round 2: templates/review-changes.md SAVE AS said project-local with no do-not-copy-verbatim clause, contradicting four surfaces since v1.40.0 and sending adopters to install an inert, never-registering skill. +270 for the correct line; 221 of it paid by deleting a paragraph that restated the description: field three lines below it and the body's own first sentence. 49 raised. (A first draft said +285/236 -- the same +49 difference, both summands 15 high. Re-derived: old lines 3-4 = 131 b, new lines 3-7 = 401 b, so +270 and 221. A cause was offered for the 15 and withdrawn: the '<!-- SAVE AS: ' prefix is 14 characters and 401-(131-14) is 284, not 285. The magnitudes reconcile; the archaeology did not.) Net for this release: re-derive it, do not read it here -- this note is pinned to one raise and the release kept moving after it.
 # ratcheted down 2026-09-14
 # ratcheted down 2026-09-14
+# RAISED 2026-09-14 from 241481 to 241950: #174: the marker prescribed by review-changes Step 3.1 was a decorative glyph the checker never implemented -- MEASURED: a glyph-marked path is reported identically to an unmarked one, so every proposed row was a standing false finding while its author believed it suppressed. Both skills now prescribe <!-- placeholder -->, the form the checker implements, and audit-context Step 4 names a marker syntax for the first time (it said 'mark them' and never said how, so an adopter without this repo's checker had no rule to apply). +469 after paying one duplicate: the same sentence stood twice in audit-context Step 4. The litigation stayed OUT of the skill bodies; the measurement is in CHANGELOG.md, not billed to every invocation.
+# RAISED 2026-09-14 from 241950 to 242170: Layer-4 logs had no guidance on version control at all: templates/gotcha-log.md prescribes the file and says nothing, while its own retirement rule says 'don't delete, it's history' -- a claim about a file that has one. +212 for a short rule in the template (a draft of this note said +220 -- eight high, directly beneath the note explaining a fifteen-high one); the reasoning went to docs/GUIDE.md, which adopters read and the ratchet does not measure. Origin: this repo cannot answer 'how did this log change over time' about its own gotcha log, which blocked #178's verification and left unrunnable the arithmetic gate behind #180's temporal half, while the adopter who filed #178 could answer it.
+# ratcheted down 2026-09-14
+# RAISED 2026-09-14 from 242162 to 242443: #174 review round 1: the prescription this release shipped was POSITIONALLY AMBIGUOUS, and one reading it permitted is worse than the bug being fixed -- a marker parked at the end of a Mechanized row covers the nearest path BEFORE it, so it is spent on the row's last path while the one the author meant to excuse stays a finding, and MEASURED, nothing reports the misplacement. All four skill copies now say 'immediately after the path'. templates/gotcha-log.md's pointer became a URL: a bare docs/GUIDE.md is dead in the adopter repo the template is copied into, which templates/review-changes.md argues three lines above the line this batch changed. +281 after paying 179 by tightening my own new prose. NOTE: this is the FOURTH raise in this session against three payments -- H-022's hypothesis, that a hatch always available is always taken, is being confirmed by the behaviour of the session recording it.
+# RAISED 2026-09-14 from 242443 to 242619: #174 review round 1, second item: templates/gotcha-log.md's OWN Mechanized example contradicted the rule this release adds -- the proposed row showed an em dash in the Check cell instead of a marked path, and the live row's illustrative tests/lint/foo.sh carried no marker, so the template shipped a standing false finding of exactly the class being fixed. Both rows now carry the marker, plus one line on placement. +176. FIFTH raise this session against four payments; every raise so far has been a correction found by review rather than new content, which is a different pattern from the one H-022 predicts and is worth separating in the entry.
+# RAISED 2026-09-14 from 242619 to 243231: #174 review round 2. Three blockers, two of them about the mechanism rather than the prose. (1) <!-- placeholder --> ENDS IN THE COMMENT TERMINATOR, so writing it inside an HTML comment closes that comment -- it silently broke templates/gotcha-log.md, the file that defines the table, and memory/gotcha-log.md's header. The example table moved out of the comment into a fenced block, which is most of these bytes. (2) 'one parked at the end of the row marks the wrong path' was FALSE for a bare Mechanized row -- trailing cells are Status and Occurrences and hold no path, so the two placements coincide there; the fixture had to manufacture a later path. Generalised from a case I constructed, which is the seeded-fixture failure this repo has a constraint about. Now scoped. (3) the live example row carried a marker, which is itself a finding on a resolving path -- the template taught the inverse defect. SIXTH raise. The status-column alternative that would have deleted most of this was measured and refuted: one proposed row carries 7 paths, 6 of them real, and a row-wide skip silences all six.
 templates/adr.md	2115
-templates/audit-context.md	19157
+templates/audit-context.md	19449
 templates/checklists/architect-checklist.md	1263
 templates/checklists/implement-checklist.md	1329
 templates/checklists/qa-checklist.md	1836
@@ -38,14 +44,14 @@ templates/checklists/README.md	1097
 templates/checklists/test-checklist.md	1234
 templates/coordination.md	3909
 templates/curate.md	71669
-templates/gotcha-log.md	6849
+templates/gotcha-log.md	7871
 templates/hypothesis-log.md	3570
 templates/memory-index.md	3396
 templates/project-file.md	6485
 templates/README.md	12042
 templates/release.md	19459
 templates/review-agent.md	5720
-templates/review-changes.md	42649
+templates/review-changes.md	43085
 templates/review-profile.md	2583
 templates/RUNBOOK.md	2795
 templates/test-fixtures/memory/decision-no-verify.md	185

@@ -16,7 +16,13 @@
        is marked or the entry is recorded in the Promoted table.
      - Track what you've promoted in the "Promoted" section below
 
-     When the root cause is fixed, mark it resolved here (don't delete). -->
+     When the root cause is fixed, mark it resolved here (don't delete).
+
+     GIVE THIS FILE A HISTORY -- tracked, or `git init` in an ignored dir
+     with no remote. What you ask of it later is about CHANGE, which a
+     working tree cannot answer. Why, and the trap in the obvious remedy:
+     https://github.com/ducroq/agent-ready-projects/blob/master/docs/GUIDE.md
+     -- "The retirement pattern". -->
 
 <!-- Template for new entries:
 
@@ -106,9 +112,20 @@
      is scoped to the wrong population, or was never wired into the run.
      Investigate the check, not the finding.
 
+     A `proposed` row's Check cell names the path the check WILL live at and
+     marks it, so a reference audit does not report it every run. Markers go
+     on `proposed` rows only: a marker on a path that already resolves is
+     itself a finding. The example below is outside this comment because the
+     marker ends in the comment terminator and would close it here.
+-->
+
+**Example rows** — the marker is shown literally; copy the shape, not the paths:
+
+```markdown
 | Date | Finding shape | Check | Status | Occurrences |
 |------|---------------|-------|--------|-------------|
 | YYYY-MM-DD | [the shape, one sentence] | `tests/lint/foo.sh` | live | 0 |
-| YYYY-MM-DD | [a shape named but not yet built] | — | proposed | — |
+| YYYY-MM-DD | [a shape named but not yet built] | `tests/lint/bar.sh` <!-- placeholder --> | proposed | — |
+```
 
--->
+⚠️ Put the marker **immediately after the path, in that path's own cell** — it covers the nearest path *before* it, so a later cell holding a path would capture it instead.

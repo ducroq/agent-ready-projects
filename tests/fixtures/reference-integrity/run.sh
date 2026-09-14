@@ -67,6 +67,40 @@ declare -a CASES=(
   "T12 stale placeholder marker on a resolving path|STALE PLACEHOLDER MARKER (resolves at rung 1"
   "T13 stale angle-bracket marker on a resolving path|PLACEHOLDER SHAPE THAT RESOLVES (resolves at rung 1"
   "T14 placeholder marker covering no path|COVERS NO PATH"
+  # #174 — a NEGATIVE CONTROL on a marker shape this checker does not
+  # implement. `review-changes` Step 3.1 prescribed a leading U+2298 for a
+  # whole release; refcheck.py has zero occurrences of the character, so the
+  # rows carrying it were standing false findings and their author believed
+  # them suppressed. The remedy chosen was to change the PRESCRIPTION to the
+  # marker that works, not to teach the checker a second glyph (#177: "a
+  # third form to get wrong"). ⚠️ **The mutants for T46 and T47 are RUN BY
+  # HAND, not committed** — nothing in this harness can reach a main-fixture
+  # CASES row (see the N32 block below, which says the same of itself). Two
+  # were run: teaching PLACEHOLDER_RE the glyph turns T46 red, and moving
+  # T47's marker into the correct cell turns T47 red.
+  # ⚠️ A first draft seeded the glyph in the LEADING position and claimed it
+  # caught "anyone who implements the glyph". MEASURED FALSE: adding the
+  # glyph to PLACEHOLDER_RE left T46 GREEN, because the shipped marker is
+  # BACKWARD-scoping and a leading glyph covers nothing either way; an
+  # unrelated row went red with a wrong diagnosis instead. The glyph now
+  # sits where the working marker sits, and that ablation turns T46 red.
+  "T46 a U+2298 in the marker position is not a marker and confers nothing|src/checks/never_built.sh"
+  # #174 — the marker INSIDE a table cell. The skills now prescribe that
+  # placement, and NOTHING seeded it: the fixture had 23 markers and zero on a
+  # table row. A draft of the changelog claimed "14 of them inside table rows"
+  # by grepping the RUNNER and counting this file's own `name|needle`
+  # delimiters — wrong instrument and wrong population in one number.
+  # T47 is the placement the prescription warns against: a marker parked at the
+  # END of a row covers the nearest path BEFORE it, so it lands on the row's
+  # last path and the path the author meant to excuse stays a finding. ⚠️ The
+  # first draft of this case asserted the wrong consequence — it expected a
+  # STALE PLACEHOLDER MARKER on the accused path. MEASURED instead: the accused
+  # path resolves at rung 2, where a marked path SKIPS the local rung (A11), so
+  # the marker is silently consumed and NOTHING reports the misplacement. That
+  # is worse than the drafted story, not better: the author sees one unexplained
+  # finding and no hint that their marker landed elsewhere. Needle is the
+  # intended path, which no other document references.
+  "T47 a marker at the end of a row does not excuse the path in an earlier cell|src/checks/cell_unmarked.sh"
   # #102 — the remedy a rung-4 finding prints must work when followed. T28 is
   # the shape an author writes when the remedy says only "qualify it instead":
   # the repo name sits inside the path, and bullet 5 forbids a reference from
@@ -117,6 +151,9 @@ declare -a NEG=(
   "N10 angle-bracket path, second form|filters/<name>/<version>/config.yaml"
   "N11 live path after a marker is not a stale marker|src/utils/redaction.py"
   "N12 leading angle bracket is extracted, not invisible|<root>/memory/MEMORY.md"
+  # #174 — the PRESCRIBED placement: marker immediately after the path, inside
+  # the same table cell. The positive control T47 is its twin.
+  "N42 marker inside a table cell, immediately after the path|src/checks/cell_marked.sh"
   # The other half of #102, and the row that makes the corrected remedy a
   # measurement rather than a claim: qualified path AND the repo named in the
   # prose around it must RESOLVE. If this starts reporting, the remedy the step
