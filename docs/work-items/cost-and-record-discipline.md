@@ -10,6 +10,23 @@ Goal: make the framework cheaper to run without cutting the review of the shippe
 
 ## Session plan — TOKEN REDUCTION ONLY (maintainer directive, 2026-09-14)
 
+✅ **`CLAUDE.md` is DONE — all three blocks, 2026-09-14** (`856fe66`, `32a86e9`, `6688972`).
+Hard Constraints 10,468 → 7,386, Architecture 8,052 → 4,591, Before You Start 7,201 → 5,384,
+whole file 36,270 → 27,364 chars / 28,393 bytes — **which clears the 35,000-byte soft flag in
+`templates/audit-context.md` Step 1 for the first time.** Every expectation in the table below
+was beaten or met except Before You Start (expected ~3k, landed 5,384: the rows that stayed
+long are routing a session cannot skip — "picking up where we left off" and the lint/CI row).
+The remaining target is `memory/MEMORY.md` (~42,700).
+
+⭐ **The finding, and it changes the method**: *every duplicate deleted had rotted, and twice the
+copy being deleted held the RIGHT answer.* `CLAUDE.md` said rule 11's block was broken for nine
+consecutive tags; `tests/lint/README.md`, the catalog that owns the rule, said eight. Deleting
+the duplicate would have deleted the correction and kept the error — it was written back into
+the catalog first. **Add to the method: before deleting a duplicate, diff it against the
+authority and write back whichever is right.** Same shape as the 38/35-vs-40/37 rot on
+2026-09-13, one step further: there the duplicate was wrong, here it was right.
+
+
 ⛔ **The next session does this and nothing else.** No issues, no release, no battery. The
 maintainer exhausts a budget in a few hours and asked whether the framework earns its keep.
 
@@ -45,7 +62,20 @@ before/after measurement, so a regression is attributable.
 
 ## Current Status
 
-**Savepoint 2026-09-12, second block.** v1.41.0 is tagged and pushed. A later `/update-drift` + `/audit-context` pass committed `76d6581` (**not pushed, no release**) and filed #170-#174.
+**Savepoint 2026-09-14, token-reduction block.** `CLAUDE.md` reduction complete (three commits
+above, unpushed, no release). Nothing else was touched: no issues picked up, no battery run, per
+the directive. `bash tests/lint/run.sh` green after each commit; `CLAUDE.md`'s one verify probe
+accounted for by name before and after each and re-run green. One collateral fix outside
+`CLAUDE.md`: `tests/lint/README.md`'s rule-11 span corrected from eight releases to nine
+(v1.31.0–v1.36.1, bounded — v1.30.0 and v1.37.0 both parse) before the duplicate carrying the
+right answer was deleted.
+
+**Next action**: `memory/MEMORY.md`, per the table below — Current State's 2026-09-07..14 blocks
+to a topic file once they stop being current, and the Topic Files "key insight" column back to a
+routing hint. Then the cheap unmeasured item: whether the `docs/**` → LOW re-tiering reduces
+spend or only moves it.
+
+**Previous savepoint — 2026-09-12, second block.** v1.41.0 is tagged and pushed. A later `/update-drift` + `/audit-context` pass committed `76d6581` (**not pushed, no release**) and filed #170-#174.
 
 **Last action**: swept v1.40.0 re-scoping residue; replaced lint rule 1's hardcoded never-exempt list with derivation from `.gitignore` negations (fixture T14 + ablation A13 seed the rot case a literal cannot pass).
 
