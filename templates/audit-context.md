@@ -159,7 +159,19 @@ Check what's tracked vs untracked:
 - User-specific data (tool auto-memory, personal notes, local credentials) should be gitignored
 - Flag any mismatches
 
-## Step 8 — Report
+## Step 8 — Retirement: what has each check ever caught?
+
+**Run this every audit, and record the answer.** For each step above, and for each sub-step of the project's other recurring skills, name what it has caught **in this project** since the last audit. A step with no catch this audit is not yet a problem; a step with **no catch in its whole recorded history** is.
+
+- **A check whose only appearances in the record are its own false positives is not an immature check. It is a check with no subject.** The tell is available on day one and costs one grep. Measured here: one framework check accumulated six false-positive classes over as many releases, each fixed with a new rung and a comment, and had caught nothing in its entire life. Every individual fix was correct; nobody asked the aggregate question.
+- **Before retiring, find out whether the class is covered elsewhere.** If it is, say by what, and whether the cadence changes — a per-session check replaced by a monthly one is still a loss, just a smaller one than it looks. If it is not covered, retiring leaves the class unchecked, and that has to be the explicit decision rather than a side effect.
+- **Retire by deleting, not by moving.** Relocating the prose to a rationale file removes the reading cost and keeps the work. Both are worth removing.
+- **Leave a tombstone that says what would justify bringing it back**: *retired on <date>, never caught anything, do not re-add without a catch to point at*. Without it the check returns on the next session that thinks of the idea fresh.
+- ⚠️ **A check that has never fired may be preventing what it checks for rather than being useless, and the record cannot tell you which.** Say which retirements rest on that ambiguity instead of deciding it silently. A check with no plausible prevention story — one that prescribes nothing an author would otherwise do — does not have this defence.
+
+**Then make the next audit able to answer this.** When any step finds something, record the finding *and the step that found it*. Attribution is what makes retirement decidable later; without it an audit cannot tell a check that works from one that has never had a subject, and the default becomes keeping everything.
+
+## Step 9 — Report
 
 Open with the **verdict** — *defects*, *clean*, or *coverage incomplete*, Step 4's three outcomes — on a line of its own, above everything else. A reader who takes only the first line must not be able to mistake an undecided run for a clean one.
 

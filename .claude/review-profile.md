@@ -49,7 +49,7 @@ Check it in this direction: read each entry below, then find its tier above.
 
 - `templates/work-item.md`: five-section structure, no frontmatter, no lifecycle state machine
 - `templates/curate.md`: Steps 0-6 in order, work-item savepoint updates in Step 3
-- `templates/audit-context.md`: Steps 1-8 in order, work-item reachability in Step 5,
+- `templates/audit-context.md`: Steps 1-9 in order, work-item reachability in Step 5,
   framework-version drift in Step 6
 - `templates/review-profile.md`: the profile format the skill reads; a change here invalidates
   every adopter profile written against the old shape

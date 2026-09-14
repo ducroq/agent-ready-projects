@@ -3,7 +3,7 @@
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and every raise is
 # recorded below, oldest first — notes accumulate and are never replaced.
-# BUDGET 241258
+# BUDGET 243496
 # SPILL 52919
 # RAISED 2026-09-06 from 247526 to 247969: #133: the #118 remedy string shipped unconditional and can turn a resolved reference into an AMBIGUOUS finding; the caveat that scopes it is +443 b on templates/audit-context.md, seeded as T39/T40/N39 (reason restored 2026-09-06 — write_baseline used to overwrite each note with the next)
 # RAISED 2026-09-06 from 247969 to 248237: #140: UNRESOLVED had two causes printing one reason. +268 b on templates/audit-context.md, seeded as T41/T41b/N40 (reason restored 2026-09-06)
@@ -47,8 +47,9 @@
 # ratcheted down 2026-09-14
 # ratcheted down 2026-09-14
 # RAISED 2026-09-14 from 239682 to 241258: v1.45.0 blocker fixes. The retirement pass left four dangling promises an adversarial lens found: Step 5 skipped itself on a condition the retirement invalidated, taking path checking inside curate from twice per run to zero; Step 6 demanded a disposition for the retired entity pass; the 300k fallback named the deleted extractor; and templates/gotcha-log.md still promised a 14-day flag that no longer fires. Fixing all four costs bytes and each fix is load-bearing. Net across the release is still -21,828 on curate.md alone.
+# RAISED 2026-09-14 from 241258 to 243496: v1.45.0: audit-context gains Step 8, retirement. The one mechanism this framework has never had — every instrument it added to control growth was itself additive, which is how templates/curate.md reached 75KB with four checks that had never caught anything. Monthly, not per-session, so the cost is amortised; and it is the only step here that can make the surface smaller. Paid for many times over by the 21,828 bytes it justified removing from curate.md in this same release.
 templates/adr.md	2115
-templates/audit-context.md	20038
+templates/audit-context.md	22276
 templates/checklists/architect-checklist.md	1263
 templates/checklists/implement-checklist.md	1329
 templates/checklists/qa-checklist.md	1836
