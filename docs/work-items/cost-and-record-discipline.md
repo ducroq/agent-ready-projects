@@ -34,15 +34,33 @@ nothing. Growing such a section past its prescribed size is the same defect as d
 
 ## Current Status
 
-**Savepoint 2026-09-14.** Token reduction complete for both halves (unpushed, no release).
-Review depth cut separately on the maintainer's decision: round cap of two with a
-same-defect-in-a-second-file exception, `CLAUDE.md` to LOW, `narrow-fork` retired. The skill's
-own warning that a cap ships introduced defects was kept, not deleted to afford the budget.
+**Savepoint 2026-09-14, end of session. v1.44.0 released** — tagged, pushed, verified on the
+remote, globals refreshed after the push.
 
-Filed #191 — Alibaba open-code-review / AACR-Bench, evaluated and parked; nothing started.
+**Shipped**: review depth cut on the maintainer's decision — round cap of two with a
+same-defect-a-second-time exception, `CLAUDE.md` to LOW, `narrow-fork` retired. The skill's own
+warning that a cap ships introduced defects was kept, not deleted to afford it. Token reduction on
+`CLAUDE.md` and `memory/MEMORY.md` is done and no further cut is scheduled.
 
-**Next**: the one cheap unmeasured item — whether the `docs/**` → LOW re-tiering reduces spend or
-only moves it. One release will say.
+⚠️ **Two things this session got wrong and a single lens caught, both worth carrying:**
+- *The rule's justification argued against the rule.* "Cost per acted finding is flat across
+  rounds" was correctly computed over the wrong population. Within one target it rises steeply —
+  the opposite reading, and the one that supports the cap.
+- *Paying for a new rule by trimming prose nearby produced three defects.* A ratchet is a prompt
+  to justify a cost, not an instruction to find the bytes next door.
+
+**Open, in priority order:**
+1. **The one measurement this item still owes**: whether the `docs/**` and `CLAUDE.md` → LOW
+   re-tiering plus the round cap actually reduce spend, or only move it. ⚠️ **The cap removes the
+   instrument** — `missed` is classified when the next round reports, and a capped run has no next
+   round. Rows produced under the cap can never be classified, so this has to be measured on
+   *total spend per release*, not on the ledger's recall columns.
+2. **#192** — ship H-015 to `templates/` (resolved CONFIRMED at 10 of 10; the promotion is the
+   remaining work, not more evidence).
+3. **#184** — no check exists for the install-source class that took three rounds to stop finding.
+4. **#193** — ten inert project-local `review-changes` copies across the estate; diff before
+   deleting.
+5. **#191** — AACR-Bench as external corroboration for `review-bench`; parked.
 
 **Previous savepoint — 2026-09-12, second block.** v1.41.0 is tagged and pushed. A later `/update-drift` + `/audit-context` pass committed `76d6581` (**not pushed, no release**) and filed #170-#174.
 
