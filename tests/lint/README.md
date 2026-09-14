@@ -113,7 +113,7 @@ The fixture inherits #77's blind spot by construction — it cannot substitute a
 
 ## Rule 11 and its fixture
 
-`block-parses.sh` runs `bash -n` over every fenced ```` ```bash ```` / ```` ```sh ```` block on an adopter-facing surface. It exists because `templates/review-changes.md`'s Step 1.5 block was a **shell syntax error for eight releases** (#105) — an ASCII apostrophe inside a single-quoted awk program.
+`block-parses.sh` runs `bash -n` over every fenced ```` ```bash ```` / ```` ```sh ```` block on an adopter-facing surface. It exists because `templates/review-changes.md`'s Step 1.5 block was a **shell syntax error for nine consecutive tags** — v1.31.0 through v1.36.1 (#105) — an ASCII apostrophe inside a single-quoted awk program. ⚠️ **This said *eight* until 2026-09-14, undercounting the v1.34.x point releases.** The span is bounded by measurement, not inference: v1.30.0 and v1.37.0 both parse.
 
 **Why nothing else caught it**, which is the argument for the rule:
 
