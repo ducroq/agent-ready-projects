@@ -3,7 +3,7 @@
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and every raise is
 # recorded below, oldest first — notes accumulate and are never replaced.
-# BUDGET 251034
+# BUDGET 239682
 # SPILL 52010
 # RAISED 2026-09-06 from 247526 to 247969: #133: the #118 remedy string shipped unconditional and can turn a resolved reference into an AMBIGUOUS finding; the caveat that scopes it is +443 b on templates/audit-context.md, seeded as T39/T40/N39 (reason restored 2026-09-06 — write_baseline used to overwrite each note with the next)
 # RAISED 2026-09-06 from 247969 to 248237: #140: UNRESOLVED had two causes printing one reason. +268 b on templates/audit-context.md, seeded as T41/T41b/N40 (reason restored 2026-09-06)
@@ -45,6 +45,7 @@
 # ratcheted down 2026-09-14
 # RAISED 2026-09-14 from 260104 to 261510: v1.44.0 round cap. The first draft paid for the new rule by trimming prose in the same section; an adversarial lens found three of those trims were defects — one reversed a measurement's meaning, one dropped a guard against a known misreading, one left a dangling antecedent. Restored, plus a false 'flat cost across rounds' claim corrected to the per-target rise the ledger actually shows. Trimming load-bearing prose to stay under a ratchet is not a trade this file should make again.
 # ratcheted down 2026-09-14
+# ratcheted down 2026-09-14
 templates/adr.md	2115
 templates/audit-context.md	20038
 templates/checklists/architect-checklist.md	1263
@@ -53,7 +54,7 @@ templates/checklists/qa-checklist.md	1836
 templates/checklists/README.md	1097
 templates/checklists/test-checklist.md	1234
 templates/coordination.md	3909
-templates/curate.md	65058
+templates/curate.md	53706
 templates/gotcha-log.md	8517
 templates/hypothesis-log.md	3570
 templates/memory-index.md	3396

@@ -43,144 +43,9 @@ Check for context rot from *previous* sessions. This catches what the session-fo
 
 **Read metadata, not documents.** Measured across 2,264 real sessions, an ordinary session reads a **median of 3** memory files — the layer works as designed. This step is the exception that reads everything, and it does not need to. A gotcha log's headers are ~6–7% of the file and carry most of what Step 0.3, Step 1 and Step 2 use; a verify probe is *run*, not read; staleness is `stat`, not content. Where a large artifact is involved, take its index first and fetch a body only when you are going to act on it. In one measured repo this is the difference between ~1,000,000 characters and ~35,000.
 
-1. **Dead references**: run the extractor below over the memory index and project file. **Do not improvise one.** A rule stated in prose and left to the model is re-derived per run, and re-derived wrong: one adopter run produced 25 `MISSING:` lines of which essentially all were false — bare basenames that exist one directory down, systemd *unit names*, paths on other machines, a file in a sibling repo. Every run reports something, so nothing looks broken, and the honest summary was "this produced noise, not findings" (#51). **Classify, do not flag**, and print the reconciliation line: `0 dead` and `0 dead / 14 unresolvable / 3 skipped / 61 resolved` are different results. **Four counts** — the example here carried three for four releases while the paragraph after the extractor said *report all four, always* and the code printed four.
+1. **RETIRED — dead references, stale-memory mtime, and ground-truth drift.** All three were audited against this framework's whole record in v1.45.0 and **none had ever caught anything**. The dead-reference extractor's entire record was its own defects — six false-positive classes, four more found while fixing those, `process.env` and absence-assertions both reported DEAD. ⚠️ **The class is still checked**, by `audit-context` Step 4, which is adopter-facing and measured against a fixture with seeded true positives; what was removed is the second, unmeasured checker. The mtime check measured file age, which is not staleness. Ground-truth drift had never had a table to examine. **Do not re-add any of them without a catch to point at.**
 
-```bash
-python3 - memory/MEMORY.md CLAUDE.md <<'PY'
-import os, re, subprocess, sys
-from pathlib import Path
-EXT = r'md|py|sh|js|ts|tsx|jsx|json|yaml|yml|toml|ini|cfg|conf|txt|sql|rs|go|rb|java|c|h|cpp|css|html|env|lock|tsv|csv'
-UNIT = re.compile(r'\.(service|timer|socket|mount|path|target)$')
-# Absence assertions (#142): a sentence claiming a file is GONE is not a dead
-# reference. THREE spellings, and each marker is scoped to its own SPAN, never
-# to the line — a line routinely retires one path and names its replacement.
-ABSENT = [re.compile(r'(?:!\s*test|test\s+!|\[\s*!)\s+-[a-z]+\s+\S+'),
-          re.compile(r'\*\*Deleted\*\*:\s*`[^`\n]+`'),
-          re.compile(r'~~[^~\n]+~~')]
-PATH = re.compile(r'`([^`\s]+\.(?:' + EXT + r'))`')
-# ⚠️ `.resolve()` is load-bearing: without it every `../` fragment reads as
-# inside the tree. Absolute on both sides or neither.
-root = Path(subprocess.run(['git','rev-parse','--show-toplevel'], capture_output=True,
-                           text=True).stdout.strip() or '.').resolve()
-# ⚠️ Walk with a denylist. NOT rglob (indexes node_modules/ and resolves a dead
-# reference against it) and NOT git ls-files (a real file in a gitignored dir
-# reads DEAD). A LIST per basename, not one winner — two answers is a COLLISION.
-DENY = {'.git', 'node_modules', '.venv', 'venv', 'vendor', '__pycache__',
-        '.mypy_cache', '.pytest_cache', 'dist', 'build', '.tox'}
-tree = {}
-def _walk(d):
-    for c in d.iterdir():
-        if c.name in DENY: continue
-        if c.is_dir(): _walk(c)
-        elif c.is_file(): tree.setdefault(c.name, []).append(str(c.relative_to(root)))
-_walk(root)
-here = {p.name for p in root.iterdir() if p.is_dir()}
-dead, unver, skip, ok = [], [], [], 0
-for doc in sys.argv[1:]:
-    d = root / doc
-    if not d.is_file():
-        print(f'CANNOT VERIFY: {doc} is not readable'); continue
-    text = d.read_text(errors='replace')
-    gone = [m.span() for r in ABSENT for m in r.finditer(text)]
-    occ = {}
-    for m in PATH.finditer(text):
-        o = occ.setdefault(m.group(1), [0, 0])
-        o[0] += 1
-        o[1] += any(a <= m.start() and m.end() <= b for a, b in gone)
-    for frag in dict.fromkeys(PATH.findall(text)):
-        # Skipped only where EVERY occurrence sits inside an absence assertion.
-        if occ[frag][0] == occ[frag][1]:
-            skip.append((doc, frag, 'asserted ABSENT — the absence is the claim')); continue
-        # Strip one leading `@` only as a fallback: `lstrip` is a character set
-        # and ate the `@` of scoped npm paths, printing text the doc never held.
-        cand0 = frag[1:] if frag.startswith('@') else frag
-        # ⚠️ A SHAPE is CHECKED before it is quarantined — `[slug]` is a literal
-        # directory in Next.js and `<slug>.md` is legal on ext4. Brace members
-        # are deliberately not expanded (#121).
-        if any(c in frag for c in '<*{['):
-            if (root / frag).is_file() or (d.parent / frag).is_file(): ok += 1; continue
-            skip.append((doc, frag, 'placeholder, glob, brace or bracket shape, not a literal path')); continue
-        # ⚠️ THIS RUNG MUST PRECEDE THE CROSS-REPO RUNG. A POSIX absolute path's
-        # first segment is '', never a top-level dir here, so that rung took it
-        # first and printed a false DEAD. `os.path.expanduser`, not
-        # `Path.expanduser()`, which raises on a `~user` with no home. No
-        # directory-on-disk gate here, unlike the doc-relative arm below: an
-        # absolute path is a claim about *a* filesystem, maybe not this one.
-        if frag.startswith(('/', '~')) or re.match(r'[A-Za-z]:[\\/]|\\\\', frag):
-            ap = Path(os.path.expanduser(frag))
-            if ap.is_absolute(): ap = ap.resolve()
-            if ap.is_file(): ok += 1
-            elif ap.is_dir(): unver.append((doc, frag, 'names a directory, not a file'))
-            elif root in ap.parents:
-                dead.append((doc, frag, 'absolute path inside this repo, and it resolves nowhere'))
-            else: unver.append((doc, frag, 'path on another host'))
-            continue
-        # `./` and `../` are DOC-RELATIVE, lexical, and resolved against ONE
-        # base — the document's own directory, never the repo root as well.
-        # Outside the tree, a directory ON DISK decides; nothing on disk falls
-        # through to CANNOT VERIFY rather than to a false DEAD.
-        if frag.split('/')[0] in ('.', '..'):
-            rp = Path(os.path.normpath(d.parent / frag))
-            if rp.is_file(): ok += 1; continue
-            if rp.is_dir(): unver.append((doc, frag, 'names a directory, not a file')); continue
-            if root in rp.parents:
-                dead.append((doc, frag, 'doc-relative and resolves nowhere')); continue
-            if rp.parent.is_dir():
-                dead.append((doc, frag, 'relative path outside the tree, and the directory it names IS on disk'))
-            else:
-                unver.append((doc, frag, 'relative path outside the tree — nothing on disk to decide it'))
-            continue
-        # CROSS-REPO. The FRAGMENT qualifies itself, so no prose is parsed —
-        # this is not the rung-4 gate #93 rejected. A sibling ON DISK decides
-        # it; without one the verdict is withheld, never invented. Residual: a
-        # SPARSE checkout can make a present file read as confirmed dead.
-        if '/' in frag and frag.split('/')[0] not in here:
-            sib = root.parent / frag.split('/')[0]
-            if sib.is_dir():
-                if (root.parent / frag).is_file(): ok += 1
-                else: dead.append((doc, frag, f'absent in the sibling {sib.name}, which IS on disk'))
-                continue
-            unver.append((doc, frag, 'cross-repo or removed top-level dir — no sibling on disk to decide it')); continue
-        if UNIT.search(frag) and '/' not in frag:
-            skip.append((doc, frag, 'unit name, not a path')); continue
-        # An unqualified directive value (`ExecStartPre=wait_for_edh.sh`) has no
-        # first segment for the cross-repo rung to key on, and reached DEAD (#141).
-        if '=' in frag and '/' not in frag:
-            skip.append((doc, frag, 'directive value, not a path')); continue
-        # FILENAME-shaped, not extension-shaped: `env` in EXT captures
-        # `process.env`. Keep such a token only if it still looks like a path.
-        if frag.rsplit('.', 1)[-1] in ('env', 'lock') and '/' not in frag and not frag.startswith('.'):
-            skip.append((doc, frag, 'filename-shaped token, not a path')); continue
-        # As written, doc-relative, then the two directories this method uses,
-        # then the basename anywhere — a bare `gotcha-log.md` means
-        # `memory/gotcha-log.md`, and calling it missing is the commonest FP.
-        cands = [b/c for c in dict.fromkeys((frag, cand0))
-                 for b in (root, d.parent, root/'memory', root/'docs')]
-        if any(c.is_file() for c in cands):
-            ok += 1
-        else:
-            hits = tree.get(Path(cand0).name, [])
-            if len(hits) > 1:
-                unver.append((doc, frag, f'ambiguous: {len(hits)} files match ' + ', '.join(hits[:3])))
-            elif hits and Path(cand0).name == cand0: ok += 1
-            elif hits: unver.append((doc, frag, f'basename only: {hits[0]}'))
-            else: dead.append((doc, frag, 'resolves nowhere'))
-for label, rows in (('DEAD', dead), ('CANNOT VERIFY', unver), ('SKIPPED', skip)):
-    for doc, frag, why in rows: print(f'{label}: {doc} -> {frag} ({why})')
-print(f'{len(dead)} dead / {len(unver)} unresolvable / {len(skip)} skipped / {ok} resolved')
-PY
-```
-
-⚠️ **A `0 dead` line alone is not a result.** It cannot distinguish a clean index from an extractor that captured nothing — report all four counts, always.
-
-⚠️ **Prose that asserts a file is absent is a convention, not a marker, and the extractor cannot read it.** `! test -f`, `> **Deleted**:` and `~~strikethrough~~` are skipped — span-scoped, so a marker silences a fragment only where *every* occurrence of it sits inside one. But *"no `docs/GUIDE.md` counterpart here"* is an ordinary sentence, and nothing lexical separates it from a live reference; it is reported DEAD, correctly on its face and uselessly, since the absence is the point of the sentence (#142). **The fix is to drop the backticks** — an absent file is not a code reference — or to put the claim in one of the three shapes above. Reach for a convention here rather than a new marker: a marker cannot distinguish a path that is *quoted* from one that is *referenced* (#76).
-
-2. **Stale memory**: Check modification dates of memory files. Flag any not modified in 30+ days — they may be outdated. Read dates from the **filesystem**, e.g. `ls -l --time-style=+%Y-%m-%d memory/` or `stat -c '%y %n' memory/*.md`. **Look for the files before reading their dates, and say which set you read.** Where there is no `memory/` there is no Layer 3, and this project's equivalents are the ones the naming map gives for a tool without auto-memory — `docs/gotcha-log.md`, `docs/hypothesis-log.md`, `docs/work-items/` — plus the project file itself. Both example commands fail the same silent way on a directory that is not there: `stat` and `ls` each write to stderr and print nothing to stdout, which reads exactly like "nothing is stale".
-
-   Do not use `git log -1 --format=%ci -- <file>` as the primary check. When the memory directory is gitignored — the recommended setup, and this framework's own — `git log` returns **empty with exit 0** for every file, so the check reports nothing stale while having examined nothing. Empty `git log` output here means "the check did not run", not "no files are stale".
-
-   If your memory files *are* tracked in git, `git log -1 --format=%ci -- <file>` is the better signal, since it reflects real edits rather than incidental touches (checkouts, formatters, syncs). Verify which case you're in first — and test that the directory exists before asking git about it, or a project with no `memory/` at all takes the "tracked" branch and is told `git log` is fine: `if [ ! -d memory ]; then echo "no memory/ — read the docs/ equivalents and the project file"; elif ! git rev-parse --git-dir >/dev/null 2>&1; then echo "not a git repo — use filesystem mtime"; elif git check-ignore -q memory/; then echo "gitignored — use filesystem mtime"; else echo "tracked — git log is fine"; fi`.
-3. **Lingering gotchas**: Read the gotcha log's **headers plus its Promoted table**, not the log.
+2. **Gotcha log headers**: Read the gotcha log's **headers plus its Promoted table**, not the log.
 
    ```
    grep -nE '^#{2,3} ' <log>                 # entries: date, title, status, line number
@@ -194,9 +59,7 @@ PY
 
    **Match both heading levels, and reconcile the count.** Adopters use `##` and `###` for entries — one measured log uses `##` for 106 of its 200 entries and says so in its own file comment, and a `^### `-only read returned 94, a plausible number that silently omitted half the file including every entry from the last two weeks. If the header count and the `**Problem**` count disagree by more than the section headings, the extractor is wrong; a short answer here is a defect, not a small log. Ignore headings inside `<!-- -->` — a fresh adopter's log still contains the template's own example entry there.
 
-   Flag any unresolved entry older than 14 days: it is either fixed (mark `[RESOLVED]`) or stuck (surface to the user). **The Promoted table is why this needs reading too** — in one measured log 11 entries are recorded resolved in the table and carry no marker in their header, so a header-only pass reports every one of them as lingering on every run, forever. Open a body only for an entry you are about to change.
-4. **Ground truth drift**: If the project file has a "Ground Truth Designations" table, verify each listed file exists and has been modified more recently than the artifacts that defer to it. Flag any where a downstream artifact is newer than its source of truth.
-5. **Unverified state claims**: Scan memory files **and the project file** for state claims ("shipped," "deployed," "live," "running," "working in production") and for counts about this repo that decay silently. The project file is in scope because that is where version lines, adopter counts and occurrence tallies live, and an always-loaded wrong number misleads every session that starts — a count with no probe is a claim, not a fact. Claims carrying a `<!-- verify: ... -->` annotation are run by the runner below. **Do not read the memory files to do this** — the runner extracts and executes the annotations itself, and its report is what you read. Pulling the files into context to find annotations costs the whole corpus to obtain what a grep already returned. A claim with no annotation is **UNVERIFIED** — those decay immediately after the session that wrote them, so suggest adding an annotation or requalifying the claim as a session observation.
+3. **Unverified state claims**: Scan memory files **and the project file** for state claims ("shipped," "deployed," "live," "running," "working in production") and for counts about this repo that decay silently. The project file is in scope because that is where version lines, adopter counts and occurrence tallies live, and an always-loaded wrong number misleads every session that starts — a count with no probe is a claim, not a fact. Claims carrying a `<!-- verify: ... -->` annotation are run by the runner below. **Do not read the memory files to do this** — the runner extracts and executes the annotations itself, and its report is what you read. Pulling the files into context to find annotations costs the whole corpus to obtain what a grep already returned. A claim with no annotation is **UNVERIFIED** — those decay immediately after the session that wrote them, so suggest adding an annotation or requalifying the claim as a session observation.
 
 ⚠️ **An annotation is not automatically a check. Four ways one passes while its claim is false** — each observed, and each invisible in a green run:
 
@@ -458,7 +321,7 @@ PY
    - **Assume nothing about the working directory.** The runner may be invoked from anywhere, and a relative command silently changes meaning when it is — `git ls-remote origin` checked a remote from the project root and, run one directory over, reported ERROR for a healthy claim. Address the target absolutely: `git -C /path/to/repo …`, absolute paths for files.
 
 
-6. **Index self-consistency**: Every check above compares the index to something *outside* it — paths on disk, file mtimes, gotcha ages, ground truth, a verify probe. None asks whether the index agrees with itself, so two entries can assert opposite things indefinitely while each passes every check individually: both paths resolve, both files are fresh, neither is tagged as a state claim.
+4. **Index self-consistency**: Every check above compares the index to something *outside* it — gotcha ages, a verify probe, a hypothesis deadline. None asks whether the index agrees with itself, so two entries can assert opposite things indefinitely while each passes every check individually: both paths resolve, both files are fresh, neither is tagged as a state claim.
 
    This is worse than an ordinary stale entry. A stale entry is wrong; **a self-contradicting index is wrong while also carrying its own correction**, so which version an agent acts on depends on read order rather than on evidence. Where the index is always-loaded — the `@memory/MEMORY.md` import in `templates/memory-index.md` — both versions enter every session's context.
 
@@ -472,17 +335,17 @@ PY
 
      `-o` with `-n` and `sort -u` counts an id **once per line**, so an entry that repeats `#34` four times is not a cluster of one. The optional prefix keeps a qualified id distinct: `adopterrepo#76` and a local `#76` are different trackers and must not be reconciled with each other. Read the surviving entries *together*, not in place. Known false positive: a six-digit hex colour reads as an id — discard it on sight. **An empty result with no index at that path is not a clean index**, which is why the guard prints rather than staying silent.
    - **The idea generalises to any stable identifier — the command does not.** For `ADR-023`, `GH-88` or `PROJ-45`, change the pattern (`[A-Za-z]+-[0-9]+`) and re-check what it matches before trusting the output.
-   - **Then cluster by entity**: a repo, a file path, a component, a host. For each cluster ask one question — can all of these hold at once? Not "is each plausible", which is what reading them in place amounts to. **This half is a pairwise read of the whole index and is not bounded by anything but the index's size**, so it is the half to cut short when the index is large; the identifier pass above is the one that is cheap enough to run every session.
+   - ⚠️ **The entity pass was RETIRED in v1.45.0** — a pairwise read of the whole index, unbounded by anything but the index's size, which had **never found a contradicting pair**, including in the dog-food run that shipped it. The identifier grep above is one command and stays. Do not re-add the pairwise read without a pair to point at.
    - **Distinguish a contradiction from a recorded correction.** An entry that *names* the claim it supersedes and dates it — "this row asserted the opposite until 2026-08-11 and was false" — is correct practice, not a defect; the index is allowed to remember being wrong. A contradiction is two entries each asserting their version *without reference to the other*, so a reader has no way to tell which came second. If you cannot tell, say so and surface both.
    - **Report the contradicting pair verbatim and do not pick a winner from the text.** The more emphatic entry is not the more likely one; in the founding instance the false entry was the emphatic one *and* told the reader not to re-check. Resolve by measuring — whichever claim can be probed, probe it — and if neither can be, surface both to the engineer as an open question rather than deleting one.
    - This is model judgement, not a deterministic check. It is bounded only if the index is small: if it exceeds the ~200 lines `templates/memory-index.md` warns about, or the size budget in sub-step 8, report that as the finding and run the identifier pass alone.
 
-7. **Hypothesis log surface**: If a hypothesis log exists, scan its `## Open` section. **Check both `memory/hypothesis-log.md` and `docs/hypothesis-log.md`** — projects put it in either, so a single-path check silently scans nothing. For each entry:
+5. **Hypothesis log surface**: If a hypothesis log exists, scan its `## Open` section. **Check both `memory/hypothesis-log.md` and `docs/hypothesis-log.md`** — projects put it in either, so a single-path check silently scans nothing. For each entry:
    - **Past `Review by:`**: Flag as **DUE FOR REVIEW** — the deadline has arrived. Surface to the engineer with the entry's Position and Method so they can resolve (move to `## Resolved`) or extend the deadline.
    - **`Revisit trigger:` fired**: If the trigger references an evidence threshold ("once 7 days of cycles complete," "after 14 contiguous eval rows"), check whether that threshold is now met. If yes, flag as **TRIGGERED**. The agent shouldn't resolve the hypothesis — only surface it; resolution requires reading the Method and applying it, which is the engineer's call.
    - **Stale (no movement, no trigger)**: Just count how many open entries exist. If more than ~10, flag as memory-cluttering — entries that never resolve should either be promoted to ADRs or marked `dormant` / closed.
 
-8. **Auto-loaded size budget — the whole set, not the project file alone.** Sum **every file your tool loads without being asked**, and compare the total against the budget. Claude Code warns at 40k chars; the soft target is under 35k to leave headroom.
+6. **Auto-loaded size budget — the whole set, not the project file alone.** Sum **every file your tool loads without being asked**, and compare the total against the budget. Claude Code warns at 40k chars; the soft target is under 35k to leave headroom.
 
    ⚠️ **Measuring one file of a set keeps a repo green while over budget** (#109). Claude Code auto-loads the project file *and* a user-level memory index; an adopter measured 31,613 + 9,941 = **41,554 chars — over the hard cap — while this step read 31,613 and reported "comfortably under the soft target"**. It had been wrong for roughly a fortnight and was caught only because that adopter had recorded the pair by hand in an earlier audit. **List the set before measuring**, and name any file you decided not to count.
 
@@ -566,7 +429,7 @@ Skip if Step 0 already ran a full freshness check. Otherwise, spot-check that pa
 ## Step 6 — Report
 
 Summarize what you changed:
-- **Freshness**: Dead references, stale memory files, lingering gotchas, ground truth drift (from Step 0)
+- **Freshness**: Gotcha log headers reconciled against the `**Problem**` count, and the Promoted table read (from Step 0)
 - **Verification**: State claims checked — N passed, N failed, N unverified, N errored, N manual check needed, N cannot verify, N malformed (from Step 0). Report all seven numbers even when they are zero; a disposition omitted because it was empty is indistinguishable from one that was never checked. Carry the runner's reconciliation line and its exit status through too — **N commands run of M annotations** — and say what the difference was. Seven zeroes and no reconciliation is the shape of a step that did not run
 - **Index self-consistency**: N identifiers cited by more than one *entry*, N contradicting pairs, and whether the entity pass ran or was cut short for size (from Step 0). Report all three. Zero pairs out of zero clusters means the check found nothing to compare, which is not the same as an index that agrees with itself — say which one it was. Quote any pair verbatim and leave it unresolved unless a probe settled it
 - **Gotchas**: New entries added, entries resolved or promoted, and **N promoted patterns re-checked, N recurred** (from Step 2). Report both numbers even when the second is zero — "checked, nothing recurred" and "never checked" are otherwise indistinguishable, which is the failure the Occurrences column exists to prevent. Name any pattern that recurred *after* promotion; that is the signal the promotion did not take
