@@ -2,10 +2,11 @@
 # Lock a reduction in:  bash tests/lint/autoload-ratchet.sh . --update
 # Pay for growth deliberately:  ... --raise "why this must get bigger"
 # Every raise is recorded below, oldest first; notes accumulate, never replace.
-# BYTES 37175
-# LINES 96
+# BYTES 36823
+# LINES 95
 # seeded 2026-09-14
 # ratcheted down 2026-09-14
 # ratcheted down 2026-09-14
+# ratcheted down 2026-09-14
 CLAUDE.md	26384
-memory/MEMORY.md	10791
+memory/MEMORY.md	10439

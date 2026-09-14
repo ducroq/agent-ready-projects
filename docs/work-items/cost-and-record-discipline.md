@@ -34,6 +34,30 @@ nothing. Growing such a section past its prescribed size is the same defect as d
 
 ## Current Status
 
+**SAVEPOINT — end of session 2026-09-14. v1.45.1 released, pushed, globals refreshed, estate migrated.**
+
+**What shipped**: `templates/review-changes.md` −5,760 bytes (−11%) of maintainer provenance, moved
+behind a URL; `templates/review-profile.md` gains a cheaper-HIGH note as an **option** with its
+counter-evidence. Lint rules 14–17 added (Step 1.5 over the tree, the auto-loaded ratchet, and the
+first two Mechanized rows ever to reach `live`). Three declared-exemption mechanisms now validate or
+expire; a fourth attempt was reverted. Auto-loaded set 49,172 → ~37,100 and ratcheted.
+
+**Estate**: ten repos migrated off inert project-local `review-changes` copies — 10 tier tables, 78
+guarantee entries and **5 project lenses** recovered into `.claude/review-profile.md` before any
+deletion. Three also needed a `.gitignore` negation, without which the file the skill refuses to run
+without could not be committed. `--check ~/repos` is clean. #193/#169/#184 closed; #195/#196 filed.
+
+**Next action**: nothing is blocked. Take #195 or #196, or measure item 1 at the next release.
+
+⚠️ **Method notes earned today, all by being caught:**
+- **Lock a ratchet once, after the round** — twice I locked mid-change and then paid review-mandated
+  fixes against a ceiling my own unfinished work had set. The tell is shaving single bytes.
+- **A check written from the instance catches the instance**; only a seeded sibling catches the class.
+- **A marker can be policed only where it asserts something the checker can re-derive** (H-029), and
+  **where it is not policed it must not be honoured** (H-030).
+- **An instrument that cannot distinguish is not evidence** — a 107-file corpus "proving" an awk
+  program unchanged passes an ablated copy identically.
+
 **Savepoint 2026-09-14, final — the pre-release sweep. Items 2-5 of "what's left" closed; 2 and 3
 closed by DECLINING, with the reason.**
 
