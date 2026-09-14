@@ -130,6 +130,26 @@ Every one of these was a number that no longer matched the thing it counted, and
 7. `docs/` ETH figures — 3%/4%/19% correct for v1, superseded by v2, propagated to **7 files**
 8. `docs/the-context-engineering-landscape.md` — every star count stale 2–3×, 4 dead links, 3 invented author names
 
+## Backlog triage — 50 open, batched by surface (2026-09-14)
+
+**Goal: clear the tracker over several sessions.** Batching is by *surface*, because one review round covers a whole batch — that is the only real lever on cost here. Work largest-first; the big clusters have the most internal merging.
+
+⚠️ **Read the cluster's issues before starting one.** #181 was re-derived from this file's Open Questions and analysed twice, because the session read the work item and never checked the tracker. That is the first move of every batch session, not an optional one.
+
+| cluster | issues | n | notes |
+|---|---|---|---|
+| **refcheck / audit-context Step 4** | 76, 117, 122, 141, 154, 155, 165, 175, 176, 177 | 10 | Start here. #176 merges into #165; #177 partly into #154. #175 is the cheapest item open. ⚠️ `refcheck.py` is an ORACLE — a fix landing only there is the #92 trap, so every one needs `templates/audit-context.md` to move too |
+| **review-changes / Step 1.5** | 126, 145, 150, 153, 158, 159, 163, 164, 166 | 9 | #158/#159 are both emphasis-guard precision. #150 part 2 is REVERTED by decision — do not re-open on the repro alone (H-026) |
+| **curate + the record's shape** | 114, 152, 178, 179, 180, 182, 183 | 7 | #178/#179/#180 are Cluster B below and share a destination decision. #180 is settled to ONE surviving claim — read the issue before re-litigating |
+| **update-drift** | 134, 135, 136, 137, 147, 148, 156 | 7 | Self-contained; the skill is user-global so adopter action is one reinstall |
+| **fixtures / lint / ablations** | 113, 138, 157, 160, 161 | 5 | #138 and #161 are the same shape: an ablation whose green result is indistinguishable from a real one. Fix together |
+| **the record itself (meta)** | 111, 123, 146, 162, 167, 168 | 6 | Mostly maintainer-local. #168 is work-item Step 4 |
+| **estate / infra** | 128, 132, 143, 169, 171, 184 | 6 | #171 rides v1.42.0 automatically. #169 is a cleanup script run, not a code change. **#184 is the batch that just shipped and stays open: six instances fixed, the CHECK not written** |
+
+**Not on this list and still open: 25 hypotheses, one past its review date.** `/curate` Step 0 sub-step 7 reviews those; they are not tracker items and should not become any.
+
+⛔ **The release does not depend on any of this.** v1.42.0 ships #172/#173/#174/#181 and carries #171's stamp fix. Holding it until the tracker empties leaves adopters being told to install skills in a way that silently does not work.
+
 ## Decisions
 
 - 🔴 **[2026-09-13] OUR OWN POPULATION UNDER v2 STRICT: 6 of 12 symptom — so "the convention problem is total" does NOT generalise.** Population: the 12 `###` headings carrying `[xN` in `memory/gotcha-log.md` (`grep -nE '^### .*\[x[0-9]'`). ⚠️ **Not a blind classification** — I had already read their four verdicts. Declared, not hidden.
