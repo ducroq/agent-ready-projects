@@ -19,6 +19,40 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.46.0 (candidate, unreleased)
+
+**PATCH-or-MINOR, maintainer's call — documentation only on the adopter surface.** No behaviour
+changes and no adopter has to act; the v1.10.1 precedent sends documentation-only changes to PATCH,
+and the only argument for MINOR is that the note introduces a configuration an adopter may adopt.
+
+### `templates/review-profile.md` — a cheaper HIGH, offered as an option and explicitly not as a default
+
+This repo cut its own HIGH tier to one adversarial lens plus two conditional ones and saw review
+spend fall sharply. **The first draft of this change made that the adopter default. A review round
+refuted it**, and the note that shipped instead says so:
+
+- **It inverts the ladder.** MEDIUM is two lenses; HIGH-at-one-lens is fewer, so the skill's own
+  instruction to escalate shipped content from MEDIUM to HIGH would *lower* its depth, and the
+  always-full-depth carve-outs would resolve at HIGH to what a changelog edit gets.
+- **Two lenses are HIGH-gated and a one-lens HIGH row retires them silently** —
+  guarantee-preservation and shell-correctness. The draft dropped shell-correctness without saying
+  so, in the release whose subject is what review depth buys, and the skill says elsewhere that
+  losing it "is the reason those paths are HIGH at all".
+- **The evidence cannot support a default.** n=2, same author, same day, same reviewer model — and
+  the recall of both runs is unmeasurable by construction, because the round cap that shipped
+  alongside means no second round will ever classify what they missed.
+
+The measurements, the confounds (the "~840k before" figure is not re-derivable, and ~17% of the
+drop belongs to the round cap) and the counter-evidence are in `docs/rationale/review-changes.md`
+rather than inlined, so they cannot rot inside an adopter's copy.
+
+### `.claude/review-profile.md` — this repo's own profile, corrected in the same round
+
+Shell-correctness restored to the HIGH row, conditional on a shell file changing. A run budget
+added, stated as one **round** and not one **run**: the first draft said "one lens-run ≤120k" and
+contradicted the HIGH row three sections above it, which mandates a second lens on a guarantee
+surface — two runs, ~220k, against a budget in the same file.
+
 ## v1.45.0 (2026-09-14)
 
 **Pruning.** The framework had an accumulation layer and no retirement mechanism — every

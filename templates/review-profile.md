@@ -28,6 +28,33 @@ in your repo.
 `**` crosses directory levels; a leading `/` anchors to the repo root. **The most specific
 matching pattern wins.** Where no pattern is more specific than another, take the highest tier.
 
+### Consider a cheaper HIGH — an option, not the default
+
+The framework's own repo runs HIGH as **one adversarial lens plus two conditional ones**
+(guarantee-preservation when the diff touches a declared guarantee surface, shell-correctness when
+it changes a shell file) and measured a large drop in review spend. **It is an option, not a default: the evidence
+does not support moving yours**, and the measurements are at
+<https://github.com/ducroq/agent-ready-projects/blob/master/docs/rationale/review-changes.md> <!-- lint-skip: maintainer-path — a URL, not a repo-relative path: it resolves for a reader with no such directory. -->
+rather than inlined here.
+
+If you take it, three things are not optional:
+
+- **Keep both conditional lenses.** Each is HIGH-gated in the skill, so a HIGH row naming neither
+  retires them silently. Losing shell-correctness "is the reason those paths are HIGH at all", and a
+  guarantee that can never fire renders as a clean pass. Both are conditional, so neither costs
+  anything on a diff that does not trigger it.
+- **Re-tier MEDIUM in the same edit, or you invert your own ladder.** MEDIUM is two lenses. A HIGH
+  path that is neither shell nor a declared guarantee surface would then get *one* — so the skill's
+  instruction to escalate shipped content from MEDIUM to HIGH would *lower* its depth, and the
+  always-full-depth carve-outs would resolve to what a changelog edit gets.
+- **Decide it per tier.** One lens where a defect costs a re-read; the battery where it reaches
+  someone who will not re-run it.
+
+⚠️ **What the framework's own measurement cannot tell you**: its two one-lens runs both found
+blockers, but their *recall* is unmeasured and permanently unmeasurable — the round cap that shipped
+alongside means no second round will ever classify what they missed. Against that, on a four-lens
+round two lenses each found a blocker no other lens found. Treat the saving as measured, the safety as not.
+
 ## Guarantee surfaces
 
 ⚠️ **Every path here must sit in the HIGH row above.** The guarantee lens is HIGH-gated, so a

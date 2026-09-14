@@ -81,7 +81,12 @@ the same guard now prints — grep it by phrase, not by line number: the file gr
 | Step 4 `### Unclassified` slot | **No record of it ever naming a file**, since v1.15.0 (#26) — and the record *cannot* answer, because review reports live in transcripts and are never archived | unattributable; Step 8's last clause failing one level up |
 | Step 5 round cap + budget | Shipped today (v1.44.0, 2026-09-14) — zero days; that is open item 1 | measure at next release |
 
-🔴 **TWO of the four shipped lenses no longer run here** — doc-accuracy and shell-correctness. The
+🔴 **ONE of the four shipped lenses no longer runs here** — doc-accuracy. ⚠️ **This said TWO until
+the adopter-facing cut was reviewed**: shell-correctness had been dropped from the HIGH cell by the
+same omission, here and in the template, and a guarantee lens caught it — it is HIGH-gated exactly
+like the guarantee lens, the skill says losing it "is the reason those paths are HIGH at all", and
+ledger row 56 has it finding a round's blocker no other lens reached. Restored in both, conditional
+on a shell file changing, so it costs nothing on a prose diff. The
 guarantee lens is explicitly **not** part of the v1.45.0 cut: the HIGH row runs it whenever a diff
 touches a guarantee surface, and it ran today (ledger row 60). Their catch record cannot grow in
 the only repo that keeps one, so at the next audit their honest entry is *"no catch since

@@ -8,7 +8,7 @@ this repo and never travels.
 
 | Tier | File patterns | Depth |
 |------|-------------|-------|
-| **HIGH** | `templates/**`, `adopt.md`, `/README.md`, `docs/GUIDE.md`, `docs/verification-rationale.md`, `tests/**`, `scripts/**`, `.claude/skills/**`, `.gitignore` | **One adversarial lens, scoped by subject** — plus the guarantee lens whenever the diff touches a guarantee surface below |
+| **HIGH** | `templates/**`, `adopt.md`, `/README.md`, `docs/GUIDE.md`, `docs/verification-rationale.md`, `tests/**`, `scripts/**`, `.claude/skills/**`, `.gitignore` | **One adversarial lens, scoped by subject**, plus the guarantee lens whenever the diff touches a guarantee surface below, and **shell-correctness whenever a shell file or executable changes** |
 | **MEDIUM** | `docs/GUIDE.md`, `templates/checklists/**`, `templates/test-fixtures/**` | Two lenses (adversarial + doc-accuracy) |
 | **LOW** | `CLAUDE.md`, `CHANGELOG.md`, `memory/**`, `docs/work-items/**`, `docs/rationale/**`, `docs/**` | One lens (adversarial) |
 
@@ -23,8 +23,8 @@ of them had silently zeroed a check. **Measured spend went from ~840k tokens per
 
 ⚠️ **What it gives up, stated because the ledger says so plainly**: on a four-lens round, *two* lenses each
 found a blocker no other lens found. One lens will miss that class, and the two runs above cannot show
-otherwise — same author, same day, same reviewer model, and both changes were deletions, which have a
-narrow and predictable blast radius. **This is a cost decision taken on cost, not a finding that breadth
+otherwise — same author, same day, same reviewer model, and both changes were small — one a deletion, one a
+small addition — with a narrow and predictable blast radius. **This is a cost decision taken on cost, not a finding that breadth
 was worthless.** Re-open it if a defect ships that a second lens would plausibly have caught.
 
 🔴 **The guarantee lens is NOT part of this cut, and the reason is mechanical.** Guarantees are HIGH-gated:
@@ -104,7 +104,13 @@ Check it in this direction: read each entry below, then find its tier above.
 
 ## Run budget
 
-**One lens-run per release, ≤120,000 tokens. Record the actual in `memory/review-ledger.tsv`.**
+**One round per release, ≤250,000 tokens total. Record each run in `memory/review-ledger.tsv`.**
+
+⚠️ **A ROUND, not a run** — `templates/review-changes.md` Step 5 defines a round as one pass of the
+lens set, however many lenses it holds. The first draft of this section said "one lens-run ≤120k"
+and immediately contradicted the HIGH row three sections above it, which mandates the guarantee
+lens alongside the adversarial one whenever a guarantee surface is touched: two runs, ~220k, over
+a budget written in the same file. **The budget and the tier table have to use the same unit.**
 
 ⚠️ **The reason is measured and it is not the one you would guess: run cost varies little with
 scope.** Over the **41 cold runs in the ledger carrying a token count** (`narrow-fork` excluded — the

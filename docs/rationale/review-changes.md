@@ -340,3 +340,42 @@ taken, which is what this file is for.
   the discriminator.
 - Broader rules still rejected: counting `**` per line, and balancing across lines. Both fire on
   ordinary bold and on multi-line spans.
+
+## The v1.45.0 HIGH-tier cut — what was measured, and what it does not license (2026-09-14)
+
+`templates/review-profile.md` points here from its *"Consider a cheaper HIGH"* note. This is the
+whole evidence base, including the parts that argue against the change.
+
+**What this repo did.** Dropped its own HIGH tier from a 3–4 lens battery to one adversarial lens
+plus two conditional ones — guarantee-preservation when the diff touches a declared guarantee
+surface, shell-correctness when it changes a shell file.
+
+**The saving, and the two ways the headline figure is soft.** The pre-cut figure quoted as
+"~840k per release" is **not re-derivable from the ledger**: the only grouping that produces it
+averages `#172`+`#173`+`#174` (1,681,403 tokens, all three shipped in v1.42.0) over two releases,
+one of which has no recorded review at all — `grep -c v1.43.0 memory/review-ledger.tsv` returns 0.
+The defensible statement is that the last heavily-reviewed release cost **1.68M**. And roughly
+**17% of the drop belongs to the v1.44.0 round cap, not the lens cut**: `#173`'s rounds 3 and 4
+alone were 250,488 tokens, and the cap removes those regardless of lens count.
+
+**The post-cut figure is per-run, not per-round.** The two one-lens runs cost 86,169 and 127,939
+(mean ~107k). The HIGH row prescribes a second lens whenever a guarantee surface is touched, so the
+commonest HIGH case costs roughly **two runs, ~214k** — a budget set from the 107k figure is one a
+compliant review cannot meet. That mistake shipped in a draft of `.claude/review-profile.md` and
+was caught by review.
+
+**What the measurement cannot tell you, and never will.** Both cited ledger rows carry
+`missed=0`, and both carry the warning that this is **not a measurement**: the round cap shipped in
+the same release means no second round will ever run on those targets, so nothing will ever
+classify what the single lens missed. **The recall of the evidence for this cut is unmeasurable by
+construction.** Against it: on a four-lens round, *two* lenses each found a blocker no other lens
+found — and `CHANGELOG.md` records which two, adversarial and **shell-correctness**, which is why
+shell-correctness is a conditional carve-out rather than a casualty.
+
+**Why it is not the shipped default.** A review round refuted making it one. HIGH at one lens sits
+*below* MEDIUM at two, so the skill's own instruction to escalate shipped content from MEDIUM to
+HIGH would lower its depth, and the always-full-depth carve-outs (`.gitignore`, renames, mode
+changes, any loosening of a check) would resolve at HIGH to exactly what a changelog edit gets.
+Fixing that means re-tiering MEDIUM as well — a larger change with no evidence base of its own.
+**n=2, same author, same day, same reviewer model** is enough to change one repo's own profile
+deliberately; it is not enough to move a default under 28+ adopters who will not re-derive it.
