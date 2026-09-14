@@ -25,19 +25,12 @@ TPL="templates/review-changes.md"
 WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
 FAIL=0
 
-python3 - "$TPL" "$WORK/check.awk" <<'PY' || { echo "EXTRACTION FAILED — the anchors moved"; exit 1; }
-import sys, pathlib
-s = pathlib.Path(sys.argv[1]).read_text()
-a = '  awk -v F="$f" \''
-i = s.index(a); j = s.index("' \"$f\"", i)
-prog = s[i+len(a):j]
-# Loud rather than silent: an extraction that yields a program without the
-# constructs under test is the same failure this fixture exists to catch.
-for needle in ("isdelim", "sub(/\\r$/", "infm"):
-    if needle not in prog:
-        sys.exit("extracted program is missing %r" % needle)
-pathlib.Path(sys.argv[2]).write_text(prog)
-PY
+# Extraction is delegated to tests/lint/extract-step15.py — the single authority,
+# shared with lint rule 14 (tests/lint/step15-corpus.sh). It carries the anchors
+# and the missing-construct guard that used to live inline here; two copies of
+# those anchors would drift silently, which is the class rule 6 exists for.
+python3 tests/lint/extract-step15.py "$TPL" "$WORK/check.awk" ||
+  { echo "EXTRACTION FAILED — see above"; exit 1; }
 
 cd "$WORK" || exit 2
 printf 'a | b\n--- | ---\n1 | 2 | 3\n'                                   > t1_lf_lossy.md
