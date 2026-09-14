@@ -94,8 +94,8 @@ agent-ready-projects/
 │                                 live in each fixture's README.md or its runner's header, never
 │                                 here. Per-fixture case digits are deliberately absent (#93)
 │   ├── lint/                  <- Thirteen deterministic structural rules, no LLM.
-│   │                             ⚠️ tests/lint/README.md is the rule catalog; Key Paths below
-│   │                             names only the five most often reached for
+│   │                             ⚠️ tests/lint/README.md is the rule catalog — what each rule
+│   │                             catches, AND what it cannot see. Nothing here restates it
 │   └── fixtures/              <- Seeded-defect fixtures, one dir per check: a check that finds
 │                                 nothing HERE is failing. tests/run-fixtures.sh enumerates them,
 │                                 so the directory listing is the current list. Two are special:
@@ -127,25 +127,27 @@ Listed here so the architecture diagram above is honest about what an adopter se
 
 ## Key Paths
 
+<!-- Per templates/project-file.md: the 10-15 files an agent most often needs, a few
+     words each. This table had grown into a second annotated catalog of the
+     Architecture tree above and of tests/lint/README.md, and two of its rows had
+     rotted (it said run-fixtures.sh refuses THREE silences; the script says four).
+     Deleted back to its prescribed form 2026-09-14. Each file's own header is the
+     authority on what it does — do not re-annotate here. -->
+
 | Path | What it is |
 |------|-----------|
-| `README.md` | Public-facing guide |
-| `adopt.md` | Three agent-facing prompts |
-| `CHANGELOG.md` | Release notes with maintainer release process at top |
+| `README.md` | Public-facing on-ramp |
+| `adopt.md` | The three agent-facing prompts |
 | `docs/GUIDE.md` | Full reference |
-| `docs/verification-rationale.md` | Three structural principles + decision rules (v1.10.1) |
-| `docs/seeded-defects-and-ablations.md` | **The adopter-facing page for this repo's most-caught-with instruments** (v1.37.0, #130). Seed the failures a check must catch; then break the check and require the fixture to go red. Ships its own limits — recall against seeds is a lower bound, with the external evidence for that. ⚠️ **Linked from `README.md` and `docs/GUIDE.md`, deliberately**: `docs/verification-rationale.md` and `docs/verifying-what-we-write.md` were reachable from nothing, which is the failure #130 is about |
-| `templates/release.md` | Release skill — bump classification, preconditions, changelog entry; stops before tagging |
-| `scripts/install-global-skills.sh` | Installs the user-global skills from tracked `.claude/skills/`, verifies they match, and with a root argument scans an estate for inert project-local copies. Refuses to install when the bytes it would copy are not what the highest release tag reachable from HEAD holds; fixture at `tests/fixtures/installer-release-guard/` |
-| `.claude/skills/`, `.claude/review-profile.md` | The two tracked children of `.claude/`: reference installs (the frontmatter-correct source a global install is derived from), and this repo's own review tiers, which `review-changes` reads and no adopter inherits |
-| `.github/workflows/checks.yml` | CI: `tests/lint/run.sh` + `tests/run-fixtures.sh`, every push and PR (#115). Its own header carries what it does *not* check |
-| `tests/run-fixtures.sh` | Runs every suite under `tests/fixtures/`, enumerated not listed. Refuses three silences: an empty population exits 2, an undeclared fixture dir with no runner FAILS, and one red suite never stops the rest (a digit here rots the next time a suite is added — it said thirteen against fourteen) |
-| `tests/fixtures/clone-lint/` | Sensitivity of lint rules 1–2 **in the environments this repo is not developed in** — a checkout with no `memory/`, and a tree that is not a git work tree at all. |
-| `tests/lint/size-ratchet.sh` | Lint rule 8 — a ratchet on adopter-facing template sizes; baseline in `size-baseline.tsv`. ⚠️ **Measures the smaller of the two costs**: a skill body is prompt-cached, while the *read surface* a run consumes is fresh tokens every time and is 4–25× larger (#46). |
-| `tests/lint/dollar-digit.sh` | Lint rule 9 — a bare `$0`–`$9` in a skill body ships as an argument word (#77). The one class no runtime check here can reach. Safe forms are context-dependent; the fixture measures all five. |
-| `tests/lint/private-names.sh` | Lint rule 12 — a private project name in a tracked file. ⚠️ **The name list is deliberately NOT tracked** (a tracked denylist publishes what it protects), so an absent list is a reported SKIP, never a pass. |
-| `tests/lint/provision-quote.sh` | Lint rule 7 — the #42 class: a file that *provisions* a canonical row must quote it. Rule 6 cannot see it. |
-| `memory/MEMORY.md` | This repo's in-repo memory index (maintainer-local) |
+| `CHANGELOG.md` | Release notes; maintainer release process at top |
+| `templates/` | Everything an adopter installs |
+| `templates/README.md` | Tool-agnostic naming map — authority on install paths |
+| `docs/rationale/` | Why a skill says what it says |
+| `scripts/install-global-skills.sh` | Install, verify, and scan an estate for inert copies |
+| `tests/lint/run.sh` | The thirteen structural rules; catalog in `tests/lint/README.md` |
+| `tests/run-fixtures.sh` | Every sensitivity fixture; its header lists what it refuses to do silently |
+| `.claude/review-profile.md` | This repo's review tiers |
+| `memory/MEMORY.md` | In-repo memory index (maintainer-local) |
 
 ## How to Work Here
 
