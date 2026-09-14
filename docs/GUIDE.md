@@ -495,7 +495,7 @@ The biggest shift in practice: **capture during work, curate at end-of-session.*
 
 | When | Action | Where |
 |------|--------|-------|
-| **During work** | Hit a gotcha? Log it immediately (2-3 lines) | `gotcha-log.md` |
+| **During work** | Hit a gotcha? Log it immediately — the lesson, not the narrative | `gotcha-log.md` |
 | **During work** | Learned something non-obvious? Note it | Relevant topic file |
 | **After a decision** | Chose between approaches? | ADR + update index |
 | **Changed operations** | Process or infrastructure changed? | Project file or RUNBOOK.md |
@@ -593,7 +593,7 @@ The goal of this loop is **memory as residue, not choreography**. You shouldn't 
 
 This loop applies to all tools. File names vary (`AGENTS.md` for most, `CLAUDE.md` for Claude Code), but the progression Capture → Surface → Promote → Retire is universal.
 
-**Capture.** During work, you log gotchas as they happen (2-3 lines), note non-obvious learnings in topic files, and write ADRs when choosing between approaches. This is the raw material — cheap to create in the moment, expensive to reconstruct later. (Details: [The Documentation Rhythm](#the-documentation-rhythm), [Layer 4: History](#layer-4-history-gotcha-logmd--always-present).)
+**Capture.** During work, you log gotchas as they happen — briefly, in the moment — note non-obvious learnings in topic files, and write ADRs when choosing between approaches. This is the raw material — cheap to create in the moment, expensive to reconstruct later. (Details: [The Documentation Rhythm](#the-documentation-rhythm), [Layer 4: History](#layer-4-history-gotcha-logmd--always-present).)
 
 **Surface.** At end-of-session, ask the agent to review what was captured. The agent reads across topic files and the gotcha log, then proposes changes. You review and approve — 1-2 minutes, not 5. The agent handles three tasks:
 

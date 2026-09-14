@@ -31,9 +31,19 @@
 **Root cause**: Why it happened.
 **Fix**: What solved it.
 
-     Keep it to 2-3 lines. Write the lesson, not the narrative of the
-     session that found it. If it needs a page, it belongs in a topic
-     file or an ADR, not here.
+     Write the lesson and the action, not the narrative of the session
+     that found it — having just lived through it, you will overweight
+     the detail.
+
+     Measured across three logs and 277 entries, a real entry runs
+     ~700-1,200 characters and that is fine: a body costs nothing until
+     someone opens it. ABOVE ~3,000 CHARACTERS is the signal worth
+     acting on (2-5% of entries in every log measured) — that is a page,
+     and a page belongs in a topic file or an ADR.
+
+     This said "keep it to 2-3 lines" until v1.43.0. That rule was
+     unenforceable — a markdown line has no length limit, so every log
+     passed it while running 3-6x the size it intended.
 -->
 
 <!-- WORKED EXAMPLE — delete or keep as a reference for entry style -->

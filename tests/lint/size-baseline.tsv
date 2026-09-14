@@ -3,7 +3,7 @@
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and every raise is
 # recorded below, oldest first — notes accumulate and are never replaced.
-# BUDGET 253254
+# BUDGET 253774
 # SPILL 43620
 # RAISED 2026-09-06 from 247526 to 247969: #133: the #118 remedy string shipped unconditional and can turn a resolved reference into an AMBIGUOUS finding; the caveat that scopes it is +443 b on templates/audit-context.md, seeded as T39/T40/N39 (reason restored 2026-09-06 — write_baseline used to overwrite each note with the next)
 # RAISED 2026-09-06 from 247969 to 248237: #140: UNRESOLVED had two causes printing one reason. +268 b on templates/audit-context.md, seeded as T41/T41b/N40 (reason restored 2026-09-06)
@@ -40,6 +40,7 @@
 # RAISED 2026-09-14 from 247306 to 247556: #145 portability fix: xargs -r is a GNU extension and on BSD/macOS empty input runs 'wc -l' with no arguments, which reads stdin and hangs — a shipped command that deadlocks for half the adopters. Replaced with a read/awk loop that prints 0 on an empty list; both cases tested. +250, re-derived: review-changes.md 45336 -> 45586, no other file moved. This is #164's class caught before shipping rather than after.
 # RAISED 2026-09-14 from 247556 to 248273: #188: the adjacency class gets its question at the point the Mechanized row is written — a guard measuring something NEXT to its claim returns a plausible number, which is why it ships where a guard measuring nothing would not. Seven instances across two independent estates in one day, none reachable by a lexer (two candidate lint rules were built and declined here after measurement in v1.36.0), so the remedy is a question and not a rule. Full treatment in docs/seeded-defects-and-ablations.md, which is outside this population and carries the cost of the evidence. Re-derived: review-changes.md 45586 -> 46303 (+717), no other file moved. Authorised by the maintainer after I declined to take it on a peer's behalf. H-022: hatch taken.
 # RAISED 2026-09-14 from 248273 to 253254: #134/#135/#136, three tier-1 update-drift issues, all NEW BEHAVIOUR. #134: matcher 3 for the connector-carried commit pin, the form a human actually writes, which matcher 2 excludes by design — 6 positives / 8 negative controls, and \b rather than a group because ugrep REFUSES the group form with 'exceeds complexity limits', a non-zero exit that inside 2>/dev/null is indistinguishable from 'no pins found' (#189's class, caught during authoring). #135: a bash -n rung, the only arm of that problem not depending on the framework, since upstream lint cannot reach a project-local or re-mapped copy. #136: the derive-the-version rule plus the stamp probe, which was not shipped anywhere before, every branch executed including a seeded DRIFT going red; and release.md's own '&& echo STOP || echo free' replaced, which exits 0 on both branches and was the framework printing the idiom curate Step 0.5 forbids. Re-derived: curate 71669->73646 (+1977), update-drift 19451->21543 (+2092), release 19459->20371 (+912), total +4981, no other file moved. PAID 1419 of 6400 by compressing three justification blocks into their operative sentences and moving the measurements — the 14-row boundary table, the ugrep error text, the eight-release bash -n window, the two-estate convergence — into docs/rationale/{update-drift,curate}.md. H-022: hatch taken.
+# RAISED 2026-09-14 from 253254 to 253774: Correcting an adopter-facing CONTRADICTION found by an adopter estate: templates/gotcha-log.md shipped 'keep it to 2-3 lines' while curate (both copies, same tag) calls that the OLD rule and unenforceable, and gives the measured one — ~700-1,200 chars normal, ~3,000 the signal, across 277 entries in three logs. The reporter adopted the template's rule into two estates this morning and restructured a log around it. ⚠️ The asymmetry is why this is worth bytes: a skill is installed by cp and self-corrects on every reinstall, while a TEMPLATE is copied once into an adopter tree and never updates — so a stale template line outlives every release in every adopter while the correction reaches nobody who already copied. +520, re-derived: gotcha-log.md 7871 -> 8391, no other file moved. Not paid: the replaced text was three lines and the measured rule needs its numbers, which is the whole defect being fixed.
 templates/adr.md	2115
 templates/audit-context.md	20038
 templates/checklists/architect-checklist.md	1263
@@ -49,7 +50,7 @@ templates/checklists/README.md	1097
 templates/checklists/test-checklist.md	1234
 templates/coordination.md	3909
 templates/curate.md	73646
-templates/gotcha-log.md	7871
+templates/gotcha-log.md	8391
 templates/hypothesis-log.md	3570
 templates/memory-index.md	3396
 templates/project-file.md	6485
