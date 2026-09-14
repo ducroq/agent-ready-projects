@@ -19,6 +19,78 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.45.0 (2026-09-14)
+
+**Pruning.** The framework had an accumulation layer and no retirement mechanism — every
+instrument it ever added to control growth was itself additive. `templates/curate.md` had reached
+75,534 bytes, read by every adopter on every session, carrying four checks that had never caught
+anything. MINOR: one new documented behaviour, and nothing an existing consumer must act on.
+
+### `curate` — four checks retired, 75,534 → 54,941 bytes
+
+Every Step 0 sub-step was audited against this framework's whole record — gotcha log, changelog,
+hypothesis log — asking one question nobody had asked in the year it ran: **what has this ever
+caught?**
+
+- **0.1 dead references — RETIRED.** Zero catches. Its entire record was its *own* defects: six
+  false-positive classes, four more found while fixing those, `process.env` and absence-assertions
+  both reported DEAD. ⚠️ **The class is still checked** by `audit-context` Step 4, which is
+  adopter-facing and measured against a fixture with seeded true positives. What went is the
+  second, unmeasured checker. The cadence drops from per-session to monthly, and `curate` Step 5
+  now always runs as the per-session spot-check.
+- **0.2 stale-memory mtime — RETIRED.** Measured file age, which is not staleness.
+- **0.4 ground-truth drift — RETIRED.** Never had a table to examine.
+- **0.6's entity pass — RETIRED.** A pairwise read of the whole index that never found a
+  contradicting pair, including in the dog-food run that shipped it. The identifier grep stays.
+- **0.3's 14-day lingering flag — DROPPED.** It fired on ~100 of 107 entries every run in a log
+  where one entry had ever been marked resolved. ⚠️ **Adopter-visible**: `templates/gotcha-log.md`
+  told you an unmarked entry gets chased. Nothing chases you now — marking the heading is entirely
+  on the author, and the template says so.
+- **KEPT, on evidence**: the verify runner, the hypothesis surface, the size budget.
+
+⭐ **The rule this produced**: *a check whose only appearances in the record are its own false
+positives is not an immature check — it is a check with no subject.* The tell is available on day
+one and costs one grep. Every individual fix to that extractor was correct; nobody ever asked the
+aggregate question.
+
+### `audit-context` — Step 8, retirement
+
+The mechanism the framework never had. Every audit now asks what each check has caught, retires
+the ones with nothing, and leaves a tombstone naming what would justify bringing it back. It also
+requires recording **which step found a finding** — without attribution the question is
+undecidable later and the default becomes keeping everything.
+
+⚠️ **That is why this audit was not run on `audit-context`'s own steps.** Unlike `curate`, its runs
+were never logged with attribution, so the record cannot say what they caught. Retiring on absent
+evidence is the error the whole exercise is about.
+
+### 🔴 The retirement pass left four dangling promises, and one was serious
+
+Found by a single adversarial lens, at roughly a fifth of a battery's cost:
+
+- **`curate` Step 5 skipped itself** on *"skip if Step 0 already ran a full freshness check"* —
+  true only while Step 0 carried the extractor that was just retired. Left alone it would have
+  taken path checking inside the skill from twice per run to **zero**, silently. Step 5 now always
+  runs.
+- **Step 6 still demanded a disposition for the retired entity pass**, under a report-all-three
+  imperative — forcing either a fabricated number or a re-run of the very pass being retired.
+- **The 300k-corpus fallback still named the deleted extractor** as a runner to fall back on — the
+  instruction for the largest repos, pointing at nothing.
+- **`templates/gotcha-log.md` still promised the 14-day flag.** *Fixing a defect does not immunise
+  you against it one file over*, again.
+
+Plus six internal renumbering misses and ten external citations of the old sub-step numbers across
+nine files — including `templates/test-verify-memory.md`, whose whole job is testing the runner it
+was mis-citing.
+
+### Also
+
+`tests/fixtures/dead-reference/` deleted — a check whose subject went, not a check deleted to
+afford a budget; `tests/run-fixtures.sh` records the deliberate deletion at `MIN_GATES`, per its
+own header. The dead-reference extractor's rationale is preserved in `docs/rationale/curate.md`
+with a retirement header, as the best worked example this repo has of the failure that motivated
+Step 8.
+
 ## v1.44.0 (2026-09-14)
 
 Review depth cut on the maintainer's decision that the framework costs too much to run. MINOR:
