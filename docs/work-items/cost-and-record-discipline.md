@@ -48,6 +48,14 @@ over `~/.claude/projects/<slug>/**.jsonl`. A positive looks like
 `"name":"Read","input":{"file_path":"…/scratchpad/full.diff"}` — 95 such calls exist in the
 subagent transcripts, which is what makes the zeros mean absence rather than a broken pattern.
 
+🔴 **EXCEPTION, measured 2026-09-14 and load-bearing: a SKILL BODY is not in that population.**
+Invoking `/curate` injects the whole body as a user message — **74,178 characters, ~18.5k tokens,
+in one record** (session `0d6c9762`, when `curate.md` was 75,534 bytes). The census above covered
+files read through *tools*; the harness injects a skill body directly, so it never appears as a
+`Read`. **Skill-body bytes are a direct per-invocation token cost for every adopter, and rule 8's
+ratchet on `templates/` is measuring exactly the right thing.** Do not quote the finding below to
+argue against trimming a skill body.
+
 **So: archiving the changelog tail would save approximately nothing**, and I recommended it as the
 single biggest lever, ~120k per release, without checking. The corroborated claim is the opposite
 one, and the run budget in `.claude/review-profile.md` already rests on it: **the cost is the

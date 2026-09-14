@@ -379,3 +379,70 @@ changes, any loosening of a check) would resolve at HIGH to exactly what a chang
 Fixing that means re-tiering MEDIUM as well — a larger change with no evidence base of its own.
 **n=2, same author, same day, same reviewer model** is enough to change one repo's own profile
 deliberately; it is not enough to move a default under 28+ adopters who will not re-derive it.
+
+## Step 1.5 provenance, moved out of the skill body (2026-09-14)
+
+`templates/review-changes.md` points here. The skill kept every *rule*; what moved is the
+litigation behind each one, which an adopter pays for on every invocation and needs only when
+editing the checker. `templates/review-changes.md` 49,516 → 43,040 bytes (the installed SKILL.md
+is 42,460; `tests/lint/size-baseline.tsv` carries the authoritative pair).
+
+**The awk program is behaviourally identical — its CODE is byte-identical, the comments are not —
+and the evidence is the fixture, not the corpus.**
+Extract both versions, strip comments with a tokenizer that respects `"…"` and `/…/`, and the code
+is 60 lines each, identical; then `tests/fixtures/step15-tables/run.sh` run against each template
+gives byte-identical output, 33 cases including 11 ablations that each still fail exactly their
+named case. ⚠️ **A corpus run over this repo's 107 markdown files was cited first and is a blind
+instrument here**: ablating the program — dropping the `\r` strip — leaves its output over those
+107 files unchanged. It was true and it proved nothing.
+
+**The frontmatter skip's deciding line.** Line 1 only *arms* the skip; the first non-blank line
+decides, because a leading `---` is also a CommonMark thematic break and opening on it alone
+silenced whole well-formed files (#151). Blank lines and YAML *comments* are scanned past rather
+than decisive — Obsidian writes `---`, a blank, then the key, and 10 files in the estate measured
+open with a `#` comment. A quoted key counts. `#` cannot be made to decide: a YAML comment is
+indistinguishable from a heading.
+
+**What the row shape can report that is not a table at all.** `isdelim()` accepts a bare `---` and
+its guard is satisfied by a pipe in the *previous* line, so a setext heading, a spaced `- - -`
+break, and frontmatter that does not begin at line 1 can each report. Classes and repros in #52.
+Frontmatter *at* line 1 no longer reports; that narrowing was measured, not assumed (#150).
+
+**The three refuted attempts to widen the 3-space fence strip (#150 part 2).** The skill points
+here for these; they were in `CHANGELOG.md` alone, which is a different document with a different
+job.
+
+| attempt | what it bought |
+|---|---|
+| strip all indentation | an 8-space marker inside a python block became a *close*; a balanced real file reported `unclosed` |
+| bound the close relatively (`ind <= find + 3`) | a top-level indented **code block** with an unpaired marker opened a fence and **silenced the whole file**, losing a lossy row the shipped version reports |
+| add CommonMark's no-info-string rule for closes | correct per spec, and moved **18 files** in the estate — 8 stopped reporting, 10 started, none cheaply adjudicable |
+
+The class being fixed has **zero instances in the 5,168-file estate**, and it is a *visible* false
+positive. ⚠️ **One attempt silenced a whole file outright; a second traded visibility for silence
+in 8 files.** A trim on 2026-09-14 compressed that to "two of them silencing a whole file", which
+neither this table nor `CHANGELOG.md` supports — a count is not provenance and should not have
+moved in a provenance trim.
+
+**Blockquotes and missing delimiter rows are not examined.** The check finds lossy rows in
+well-formed tables. It is not a markdown validator, and a clean result should not be read as one.
+
+**The lone-CR failure has a loud half and a quiet half**, and the quiet one is why it is named in
+the skill at all: with the first fence as the file's opening construct a correctly closed fence is
+reported as unclosed, but with anything above it — a heading is enough — the file goes entirely
+silent and a genuine lossy row is lost. Both measured (#150).
+
+**Why the `set -e`/`|| :` guards in the Step 1 baseline block are shaped as they are.** Measured
+failure modes: a repo with no remote and no `main`/`master` died at the candidate loop with no
+output at all; without `|| :`, `set -eo pipefail` kills the shell before the message that reports
+the failure; and an empty repo was told to run `git show --stat` with no argument. Four modes are
+seeded in `tests/fixtures/baseline-fallback/`.
+
+**Why `ls-files` is root-anchored and `-z`.** It defaults to the CWD subtree while every `git diff`
+term is repo-wide, so from a subdirectory it silently dropped every untracked file outside it — and
+this skill is user-global, running with the cwd of whatever repo is under review. `release.md`
+praises `git grep` for being repo-root-relative for the same reason.
+
+**Why the guarantee invariant is checked entry-first.** It used to span the skill (tier table) and
+the lens (guarantees), which adopters rewrote independently and therefore inconsistently; v1.40.0
+put both halves in the profile so it is checkable inside one file.

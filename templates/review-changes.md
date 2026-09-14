@@ -23,48 +23,42 @@ Resolve the review baseline first — **every command in this step depends on it
 **The baseline is the default branch — `@{u}` only on the default branch itself.** On a branch that is committed and pushed but not merged — the commonest state in which anyone wants a pre-merge review — `@{u}` is *empty*, because the upstream exists and is current. Every `@{u}`-derived term then reports zero and the step reads as "nothing to review" on a whole PR. Resolve it once, **here, before anything else in this step**, and reuse it everywhere below — the tier table, the magnitude gate and Step 1.5 all read `$BASE`:
 
 ```bash
-# Every arm ends in a success, or `set -e` aborts here — before the fallback below,
-# which is the one place that reports the failure. Measured: a repo with no remote
-# and no main/master branch died at the loop with no output at all.
+# Every arm ends in a success, or `set -e` aborts before the fallback that is the
+# one place reporting the failure.
 BASE=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD) ||
-# Fully qualified: `rev-parse` resolves refs/heads/ before refs/remotes/, so a
-# LOCAL branch literally named `origin/main` would win and silently reintroduce
-# #64 — measured, with only a stderr `ambiguous` warning nothing reads.
+# Fully qualified: `rev-parse` resolves refs/heads/ first, so a LOCAL branch named
+# `origin/main` would win and silently reintroduce #64.
 BASE=$(for c in refs/remotes/origin/main refs/remotes/origin/master main master; do
          git rev-parse --verify --quiet "$c" >/dev/null && { printf %s "$c"; break; }; done) || :
 # On the default branch HEAD...HEAD is empty, so the upstream is the baseline.
 if [ -n "${BASE:-}" ] && [ "$(git rev-parse --abbrev-ref HEAD 2>/dev/null)" = "${BASE##*/}" ]; then
   BASE=$(git rev-parse --abbrev-ref '@{u}' 2>/dev/null || printf %s '')
 fi
-# An empty or dangling BASE makes "$BASE"...HEAD an empty diff, which is what a
-# clean tree also yields. The fallback below is NOT "the whole branch": three-dot
-# excludes the root's own content, so a one-commit repo diffs to NOTHING (#149).
-# No `${BASE:-sentinel}` placeholder — any sentinel word is a legal branch name.
+# An empty or dangling BASE diffs to nothing, which is what a clean tree yields.
+# The fallback is NOT "the whole branch": three-dot excludes the root's own
+# content, so a one-commit repo diffs to NOTHING (#149). No `${BASE:-sentinel}`
+# placeholder — any sentinel word is a legal branch name.
 ROOTFALLBACK=          # initialised, or a later `set -u` reader aborts on it
 { [ -n "${BASE:-}" ] && git rev-parse --verify --quiet "$BASE^{commit}" >/dev/null; } || {
-  # `|| :` is load-bearing: without it, `set -eo pipefail` kills the shell here
-  # and prints nothing. Abort before the message, or an empty repo is told to run
-  # `git show --stat` with no argument. Both measured; four modes seeded.
+  # `|| :` is load-bearing: without it `set -eo pipefail` kills the shell here and
+  # prints nothing. Four SHELL-OPTION modes are seeded in the fixture — the axis
+  # matters, because the block was broken only in the ones without `set -e`.
   BASE=$(git rev-list --max-parents=0 HEAD 2>/dev/null | tail -1) || :
   : "${BASE:?no commits in this repository — nothing can be reviewed}"
   ROOTFALLBACK=1
-  # PRINTED as well as set: a shell variable does not reach the next tool call,
-  # and this one degrades toward PERMITTING a clean result. The terminator keys
-  # off the printed token, because scrollback survives what the shell does not.
+  # PRINTED as well as set: a shell variable does not reach the next tool call and
+  # this one degrades toward PERMITTING a clean result. Key off the printed token.
   { echo "BASELINE UNRESOLVED (ROOTFALLBACK=1) — fell back to root commit $BASE,"
     echo "  whose OWN content \"\$BASE\"...HEAD EXCLUDES. Run 'git show --stat $BASE'"
     echo "  too. Report this as a FINDING, never a clean result — Step 1.5's file"
     echo "  list carries the same term and the same hole."; } >&2
 }
 
-# #153 — a baseline can RESOLVE and still leave every term legitimately empty:
-# HEAD already contained in $BASE (on the base branch, a detached older commit, a
-# worktree someone moved, a landed fast-forward). No other guard fires, so
-# unreviewed commits report as a clean review. A diagnostic, not an abort.
-# ⚠️ The equality case is EXCLUDED. On the default branch this block reassigns
-# BASE to @{u}, which makes HEAD an ancestor of BASE on every ordinary run — so
-# the unguarded form fired on the commonest pre-commit state there is, and a
-# guard that cries wolf trains its reader to skip the one line that matters.
+# #153 — a baseline can RESOLVE and still leave every term legitimately empty
+# (HEAD already contained in $BASE). No other guard fires, so unreviewed commits
+# report as a clean review. A diagnostic, not an abort.
+# ⚠️ The equality case is EXCLUDED, or this fires on the commonest pre-commit
+# state there is, and a guard that cries wolf is skipped.
 if git merge-base --is-ancestor HEAD "$BASE" 2>/dev/null &&
    [ "$(git rev-parse HEAD)" != "$(git rev-parse "$BASE^{commit}" 2>/dev/null)" ]; then
   { echo "HEAD IS CONTAINED IN $BASE — nothing on this branch is absent from the"
@@ -77,15 +71,12 @@ fi
 git diff --shortstat "$BASE"...HEAD    # committed on this branch
 git diff --shortstat                   # unstaged
 git diff --cached --shortstat          # staged
-# #145 — no `git diff` variant lists a file git has not seen, so the gate carve-out
-# for "any new file in a HIGH path" fired on a class this step could not observe.
-# Step 1.5 having ls-files is no substitute: it checks markdown, not tiers.
-# ⚠️ ROOT-ANCHORED. `ls-files` defaults to the CWD SUBTREE while every `git diff`
-# term above is repo-wide, so run from a subdirectory this silently dropped every
-# untracked file outside it — restoring observability only when cwd happens to be
-# the root. This skill is user-global and runs with the cwd of whatever repo is
-# under review, so that is not a safe assumption. `release.md` praises `git grep`
-# for being repo-root-relative for the same reason.
+# #145 — no `git diff` variant lists a file git has not seen, so the carve-out for
+# "any new file in a HIGH path" fired on a class this step could not observe.
+# Step 1.5 having its own `ls-files` is no substitute: it checks markdown, not tiers.
+# ⚠️ ROOT-ANCHORED on purpose: `ls-files` defaults to the CWD SUBTREE while every
+# term above is repo-wide, and this skill runs with the cwd of whatever repo is
+# under review.
 git -C "$(git rev-parse --show-toplevel)" -c core.quotePath=false \
     ls-files --others --exclude-standard    # untracked, not ignored
 ```
@@ -144,16 +135,13 @@ The tier above is set by *path*. Depth is also set by *size* — but size is the
 git diff --shortstat "$BASE"...HEAD    # committed on this branch
 git diff --shortstat                   # unstaged
 git diff --cached --shortstat          # staged
-# Untracked lines count toward the magnitude too — none of the three terms above
-# sees them, and a change can be mostly new files (#145). No `xargs -r`: that is
-# a GNU extension. Without it, empty input runs `wc -l` with no arguments, which
-# reads stdin — on this box that is an immediate EOF, but on a terminal it blocks.
-# ⚠️ NOT verified on BSD/macOS; no BSD userland here. The form below avoids the
-# question entirely and prints 0 on an empty list, which IS measured.
-# ⚠️ `-z`, not a plain list: `ls-files` C-QUOTES any path with a non-ASCII byte,
-# a tab or a newline (`"r\303\251sum\303\251.md"`), and `wc -l < "$f"` then
-# opens nothing. Measured: 5 reported against a true 105. The same quoting hits
-# the TIER listing above, which is why it carries `core.quotePath=false`.
+# Untracked lines count too — none of the three terms above sees them (#145).
+# No `xargs -r` (a GNU extension) and no plain `xargs` either: on empty input that
+# runs `wc -l` with no argument, which reads stdin and BLOCKS on a terminal. The
+# form below prints 0 on an empty list. ⚠️ Not verified on BSD/macOS.
+# ⚠️ `-z`, not a plain list: `ls-files` C-QUOTES any path with a non-ASCII byte, a
+# tab or a newline, and `wc -l < "$f"` then opens nothing — measured 5 against a
+# true 105. Same quoting hits the TIER listing, hence `core.quotePath=false`.
 # `|| echo 0` keeps a broken symlink from aborting the stream under `set -e`.
 git -C "$(git rev-parse --show-toplevel)" ls-files -z --others --exclude-standard |
   while IFS= read -r -d '' f; do wc -l < "$f" 2>/dev/null || echo 0; done |
@@ -204,44 +192,24 @@ The lenses below all read *content*: does this path exist, is this flag right, w
       t = s; gsub(/\\\|/, "", t); gsub(/[ \t]/, "", t)
       return (t ~ /-/ && t ~ /^[|:-]+$/)
     }
-    # `$(0)`, never `\$0`: skill ARGUMENTS are substituted into the skill BODY, so a
-    # bare `\$0` arrives as the first argument word and this program examines a
-    # constant while printing what a clean run prints. See #77.
-    # A UTF-8 BOM is invisible in an editor and defeats every `NR == 1` test under
-    # it, so the frontmatter skip never fires (#151). Octal, not `\xef`: `\x` is a
-    # gawk extension. ⚠️ A SUB, never `substr($(0), 1, 3)`: that hard-codes a length
-    # in units awk does not agree on — bytes in mawk, CHARACTERS in gawk under a
-    # UTF-8 locale, where the BOM is one. MEASURED on mawk and busybox awk (nawk
-    # here is mawk), green on the CI awk the substr form failed on.
-    # ⚠️ OCTAL DOES NOT SETTLE PORTABILITY, and this comment used to read as if
-    # it did: under one-true-awk in a UTF-8 locale the sub does not fire at all
-    # (mawk, gawk and busybox strip it; original-awk does not, LC_ALL=C flips
-    # it). Safe direction — you get the #52 false positive back, noise not
-    # silence — and there is no free fix. Measured by an adopter, NOT re-verified
-    # here: this box has only mawk and its nawk is a symlink to it (#164).
+    # `$(0)`, never `\$0` — skill arguments are substituted into the body, so a bare
+    # `\$0` arrives as an argument word and this program examines a constant while
+    # printing what a clean run prints (#77).
+    # BOM: a SUB with an OCTAL escape, never `substr(...) == "\xef..."` — `\x` is a
+    # gawk extension and the length is bytes in one awk, characters in another.
+    # ⚠️ Octal does not settle portability either: one-true-awk in a UTF-8 locale
+    # was measured BY AN ADOPTER, not here, not to strip it — costing a false
+    # positive, not silence (#151, #164).
     { if (NR == 1) sub(/^\357\273\277/, "")
-      sub(/\r$/, "") }              # CRLF: strip before anything reads the line,
-                                     # or isdelim() never matches and no table in
-                                     # the file is examined. See #52.
-    # YAML frontmatter, skipped whole: `isdelim()` accepts a bare `---` and its
-    # guard is satisfied by a pipe in the PREVIOUS line, so a closing `---` under
-    # `description: Runs a | b` reported as a malformed table — and every SKILL.md
-    # here has a `description:`. Preferred over requiring a pipe in the delimiter
-    # row, which would reject the pipe-less rows GFM permits (#52).
-    # ⚠️ A leading `---` is ALSO a CommonMark thematic break, and opening the skip
-    # on it alone silenced whole well-formed files — the SILENCING direction (#151).
-    # Line 1 now only ARMS the skip; the first non-blank line decides, since real
-    # frontmatter usually opens with a YAML key. Blank lines and YAML COMMENTS do
-    # not decide — they are scanned past: Obsidian writes `---`, a blank, then the
-    # key, and 10 estate files open with a `#` comment. A quoted key counts.
-    # ⚠️ Residual cost, and it is a FALSE POSITIVE rather than lost detection: a
-    # frontmatter whose first deciding line is a block sequence, a `%YAML`
-    # directive or a spaced key is not recognised, and its closing `---` can then
-    # report as a delimiter row. `#` cannot be made to decide it — a YAML comment
-    # is indistinguishable from a heading, which is the shape #151 is about.
-    # `\047` is an apostrophe as OCTAL, and it has to be: a literal one would close
-    # the single-quoted shell string this whole program lives inside. Lint rule 11
-    # caught that, three times in one session (#105).
+      sub(/\r$/, "") }              # CRLF: strip first, or isdelim() never matches
+                                     # and no table in the file is examined (#52).
+    # YAML frontmatter, skipped whole (#52). ⚠️ Line 1 only ARMS the skip and the
+    # first non-blank line decides: a leading `---` is also a thematic break, and
+    # opening on it alone SILENCED whole well-formed files (#151). Blank lines and
+    # YAML comments are scanned past, not decisive. Residual cost is a false
+    # positive, not lost detection. Do not widen without reading the rationale.
+    # `\047` is an apostrophe as OCTAL and has to be: a literal one closes the
+    # single-quoted shell string this program lives inside (#105, lint rule 11).
     NR == 1 && $(0) ~ /^---[ \t]*$/ { fmpend = 1; next }
     fmpend && $(0) ~ /^([ \t]*|[ \t]*#.*)$/ { next }
     fmpend { fmpend = 0
@@ -249,14 +217,10 @@ The lenses below all read *content*: does this path exist, is this flag right, w
     infm && $(0) ~ /^(---|\.\.\.)[ \t]*$/ { infm = 0; prev = ""; next }
     infm { next }
     {
-      # ⚠️ The 3-space strip is DELIBERATE, and re-confirmed by measurement rather
-      # than left alone. A fence indented four spaces is scanned as markdown — a
-      # documented false positive below (#150) — and THREE attempts to widen it
-      # each bought a worse class: opening at any indent SILENCED a whole file on a
-      # top-level indented code block; bounding the close relatively broke a
-      # balanced file on an 8-space marker; adding CommonMark no-info-string closes
-      # moved 18 files in a 5,168-file estate. The defect being fixed has ZERO
-      # instances in that estate. Noise you can see beats silence you cannot.
+      # ⚠️ DO NOT WIDEN THE 3-SPACE STRIP — the three refuted attempts are in the
+      # Known blind spots note below. Each bought a worse class, ONE of them
+      # SILENCING a whole file, against a defect with zero instances in a
+      # 5,168-file estate (#150).
       bare = $(0); sub(/^ ? ? ?/, "", bare)
       if (bare ~ /^```/ || bare ~ /^~~~/) {
         c = substr(bare, 1, 1); n = 0
@@ -266,16 +230,12 @@ The lenses below all read *content*: does this path exist, is this flag right, w
         intbl = 0; prev = ""; next
       }
       if (fch != "") next
-      # Emphasis spans — the third construct with Step 1.5’s property: correct in
-      # the diff, wrong when rendered (#50). Deliberately NARROW: it reports only
-      # TWO backticked tokens whose content abuts `**` inside one open bold run,
-      # which a formatter can join and corrupt. ⚠️ The ONE-token form is what
-      # prettier 3.8.1 was measured to corrupt, and it passes here in silence —
-      # a BACKSTOP, not coverage (#151, precision tracked as #158).
-      # Mask each code span to ONE character — \001 if its content abuts `**`,
-      # \002 otherwise — so bold runs can be paired positionally. Adjacency is
-      # the discriminator and nothing weaker works; only a token INSIDE an open
-      # bold run can be joined.
+      # Emphasis spans — correct in the diff, wrong when rendered (#50). NARROW by
+      # design: only TWO backticked tokens abutting `**` inside one open bold run.
+      # ⚠️ The one-token form was measured to corrupt under prettier 2 and 3.8.1
+      # (fixed in 3.9.6) and passes here in silence — a BACKSTOP, not coverage
+      # (#151, #158). Each code span is masked to one character so
+      # bold runs pair positionally; adjacency is the discriminator.
       { masked = ""; rest = $(0)
         while (match(rest, /`[^`]*`/)) {
           inner = substr(rest, RSTART + 1, RLENGTH - 2)
@@ -290,11 +250,9 @@ The lenses below all read *content*: does this path exist, is this flag right, w
           if (substr(masked, i, 2) == "**") { inb = 1 - inb; i++; continue }
           if (inb && substr(masked, i, 1) == "\001") nrisk++
         }
-        # The backtick test guards against a literal \001/\002 byte in the source
-        # masquerading as a masked span: without it, a line with no backticks at
-        # all reported "two backticked tokens", a message that is simply false.
-        # No tracked file here contains those bytes; the message would be wrong
-        # anyway, and a wrong message is what sends a reader to the wrong line.
+        # The backtick test stops a literal \001/\002 byte masquerading as a masked
+        # span: without it a line with no backticks reported "two backticked
+        # tokens", which is simply false.
         if (nrisk > 1 && index($(0), "`"))
           printf "%s:%d: two backticked tokens abutting ** inside one bold span — a formatter can join the runs and corrupt both\n", F, NR
       }
@@ -312,12 +270,10 @@ The lenses below all read *content*: does this path exist, is this flag right, w
       prev = $(0)
     }
     END { if (fch != "") printf "%s: unclosed %s code fence\n", F, fch
-          # An unclosed frontmatter leaves `infm` set, so `infm { next }` swallowed
-          # every remaining line and the check printed what a clean run prints —
-          # the silence this guard ended (#103). It reports the state rather than
-          # guessing where the frontmatter should have closed.
+          # Unclosed frontmatter leaves `infm` set, so `infm { next }` swallows the
+          # rest of the file and the check prints what a clean run prints (#103).
           # ⚠️ It says NO CHECK RAN, not "no table": that `next` sits above the
-          # fence and emphasis blocks too, so all three are lost, not one (#144).
+          # fence and emphasis blocks too, so all three are lost (#144).
           if (infm) printf "%s: unclosed YAML frontmatter — no check ran on any line of this file\n", F }
   ' "$f"
 done
@@ -329,13 +285,11 @@ The file list is the union of unstaged, staged, **everything committed on this b
 
 Hits come in five shapes: a row whose excess cells are discarded, a header that disagrees with its own delimiter row (which means GFM renders no table at all), an unbalanced code fence, two backticked tokens abutting `**` inside one bold span, and a frontmatter that opens and never closes. Fix each before running the lenses, **with the repair its shape calls for.** *Row and header*: escape as `\|`, or move the command out of the table — this includes pipes inside backticks, since GFM splits a row into cells *before* it parses inline content and its spec says so explicitly, so a `|` in an inline-code span breaks the row exactly like a bare one. *Fence*: close it. *Emphasis*: separate the two backticked tokens, or take one out of the bold run. ⚠️ *Frontmatter*: this one is a **denominator signal**, not a table defect — no check ran on any line of that file, so close the delimiter and **run Step 1.5 again**. Until you do, that file's real findings are unknown (#144, #150).
 
-**Treat a hit as real until you have looked at it, not as proven** — this applies to the *row* shape, the only one with a documented false-positive class. A row hit says the row supplies more cells than the delimiter defines and GFM discards the excess, which is a loss only when those cells carry content: `| 1 | 2 | |` against a two-column delimiter reports and loses nothing. It also says nothing about whether you are looking at a table at all — `isdelim()` accepts a bare `---` and its guard is satisfied by a pipe in the *previous* line, so a setext heading, a spaced `- - -` break and **frontmatter that does not begin at line 1** can each report. Classes and repros in #52. Frontmatter *at* line 1 no longer reports — the skip handles it — and that narrowing was measured, not assumed (#150).
+**Treat a hit as real until you have looked at it, not as proven** — this applies to the *row* shape, the only one with a documented false-positive class. A row hit says the row supplies more cells than the delimiter defines, which is a loss only when those cells carry content, and it says nothing about whether you are looking at a table at all: a setext heading, a spaced `- - -` break and frontmatter that does not begin at line 1 can each report (#52).
 
-**Known blind spots, so a clean result is not read as more than it is**: tables inside blockquotes are not examined, nor is a table whose delimiter row is itself missing. The check finds lossy rows in well-formed tables; it is not a markdown validator. The emphasis guard is a **backstop, not coverage** — it needs two risky tokens in one bold run, and the one-token form goes unreported (#151, measured in #158). It also reads a double-backtick span as separate single-backtick ones, so prose *quoting* the shape can itself report (#159).
+**Known blind spots, so a clean result is not read as more than it is.** Tables inside blockquotes are not examined, nor is a table whose delimiter row is missing — this finds lossy rows in well-formed tables and is not a markdown validator. The emphasis guard is a **backstop, not coverage**: it needs two risky tokens in one bold run, the one-token form goes unreported, and prose *quoting* the shape can itself report (#151, #158, #159). A fenced block indented four or more spaces is scanned as markdown, so a table inside it can report — a *documented* false positive, not an unfixed one (#150) — and frontmatter is the same trade: one whose first deciding line is a block sequence, a `%YAML` directive or a spaced key is not recognised, and its closing `---` can report as a delimiter row. **Lone CR is the one that matters**: awk sees the file as a single record, and with anything above the first fence the file goes **entirely silent**, which is indistinguishable from a clean run.
 
-**A fenced block indented four or more spaces is scanned as markdown, so a table inside it can report** — the ordinary shape in a list item (#150). A *documented* false positive, not an unfixed one: three attempts to widen the fence rule each bought a worse class, one of them silencing a whole well-formed file, and the class has **zero instances in the 5,168-file estate they were measured against**. Visible noise beat silent loss. **Frontmatter is the same trade**: one whose first deciding line is a block sequence, a `%YAML` directive or a spaced key is not recognised, and its closing `---` can report as a delimiter row.
-
-**Lone CR is still a blind spot, and the half worth naming is the quiet half.** awk sees the whole file as a single record, so nothing in it is examined. Which way that fails depends on where the first fence sits, and only one of the two is loud: with the fence as the file's first construct a correctly *closed* fence is reported as unclosed, but **with anything above it — a heading is enough — the file goes entirely silent**, and a genuine lossy row that the identical LF file reports is lost. Both measured (#150). The silent half is the one that matters, because it is indistinguishable from a clean run.
+⚠️ **Three attempts to widen the fence rule each bought a worse class. The attempts, and what each cost, are in <https://github.com/ducroq/agent-ready-projects/blob/master/docs/rationale/review-changes.md> <!-- lint-skip: maintainer-path — a URL, not a repo-relative path: it resolves for a reader with no such directory. --> before touching any of these trades.**
 
 The command prints nothing on a clean run — which is also what it prints when the file list was empty. **Report the count alongside the result** so the two are distinguishable:
 
@@ -359,9 +313,7 @@ prompts` to the matching prompts** (#166). They are additive: a project lens nev
 project addition never replaces the shipped text it extends. A profile with neither section
 runs exactly the set below.
 
-**Invariant: every file named in the guarantee lens must sit in the HIGH row of Step 1.** The lens is HIGH-gated. A file it defines a guarantee for but that tiers below HIGH has a guarantee that can *never* be checked — and the report renders "no HIGH files changed" as a clean pass, so the failure is silent and looks like success. Whenever you add an entry to the guarantee lens, add its path to the HIGH row in the same edit; if a path does not deserve HIGH, it does not deserve a guarantee entry. Check the invariant in the direction that catches it: read each guarantee entry and find its tier, not the other way round.
-
-⭐ **Both halves now live in `.claude/review-profile.md`, so the invariant is checkable inside one file** — that is the point of the split. It used to span the skill (tier table) and the lens (guarantees), which adopters rewrote independently and therefore inconsistently. Check it in the direction that catches it: read each guarantee entry in the profile and find its tier in the same file. ⚠️ A profile that lists a guarantee for a path tiered below HIGH has a guarantee that can never fire, and the report renders that as a clean pass.
+**Invariant: every path with a guarantee must sit in the profile's HIGH row.** The lens is HIGH-gated, so a guarantee on a lower-tiered path can *never* fire — and the report renders that as a clean pass, a silent failure that looks like success. Both halves live in `.claude/review-profile.md`, so check it inside one file, and in the direction that catches it: read each guarantee entry, then find its tier. If a path does not deserve HIGH, it does not deserve a guarantee entry.
 
 ### Lens: guarantee-preservation (HIGH only)
 
@@ -497,7 +449,7 @@ For **each** finding, answer one question: **could a deterministic check have fo
 
 ⚠️ **Naming a check is not writing one, and the row is not done until the check fires on a seeded case.** A check that has never caught anything is indistinguishable from one that does not work — the method is at <https://github.com/ducroq/agent-ready-projects/blob/master/docs/seeded-defects-and-ablations.md> — a URL, not a repo-relative path: this skill is user-global and runs with the cwd of whatever repo is under review, where `docs/` is someone else's tree. Record the named check in the gotcha log's **Mechanized** table as `proposed` — the log is wherever your project keeps it (`memory/gotcha-log.md`, `docs/gotcha-log.md`; `templates/README.md` has the map). It becomes `live` only once a seeded positive has made it go red.
 
-⚠️ **Ask what the check measures, not only what it reports — and beware the one that measures something ADJACENT to the claim.** A guard that measures nothing looks wrong and never ships; one that measures the neighbouring thing returns a plausible number and does. Byte size standing in for content, a file *listed* standing in for a file *changed*, a printed verdict word standing in for an exit status. **State what a positive looks like, then produce one**: a guard never shown failing has been read, not tested, and a sweep returning ZERO must be shown finding something before its zero is believed. Semantic, so no linter reaches it — this is the question to ask here, at the point the row is written.
+⚠️ **Ask what the check measures, not only what it reports, and beware the one that measures something ADJACENT to the claim** — byte size standing in for content, a file *listed* standing in for a file *changed*, a printed verdict word standing in for an exit status. A guard that measures nothing looks wrong and never ships; one that measures the neighbouring thing returns a plausible number and does. **State what a positive looks like, then produce one.**
 
 ⚠️ **Mark a `proposed` row's check path with `<!-- placeholder -->`, immediately after the path and in the same cell** — `` `tests/lint/count-commands.sh` <!-- placeholder --> ``. It covers the nearest path *before* it, so a marker further along the row binds to whatever path came last — harmless in a bare row whose trailing cells hold no path, wrong the moment one does. The file does not exist yet, so a reference-integrity audit reports a path that does not resolve; the marker is what tells the auditor this is a declared placeholder rather than a dead link. Without it every proposed row becomes a standing false finding, which trains readers to dismiss that audit. ⚠️ **That exact marker, no other** — one the reading end was never taught is worse than none, because it stops the author looking while the finding is still in the list.
 
@@ -546,7 +498,7 @@ The Unclassified list is not cosmetic and is not made moot by a HIGH file elsewh
 
 ## Step 5 — Fixing, and whether to run another round
 
-**Reviewing is not where the cost is. Fixing is.** A large share of this framework's findings classified `missed` or `introduced` were defects the previous round's own fixes created — the share has run as high as 65% of those pairs and is a minority of them today, which is why it is **re-derived, never quoted**: note `$(N)`, not `$N`, or the substituter eats the field refs (#77) — `awk -F'\t' '$(1)~/^2026-/{f+=$(9); i+=$(12); m+=$(11)} END{print i, m, f}' <ledger>` gives introduced, missed, and all findings. ⚠️ **Read the `introduced`-over-all-findings ratio with care**: seeded-benchmark rows carry `introduced` 0 by construction, so the whole-ledger figure is low for a reason that has nothing to do with fixing. **A benchmark round's zero is not evidence that fixing is safe; it is evidence that seeded defects do not have fixes.** **A round cap does not remove the defects fixing creates; it ships them.**
+**Reviewing is not where the cost is. Fixing is.** In this framework's own ledger, a large share of findings classified `missed` or `introduced` were defects the previous round's own fixes created. **Re-derive it, never quote it** — note `$(N)`, not `$N`, or the substituter eats the field refs (#77): `awk -F'\t' '$(1)~/^2026-/{f+=$(9); i+=$(12); m+=$(11)} END{print i, m, f}' <ledger>`. ⚠️ Seeded-benchmark rows carry `introduced` 0 by construction, so the whole-ledger ratio is low for a reason that has nothing to do with fixing. **A round cap does not remove the defects fixing creates; it ships them.**
 
 - **A fix is a change, and takes the tier of the file it lands in.** Treating it as a correction too small and too well-understood to re-read is self-certification in miniature: small is why loosenings hide, and knowing the intent is what stops you seeing the result.
 - **Re-read the steps that consume what you changed.** These defects live in the *relationship between* steps, so re-reading the fixed step alone finds nothing.
