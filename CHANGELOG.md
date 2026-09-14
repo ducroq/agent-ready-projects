@@ -19,39 +19,64 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.46.0 (candidate, unreleased)
+## v1.45.1 (candidate, unreleased)
 
-**PATCH-or-MINOR, maintainer's call — documentation only on the adopter surface.** No behaviour
-changes and no adopter has to act; the v1.10.1 precedent sends documentation-only changes to PATCH,
-and the only argument for MINOR is that the note introduces a configuration an adopter may adopt.
+**PATCH.** No existing consumer has to act, and there is no new artifact — both changes are
+refinements to existing ones. Precedent: v1.10.1, documentation-only → PATCH. (A draft of this
+block said v1.46.0; it was written before the bump was classified from the diff.)
 
-### `templates/review-profile.md` — a cheaper HIGH, offered as an option and explicitly not as a default
+### `templates/review-changes.md` — 5,760 bytes of maintainer provenance removed from a body adopters load
 
-This repo cut its own HIGH tier to one adversarial lens plus two conditional ones and saw review
-spend fall sharply. **The first draft of this change made that the adopter default. A review round
-refuted it**, and the note that shipped instead says so:
+**A skill body is a direct per-invocation token cost.** Invoking a skill injects the whole body as
+one user message — measured at 74,178 characters in a single transcript record for `curate` — so
+every byte is paid by every adopter on every invocation. 49,516 → 43,756 bytes, −11%.
 
-- **It inverts the ladder.** MEDIUM is two lenses; HIGH-at-one-lens is fewer, so the skill's own
-  instruction to escalate shipped content from MEDIUM to HIGH would *lower* its depth, and the
-  always-full-depth carve-outs would resolve at HIGH to what a changelog edit gets.
-- **Two lenses are HIGH-gated and a one-lens HIGH row retires them silently** —
-  guarantee-preservation and shell-correctness. The draft dropped shell-correctness without saying
-  so, in the release whose subject is what review depth buys, and the skill says elsewhere that
-  losing it "is the reason those paths are HIGH at all".
-- **The evidence cannot support a default.** n=2, same author, same day, same reviewer model — and
-  the recall of both runs is unmeasurable by construction, because the round cap that shipped
-  alongside means no second round will ever classify what they missed.
+**What moved, and what did not.** Provenance moved to `docs/rationale/review-changes.md` behind a
+URL: which draft was refuted, what was measured on which awk variant, the estate counts. Every
+rule, every ⚠️, and every "read before loosening" stayed in the body.
 
-The measurements, the confounds (the "~840k before" figure is not re-derivable, and ~17% of the
-drop belongs to the round cap) and the counter-evidence are in `docs/rationale/review-changes.md`
-rather than inlined, so they cannot rot inside an adopter's copy.
+**The executable content is unchanged, and the evidence is the ablation set, not a corpus.** The
+awk code is byte-identical (60 lines each after tokenizer comment-stripping) and
+`tests/fixtures/step15-tables/run.sh` gives identical output against both versions, with all 11
+ablations still failing exactly their named case. ⚠️ **A corpus run over 107 markdown files was the
+first evidence offered and two independent lenses refuted it**: ablating the program — dropping the
+`\r` strip — leaves its output over those files unchanged. It was true and it proved nothing.
 
-### `.claude/review-profile.md` — this repo's own profile, corrected in the same round
+⚠️ **A review round found seven places where a warning kept its wording and lost its teeth**, all
+restored: the `xargs` hang mechanism and its BSD hedge, *"Step 1.5 having its own `ls-files` is no
+substitute: it checks markdown, not tiers"* (the sentence that stops the next editor deleting a
+call as a duplicate), the frontmatter blind spot this changelog asserts is listed in the skill, the
+prettier version scope on the one-token emphasis form, a count that drifted inside a *provenance*
+trim (one widening attempt silenced a file, not two), and a scope widened by deleting two words.
+**Trimming provenance is safe; trimming the evidence a rule rests on is not, and the two look
+identical in a diff.**
 
-Shell-correctness restored to the HIGH row, conditional on a shell file changing. A run budget
-added, stated as one **round** and not one **run**: the first draft said "one lens-run ≤120k" and
-contradicted the HIGH row three sections above it, which mandates a second lens on a guarantee
-surface — two runs, ~220k, against a budget in the same file.
+### `templates/review-profile.md` — a cheaper HIGH tier, offered as an option and explicitly not as the default
+
+The framework's own repo now runs HIGH as one adversarial lens plus two conditional ones
+(guarantee-preservation on a declared guarantee surface, shell-correctness on a shell change). The
+note offers that to adopters with the measurements behind a URL, and says why it is not the
+default.
+
+**The first draft made it the default. A review round refuted it**, and the note carries the
+reasons:
+
+- **It inverts the ladder.** MEDIUM is two lenses; a HIGH path that is neither shell nor a declared
+  guarantee surface would get one — so the skill's own instruction to escalate shipped content from
+  MEDIUM to HIGH would *lower* its depth, and the always-full-depth carve-outs (`.gitignore`,
+  renames, mode changes, any loosening) would resolve at HIGH to what a changelog edit gets.
+- **Two lenses are HIGH-gated and a one-lens HIGH row retires them silently.** The draft dropped
+  **shell-correctness** without saying so — the lens this changelog records as one of the two that
+  each found a blocker no other lens found on the four-lens round the note cites as its own
+  counter-evidence. The carve-out had protected the guarantee lens on a bookkeeping argument and
+  dropped the one with the catches.
+- **The evidence cannot carry a default**: n=2, same author, same day, same reviewer model, and the
+  recall of both runs is unmeasurable by construction, because the round cap that shipped alongside
+  means no second round will ever classify what they missed.
+
+⚠️ **Two ways the headline saving is soft, stated in the rationale rather than the template**: the
+"~840k per release before" figure is not re-derivable from the ledger, and roughly 17% of the drop
+belongs to the v1.44.0 round cap rather than the lens cut.
 
 ## v1.45.0 (2026-09-14)
 
