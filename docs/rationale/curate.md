@@ -41,3 +41,44 @@ Moved 2026-09-05. The rule stays in Step 0.8: measure the de-padded size before 
 The first project had no session footers left to trim and only structural sections remaining, so
 the step had already escalated to the engineer as a *content* decision when the real cause was
 whitespace. A file whose tables hold short cells sees far less than 35%.
+
+## v1.43.0 — never hardcode the version a probe corroborates (#136)
+
+Two adopter estates wrote the same fix for the same shape on the same day, independently. That
+convergence is the reason it shipped rather than being noted.
+
+The shape, written from this framework's own guidance:
+
+```bash
+for s in audit-context curate update-drift; do
+  git -C "$FRAMEWORK" show "v1.36.1:.claude/skills/$s/SKILL.md" \
+    | diff -q - "$HOME/.claude/skills/$s/SKILL.md" >/dev/null || echo "DRIFT: $s";
+done; echo "checked 3 global skills vs v1.36.1"
+```
+
+**Two independent defects in one line.**
+
+**(a) The verdict is a word in the output.** `|| echo` swallows the failure and the trailing
+`echo` sets the status, so a runner scores PASS while it prints `DRIFT` three times. Step 0.5
+already forbids this, and `docs/rationale/curate.md` records that this framework *taught* it
+until v1.21.0 — so it is an idiom that survived being corrected, found in an adopter's record
+dated 2026-09-05.
+
+**(b) The probe hardcodes the tag it corroborates**, giving it the lifetime of that tag rather
+than of the claim. It expires at the only moment it has anything to report — when the upstream
+tag moves. One estate's derived version is what caught v1.37.0: it went red at `differing: 3` on
+skills that had been diff-zero the session before. The other reports it as the fifth occurrence
+of the family in their repo and the **first not authored locally**.
+
+The shipped probe derives the version from the stamp, so bumping the stamp re-arms it with no
+edit and pin and probe cannot silently disagree. Every branch was executed before shipping:
+clean (exit 0), a seeded drifted install (`DRIFT: curate differs from v1.42.0`, exit 1), no
+stamp, a skill not installed, and outside a git repo. The `2>/dev/null` on `rev-parse` is
+load-bearing — without it git's own `fatal:` prints beside the CANNOT VERIFY line and reads as
+the failure.
+
+⚠️ **The framework was still printing the forbidden idiom itself.** `templates/release.md`
+carried `… && echo "TAG EXISTS — STOP" || echo "free"`, exit 0 on both branches, measured.
+Defensible while only a human read it, and still the framework printing what it forbids. Replaced
+in v1.43.0 with a function whose exit status carries the verdict and which distinguishes a third
+outcome — 0 free, 1 taken, 2 could not be decided (offline, no origin).

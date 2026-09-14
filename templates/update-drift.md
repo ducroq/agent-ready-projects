@@ -51,6 +51,8 @@ for o in $OPERANDS; do [ -e "$o" ] || echo "operand absent, not searched: $o"; d
 grep -rnE "agent-ready-[a-z]+[^0-9]{0,60}v?[0-9]+\.[0-9]+[0-9.]*" $OPERANDS 2>/dev/null
 # 2. commit-hash pins
 grep -rnE "agent-ready-[a-z]+[^A-Za-z0-9]{0,24}[0-9a-f]{7,40}" $OPERANDS 2>/dev/null
+# 3. prose commit pins — a connector word carries the hash (#134)
+grep -rnEi "agent-ready-[a-z]+[^0-9]{0,40}\b(commit|rev|sha|ref|pinned to)[^A-Za-z0-9]{1,4}[0-9a-f]{7,40}" $OPERANDS 2>/dev/null
 ```
 
 ⚠️ **A single-operand run is a finding, not a result.** If the list reduces to one file, say so in the report — a self-reconciliation always agrees.
@@ -59,7 +61,11 @@ grep -rnE "agent-ready-[a-z]+[^A-Za-z0-9]{0,24}[0-9a-f]{7,40}" $OPERANDS 2>/dev/
 - **Matcher 2** exists because matcher 1 needs two dot-separated numeric groups, which no separator width reaches on a hash.
 - **The two separator classes differ, and that is why these are two matchers rather than one alternation.** Matcher 1 allows letters between the name and the version, because a provenance line puts a filename there. Matcher 2 must *exclude* them, or a 7-character hex run matches inside an ordinary word. One pattern cannot hold both rules. Combining them as `(a|b)` also works on every implementation tried here — GNU grep 3.12 and busybox — so combine them if you prefer; the reason for two is the classes, not the tool.
 
-Neither matcher is exhaustive — a branch name, a date or a `main` pin is a pin they cannot see — which is why the reconciliation below is not optional.
+- **Matcher 3 sees the pin a human actually writes**, where a parenthetical or filename sits between the name and the hash — the form matcher 2 excludes by design, so a repo carrying only that read as *unstamped*. Letters are allowed between the **name** and the **connector**, never between the connector and the hash: the hex-inside-a-word risk is about what precedes the *hash*. Both word boundaries were measured, not assumed (8 negative controls, 6 positives).
+- ⚠️ **`\b`, not `(^|[^A-Za-z])` — a portability fix, not a style choice.** The group form is correct under GNU grep 3.12 and **ugrep 7.8.4 refuses it**: `exceeds complexity limits`, non-zero, no output — which inside `2>/dev/null` is indistinguishable from "no pins found". Check `grep --version` if a matcher returns nothing.
+- **The connector list is the weak part, and it is short on purpose** — only shapes actually seen. A pin written *«fixed at»* or *«as of»* is invisible to all three. Do not read a clean matcher run as a clean result; that is what the reconciliation is for.
+
+No matcher here is exhaustive — a branch name, a date or a `main` pin is a pin none of them can see — which is why the reconciliation below is not optional.
 
 **Report the stamps you found, by file and line, before continuing.** If you find none, say "no stamp found" and stop — do not assume the project is unadopted, and do not add a stamp yourself.
 
@@ -159,6 +165,10 @@ curate          v1.28.0 diff 119  v1.29.0 diff 119  v1.30.0 diff 119  v1.31.0 di
 </details>
 
 **Grep for the marker strings the release note names.** A defensive fix looks like nothing: the framework shipped one where broken and fixed were semantically identical in isolation — no error, no empty output, no non-zero status, the check simply examined a constant and printed what a clean run prints. If no markers are named, ask, and record `not verified` (#94).
+
+⚠️ **A marker is not evidence that the thing runs. If the release changes a fenced executable block, extract it and `bash -n` BOTH the version you are leaving and the version you are taking, before adopting either** (#135). Marker presence says the text arrived; it says nothing about whether the block parses, and a block that dies on a syntax error prints nothing — indistinguishable from a clean run, which is the failure the block was probably added to prevent.
+
+Measured across an eight-release window by an adopter: the block they were being asked to adopt failed `bash -n` at v1.31.0 and v1.36.1 and parsed at v1.37.0. ⚠️ **This rung is the only arm that does not depend on the framework** — an upstream lint rule reaches the copies upstream ships, never a project-local or re-mapped one in your tree.
 
 ## Step 4 — Verify by execution, not by reading
 

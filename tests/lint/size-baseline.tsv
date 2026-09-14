@@ -3,8 +3,8 @@
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and every raise is
 # recorded below, oldest first — notes accumulate and are never replaced.
-# BUDGET 248273
-# SPILL 37667
+# BUDGET 253254
+# SPILL 43620
 # RAISED 2026-09-06 from 247526 to 247969: #133: the #118 remedy string shipped unconditional and can turn a resolved reference into an AMBIGUOUS finding; the caveat that scopes it is +443 b on templates/audit-context.md, seeded as T39/T40/N39 (reason restored 2026-09-06 — write_baseline used to overwrite each note with the next)
 # RAISED 2026-09-06 from 247969 to 248237: #140: UNRESOLVED had two causes printing one reason. +268 b on templates/audit-context.md, seeded as T41/T41b/N40 (reason restored 2026-09-06)
 # RAISED 2026-09-06 from 248237 to 248864: #149 (BLOCKER): review-changes could report a clean result on wholly unreviewed content — the root-commit fallback excluded the root, so a one-commit repo diffed to nothing and Step 1's terminator said 'nothing to review'. +627 b (measured; a draft of this line said +466, and the edit I called a trim was 77 b LARGER than what it replaced — third fabricated byte count in this session, same class as the defects being fixed) buys three runtime lines that name the excluded content and the companion command, plus a terminator clause the fallback cannot satisfy. THIRD RAISE TODAY: three correctness fixes to adopter-facing prose in one session, none paid by a shrink — if that keeps happening the budget is mis-calibrated, not the fixes. Seeded at tests/fixtures/baseline-fallback/
@@ -39,6 +39,7 @@
 # RAISED 2026-09-14 from 243820 to 247306: #145/#153/#164/#166, four tier-1 issues. New BEHAVIOUR, not prose: Step 1 gains an untracked-file listing (#145 — the magnitude gate carved out a class the step could not observe) and an ancestor diagnostic (#153 — a resolved baseline with every term legitimately empty, the one state no existing guard reports); templates/review-profile.md gains three sections so a project's lenses and procedure have somewhere to live (#166 — v1.40.0's split dropped an adopter's lens silently). Re-derived: review-changes.md 43085 -> 45336 (+2251), review-profile.md 2583 -> 3818 (+1235), total +3486, no other file moved. PAID 2645 of the original 6131 across three passes: the #164 and #145/#153 comments compressed to their operative sentences, the profile's incident narrative cut to its rule, and the emphasis-guard measurements (39%, 33 hits, 28/15) moved to docs/rationale/review-changes.md where this repo puts evidence for decisions already taken. Stopped paying there deliberately — the previous raise this session was spent narrowing a warning's audience, which a review lens flagged as a real cost. H-022: hatch taken.
 # RAISED 2026-09-14 from 247306 to 247556: #145 portability fix: xargs -r is a GNU extension and on BSD/macOS empty input runs 'wc -l' with no arguments, which reads stdin and hangs — a shipped command that deadlocks for half the adopters. Replaced with a read/awk loop that prints 0 on an empty list; both cases tested. +250, re-derived: review-changes.md 45336 -> 45586, no other file moved. This is #164's class caught before shipping rather than after.
 # RAISED 2026-09-14 from 247556 to 248273: #188: the adjacency class gets its question at the point the Mechanized row is written — a guard measuring something NEXT to its claim returns a plausible number, which is why it ships where a guard measuring nothing would not. Seven instances across two independent estates in one day, none reachable by a lexer (two candidate lint rules were built and declined here after measurement in v1.36.0), so the remedy is a question and not a rule. Full treatment in docs/seeded-defects-and-ablations.md, which is outside this population and carries the cost of the evidence. Re-derived: review-changes.md 45586 -> 46303 (+717), no other file moved. Authorised by the maintainer after I declined to take it on a peer's behalf. H-022: hatch taken.
+# RAISED 2026-09-14 from 248273 to 253254: #134/#135/#136, three tier-1 update-drift issues, all NEW BEHAVIOUR. #134: matcher 3 for the connector-carried commit pin, the form a human actually writes, which matcher 2 excludes by design — 6 positives / 8 negative controls, and \b rather than a group because ugrep REFUSES the group form with 'exceeds complexity limits', a non-zero exit that inside 2>/dev/null is indistinguishable from 'no pins found' (#189's class, caught during authoring). #135: a bash -n rung, the only arm of that problem not depending on the framework, since upstream lint cannot reach a project-local or re-mapped copy. #136: the derive-the-version rule plus the stamp probe, which was not shipped anywhere before, every branch executed including a seeded DRIFT going red; and release.md's own '&& echo STOP || echo free' replaced, which exits 0 on both branches and was the framework printing the idiom curate Step 0.5 forbids. Re-derived: curate 71669->73646 (+1977), update-drift 19451->21543 (+2092), release 19459->20371 (+912), total +4981, no other file moved. PAID 1419 of 6400 by compressing three justification blocks into their operative sentences and moving the measurements — the 14-row boundary table, the ugrep error text, the eight-release bash -n window, the two-estate convergence — into docs/rationale/{update-drift,curate}.md. H-022: hatch taken.
 templates/adr.md	2115
 templates/audit-context.md	20038
 templates/checklists/architect-checklist.md	1263
@@ -47,13 +48,13 @@ templates/checklists/qa-checklist.md	1836
 templates/checklists/README.md	1097
 templates/checklists/test-checklist.md	1234
 templates/coordination.md	3909
-templates/curate.md	71669
+templates/curate.md	73646
 templates/gotcha-log.md	7871
 templates/hypothesis-log.md	3570
 templates/memory-index.md	3396
 templates/project-file.md	6485
 templates/README.md	12042
-templates/release.md	19459
+templates/release.md	20371
 templates/review-agent.md	5720
 templates/review-changes.md	46303
 templates/review-profile.md	3818
@@ -70,5 +71,5 @@ templates/test-fixtures/memory/verified-fail.md	166
 templates/test-fixtures/memory/verified-manual.md	155
 templates/test-fixtures/memory/verified-pass.md	135
 templates/test-verify-memory.md	6000
-templates/update-drift.md	19451
+templates/update-drift.md	21543
 templates/work-item.md	3860

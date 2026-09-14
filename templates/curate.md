@@ -542,6 +542,26 @@ PY
      ```
 
      The second is a false PASS with the evidence of its own failure printed beside it, and this repo shipped one for two months. The disposition is carried by exit status and by the `CANNOT VERIFY` prefix — never by a word in the output, which nothing parses. The single exception is deprecated and exists only to stop this framework's own four-month-old idiom reading as a pass on upgrade: a first line that is exactly `FAIL` with exit 0 is scored FAIL and told to rewrite itself. Printing the value you checked, rather than a verdict, is better still — it tells the next reader what the claim was measured against.
+   - **Never hardcode the version a probe corroborates — derive it from the stamp.** A probe written as `git show "v1.36.1:<path>" | diff -q - <installed>` has the lifetime of *that tag*, not of the claim: it expires at the exact moment it has something to report, since what makes it interesting is the upstream tag moving. Derive the version from the stamp, so bumping the stamp re-arms the probe and the two cannot silently disagree. Two adopter estates wrote the same fix independently on the same day, and one of them caught a release with it (#136).
+
+     ```bash
+     # Derive, do not hardcode. CANNOT VERIFY is a third outcome, not a failure.
+     R=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "CANNOT VERIFY: not in a git repo"; exit 0; }
+     P=$(sed -n "s/^framework: agent-ready-projects \(v[0-9.]*\).*/\1/p" "$R/CLAUDE.md" 2>/dev/null | head -1)
+     [ -n "$P" ] || { echo "CANNOT VERIFY: no framework stamp in CLAUDE.md"; exit 0; }
+     d=0
+     for s in audit-context curate update-drift; do
+       i="$HOME/.claude/skills/$s/SKILL.md"
+       [ -f "$i" ] || { echo "CANNOT VERIFY: $s is not installed"; continue; }
+       git -C "$FRAMEWORK" show "$P:.claude/skills/$s/SKILL.md" 2>/dev/null \
+         | diff -q - "$i" >/dev/null || { echo "DRIFT: $s differs from $P"; d=1; }
+     done
+     [ "$d" = 0 ] && echo "global skills byte-identical to $P" || exit 1
+     ```
+
+     Every branch was executed, not read: clean, a seeded drift (exit 1), no stamp, skill absent, and outside a repo. The `2>/dev/null` matters — without it git's own `fatal:` prints beside CANNOT VERIFY and reads as the failure.
+
+     ⚠️ **Compare against the REFERENCE INSTALL (`.claude/skills/<name>/SKILL.md`), never `templates/<name>.md`** — the template's `SAVE AS` comment is frontmatter in the install, a structural residue no tag clears, so every run reads as drift. **Preconditions, not universal**: a framework clone at `$FRAMEWORK`, skills installed globally.
    - **Assume nothing about the working directory.** The runner may be invoked from anywhere, and a relative command silently changes meaning when it is — `git ls-remote origin` checked a remote from the project root and, run one directory over, reported ERROR for a healthy claim. Address the target absolutely: `git -C /path/to/repo …`, absolute paths for files.
 
 

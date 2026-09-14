@@ -85,8 +85,29 @@ git rev-parse --abbrev-ref HEAD
 
 # Tag free? Anchor to refs/tags — a bare `git rev-parse vX.Y.Z` also matches
 # a *branch* named vX.Y.Z and would block a legitimate release.
-git rev-parse --verify --quiet "refs/tags/vX.Y.Z" && echo "LOCAL TAG EXISTS — STOP" || echo "local: free"
-git ls-remote --exit-code --tags origin "refs/tags/vX.Y.Z" && echo "REMOTE TAG EXISTS — STOP" || echo "remote: free"
+# ⚠️ THE VERDICT IS THE EXIT STATUS, never the word. `cmd && echo STOP || echo free`
+# exits 0 on BOTH branches, so anything scoring it reads PASS while it prints STOP.
+# This file printed that shape until v1.43.0 — defensible while only a human read
+# it, and still the framework printing the idiom `curate` Step 0.5 forbids (#136).
+# Braced, never bare: a skill's ARGUMENTS are substituted into its BODY, so a
+# bare \$1 here ships as the first argument word (#77). Lint rule 9 catches it —
+# including in THIS comment, whose first draft warned about the token by writing
+# it, which is the same trap one level up.
+tagfree() {
+  t=${1}
+  if git rev-parse --verify --quiet "refs/tags/$t" >/dev/null; then
+    echo "LOCAL TAG $t EXISTS — STOP"; return 1
+  fi
+  lsr=$(git ls-remote --tags origin "refs/tags/$t" 2>/dev/null) || {
+    echo "CANNOT VERIFY $t on the remote — ls-remote failed (offline? no origin?)"
+    return 2
+  }
+  if [ -n "$lsr" ]; then
+    echo "REMOTE TAG $t EXISTS — STOP"; return 1
+  fi
+  echo "tag $t free, local and remote"
+}
+tagfree vX.Y.Z; echo "  exit=$?   # 0 free, 1 taken, 2 could not be decided"
 
 # Version references. Use git grep: it is gitignore-aware (skips node_modules/,
 # vendor/, .venv/), repo-root-relative rather than cwd-relative, and excludes by
