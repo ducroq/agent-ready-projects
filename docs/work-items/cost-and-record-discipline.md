@@ -10,6 +10,8 @@ Goal: make the framework cheaper to run without cutting the review of the shippe
 
 ## Session plan — TOKEN REDUCTION ONLY (maintainer directive, 2026-09-14)
 
+✅ **BOTH HALVES DONE, 2026-09-14 — see Current Status for the `memory/MEMORY.md` half.**
+
 ✅ **`CLAUDE.md` is DONE — all three blocks, 2026-09-14** (`856fe66`, `32a86e9`, `6688972`).
 Hard Constraints 10,468 → 7,386, Architecture 8,052 → 4,591, Before You Start 7,201 → 5,384,
 whole file 36,270 → 27,364 chars / 28,393 bytes — **which clears the 35,000-byte soft flag in
@@ -70,10 +72,23 @@ accounted for by name before and after each and re-run green. One collateral fix
 (v1.31.0–v1.36.1, bounded — v1.30.0 and v1.37.0 both parse) before the duplicate carrying the
 right answer was deleted.
 
-**Next action**: `memory/MEMORY.md`, per the table below — Current State's 2026-09-07..14 blocks
-to a topic file once they stop being current, and the Topic Files "key insight" column back to a
-routing hint. Then the cheap unmeasured item: whether the `docs/**` → LOW re-tiering reduces
-spend or only moves it.
+✅ **`memory/MEMORY.md` is DONE too, 2026-09-14** — 42,653 → 19,067 chars. The 2026-09-06 and
+2026-09-07 session blocks were appended verbatim to `memory/project_session_2026_09_06.md` and
+`memory/project_session_2026_09_07.md` (which already held distillations of the same sessions —
+the index was the second narrative), and the Topic Files table's 4,840-char per-hypothesis
+summary was deleted down to the count, its probe, and a pointer at the log.
+
+⚠️ **Two probes moved files and both were re-run green in their new homes** — the v1.39.0 tag
+probe, and the 2026-09-06 wave probe, whose hardcoded path had to be repointed from
+`memory/MEMORY.md` to the archive file or it would have silently reported CANNOT VERIFY.
+
+**Auto-loaded set 79,976 → 47,471 chars against the 40,000 cap.** Still over, and **no further
+cut is scheduled**: both named candidates are spent, and the remaining bulk is the 2026-09-12 and
+2026-09-14 blocks, which are still current and are what a bare "continue" reads. The next cut
+needs a fresh measurement rather than this plan.
+
+**Next action**: the cheap unmeasured item — whether the `docs/**` → LOW re-tiering reduces spend
+or only moves it. One release will say.
 
 **Previous savepoint — 2026-09-12, second block.** v1.41.0 is tagged and pushed. A later `/update-drift` + `/audit-context` pass committed `76d6581` (**not pushed, no release**) and filed #170-#174.
 
