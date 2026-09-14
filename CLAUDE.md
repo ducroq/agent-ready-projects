@@ -16,7 +16,7 @@ The source framework that teaches the layered memory method for AI coding agents
 | Installing, moving, or removing a skill | `docs/GUIDE.md` § "Where a skill lives" — global shadows local, so scope is exclusive. Run `bash scripts/install-global-skills.sh --check ~/repos` to verify the global install matches the tracked source and no inert local copies remain. **The install path refuses when the bytes it would copy are not what the highest release tag reachable from HEAD holds** (#33): refresh globals after the tag is pushed *and verified*, per `templates/release.md` Step 7 — a local tag satisfies the guard, so tagging alone is not the safe point. `--force` overrides it, knowingly. |
 | Editing a skill — either `templates/<name>.md` or `.claude/skills/<name>/SKILL.md` | **Edit both.** One artifact in two files; an edit to one is drift until the other matches. `install-global-skills.sh --check` cannot see it (it compares the global install to the tracked one, so both read as current while diverging from the template). `bash tests/lint/run.sh` rule 6 is what catches it. |
 | Closing an issue that was filed against a **skill** | **Name the adopter-installed file that changed because of it**, before writing `Closes #N` anywhere. `git diff -- templates/<skill>.md \| grep -c '<the concept>'` returning 0 is the check, and it is the whole rule. Maintainer-local on purpose — it is a question, not a check. **`memory/hypothesis-log.md` H-015 carries the origin, every instance, and the terms it ships or dies on (#92), and is currently DUE.** |
-| Before committing structural changes (CLAUDE.md, `memory/`, `templates/`) | Run `bash tests/lint/run.sh` — fourteen deterministic structural rules; **`tests/lint/README.md` is the catalog and states what each rule cannot see.** **CI runs it and `bash tests/run-fixtures.sh` on every push and PR** (`.github/workflows/checks.yml`, #115), so a green tick is available to be mistaken for a review: it is not one, `/review-changes` still is. Two rules SKIP in CI and cannot do otherwise — rule 2 has no `memory/` to read, rule 12 has no name list — so **the local run is the stronger one**, and the skips print to the run summary rather than folding into the pass. Then run `/review-changes` for diff-driven LLM review: tiers from `.claude/review-profile.md` (v1.40.0), size gate from the skill; with no profile it stops rather than defaulting to LOW. |
+| Before committing structural changes (CLAUDE.md, `memory/`, `templates/`) | Run `bash tests/lint/run.sh` — fifteen deterministic structural rules; **`tests/lint/README.md` is the catalog and states what each rule cannot see.** **CI runs it and `bash tests/run-fixtures.sh` on every push and PR** (`.github/workflows/checks.yml`, #115), so a green tick is available to be mistaken for a review: it is not one, `/review-changes` still is. Three rules SKIP in CI and cannot do otherwise — rules 2 and 15 have no `memory/` to read, rule 12 has no name list — so **the local run is the stronger one**, and the skips print to the run summary rather than folding into the pass. Then run `/review-changes` for diff-driven LLM review: tiers from `.claude/review-profile.md` (v1.40.0), size gate from the skill; with no profile it stops rather than defaulting to LOW. |
 | Picking up where the last session left off — **including a bare "continue", "carry on" or "pick up where we left off", which is the maintainer's normal way to start** | `memory/MEMORY.md` — the index itself. **Read it before doing anything else, and before asking what to work on: the answer is in there.** Nothing loads it automatically; this row is what reaches it. Its Current State section names the open branches, what each review found, and the next steps in order. Topic files in `memory/` stay on demand, per the index's own table. |
 | Editing templates | `templates/README.md` for the tool-agnostic naming map. Templates are the adopter-facing surface; changes ripple to every downstream consumer. |
 | Editing the guide | `docs/GUIDE.md` is the full reference; `README.md` is the on-ramp. Keep them in sync — when you change one, ask whether the other needs the same change. |
@@ -94,7 +94,7 @@ agent-ready-projects/
 │                                 constructed-vs-bitten rows and read-before-loosening warnings
 │                                 live in each fixture's README.md or its runner's header, never
 │                                 here. Per-fixture case digits are deliberately absent (#93)
-│   ├── lint/                  <- Fourteen deterministic structural rules, no LLM.
+│   ├── lint/                  <- Fifteen deterministic structural rules, no LLM.
 │   │                             ⚠️ tests/lint/README.md is the rule catalog — what each rule
 │   │                             catches, AND what it cannot see. Nothing here restates it
 │   └── fixtures/              <- Seeded-defect fixtures, one dir per check: a check that finds
@@ -145,7 +145,7 @@ Listed here so the architecture diagram above is honest about what an adopter se
 | `templates/README.md` | Tool-agnostic naming map — authority on install paths |
 | `docs/rationale/` | Why a skill says what it says |
 | `scripts/install-global-skills.sh` | Install, verify, and scan an estate for inert copies |
-| `tests/lint/run.sh` | The fourteen structural rules; catalog in `tests/lint/README.md` |
+| `tests/lint/run.sh` | The fifteen structural rules; catalog in `tests/lint/README.md` |
 | `tests/run-fixtures.sh` | Every sensitivity fixture; its header lists what it refuses to do silently |
 | `.claude/review-profile.md` | This repo's review tiers |
 | `memory/MEMORY.md` | In-repo memory index (maintainer-local) |
@@ -161,7 +161,7 @@ git push --tags
 git diff vX.Y.Z..vX.Y+1.0 -- templates/
 
 # Self-tests, before committing structural changes
-bash tests/lint/run.sh                              # fourteen structural rules (12 SKIPS without a local name list)
+bash tests/lint/run.sh                              # fifteen structural rules (12 and 15 SKIP without a local name list)
 bash tests/run-fixtures.sh                          # EVERY sensitivity fixture, 2m12s measured (112s of it verify-runner).
                                                     # Enumerates tests/fixtures/, so a suite added tomorrow runs
                                                     # tonight; a dir with no run.sh FAILS unless declared not-a-gate
