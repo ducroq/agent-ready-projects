@@ -9,8 +9,8 @@ this repo and never travels.
 | Tier | File patterns | Depth |
 |------|-------------|-------|
 | **HIGH** | `templates/**`, `adopt.md`, `/README.md`, `docs/GUIDE.md`, `docs/verification-rationale.md`, `tests/**`, `scripts/**`, `.claude/skills/**`, `.gitignore` | Full battery (3-4 lenses) |
-| **MEDIUM** | `CLAUDE.md`, `docs/GUIDE.md`, `templates/checklists/**`, `templates/test-fixtures/**` | Two lenses (adversarial + doc-accuracy) |
-| **LOW** | `CHANGELOG.md`, `memory/**`, `docs/work-items/**`, `docs/rationale/**`, `docs/**` | One lens (adversarial) |
+| **MEDIUM** | `docs/GUIDE.md`, `templates/checklists/**`, `templates/test-fixtures/**` | Two lenses (adversarial + doc-accuracy) |
+| **LOW** | `CLAUDE.md`, `CHANGELOG.md`, `memory/**`, `docs/work-items/**`, `docs/rationale/**`, `docs/**` | One lens (adversarial) |
 
 ⚠️ **`docs/rationale/**` and the rest of `docs/**` were MEDIUM until 2026-09-14 and are now LOW,
 deliberately.** Measured over two full batteries that day: of ~18 findings, **8 were shipped
@@ -24,6 +24,10 @@ roughly half the review spend and produced nothing an adopter runs.
 will now survive longer. That is acceptable because the rationale files are read when someone
 re-opens a settled decision, not when anyone executes something — and it is not acceptable in
 `templates/`, which is why the tiering splits there and not on "is it documentation".
+
+⚠️ **`CLAUDE.md` moved MEDIUM → LOW on 2026-09-14**, on the same argument that moved `docs/**`:
+nobody installs it, so a wrong line costs one session rather than every adopter. It is still
+reviewed — one adversarial lens — and it is still the file the tier table itself is read from.
 
 `**` crosses directory levels; a leading `/` anchors to the repo root. **The most specific
 matching pattern wins** — `templates/checklists/foo.md` is MEDIUM, not HIGH, even though

@@ -546,12 +546,21 @@ The Unclassified list is not cosmetic and is not made moot by a HIGH file elsewh
 
 ## Step 5 — Fixing, and whether to run another round
 
-**Reviewing is not where the cost is. Fixing is.** On this framework's review ledger, across the findings classified `missed` or `introduced`, most were defects the previous round's own fixes created — 24 introduced against 13 missed, **65% of those pairs** (re-derived at v1.39.0). ⚠️ **That 65% is those pairs and nothing wider**: over the whole ledger the same 24 sit against **219** counted findings — 11% — because most rows are seeded-benchmark runs whose `introduced` is 0 by construction. **A benchmark round's zero is not evidence that fixing is safe; it is evidence that seeded defects do not have fixes.** Re-derive rather than trust — note `$(N)`, not `$N`, or the skill's own argument substituter eats the field refs (#77): `awk -F'\t' '$(1)~/^2026-/{f+=$(9); i+=$(12)} END{print i, f}' <ledger>`. Rounds appear to multiply because each round's fixes need another round to check them, so **a round cap may save nothing on its own — it can ship the introduced defects instead.**
+**Reviewing is not where the cost is. Fixing is.** On this framework's review ledger, across the findings classified `missed` or `introduced`, most were defects the previous round's own fixes created — 24 introduced against 13 missed, **65% of those pairs** (re-derived at v1.39.0). ⚠️ **That 65% is those pairs and nothing wider** — over the whole ledger the same 24 sit against **219** findings (11%), because seeded-benchmark rows have `introduced` 0 by construction. Re-derive rather than trust — note `$(N)`, not `$N`, or the substituter eats the field refs (#77): `awk -F'\t' '$(1)~/^2026-/{f+=$(9); i+=$(12)} END{print i, f}' <ledger>`. **A round cap does not remove those defects; it ships them.**
 
-- **A fix is a change, and takes the tier of the file it lands in.** Treating it as a correction too small and too well-understood to re-read is self-certification in miniature: small is why loosenings hide, and knowing the intent is what stops you seeing the result.
-- **Re-read the steps that consume what you changed.** These defects live in the *relationship between* steps, which is why re-reading the fixed step alone finds nothing.
-- **Fix one finding at a time when findings touch the same file.** Batched fixes interact, and the interaction is invisible in a diff that shows them as separate hunks.
-- **Name what the fix could have broken before starting another round.** If you cannot name a candidate you have not looked; if you can, that is the next round's scope — far narrower than a battery.
+- **A fix is a change, and takes the tier of the file it lands in.** Treating it as too small to re-read is self-certification in miniature: small is why loosenings hide, and knowing the intent is what stops you seeing the result.
+- **Re-read the steps that consume what you changed.** These defects live in the *relationship between* steps, so re-reading the fixed step alone finds nothing.
+- **Fix one finding at a time when findings touch the same file.** Batched fixes interact, and the interaction is invisible in a diff showing them as separate hunks.
+- **Name what the fix could have broken before another round.** If you cannot name a candidate you have not looked; if you can, that is the next round's scope — far narrower than a battery.
+
+### Round cap
+
+**Two rounds maximum.** A third runs only when round 2 found **the same defect in a second file**
+— a class, not an instance.
+
+⚠️ **A cost decision buying the risk named above**: a cap ships the introduced defects instead of
+catching them. Cost per acted finding is flat across rounds, so the saving is rounds not
+happening. **Re-open on a measured change in the rate, not on one missed defect.**
 
 ### Budget the round before you spawn it
 
@@ -559,5 +568,5 @@ State the lens set and the ceiling **before** starting; record the cost after. L
 
 - **Decide the lens set up front.** Stopping a reviewer part-way spends its cost to that point and returns nothing. A lens not worth its cost should not be started.
 - **Never run a lens for a class a deterministic check covers *completely*.** Partial coverage is not coverage: where the tier table mandates a lens and a check covers only part of its class, the tier table wins — say which part the check already settled, and let the lens have the rest.
-- ⚠️ **Do not economise by collapsing lenses into the author's own context.** This is about *whose context* the reviewer holds, not how many run: one independent reviewer instead of four is a legitimate saving, and the magnitude gate prescribes exactly that for small diffs. Asking the questions inside the context that wrote the change is not — that reviewer holds the author's blind spots, the failure this skill exists to prevent. Measured twice: two lenses once returned **disjoint** findings; and on a four-lens round every lens found the top blocker while **two of them each found a blocker no other lens did**. Breadth buys the defects nobody predicted — not disjointness.
+- ⚠️ **Do not economise by collapsing lenses into the author's own context.** This is about *whose context* the reviewer holds, not how many run: one independent reviewer instead of four is a legitimate saving, and the magnitude gate prescribes that for small diffs. Asking the questions inside the context that wrote the change is not — that reviewer holds the author's blind spots, the failure this skill exists to prevent. Measured twice: two lenses once returned **disjoint** findings, and on a four-lens round two lenses each found a blocker no other lens did. Breadth buys the defects nobody predicted.
 - **Promote rather than re-catch.** Step 3.1 triages each round's findings into checks; this is where the loop closes. **Read the Mechanized table in Step 1, before choosing lenses** — not here, which is read before Step 3.1 has ever run. ⚠️ A `live` row is not a reason to drop a lens the tier table mandates: it covers one *shape*, a lens covers a *class*, and the bullet above governs — partial coverage is not coverage. Use it to narrow a lens's scope, never to skip one.
