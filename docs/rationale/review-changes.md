@@ -242,14 +242,18 @@ not silently undo it.
 
 The third member of the family #149 and the unresolved-baseline guard already cover, and the
 only one where every existing guard reports healthy: `$BASE` resolves, `^{commit}` passes, no
-fallback fires, and every diff term is *correctly* empty because HEAD is already an ancestor of
-the baseline. The terminator then says "nothing to review".
+fallback fires, and the committed-on-this-branch term is *correctly* empty because HEAD is
+already an ancestor of the baseline. ⚠️ **"every diff term" was wrong and is corrected here**:
+only `"$BASE"...HEAD` depends on the baseline — `git diff` and `git diff --cached` do not — so
+the state coexists with real uncommitted work. That is why the shipped guard also excludes the
+EQUALITY case: without it the diagnostic fired on the ordinary default-branch pre-commit run,
+where the block reassigns BASE to `@{u}` and makes HEAD an ancestor by construction. The terminator then says "nothing to review".
 
 | state | `$BASE` resolves | fallback fires | diff empty | reported |
 |---|---|---|---|---|
 | baseline unresolvable | no | yes | maybe | unresolved-baseline finding |
 | root-commit fallback (#149) | yes (to root) | yes | yes, if one commit | finding, via `ROOTFALLBACK` |
-| **HEAD contained in `$BASE`** | **yes** | **no** | **yes, always** | **"nothing to review"** |
+| **HEAD contained in `$BASE`** | **yes** | **no** | the `$BASE`...HEAD term only | **"nothing to review"** |
 
 Found by running the skill on a branch carrying three unreviewed commits after a concurrent
 session moved the checkout back to `master`. It is also the *likeliest* of the three in ordinary

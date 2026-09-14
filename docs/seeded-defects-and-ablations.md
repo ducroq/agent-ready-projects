@@ -230,8 +230,11 @@ sweep for the code already there.
 We looked. The lexical cousins *are* mechanizable and we ship a rule for them — a mutation equal
 to its target, an empty expected kill set. This class is **semantic**: whether `git status`
 answers "did the content change" depends on what the claim was, and no pattern over the text
-reaches that. Two candidate lint rules were built and declined here after measurement. Expect to
-catch these by asking the question, not by running something.
+reaches that. One candidate rule was built here, measured (3 hits, all the safe direction, zero
+dangerous) and declined; a second was reported not-applicable by an adopter rather than built.
+*(An earlier draft of this paragraph said "two candidate lint rules were built and declined
+here", which overstates the record on both counts.)* Expect to catch these by asking the
+question, not by running something.
 
 ## Starting small
 

@@ -545,18 +545,49 @@ PY
    - **Never hardcode the version a probe corroborates — derive it from the stamp.** A probe written as `git show "v1.36.1:<path>" | diff -q - <installed>` has the lifetime of *that tag*, not of the claim: it expires at the exact moment it has something to report, since what makes it interesting is the upstream tag moving. Derive the version from the stamp, so bumping the stamp re-arms the probe and the two cannot silently disagree. Two adopter estates wrote the same fix independently on the same day, and one of them caught a release with it (#136).
 
      ```bash
-     # Derive, do not hardcode. CANNOT VERIFY is a third outcome, not a failure.
-     R=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "CANNOT VERIFY: not in a git repo"; exit 0; }
-     P=$(sed -n "s/^framework: agent-ready-projects \(v[0-9.]*\).*/\1/p" "$R/CLAUDE.md" 2>/dev/null | head -1)
-     [ -n "$P" ] || { echo "CANNOT VERIFY: no framework stamp in CLAUDE.md"; exit 0; }
-     d=0
-     for s in audit-context curate update-drift; do
-       i="$HOME/.claude/skills/$s/SKILL.md"
-       [ -f "$i" ] || { echo "CANNOT VERIFY: $s is not installed"; continue; }
-       git -C "$FRAMEWORK" show "$P:.claude/skills/$s/SKILL.md" 2>/dev/null \
-         | diff -q - "$i" >/dev/null || { echo "DRIFT: $s differs from $P"; d=1; }
-     done
-     [ "$d" = 0 ] && echo "global skills byte-identical to $P" || exit 1
+     # Three outcomes: 0 verified, 1 drift, 2 could not decide. ⚠️ UNDECIDED IS
+     # NOT A PASS — an earlier draft of this block printed "CANNOT VERIFY: <skill>
+     # is not installed" and then "byte-identical", exit 0, because the skip left
+     # the counter alone. That is the false PASS with the evidence of its own
+     # failure printed beside it, forbidden eight lines above, inside the sub-step
+     # that forbids it. The success line is now gated on a COUNT of what was
+     # actually compared, not on the absence of a difference.
+     stampcheck() {
+       want="audit-context curate update-drift"
+       R=$(git rev-parse --show-toplevel 2>/dev/null) ||
+         { echo "CANNOT VERIFY: not in a git repo"; return 2; }
+       [ -n "${FRAMEWORK:-}" ] && [ -d "$FRAMEWORK/.git" ] ||
+         { echo "CANNOT VERIFY: FRAMEWORK is unset or is not a git clone"; return 2; }
+       # ⚠️ Five of the six stamp shapes `update-drift` Step 0 documents, not one.
+       # A first draft keyed on `framework: <name> vX.Y.Z` alone and returned
+       # CANNOT VERIFY in THIS repo, whose own stamp is the `- **<name>** (this
+       # repo):` shape — a matcher keyed to one shape reporting an unstamped
+       # project is the exact failure that step warns about. The sixth shape,
+       # bare prose `Framework version X.Y.Z`, carries no repo name and stays
+       # undecidable on purpose.
+       P=$(grep -oE "agent-ready-projects[^0-9]{0,40}v?[0-9]+\.[0-9]+\.[0-9]+" \
+             "$R/CLAUDE.md" 2>/dev/null | head -1 |
+           grep -oE "v?[0-9]+\.[0-9]+\.[0-9]+$" | sed "s/^v*/v/")
+       [ -n "$P" ] || { echo "CANNOT VERIFY: no framework stamp in CLAUDE.md"; return 2; }
+       n=0; d=0
+       for s in $want; do
+         i="$HOME/.claude/skills/$s/SKILL.md"
+         [ -f "$i" ] || { echo "CANNOT VERIFY: $s is not installed"; continue; }
+         # ⚠️ SPLIT the pipeline. Piped, a `git show` that fails — the normal
+         # state right after an upstream release, stamp bumped and clone not
+         # fetched — is swallowed and `diff` supplies the verdict, so the
+         # re-armed probe accuses three clean installs of drifting.
+         t=$(git -C "$FRAMEWORK" show "$P:.claude/skills/$s/SKILL.md" 2>/dev/null) ||
+           { echo "CANNOT VERIFY: $P is not in the framework clone — fetch tags"; return 2; }
+         printf '%s\n' "$t" | diff -q - "$i" >/dev/null ||
+           { echo "DRIFT: $s differs from $P"; d=1; }
+         n=$((n + 1))
+       done
+       [ "$d" = 0 ] || return 1
+       [ "$n" = 3 ] || { echo "CANNOT VERIFY: compared $n of 3 skills"; return 2; }
+       echo "3 global skills byte-identical to $P"
+     }
+     stampcheck; echo "  exit=$?"
      ```
 
      Every branch was executed, not read: clean, a seeded drift (exit 1), no stamp, skill absent, and outside a repo. The `2>/dev/null` matters — without it git's own `fatal:` prints beside CANNOT VERIFY and reads as the failure.

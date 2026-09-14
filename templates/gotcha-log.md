@@ -36,8 +36,10 @@
      the detail.
 
      Measured across three logs and 277 entries, a real entry runs
-     ~700-1,200 characters and that is fine: a body costs nothing until
-     someone opens it. ABOVE ~3,000 CHARACTERS is the signal worth
+     ~700-1,200 characters and that is fine: SO LONG AS YOUR PROCESS
+     READS HEADINGS FIRST, a body costs nothing until someone opens it.
+     If you read this log whole, that does not hold and shorter is
+     better. ABOVE ~3,000 CHARACTERS is the signal worth
      acting on (2-5% of entries in every log measured) — that is a page,
      and a page belongs in a topic file or an ADR.
 

@@ -37,7 +37,7 @@ flowchart LR
     style HL fill:#eff6ff,stroke:#1d6fa5
 ```
 
-**Time cost:** Seconds. You're writing 2-3 lines, not a report.
+**Time cost:** Seconds. You're writing the lesson, not a report.
 
 **The rule:** If you'd explain it to a colleague arriving tomorrow, write it down now. If it's obvious from the code, don't.
 

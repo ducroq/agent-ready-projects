@@ -51,7 +51,12 @@ ROOTFALLBACK=          # initialised, or a later `set -u` reader aborts on it
 # HEAD already contained in $BASE (on the base branch, a detached older commit, a
 # worktree someone moved, a landed fast-forward). No other guard fires, so
 # unreviewed commits report as a clean review. A diagnostic, not an abort.
-if git merge-base --is-ancestor HEAD "$BASE" 2>/dev/null; then
+# ⚠️ The equality case is EXCLUDED. On the default branch this block reassigns
+# BASE to @{u}, which makes HEAD an ancestor of BASE on every ordinary run — so
+# the unguarded form fired on the commonest pre-commit state there is, and a
+# guard that cries wolf trains its reader to skip the one line that matters.
+if git merge-base --is-ancestor HEAD "$BASE" 2>/dev/null &&
+   [ "$(git rev-parse HEAD)" != "$(git rev-parse "$BASE^{commit}" 2>/dev/null)" ]; then
   { echo "HEAD IS CONTAINED IN $BASE — nothing on this branch is absent from the"
     echo "  baseline, so an empty diff below is expected and is NOT a clean review."
     echo "  If you expected changes you are not on the branch you think: check"
@@ -65,7 +70,14 @@ git diff --cached --shortstat          # staged
 # #145 — no `git diff` variant lists a file git has not seen, so the gate carve-out
 # for "any new file in a HIGH path" fired on a class this step could not observe.
 # Step 1.5 having ls-files is no substitute: it checks markdown, not tiers.
-git ls-files --others --exclude-standard    # untracked, not ignored
+# ⚠️ ROOT-ANCHORED. `ls-files` defaults to the CWD SUBTREE while every `git diff`
+# term above is repo-wide, so run from a subdirectory this silently dropped every
+# untracked file outside it — restoring observability only when cwd happens to be
+# the root. This skill is user-global and runs with the cwd of whatever repo is
+# under review, so that is not a safe assumption. `release.md` praises `git grep`
+# for being repo-root-relative for the same reason.
+git -C "$(git rev-parse --show-toplevel)" -c core.quotePath=false \
+    ls-files --others --exclude-standard    # untracked, not ignored
 ```
 
 **Resolving a name is not enough — it has to resolve to a commit.** A ref can look fine and diff to nothing. That is why the block validates `^{commit}` and, on failure, falls back to the root commit and says so: an unresolved baseline and a clean tree produce identical output.
@@ -77,10 +89,13 @@ The loop covers the cases where `origin/HEAD` is absent: `git init` + `git remot
 Now run `git diff --stat "$BASE"...HEAD`, `git diff --stat` and `git diff --cached --stat` to see the changed files, `git diff --summary -M "$BASE"...HEAD` alongside them, and `git ls-files --others --exclude-standard` for the ones git has not seen — **an untracked file is a changed file and gets a tier like any other** (#145). That was #64 surviving its own fix in the place nobody re-read. **`--stat` alone cannot see a mode change, a rename, a submodule, or a binary** — all four render as zero or near-zero lines, and three of them are carve-outs below. A carve-out you cannot observe is not in force; `--summary` without the baseline term cannot observe any of them on a pushed branch. Classify each changed file into a risk tier:
 
 **Read `.claude/review-profile.md` now** — it holds this project's risk tiers,
-guarantee surfaces, test baseline, carve-outs, and any **project lenses** or
-**project additions to the shipped lenses** (#166; both optional, both additive —
-they never replace the lens set below, and a profile written before v1.43.0 has
-neither section, which is not an error). The tier table is **not** in this skill,
+guarantee surfaces, test baseline, carve-outs, and three optional sections a
+project may add (#166): **Project lenses** and **Project additions to the shipped
+lens prompts**, both read in Step 2, and **Project procedure kept with the profile**,
+which you read HERE if it is present — it holds local checks the project wants
+run that are procedure rather than data. All three are additive and never replace
+what ships; a profile written before v1.43.0 has none of them, which is not an
+error. The tier table is **not** in this skill,
 deliberately: this file ships identically to every project, and a table of one project's
 paths silently classifies every other project's changes as LOW.
 
@@ -121,10 +136,17 @@ git diff --shortstat                   # unstaged
 git diff --cached --shortstat          # staged
 # Untracked lines count toward the magnitude too — none of the three terms above
 # sees them, and a change can be mostly new files (#145). No `xargs -r`: that is
-# a GNU extension, and on BSD/macOS empty input runs `wc -l` with no arguments,
-# which reads stdin and HANGS. This prints 0 on an empty list.
-git ls-files --others --exclude-standard |
-  while IFS= read -r f; do wc -l < "$f"; done |
+# a GNU extension. Without it, empty input runs `wc -l` with no arguments, which
+# reads stdin — on this box that is an immediate EOF, but on a terminal it blocks.
+# ⚠️ NOT verified on BSD/macOS; no BSD userland here. The form below avoids the
+# question entirely and prints 0 on an empty list, which IS measured.
+# ⚠️ `-z`, not a plain list: `ls-files` C-QUOTES any path with a non-ASCII byte,
+# a tab or a newline (`"r\303\251sum\303\251.md"`), and `wc -l < "$f"` then
+# opens nothing. Measured: 5 reported against a true 105. The same quoting hits
+# the TIER listing above, which is why it carries `core.quotePath=false`.
+# `|| echo 0` keeps a broken symlink from aborting the stream under `set -e`.
+git -C "$(git rev-parse --show-toplevel)" ls-files -z --others --exclude-standard |
+  while IFS= read -r -d '' f; do wc -l < "$f" 2>/dev/null || echo 0; done |
   awk '{ n += $(1) } END { print n + 0, "untracked lines" }'
 ```
 
@@ -322,8 +344,8 @@ That count is files *in scope*, not files you edited: the baseline term includes
 
 For each lens, spawn a subagent with the specific prompt below. Run lenses concurrently.
 
-**Run the profile's `Project lenses` too, and append its `Project additions` to the matching
-shipped prompts** (#166). They are additive: a project lens never replaces one below, and a
+**Run the profile's `Project lenses` too, and append its `Project additions to the shipped lens
+prompts` to the matching prompts** (#166). They are additive: a project lens never replaces one below, and a
 project addition never replaces the shipped text it extends. A profile with neither section
 runs exactly the set below.
 

@@ -59,14 +59,15 @@ Extra lenses this project runs, and when. **The skill's own lens set always runs
 section adds, it never replaces. One per entry: the name, the trigger, and the prompt the
 subagent gets.
 
-⚠️ **This section exists because the v1.40.0 split silently lost one.** The skill refuses on a
-*missing* profile and cannot tell a complete one from a half-ported one, so a lens that is not
-written here is not run and nothing says so (#166).
+⚠️ **This section exists because the v1.40.0 split silently lost an ADOPTER's lens** — the
+framework's own four were unchanged across that release. The skill refuses on a *missing*
+profile and cannot tell a complete one from a half-ported one, so a lens that is not written
+here is not run and nothing says so (#166).
 
 - `lens-name` — fires on: `path/glob/**`
   *The prompt. What it must refute, and what a positive looks like.*
 
-## Project additions to the shipped lenses
+## Project additions to the shipped lens prompts
 
 Text appended to the shipped `adversarial` / `doc-accuracy` / `guarantee-preservation` prompts
 for this project. Use this when a shipped lens is *right* but needs local vocabulary, rather

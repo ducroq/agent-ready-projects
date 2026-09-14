@@ -94,7 +94,12 @@ git rev-parse --abbrev-ref HEAD
 # including in THIS comment, whose first draft warned about the token by writing
 # it, which is the same trap one level up.
 tagfree() {
-  t=${1}
+  # Empty or missing arg was a FALSE PASS: `tagfree` with no argument printed
+  # "tag  free, local and remote" and exited 0, having checked nothing, with a
+  # double space as the only tell. Reachable whenever $VERSION did not survive
+  # into this shell.
+  t=${1:-}
+  [ -n "$t" ] || { echo "CANNOT VERIFY: no tag given"; return 2; }
   if git rev-parse --verify --quiet "refs/tags/$t" >/dev/null; then
     echo "LOCAL TAG $t EXISTS — STOP"; return 1
   fi
@@ -107,7 +112,15 @@ tagfree() {
   fi
   echo "tag $t free, local and remote"
 }
-tagfree vX.Y.Z; echo "  exit=$?   # 0 free, 1 taken, 2 could not be decided"
+# ⚠️ GUARDED. Under `set -e` a bare `tagfree vX.Y.Z` kills the shell on both the
+# 1 and the 2 branch, so the status line never prints and the remaining
+# preconditions are skipped — the 1-vs-2 distinction this rewrite exists to
+# create, invisible in exactly the regime the framework recommends running in.
+if tagfree vX.Y.Z; then rc=0; else rc=$?; fi
+echo "  exit=$rc   # 0 free, 1 taken, 2 COULD NOT BE DECIDED"
+# ⚠️ 2 IS NOT A PASS HERE. Elsewhere this framework treats CANNOT VERIFY as a
+# third outcome rather than a failure; for THIS precondition it means the remote
+# was never checked, so treat it as STOP. Do not continue to Step 7 on a 2.
 
 # Version references. Use git grep: it is gitignore-aware (skips node_modules/,
 # vendor/, .venv/), repo-root-relative rather than cwd-relative, and excludes by

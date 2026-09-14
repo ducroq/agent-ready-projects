@@ -63,3 +63,18 @@ where the seeded-defect and sensitivity guards live.
 ## Always-full-depth carve-outs (project additions)
 
 None beyond the skill's own list.
+
+## Project lenses
+
+None beyond the shipped set. ⚠️ **Present deliberately and empty**: the v1.43.0 template adds
+this section, and a profile that simply omits it is indistinguishable from one that lost it in a
+port — which is the failure #166 is about. An empty section says the question was asked.
+
+## Project additions to the shipped lens prompts
+
+None.
+
+## Project procedure kept with the profile
+
+None. Procedure for this repo lives in `tests/lint/` and `tests/fixtures/`, which are tracked
+and run by CI, so there is nothing that would otherwise be homeless.

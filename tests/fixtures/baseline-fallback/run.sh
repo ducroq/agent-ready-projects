@@ -49,6 +49,26 @@ for needle in ('ROOTFALLBACK=1', 'BASE:?no commits', 'EXCLUDES', '| tail -1) || 
 open(sys.argv[2], 'w', encoding='utf-8').write(prog)
 PY
 
+# ⚠️ A SECOND extraction, because the first cannot answer #153. The block above
+# deliberately starts AFTER baseline resolution so its rows can force the fallback
+# with BASE unset. #153 is the opposite state -- BASE must RESOLVE -- so its rows
+# need the whole of Step 1. Asserting the ancestor guard against the fallback-only
+# block is what the first draft of T5 did: it failed, and the cause was the
+# HARNESS, not the guard.
+python3 - "$TPL" "$WORK/full.sh" <<'XPY' || { echo "FULL EXTRACTION FAILED"; exit 1; }
+import sys
+src = open(sys.argv[1], encoding="utf-8").read()
+i = src.index("BASE=$(git symbolic-ref")
+j = src.index('git diff --shortstat "$BASE"...HEAD', i)
+prog = src[i:j]
+for needle in ("HEAD IS CONTAINED IN", "merge-base --is-ancestor", "ROOTFALLBACK=1"):
+    if needle not in prog:
+        sys.exit("full block is missing %r" % needle)
+open(sys.argv[2], "w", encoding="utf-8").write(prog)
+XPY
+
+runfull() { ( cd "$1"; /bin/bash -c "set -uo pipefail; unset BASE ROOTFALLBACK
+                 . '$WORK/full.sh'" 2>"$WORK/err" >/dev/null ); }
 mkrepo() {  # $1 = dir, $2 = number of commits. Asserts what it produced.
   local d="$WORK/$1" i=1 n
   mkdir -p "$d"; git init -q "$d"
@@ -134,6 +154,45 @@ say "$([ "$out" = "RF=" ] || [ "$out" = "RF=unset" ] && echo 1 || echo 0)" \
 say "$([ -z "$err" ] && echo 1 || echo 0)" \
   "N1b a resolving baseline prints nothing" \
   "N1b a resolving baseline printed a diagnostic, which reads as a finding when there is none"
+
+# --- #153: HEAD contained in $BASE. -----------------------------------------
+# The third member of the family T1 covers. $BASE RESOLVES, ^{commit} passes, no
+# fallback fires, ROOTFALLBACK is legitimately unset — and the BASE-dependent
+# diff term is empty because HEAD is already an ancestor. Every existing guard
+# here reports healthy, which is why it needed its own rows.
+#
+# ⚠️ T5 and N2 are a PAIR and neither is sufficient alone. The first draft of the
+# guard had no equality condition, so it fired on N2 — the ordinary default-branch
+# pre-commit run, which is this skill's commonest invocation — while still passing
+# T5. A guard that cries wolf on the modal case trains its reader to skip the one
+# line that matters, so the false positive is the more expensive half.
+mkrepo behind 3
+git -C "$WORK/behind" checkout -q --detach HEAD~1
+
+runfull "$WORK/behind"; err=$(cat "$WORK/err")
+say "$(printf '%s' "$err" | grep -qF 'HEAD IS CONTAINED IN' && echo 1 || echo 0)" \
+  "T5 HEAD strictly behind the baseline is announced (#153)" \
+  "T5 HEAD is contained in the baseline and nothing said so — three unreviewed commits would report as a clean review"
+
+# Same shape on the branch tip, with real uncommitted work: HEAD EQUALS the
+# baseline, which is not the defect and must stay silent.
+#
+# ⚠️ THIS NEEDS A REAL UPSTREAM and the first draft did not have one. Without an
+# origin, the default-branch arm reassigns BASE to @{u}, finds none, empties it,
+# and the ROOT-COMMIT FALLBACK fires — so HEAD is not an ancestor of BASE and the
+# guard is silent FOR AN UNRELATED REASON. N2 then passed against the unguarded
+# mutant too: a vacuous row, caught by ablating it rather than by reading it.
+git -C "$WORK/behind" checkout -q -
+mkrepo up 3
+git -C "$WORK/behind" remote add origin "$WORK/up" 2>/dev/null || :
+git -C "$WORK/behind" fetch -q origin 2>/dev/null || :
+git -C "$WORK/behind" branch --set-upstream-to=origin/main 2>/dev/null ||
+  git -C "$WORK/behind" branch --set-upstream-to=origin/master 2>/dev/null || :
+echo "uncommitted" >> "$WORK/behind/f.txt"
+runfull "$WORK/behind"; err=$(cat "$WORK/err")
+say "$(printf '%s' "$err" | grep -qF 'HEAD IS CONTAINED IN' && echo 0 || echo 1)" \
+  "N2 HEAD equal to the baseline with uncommitted work stays silent" \
+  "N2 the diagnostic fired on the ordinary pre-commit run — it cries wolf on the commonest invocation"
 
 # --- ablations. `!pattern` = must STOP appearing; otherwise must APPEAR. -----
 ablate() { # $1 label, $2 old, $3 new, $4 [!]pattern, $5 repo=one, $6 mode

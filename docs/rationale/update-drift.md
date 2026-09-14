@@ -30,7 +30,20 @@ matcher bug and not a method bug — the reconciliation was paying for the match
 where a filename or parenthetical sits. They are not allowed between the connector and the hash.
 The hex-inside-a-word risk is about what precedes the **hash**.
 
-**Both word boundaries were measured, not argued.** Six positives and eight negative controls:
+**Both properties were ablated, not argued.** ⚠️ **A first draft of this table was wrong twice**
+and both are corrected here: it announced "six positives and eight negative controls" over a
+table that listed four and six; and it named the trailing ablation as *"without the trailing
+`[^A-Za-z0-9]`"*, which returns **zero** false hits. The trailing gap only leaks when it is
+WIDENED to the leading gap's permissiveness. Measured:
+
+| trailing gap | `commitment` / `reviewed` / `referenced` |
+|---|---|
+| `[^A-Za-z0-9]{1,4}` (shipped) | 0 false hits |
+| deleted entirely | 0 false hits |
+| `[^0-9]{1,4}` | 0 false hits |
+| `[^0-9]{0,40}` (the leading gap's shape) | **false hits** |
+
+The corpus below is the full set — count the rows rather than trusting a headline:
 
 | case | without `\b` | without the trailing `[^A-Za-z0-9]` | shipped form |
 |---|---|---|---|
@@ -71,8 +84,9 @@ Lint rule 11 covers the fenced blocks *this repo* ships. It structurally cannot 
 adopter's: `review-changes` is carried project-local by some adopters, a re-mapped copy is not
 byte-comparable to anything upstream, and upstream lint runs upstream. An adopter measured the
 block they were being asked to adopt at each version they could have taken it from — `bash -n`
-failed at v1.31.0 and v1.36.1, and parsed at v1.37.0. Anyone adopting during that eight-release
-window imported a block that dies with a shell error and prints nothing, which is
+failed at v1.31.0 and v1.36.1, and parsed at v1.37.0. Anyone adopting during that window — v1.31.0 through
+v1.36.1, NINE tags once the v1.34.x point releases are counted, and a first draft of this
+paragraph said eight — imported a block that dies with a shell error and prints nothing, which is
 indistinguishable from a clean run — the failure Step 1.5 exists to prevent, one level up.
 
 Marker presence says the text arrived. It says nothing about whether the block runs. **This rung
