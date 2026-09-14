@@ -41,7 +41,7 @@
 # ordinary English words. Names under MINLEN characters, and names on the
 # generic list below, are reported to stderr as UNCHECKED so the gap is visible
 # rather than silently absent. This trades recall for a usable signal, exactly
-# the trade `curate`'s dead-reference extractor had to make (#51).
+# the trade the retired dead-reference extractor had to make (#51).
 set -u
 
 MINLEN=6

@@ -426,7 +426,7 @@ not write, and a hypothesis needs a Method and a Revisit trigger that the
 reviewer of a diff is not placed to supply. `templates/hypothesis-log.md` says
 what an entry requires, and it is written **by the author, at the time of the
 claim** — not deferred to `/curate`, which runs at end of session and so
-reinstates exactly the delay the log exists to remove. `/curate` Step 0 sub-step 7
+reinstates exactly the delay the log exists to remove. `/curate` Step 0 sub-step 5
 keeps the entries that exist honest, reviewing open ones for staleness and due
 dates;
 it does **not** detect a claim that never got an entry, so writing it at claim

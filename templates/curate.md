@@ -37,11 +37,11 @@ find memory docs/work-items -type f -name '*.md' -print0 2>/dev/null \
   | xargs -0 cat | wc -m
 ```
 
-**Above roughly 300k characters, do not read the corpus.** Work from metadata and the runners in this step, which are built to avoid the full read: the dead-reference extractor and the verify runner both take paths and report, and neither needs the documents in context. Then curate **the index and the newest topic file only**, and say in the report which files you did not open. A run that silently reads a third of its inputs and reports as though it read all of them is the failure this whole method exists to prevent, one layer up.
+**Above roughly 300k characters, do not read the corpus.** Work from metadata and the verify runner in this step, which is built to avoid the full read: it takes paths and reports, and never needs the documents in context. ⚠️ **Do not improvise a dead-reference check to fill the gap** — one was retired in v1.45.0 for never having caught anything, and an improvised one is the #51 failure: 25 `MISSING:` lines of which essentially all were false. Then curate **the index and the newest topic file only**, and say in the report which files you did not open. A run that silently reads a third of its inputs and reports as though it read all of them is the failure this whole method exists to prevent, one layer up.
 
 Check for context rot from *previous* sessions. This catches what the session-focused steps below miss.
 
-**Read metadata, not documents.** Measured across 2,264 real sessions, an ordinary session reads a **median of 3** memory files — the layer works as designed. This step is the exception that reads everything, and it does not need to. A gotcha log's headers are ~6–7% of the file and carry most of what Step 0.3, Step 1 and Step 2 use; a verify probe is *run*, not read; staleness is `stat`, not content. Where a large artifact is involved, take its index first and fetch a body only when you are going to act on it. In one measured repo this is the difference between ~1,000,000 characters and ~35,000.
+**Read metadata, not documents.** Measured across 2,264 real sessions, an ordinary session reads a **median of 3** memory files — the layer works as designed. This step is the exception that reads everything, and it does not need to. A gotcha log's headers are ~6–7% of the file and carry most of what Step 0.2, Step 1 and Step 2 use; a verify probe is *run*, not read; staleness is `stat`, not content. Where a large artifact is involved, take its index first and fetch a body only when you are going to act on it. In one measured repo this is the difference between ~1,000,000 characters and ~35,000.
 
 1. **RETIRED — dead references, stale-memory mtime, and ground-truth drift.** All three were audited against this framework's whole record in v1.45.0 and **none had ever caught anything**. The dead-reference extractor's entire record was its own defects — six false-positive classes, four more found while fixing those, `process.env` and absence-assertions both reported DEAD. ⚠️ **The class is still checked**, by `audit-context` Step 4, which is adopter-facing and measured against a fixture with seeded true positives; what was removed is the second, unmeasured checker. The mtime check measured file age, which is not staleness. Ground-truth drift had never had a table to examine. **Do not re-add any of them without a catch to point at.**
 
@@ -57,7 +57,7 @@ Check for context rot from *previous* sessions. This catches what the session-fo
    grep -c '^\*\*Problem\*\*' <log>          # ground truth: entry count, obtained a different way
    ```
 
-   **Match both heading levels, and reconcile the count.** Adopters use `##` and `###` for entries — one measured log uses `##` for 106 of its 200 entries and says so in its own file comment, and a `^### `-only read returned 94, a plausible number that silently omitted half the file including every entry from the last two weeks. If the header count and the `**Problem**` count disagree by more than the section headings, the extractor is wrong; a short answer here is a defect, not a small log. Ignore headings inside `<!-- -->` — a fresh adopter's log still contains the template's own example entry there.
+   **Match both heading levels, and reconcile the count.** Adopters use `##` and `###` for entries — one measured log uses `##` for 106 of its 200 entries and says so in its own file comment, and a `^### `-only read returned 94, a plausible number that silently omitted half the file including every entry from the last two weeks. If the header count and the `**Problem**` count disagree by more than the section headings, the extractor is wrong; a short answer here is a defect, not a small log. Ignore headings inside `<!-- -->` — a fresh adopter's log still contains the template's own example entry there. **The Promoted table is why this needs reading too**: Step 2 carries recurrences into it, and in one measured log 11 entries recorded resolved there carry no marker in their header, so a header-only pass reports every one of them as unresolved forever.
 
 3. **Unverified state claims**: Scan memory files **and the project file** for state claims ("shipped," "deployed," "live," "running," "working in production") and for counts about this repo that decay silently. The project file is in scope because that is where version lines, adopter counts and occurrence tallies live, and an always-loaded wrong number misleads every session that starts — a count with no probe is a claim, not a fact. Claims carrying a `<!-- verify: ... -->` annotation are run by the runner below. **Do not read the memory files to do this** — the runner extracts and executes the annotations itself, and its report is what you read. Pulling the files into context to find annotations costs the whole corpus to obtain what a grep already returned. A claim with no annotation is **UNVERIFIED** — those decay immediately after the session that wrote them, so suggest adding an annotation or requalifying the claim as a session observation.
 
@@ -76,7 +76,7 @@ Check for context rot from *previous* sessions. This catches what the session-fo
 
    ````bash
    #!/usr/bin/env bash
-   # curate Step 0 sub-step 5 — verify runner (canonical). Do not re-derive it; see issue #34.
+   # curate Step 0 sub-step 3 — verify runner (canonical). Do not re-derive it; see issue #34.
    # Usage: bash verify-runner.sh <file>...        VERIFY_TIMEOUT=<seconds> caps each command.
    # Exit:  0 something was verified and nothing failed · 1 a claim failed, errored or was
    #        malformed · 2 the run cannot be trusted — no files, an operand that is not a
@@ -226,7 +226,7 @@ Check for context rot from *previous* sessions. This catches what the session-fo
    [ $((fail + err + bad)) -eq 0 ] || exit 1
    ````
 
-   **Zero commands extracted is a defect, never a pass** — and so is a count the reader cannot account for. The runner's last line reconciles commands run against `<!--`-shaped annotations in the same files; account for the difference item by item. Documentation of the syntax — code spans, fenced examples — is the expected explanation; an annotation the extractor could not see is a bug in the annotation or in the runner. This is the same trap sub-step 2 warns about for `git log`, one step over: the step reports nothing wrong *precisely when* it has examined nothing. The exit status says which case you are in: **2** means the run itself cannot be trusted — no files given, an operand that is not a readable file, nothing extracted, or nothing that produced a verdict because every annotation was manual or unreachable — **1** means a claim failed, errored or was malformed, and **0** means everything reachable checked out. Do not report a run you did not read the exit status of.
+   **Zero commands extracted is a defect, never a pass** — and so is a count the reader cannot account for. The runner's last line reconciles commands run against `<!--`-shaped annotations in the same files; account for the difference item by item. Documentation of the syntax — code spans, fenced examples — is the expected explanation; an annotation the extractor could not see is a bug in the annotation or in the runner. It is the same trap as reading memory-file dates with `git log` where `memory/` is gitignored — the recommended setup, and this framework's own: `git log` returns **empty with exit 0** for every file, so the check reports nothing stale having examined nothing. The step reports nothing wrong *precisely when* it has examined nothing. The exit status says which case you are in: **2** means the run itself cannot be trusted — no files given, an operand that is not a readable file, nothing extracted, or nothing that produced a verdict because every annotation was manual or unreachable — **1** means a claim failed, errored or was malformed, and **0** means everything reachable checked out. Do not report a run you did not read the exit status of.
 
    **Dispositions** — first match wins, and the order matters because one command can satisfy several:
 
@@ -338,7 +338,7 @@ Check for context rot from *previous* sessions. This catches what the session-fo
    - ⚠️ **The entity pass was RETIRED in v1.45.0** — a pairwise read of the whole index, unbounded by anything but the index's size, which had **never found a contradicting pair**, including in the dog-food run that shipped it. The identifier grep above is one command and stays. Do not re-add the pairwise read without a pair to point at.
    - **Distinguish a contradiction from a recorded correction.** An entry that *names* the claim it supersedes and dates it — "this row asserted the opposite until 2026-08-11 and was false" — is correct practice, not a defect; the index is allowed to remember being wrong. A contradiction is two entries each asserting their version *without reference to the other*, so a reader has no way to tell which came second. If you cannot tell, say so and surface both.
    - **Report the contradicting pair verbatim and do not pick a winner from the text.** The more emphatic entry is not the more likely one; in the founding instance the false entry was the emphatic one *and* told the reader not to re-check. Resolve by measuring — whichever claim can be probed, probe it — and if neither can be, surface both to the engineer as an open question rather than deleting one.
-   - This is model judgement, not a deterministic check. It is bounded only if the index is small: if it exceeds the ~200 lines `templates/memory-index.md` warns about, or the size budget in sub-step 8, report that as the finding and run the identifier pass alone.
+   - This is model judgement, not a deterministic check. It is bounded only if the index is small: if it exceeds the ~200 lines `templates/memory-index.md` warns about, or the size budget in sub-step 6, report that as the finding and run the identifier pass alone.
 
 5. **Hypothesis log surface**: If a hypothesis log exists, scan its `## Open` section. **Check both `memory/hypothesis-log.md` and `docs/hypothesis-log.md`** — projects put it in either, so a single-path check silently scans nothing. For each entry:
    - **Past `Review by:`**: Flag as **DUE FOR REVIEW** — the deadline has arrived. Surface to the engineer with the entry's Position and Method so they can resolve (move to `## Resolved`) or extend the deadline.
@@ -365,7 +365,7 @@ Report findings before proceeding. Don't fix anything in this step — just surf
 
 ## Step 1 — Gotcha log review
 
-Read the gotcha log's **headers** — the same `grep -nE '^#{2,3} '` as sub-step 3, both levels, not `^### ` alone — rather than the whole log. For each existing entry:
+Read the gotcha log's **headers** — the same `grep -nE '^#{2,3} '` as sub-step 2, both levels, not `^### ` alone — rather than the whole log. For each existing entry:
 - If the root cause was fixed during this session, mark it `[RESOLVED]` **in the header**, not in the body: `### Title (2026-08-12) [RESOLVED]`. A status buried in a body cannot be seen by a header read, which makes every later run open the whole file to find out what is still open. Headers written before this convention have no marker and read as open; move one up when you touch its entry.
 - If the same issue came up again, note the recurrence **in the header as well as the body** — `### Title (2026-08-12) [x3]`. Step 2 counts recurrences and reads headers; a recurrence recorded only in a body is invisible to the step that exists to promote it.
 
@@ -380,7 +380,7 @@ Then check: did anything go wrong or surprise you during this session? For each 
 **Fix**: What solved it.
 ```
 
-**Write the lesson and the action, not the narrative of the session that found it.** Having just lived through it, you will overweight the detail. Measured across three logs and 277 entries, a real entry runs ~700–1,200 characters and that is fine: since Step 0.3 reads headings, a body costs nothing until someone opens it. The old rule here said "2–3 lines", which was unenforceable — a markdown line has no length limit, so every log passed it while running 3–6× the size the rule intended. **Above ~3,000 characters is the signal worth acting on** (2–5% of entries in every log measured): that is a page, and a page belongs in a topic file or an ADR.
+**Write the lesson and the action, not the narrative of the session that found it.** Having just lived through it, you will overweight the detail. Measured across three logs and 277 entries, a real entry runs ~700–1,200 characters and that is fine: since Step 0.2 reads headings, a body costs nothing until someone opens it. The old rule here said "2–3 lines", which was unenforceable — a markdown line has no length limit, so every log passed it while running 3–6× the size the rule intended. **Above ~3,000 characters is the signal worth acting on** (2–5% of entries in every log measured): that is a page, and a page belongs in a topic file or an ADR.
 
 ## Step 2 — Pattern detection and promotion
 
@@ -406,7 +406,7 @@ Read the memory index (`MEMORY.md` for Claude Code, or the project file for othe
 - **Active Decisions** — add any architectural choices made, with ADR pointers if created
 - Remove or correct anything that is now stale
 
-**Don't accrete session narrative onto the project file footer.** Session-level "what happened today" belongs in `memory/project_session_YYYY_MM_DD.md`, with a one-line pointer added to `MEMORY.md`. The project file is structural context (constraints, architecture, key paths) — appending session footers there bloats it past the 40k Claude Code perf threshold within ~7 sessions and duplicates what the index already holds. If a previous workflow left footer blocks behind, Step 0 sub-step 8 catches and trims them.
+**Don't accrete session narrative onto the project file footer.** Session-level "what happened today" belongs in `memory/project_session_YYYY_MM_DD.md`, with a one-line pointer added to `MEMORY.md`. The project file is structural context (constraints, architecture, key paths) — appending session footers there bloats it past the 40k Claude Code perf threshold within ~7 sessions and duplicates what the index already holds. If a previous workflow left footer blocks behind, Step 0 sub-step 6 catches and trims them.
 
 ## Step 4 — Doc sync check
 
@@ -424,14 +424,14 @@ Fix what you can. Flag anything that needs engineer input.
 
 ## Step 5 — Verify references
 
-Skip if Step 0 already ran a full freshness check. Otherwise, spot-check that paths mentioned in the memory index and project file still exist. Flag any broken references.
+**Always run this.** ⚠️ It read *"skip if Step 0 already ran a full freshness check"* until v1.45.0, which was true only while Step 0 carried a dead-reference extractor. That was retired for never having caught anything, and the skip clause went with it — left in place it would have taken path checking inside this skill from twice per run to **zero**, silently. Spot-check that paths named in the memory index and project file still exist, and flag any that do not. For a full, measured check of the class, `audit-context` Step 4 is the instrument; it runs monthly, so this per-session spot-check is what stands between.
 
 ## Step 6 — Report
 
 Summarize what you changed:
 - **Freshness**: Gotcha log headers reconciled against the `**Problem**` count, and the Promoted table read (from Step 0)
 - **Verification**: State claims checked — N passed, N failed, N unverified, N errored, N manual check needed, N cannot verify, N malformed (from Step 0). Report all seven numbers even when they are zero; a disposition omitted because it was empty is indistinguishable from one that was never checked. Carry the runner's reconciliation line and its exit status through too — **N commands run of M annotations** — and say what the difference was. Seven zeroes and no reconciliation is the shape of a step that did not run
-- **Index self-consistency**: N identifiers cited by more than one *entry*, N contradicting pairs, and whether the entity pass ran or was cut short for size (from Step 0). Report all three. Zero pairs out of zero clusters means the check found nothing to compare, which is not the same as an index that agrees with itself — say which one it was. Quote any pair verbatim and leave it unresolved unless a probe settled it
+- **Index self-consistency**: N identifiers cited by more than one *entry*, and N contradicting pairs among them (from Step 0). Report both. Zero pairs out of zero clusters means the check found nothing to compare, which is not the same as an index that agrees with itself — say which one it was. ⚠️ **Do not report a disposition for the entity pass**; it was retired in v1.45.0, and inventing one — or re-running the pairwise read to have something to say — is what that retirement forbids. Quote any pair verbatim and leave it unresolved unless a probe settled it
 - **Gotchas**: New entries added, entries resolved or promoted, and **N promoted patterns re-checked, N recurred** (from Step 2). Report both numbers even when the second is zero — "checked, nothing recurred" and "never checked" are otherwise indistinguishable, which is the failure the Occurrences column exists to prevent. Name any pattern that recurred *after* promotion; that is the signal the promotion did not take
 - **Memory index**: Updates made
 - **Doc sync**: Project file, runbook, backlog updates made or flagged (from Step 4)

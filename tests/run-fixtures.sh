@@ -33,7 +33,9 @@ NOT_A_GATE=" review-bench "
 # A floor, not a target: suites are only ever added, so this rises and never falls
 # without a deliberate edit. Lower it only when a suite is deleted on purpose, and
 # say why in the same commit.
-MIN_GATES=14
+MIN_GATES=14   # 15 -> 14 gating suites in v1.45.0: tests/fixtures/dead-reference/ was
+               # deleted because curate Step 0.1, the only thing it tested, was retired.
+               # A suite deleted on purpose, said here in the same change, per the header.
 
 total=0; ran=0; failed=0; declared=0
 FAILED_NAMES=""

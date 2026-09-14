@@ -1,7 +1,7 @@
 # Fixture — the canonical verify runner (issue #34)
 
 Sensitivity harness for the runner shipped in `templates/curate.md`, Step 0
-sub-step 5. Run it after any change to that block:
+sub-step 3. Run it after any change to that block:
 
 ```bash
 bash tests/fixtures/verify-runner/run.sh
@@ -9,7 +9,7 @@ bash tests/fixtures/verify-runner/run.sh
 
 ## Why this fixture exists
 
-Step 0 sub-step 5 executes the `<!-- verify: ... -->` annotations in the memory
+Step 0 sub-step 3 executes the `<!-- verify: ... -->` annotations in the memory
 files. Its failure mode is silence — it reports nothing wrong having checked
 nothing, which is byte-for-byte what a clean pass looks like. Running it against
 this repo proves little: it holds two real annotations, and only one of them —

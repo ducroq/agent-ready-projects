@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Sensitivity harness for the canonical verify runner shipped in
-# templates/curate.md, Step 0 sub-step 5 (issue #34).
+# templates/curate.md, Step 0 sub-step 3 (issue #34).
 #
 # The runner's failure mode is silence: it reports nothing wrong having checked
 # nothing, which is byte-for-byte what a clean pass looks like. A run that finds

@@ -13,7 +13,7 @@
      disable-model-invocation: false
      --- -->
 
-Test the self-verifying memory protocol (curate Step 0, sub-step 5) against fixture files with known expected outcomes.
+Test the self-verifying memory protocol (curate Step 0, sub-step 3) against fixture files with known expected outcomes.
 
 ## Setup
 
@@ -27,12 +27,12 @@ If this project doesn't have the fixtures, fetch them from the [agent-ready-proj
 
 ## Test protocol
 
-For each `.md` file in the fixture directory, run the curate verification logic from Step 0 sub-step 5:
+For each `.md` file in the fixture directory, run the curate verification logic from Step 0 sub-step 3:
 
 1. Read the file
 2. Detect whether it contains a state claim (trigger words: "shipped," "deployed," "live," "running," "working in production")
 3. If it's a state claim, check for a `<!-- verify: ... -->` comment
-4. If a verify command exists, run it **with the runner shipped in curate Step 0 sub-step 5** — not with an implementation written here, which is the defect that step exists to prevent
+4. If a verify command exists, run it **with the runner shipped in curate Step 0 sub-step 3** — not with an implementation written here, which is the defect that step exists to prevent
 5. Classify the outcome against that step's disposition table
 
 Steps 4 and 5 are deliberately not restated here. This test measures whether the

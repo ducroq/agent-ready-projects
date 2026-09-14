@@ -1239,7 +1239,7 @@ def main():
 
     print(f"\n== EXTENSIONS IN TREE NOT EXTRACTED: {', '.join(unknown) if unknown else '(none)'} ==")
 
-    # Three outcomes, not two (#93). `curate` Step 0 sub-step 5 is the precedent
+    # Three outcomes, not two (#93). `curate` Step 0 sub-step 3 is the precedent
     # for the DISPOSITION — a thing that is neither a pass nor a failure gets its
     # own state and its own status — and NOT for the trigger: curate exits 2 only
     # when *nothing* produced a verdict, while this exits 2 on a single undecided

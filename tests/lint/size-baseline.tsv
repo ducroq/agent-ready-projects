@@ -3,8 +3,8 @@
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and every raise is
 # recorded below, oldest first — notes accumulate and are never replaced.
-# BUDGET 239682
-# SPILL 52010
+# BUDGET 241258
+# SPILL 52919
 # RAISED 2026-09-06 from 247526 to 247969: #133: the #118 remedy string shipped unconditional and can turn a resolved reference into an AMBIGUOUS finding; the caveat that scopes it is +443 b on templates/audit-context.md, seeded as T39/T40/N39 (reason restored 2026-09-06 — write_baseline used to overwrite each note with the next)
 # RAISED 2026-09-06 from 247969 to 248237: #140: UNRESOLVED had two causes printing one reason. +268 b on templates/audit-context.md, seeded as T41/T41b/N40 (reason restored 2026-09-06)
 # RAISED 2026-09-06 from 248237 to 248864: #149 (BLOCKER): review-changes could report a clean result on wholly unreviewed content — the root-commit fallback excluded the root, so a one-commit repo diffed to nothing and Step 1's terminator said 'nothing to review'. +627 b (measured; a draft of this line said +466, and the edit I called a trim was 77 b LARGER than what it replaced — third fabricated byte count in this session, same class as the defects being fixed) buys three runtime lines that name the excluded content and the companion command, plus a terminator clause the fallback cannot satisfy. THIRD RAISE TODAY: three correctness fixes to adopter-facing prose in one session, none paid by a shrink — if that keeps happening the budget is mis-calibrated, not the fixes. Seeded at tests/fixtures/baseline-fallback/
@@ -46,6 +46,7 @@
 # RAISED 2026-09-14 from 260104 to 261510: v1.44.0 round cap. The first draft paid for the new rule by trimming prose in the same section; an adversarial lens found three of those trims were defects — one reversed a measurement's meaning, one dropped a guard against a known misreading, one left a dangling antecedent. Restored, plus a false 'flat cost across rounds' claim corrected to the per-target rise the ledger actually shows. Trimming load-bearing prose to stay under a ratchet is not a trade this file should make again.
 # ratcheted down 2026-09-14
 # ratcheted down 2026-09-14
+# RAISED 2026-09-14 from 239682 to 241258: v1.45.0 blocker fixes. The retirement pass left four dangling promises an adversarial lens found: Step 5 skipped itself on a condition the retirement invalidated, taking path checking inside curate from twice per run to zero; Step 6 demanded a disposition for the retired entity pass; the 300k fallback named the deleted extractor; and templates/gotcha-log.md still promised a 14-day flag that no longer fires. Fixing all four costs bytes and each fix is load-bearing. Net across the release is still -21,828 on curate.md alone.
 templates/adr.md	2115
 templates/audit-context.md	20038
 templates/checklists/architect-checklist.md	1263
@@ -54,8 +55,8 @@ templates/checklists/qa-checklist.md	1836
 templates/checklists/README.md	1097
 templates/checklists/test-checklist.md	1234
 templates/coordination.md	3909
-templates/curate.md	53706
-templates/gotcha-log.md	8517
+templates/curate.md	54941
+templates/gotcha-log.md	8858
 templates/hypothesis-log.md	3570
 templates/memory-index.md	3396
 templates/project-file.md	6485

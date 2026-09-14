@@ -83,7 +83,20 @@ Defensible while only a human read it, and still the framework printing what it 
 in v1.43.0 with a function whose exit status carries the verdict and which distinguishes a third
 outcome — 0 free, 1 taken, 2 could not be decided (offline, no origin).
 
-## v1.45.0 — the dead-reference extractor's comments moved here
+## v1.45.0 — the dead-reference extractor: comments moved here, then the code RETIRED
+
+⚠️ **READ THIS FIRST. The extractor no longer ships.** The section below was written when only
+its comments moved here; hours later the check itself was retired, having never caught anything
+in the framework's whole record — its only appearances were its own defects. The code is gone
+from `templates/curate.md`, `tests/fixtures/dead-reference/` is deleted, and the skill keeps no
+rungs and no guards. **Do not read what follows as describing a live check, and do not re-add it
+without a catch to point at.** The class is covered by `audit-context` Step 4, which is
+adopter-facing and measured against a fixture with seeded true positives.
+
+The account is kept because it is the best worked example this repo has of the failure that
+motivated the retirement: six false-positive classes, each fixed with a new rung and a comment,
+and nobody ever asking what the check had caught.
+
 
 The block in `templates/curate.md` Step 0.1 was **73% comment**: 13,157 characters of
 archaeology against 4,958 of code, in the skill an adopter runs every session. The account below

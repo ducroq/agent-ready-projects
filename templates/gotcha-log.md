@@ -11,9 +11,14 @@
      - When a gotcha's root cause is fixed, mark it [RESOLVED] IN THE HEADING
        (Retire phase) — `### Title (2026-08-12) [RESOLVED]`. Curation reads
        headings and the Promoted table, not bodies, so a status written in a
-       body is invisible to it. Such an entry is flagged as lingering once it
-       is older than 14 days, and keeps being flagged until either the heading
-       is marked or the entry is recorded in the Promoted table.
+       body is invisible to it — and so is a resolved entry whose heading was
+       never marked, which then reads as open forever.
+       WARNING: this used to say curation FLAGS such an entry once it is older
+       than 14 days. That flag was retired in v1.45.0: in the framework's own
+       log it fired on about 100 of 107 entries every run, where exactly one
+       had ever been marked resolved. Nothing chases you now. Marking the
+       heading is the only thing that keeps the log's open set meaningful, and
+       it is now entirely on the author.
      - Track what you've promoted in the "Promoted" section below
 
      When the root cause is fixed, mark it resolved here (don't delete).

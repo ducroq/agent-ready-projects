@@ -25,7 +25,7 @@ Structural audit of the agent-ready-projects layered memory system. Run monthly 
 
 Then check the project file and the memory index. For each:
 
-- **Measure characters, not lines** — `wc -c`, with `wc -l` beside it as a readability signal only. *(`wc -c` counts bytes, so a file with multi-byte characters reads larger than its character count — `curate` sub-step 8 carries the same caveat. On this framework's own project file the gap is ~2%: 29,479 bytes to 28,915 characters. Budget in bytes and the error is on the safe side.)*
+- **Measure characters, not lines** — `wc -c`, with `wc -l` beside it as a readability signal only. *(`wc -c` counts bytes, so a file with multi-byte characters reads larger than its character count — `curate` sub-step 6 carries the same caveat. On this framework's own project file the gap is ~2%: 29,479 bytes to 28,915 characters. Budget in bytes and the error is on the safe side.)*
 - Flag the **project file** over **35,000 characters** (soft) or **40,000** (hard) — the same two numbers `curate`'s budget uses, on purpose: the hard one is where Claude Code itself warns, the soft one leaves headroom
 - Flag the **memory index** over ~**60 lines**, in lines deliberately: an index is a list, so a line is a unit of content there in a way it is not for prose (`templates/memory-index.md` separately warns that some tools truncate at ~200 lines). Report its characters too and say which number you acted on; no character threshold is prescribed, because none has been derived
 - If too long, identify sections that are reference material (looked up on demand, not needed every session) and propose moving them to topic files behind "Before You Start" pointers

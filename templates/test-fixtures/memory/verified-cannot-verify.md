@@ -11,13 +11,13 @@ false PASS or a misleading FAIL. This is the disposition that distinguishes
 "the check ran and the claim is false" from "the check never ran at all".
 
 The guard here is a filesystem test rather than the `ping` form shown in
-curate Step 0 sub-step 5, so the fixture is deterministic and needs no
+curate Step 0 sub-step 3, so the fixture is deterministic and needs no
 network. The shape being tested is identical: guard, then real check, then a
 CANNOT VERIFY line naming the cause.
 
 Written as an explicit `if`, not as `guard && check || echo ...`: in that form
 the fallback also runs when the *check* fails, so a reachable appliance whose
 snapshot is genuinely missing would report as un-checkable. curate Step 0
-sub-step 5 forbids the shape for that reason, and a fixture may not model what
+sub-step 3 forbids the shape for that reason, and a fixture may not model what
 the step forbids.
 -->
