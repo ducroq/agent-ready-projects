@@ -19,7 +19,21 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## Unreleased (proposed MINOR — v1.42.0)
+## v1.42.0 (2026-09-14)
+
+**Adopters were being told to install skills in a way that silently does not work, and three inventories never mentioned the skill whose job is telling you that you are behind.** MINOR: new documented conventions to adopt — a marker syntax where `audit-context` had none, a version-control rule for Layer-4 logs, and install instructions for `update-drift` that existed nowhere an adopter reads. Nothing is removed or renamed and no existing consumer breaks, so rule 1 does not fire; the precedent is **v1.28.0 / #68**, a shipped surface that named none of the skills, fixed by naming them, released MINOR.
+
+⚠️ **Adopter action — one reinstall, and it matters more than usual.** `curate`, `audit-context`, `update-drift` and `review-changes` are user-global; run `scripts/install-global-skills.sh` **after this tag is pushed and verified**. If you installed any skill by copying `templates/<name>.md` to a `SKILL.md` path — which is what `docs/GUIDE.md` told you to do until this release — **that skill has never loaded.** It fails by doing nothing, so nothing reported it. Check with `head -1 ~/.claude/skills/<name>/SKILL.md`: a current install starts with `---`, a broken one starts with `#`.
+
+⚠️ **Do not re-copy `templates/gotcha-log.md`** — it is an append-only journal holding your real entries. The changes to it are a version-control note in the header comment and a corrected Mechanized example; a current copy contains `GIVE THIS FILE A HISTORY` once, and `<!-- placeholder -->` on the example table's `proposed` row (that row only — a marker on a path that resolves is itself a finding). Apply those two by hand.
+
+
+**Also in this release: the v1.40.0 scope residue swept, committed 2026-09-12 and never given an entry.** These landed after the v1.41.0 tag, so an adopter reading the v1.41.0 notes will not have seen them.
+
+- **`templates/project-file.md`'s "Before committing" row fires a skill that refuses (#172).** The v1.40.0 profile split moved `review-changes`' risk tiers into a per-repo `.claude/review-profile.md`, and the skill now **stops** where none exists rather than reviewing everything at LOW. The row that fires it never learned. It now names the requirement and points at `templates/review-profile.md`.
+- **A stale digit in that same file**, in the one artifact loaded every session: it claimed *"five permanent broken references"* where the true count changes every time a row is added. Replaced with a no-digit form.
+- **Version stamps unstuck.** `README.md` and `docs/GUIDE.md` carried **1.28.0** — thirteen releases stale — and `templates/project-file.md` and `templates/coordination.md` carried v1.40.0.
+- 🔴 **Lint rule 1's never-exempt set is now DERIVED from `.gitignore` negations, not listed.** A hardcoded list was written first and refuted three lines above the edit by the file's own comment: a static allowlist drifts the first time a path is added, and it had — `.claude/review-profile.md` was negated in v1.40.0 and the list never learned. Fixture case `T14` seeds a negation the rule has never heard of; the rejected literal passes `T13` and **fails** `T14`.
 
 **#173 — `docs/GUIDE.md`, `README.md` and `adopt.md`'s install list never mentioned `update-drift`, the one skill whose job is telling you that you are behind.** (Not every surface: `templates/README.md` has mapped it since v1.18.0 and `templates/project-file.md` since v1.28.0 — `git grep -l 'update-drift' HEAD -- README.md adopt.md docs/ templates/` is the check.) `git log -S'update-drift' -- docs/GUIDE.md` returns **no commits at all**: the string had never once appeared in the full reference, across the 28 releases since the skill shipped in **v1.18.0** (`awk '/^## v/{n++} /^## v1\.18\.0/{print n-1; exit}' CHANGELOG.md`). `README.md` — the on-ramp, read before the guide — omitted it too, at every tag. ⚠️ **A first draft of this entry said "three releases" and called `docs/GUIDE.md` "the only one that omitted it"; both were wrong**, in an entry whose own thesis is that inventories go stale unnoticed. Two review lenses caught the span independently and a third caught the "only one".
 
