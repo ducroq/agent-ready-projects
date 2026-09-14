@@ -51,38 +51,20 @@ import os, re, subprocess, sys
 from pathlib import Path
 EXT = r'md|py|sh|js|ts|tsx|jsx|json|yaml|yml|toml|ini|cfg|conf|txt|sql|rs|go|rb|java|c|h|cpp|css|html|env|lock|tsv|csv'
 UNIT = re.compile(r'\.(service|timer|socket|mount|path|target)$')
-# Absence assertions (#142). `audit-context` Step 4 has skipped this class since
-# v1.15.0 and this extractor did not, so two shipped checkers gave the SAME input
-# opposite dispositions — reported by an adopter who hit it twice, the second time
-# in the text they wrote to record the first. THREE spellings of the negation, not
-# one: `[ ! -f ]` and `test ! -f` are the forms that `! test -f` alone misses.
-# ⚠️ Each marker is scoped to its own SPAN, never to the line. The sibling step
-# measured that cost: line-scoping dropped 4 references on 2 lines in one adopter
-# repo, 3 of them load-bearing. A line routinely retires one path and names its
-# live replacement in the same sentence, so `**Deleted**:` binds the ONE backticked
-# token that follows it — a first draft here ran to end-of-line and silenced the
-# replacement, re-creating the divergence #142 exists to remove.
+# Absence assertions (#142): a sentence claiming a file is GONE is not a dead
+# reference. THREE spellings, and each marker is scoped to its own SPAN, never
+# to the line — a line routinely retires one path and names its replacement.
 ABSENT = [re.compile(r'(?:!\s*test|test\s+!|\[\s*!)\s+-[a-z]+\s+\S+'),
           re.compile(r'\*\*Deleted\*\*:\s*`[^`\n]+`'),
           re.compile(r'~~[^~\n]+~~')]
 PATH = re.compile(r'`([^`\s]+\.(?:' + EXT + r'))`')
-# `.resolve()` matters: outside a git repo this falls back to `.`, and
-# `Path('.') in Path('../x.md').parents` is True — so every `../` fragment read
-# as inside the tree and was decided DEAD. Absolute on both sides or neither.
+# ⚠️ `.resolve()` is load-bearing: without it every `../` fragment reads as
+# inside the tree. Absolute on both sides or neither.
 root = Path(subprocess.run(['git','rev-parse','--show-toplevel'], capture_output=True,
                            text=True).stdout.strip() or '.').resolve()
-# TRACKED files, not rglob. rglob indexes `node_modules/`, `.venv/`, `vendor/`
-# and `.git/`, so a doc naming a root `package.json` that does not exist was
-# counted RESOLVED against `node_modules/lodash/package.json` — a false NEGATIVE
-# in the one check whose purpose is finding dead references. And a LIST per
-# basename, not one winner: `{p.name: p}` kept whichever of two same-named files
-# rglob happened to yield last, so a bare `helpers.py` with two answers resolved
-# silently while the sibling step reports that same input as a COLLISION.
-# git ls-files fixed #51's node_modules false NEGATIVE and introduced a false
-# POSITIVE of its own: a real file in a gitignored data dir is untracked, so a
-# bare basename referring to it read as DEAD. Walk the filesystem with an
-# explicit denylist instead — that excludes vendored trees without excluding
-# everything an adopter chose not to commit.
+# ⚠️ Walk with a denylist. NOT rglob (indexes node_modules/ and resolves a dead
+# reference against it) and NOT git ls-files (a real file in a gitignored dir
+# reads DEAD). A LIST per basename, not one winner — two answers is a COLLISION.
 DENY = {'.git', 'node_modules', '.venv', 'venv', 'vendor', '__pycache__',
         '.mypy_cache', '.pytest_cache', 'dist', 'build', '.tox'}
 tree = {}
@@ -92,8 +74,6 @@ def _walk(d):
         if c.is_dir(): _walk(c)
         elif c.is_file(): tree.setdefault(c.name, []).append(str(c.relative_to(root)))
 _walk(root)
-# Top-level directories of THIS repo. A fragment whose first segment is not one
-# of them cannot be a path in this repo at all.
 here = {p.name for p in root.iterdir() if p.is_dir()}
 dead, unver, skip, ok = [], [], [], 0
 for doc in sys.argv[1:]:
@@ -101,10 +81,6 @@ for doc in sys.argv[1:]:
     if not d.is_file():
         print(f'CANNOT VERIFY: {doc} is not readable'); continue
     text = d.read_text(errors='replace')
-    # SPAN-scoped, so a deletion marker cannot silence a live neighbour: a fragment
-    # is skipped only when EVERY occurrence of it sits inside an absence assertion.
-    # Count first, decide after — the fragment loop below is de-duplicated and has
-    # no positions left to test.
     gone = [m.span() for r in ABSENT for m in r.finditer(text)]
     occ = {}
     for m in PATH.finditer(text):
@@ -112,90 +88,37 @@ for doc in sys.argv[1:]:
         o[0] += 1
         o[1] += any(a <= m.start() and m.end() <= b for a, b in gone)
     for frag in dict.fromkeys(PATH.findall(text)):
-        # An assertion that a file is GONE is not a dead reference — its absence is
-        # the whole point of the sentence, and reporting it asks the author to
-        # "fix" a line that is correct as written (#142).
+        # Skipped only where EVERY occurrence sits inside an absence assertion.
         if occ[frag][0] == occ[frag][1]:
             skip.append((doc, frag, 'asserted ABSENT — the absence is the claim')); continue
-        # `@file` is an inclusion sigil — but `lstrip` is a CHARACTER SET, so it also
-        # ate the `@` of a scoped npm path and printed `types/node/index.d.ts`, text
-        # the document never contained. Strip one leading `@`, and only as a fallback.
+        # Strip one leading `@` only as a fallback: `lstrip` is a character set
+        # and ate the `@` of scoped npm paths, printing text the doc never held.
         cand0 = frag[1:] if frag.startswith('@') else frag
-        # A SHAPE, not a file: `<slug>.md`, `settings*.json`, `project_*.md`.
-        # Reporting one dead is the loudest false positive this extractor can make,
-        # and four of them were in this framework's own project file on first run.
-        # FOUR conventions, not two: `{a,b}` and `[slug]` are neither a placeholder
-        # marker nor a glob star, so both reached the resolver and were reported
-        # DEAD on an adopter run (#104, #106).
-        # ⚠️ Checked before quarantined, because a shape can be a real name —
-        # `[slug]` is a literal directory in Next.js and SvelteKit, `<slug>.md` is
-        # legal on ext4 — which is also what `audit-context` rung 1 does with one.
-        # ⚠️ Brace members are NOT expanded, so a dead `{a,b}` pair is silenced.
-        # Measured cost of that: nil. Across 66 directories (51 git roots), every
-        # member of every comma-brace fragment resolves. A draft claimed two real
-        # losses, from a member check asking `(root/member).is_file()` — which is
-        # #51's own false positive, the one the basename rung below removes. So
-        # #104's judgement stands, on evidence it did not have; expansion would be
-        # right on all of them and is filed as unprioritised (#121).
-        # ⚠️ `audit-context` is not the warrant for the two new conventions: Step 4
-        # names the angle-bracket form and neither of these, so the steps disagree
-        # about `[slug]` — skipped here, a finding there, on a form `docs/GUIDE.md`
-        # writes itself. Filed as #122.
+        # ⚠️ A SHAPE is CHECKED before it is quarantined — `[slug]` is a literal
+        # directory in Next.js and `<slug>.md` is legal on ext4. Brace members
+        # are deliberately not expanded (#121).
         if any(c in frag for c in '<*{['):
             if (root / frag).is_file() or (d.parent / frag).is_file(): ok += 1; continue
             skip.append((doc, frag, 'placeholder, glob, brace or bracket shape, not a literal path')); continue
-        # A claim about ANOTHER machine cannot be checked from here. Quarantined,
-        # not flagged — the same disposition a host-dependent verify probe gets.
-        # ⚠️ MUST PRECEDE THE CROSS-REPO RUNG. It sat below it for three releases,
-        # unreachable for every path it was written for: a POSIX absolute path
-        # contains a `/` and its first segment is `''`, never a top-level dir here,
-        # so the rung took it first and — pathlib discarding the left side of an
-        # absolute join — printed a false `DEAD ... absent in the sibling <parent>`.
-        # Windows forms arrive by the opposite route, no `/` at all: 10 false DEAD
-        # rows in 8 repos. Measured on an estate, never filed.
-        # ⚠️ Checked before quarantined: withholding a verdict the run HAS is the
-        # sibling rung's own sentence pointing the other way, and 19 of the 23
-        # resolutions this arm makes across that estate are `~`-prefixed.
-        # `os.path.expanduser`, not `Path.expanduser()`, which raises on a `~user`
-        # with no home.
+        # ⚠️ THIS RUNG MUST PRECEDE THE CROSS-REPO RUNG. A POSIX absolute path's
+        # first segment is '', never a top-level dir here, so that rung took it
+        # first and printed a false DEAD. `os.path.expanduser`, not
+        # `Path.expanduser()`, which raises on a `~user` with no home. No
+        # directory-on-disk gate here, unlike the doc-relative arm below: an
+        # absolute path is a claim about *a* filesystem, maybe not this one.
         if frag.startswith(('/', '~')) or re.match(r'[A-Za-z]:[\\/]|\\\\', frag):
             ap = Path(os.path.expanduser(frag))
-            # Resolved only when genuinely absolute: `root` is resolved, so an
-            # unresolved `ap` made a symlinked repo path read as another host (the
-            # default on macOS). A Windows fragment is not absolute on POSIX, and
-            # resolving it would join it to the cwd and land it inside the repo.
             if ap.is_absolute(): ap = ap.resolve()
             if ap.is_file(): ok += 1
-            # A directory is not a dead file reference. The other half of this test
-            # was `ap == root`, true only of the root itself, which exists — so it
-            # asserted `resolves nowhere` about a directory that is there.
             elif ap.is_dir(): unver.append((doc, frag, 'names a directory, not a file'))
-            # Inside this repo it is decidable, and `path on another host` would be
-            # a false reason — the kind that sends a reader to the wrong place.
             elif root in ap.parents:
                 dead.append((doc, frag, 'absolute path inside this repo, and it resolves nowhere'))
-            # ⚠️ No on-disk-directory gate here, unlike the arm below, and the
-            # asymmetry is deliberate: a `../` fragment is unambiguously about the
-            # author's own tree, while an absolute path is a claim about *a*
-            # filesystem that may not be this one. With the gate, `/opt/app/x.json`
-            # from another machine reads DEAD wherever `/opt/app` happens to exist
-            # here — a false DEAD invented by the environment.
             else: unver.append((doc, frag, 'path on another host'))
             continue
-        # `./` and `../` are DOC-RELATIVE, not cross-repo. They reached the rung
-        # below because `..` is not a top-level dir here, which then tested a path
-        # ONE LEVEL ABOVE the one the fragment names and called a live file dead —
-        # its own reason said so, *absent in the sibling `..`* (#106). Lexical
-        # (`normpath`): `..` in a document means the textual parent.
-        # ⚠️ ONE base, the document's own directory, never the repo root as well.
-        # A draft used both; the root base lands outside the tree for any `../`
-        # fragment, so a stray `RUNBOOK.md` beside the repo silenced a dead
-        # reference — in the population this method creates (`memory/gotcha-log.md`
-        # exists in 35 git roots of one estate, `RUNBOOK.md` in 13). Nothing
-        # exercised it: deleting that base left every row and ablation green.
-        # Inside the tree it is decidable, so decide it. Outside, a directory ON
-        # DISK decides, and nothing on disk falls through to CANNOT VERIFY rather
-        # than to a false DEAD.
+        # `./` and `../` are DOC-RELATIVE, lexical, and resolved against ONE
+        # base — the document's own directory, never the repo root as well.
+        # Outside the tree, a directory ON DISK decides; nothing on disk falls
+        # through to CANNOT VERIFY rather than to a false DEAD.
         if frag.split('/')[0] in ('.', '..'):
             rp = Path(os.path.normpath(d.parent / frag))
             if rp.is_file(): ok += 1; continue
@@ -207,89 +130,30 @@ for doc in sys.argv[1:]:
             else:
                 unver.append((doc, frag, 'relative path outside the tree — nothing on disk to decide it'))
             continue
-        # CROSS-REPO. A qualified sibling reference — `AdopterRepo/docs/X.md` — is
-        # the form the sibling step tells authors to WRITE, so the better an
-        # adopter follows that advice the more phantom dead references a
-        # repo-local check invents: measured on one adopter, 12 dead reported and
-        # 0 actually dead, 9 of them qualified sibling paths. NOT resolved
-        # against the neighbours BY PROSE — that is the environment-dependence
-        # #93 took five review rounds to remove; a sibling named by the fragment
-        # itself is a different gate, and the rung below does use it. It gets its own disposition,
-        # matching how the sibling step's ladder already treats these. ⚠️ COST,
-        # stated, and CONDITIONAL — a draft of this comment wrote it flat. A
-        # genuinely dead `oldpkg/foo.py` whose top-level directory was deleted
-        # lands here rather than in DEAD **only when no sibling of that name is
-        # on disk**; where one is, the rung below decides it and reports DEAD.
-        # Measured both ways. The sensitivity loss is real and taken knowingly —
-        # a check with a 100% false-positive rate is not read at all — but it is
-        # narrower than the flat version claimed, and an adopter weighing the
-        # trade needs the condition.
+        # CROSS-REPO. The FRAGMENT qualifies itself, so no prose is parsed —
+        # this is not the rung-4 gate #93 rejected. A sibling ON DISK decides
+        # it; without one the verdict is withheld, never invented. Residual: a
+        # SPARSE checkout can make a present file read as confirmed dead.
         if '/' in frag and frag.split('/')[0] not in here:
-            # A SIBLING ON DISK DECIDES IT. The fall-through below stays, but it
-            # is a fall-through and not the whole answer: an adopter measured a
-            # genuinely dead cross-repo reference — the sibling present, the file
-            # provably absent beside three of its neighbours — being reported
-            # `not checkable`, on the one reference their repo keeps unfixed on
-            # purpose as a control. Withholding a verdict it HAS is #93's
-            # sentence pointing the other way.
-            #
-            # ⚠️ This is NOT the rung-4 gate #93 rejected, and the difference is
-            # the whole argument: rung 4 reads a repo NAME OUT OF PROSE, which is
-            # only recognisable as a repo name when that repo is on disk, so
-            # per-reference decidability is not computable. Here the FRAGMENT
-            # QUALIFIES ITSELF — `AdopterRepo/scripts/x.py` names its repo in the
-            # path — so no prose is parsed and nothing is inferred.
-            #
-            # ⚠️ Residual environment-dependence, stated: which of `dead` /
-            # `undecided` you get still varies with whether the sibling is
-            # checked out. What cannot happen is a false `dead` from the
-            # environment, and a neighbourless CI checkout degrades to exactly
-            # the previous behaviour.
-            #
-            # ⚠️ ONE way it does go wrong, and it is NARROWER than "a shallow or
-            # partial checkout" — that phrasing shipped in v1.34.0 and was wrong.
-            # MEASURED: `--depth 1` truncates HISTORY, not the working tree —
-            # every file is present and it reproduces nothing. Sparse checkout
-            # DOES omit files, and there a file present upstream reads as a
-            # confirmed dead reference; seeded in the fixture as a known,
-            # unfixed exposure.
-            #
-            # ⚠️ `--filter=blob:none` is UNTESTED, and two drafts claimed it as
-            # measured. Both tested over a local `file://` remote, which answers
-            # `warning: filtering not recognized by server, ignoring` — while
-            # STILL writing `promisor=true` and `partialclonefilter=blob:none`
-            # into the config. So the clone looks partial by every flag anyone
-            # would check and has zero missing blobs. A filtered clone from a
-            # real server is not reproducible here; treat that mode as unknown,
-            # not as safe. The same trap makes a flag-based estate sweep report
-            # `partial` for a repo that is not one.
             sib = root.parent / frag.split('/')[0]
             if sib.is_dir():
                 if (root.parent / frag).is_file(): ok += 1
                 else: dead.append((doc, frag, f'absent in the sibling {sib.name}, which IS on disk'))
                 continue
             unver.append((doc, frag, 'cross-repo or removed top-level dir — no sibling on disk to decide it')); continue
-        # A systemd unit NAME is not a file reference unless it carries a directory.
         if UNIT.search(frag) and '/' not in frag:
             skip.append((doc, frag, 'unit name, not a path')); continue
-        # ...and neither is a DIRECTIVE VALUE. `ExecStartPre=wait_for_edh.sh` is a
-        # unit-file line, not a path in this repo, and it reached DEAD because the
-        # cross-repo arm keys on a FIRST SEGMENT that an unqualified token does not
-        # have (#141). Only the unqualified form: a directive naming a real path
-        # (`ExecStart=/usr/bin/x`) still carries a `/` and is decided on it.
+        # An unqualified directive value (`ExecStartPre=wait_for_edh.sh`) has no
+        # first segment for the cross-repo rung to key on, and reached DEAD (#141).
         if '=' in frag and '/' not in frag:
             skip.append((doc, frag, 'directive value, not a path')); continue
-        # FILENAME-shaped, not extension-shaped: `env` in the whitelist captures
-        # `process.env`, a ubiquitous code identifier no rung can ever resolve.
-        # The sibling step solved this and states the test — keep such a token
-        # only when it still looks like a path: it contains a `/`, or it starts
-        # with a `.`. This extractor shipped without it and reported
-        # `process.env` as DEAD on the first /curate that ran it.
+        # FILENAME-shaped, not extension-shaped: `env` in EXT captures
+        # `process.env`. Keep such a token only if it still looks like a path.
         if frag.rsplit('.', 1)[-1] in ('env', 'lock') and '/' not in frag and not frag.startswith('.'):
             skip.append((doc, frag, 'filename-shaped token, not a path')); continue
-        # As written, then doc-relative, then the two directories this method puts
-        # things in, then the basename anywhere. A bare `gotcha-log.md` means
-        # `memory/gotcha-log.md`; calling it missing is the commonest false positive.
+        # As written, doc-relative, then the two directories this method uses,
+        # then the basename anywhere — a bare `gotcha-log.md` means
+        # `memory/gotcha-log.md`, and calling it missing is the commonest FP.
         cands = [b/c for c in dict.fromkeys((frag, cand0))
                  for b in (root, d.parent, root/'memory', root/'docs')]
         if any(c.is_file() for c in cands):
@@ -297,8 +161,6 @@ for doc in sys.argv[1:]:
         else:
             hits = tree.get(Path(cand0).name, [])
             if len(hits) > 1:
-                # Two files answer to it. The sibling step calls this a COLLISION
-                # and reports it; silently picking one is how a deletion hides.
                 unver.append((doc, frag, f'ambiguous: {len(hits)} files match ' + ', '.join(hits[:3])))
             elif hits and Path(cand0).name == cand0: ok += 1
             elif hits: unver.append((doc, frag, f'basename only: {hits[0]}'))

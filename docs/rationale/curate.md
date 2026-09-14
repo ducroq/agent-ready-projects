@@ -82,3 +82,88 @@ carried `… && echo "TAG EXISTS — STOP" || echo "free"`, exit 0 on both branc
 Defensible while only a human read it, and still the framework printing what it forbids. Replaced
 in v1.43.0 with a function whose exit status carries the verdict and which distinguishes a third
 outcome — 0 free, 1 taken, 2 could not be decided (offline, no origin).
+
+## v1.45.0 — the dead-reference extractor's comments moved here
+
+The block in `templates/curate.md` Step 0.1 was **73% comment**: 13,157 characters of
+archaeology against 4,958 of code, in the skill an adopter runs every session. The account below
+is what was removed. The code is unchanged — before and after produce byte-identical output on
+the same input, and `tests/fixtures/dead-reference/` passes every seeded case and ablation.
+
+⚠️ **No pointer to this file exists in the skill, deliberately.** Lint rule 13 forbids it:
+adopters install the skill and never get `docs/rationale/`. The skill keeps one-line guards at
+each rung that a maintainer might plausibly "simplify"; the reasoning lives here.
+
+**Why each rung is shaped the way it is** — every one of these was a defect in a shipped draft:
+
+- **`.resolve()` on the repo root.** Outside a git repo the lookup falls back to `.`, and
+  `Path('.') in Path('../x.md').parents` is True — so every `../` fragment read as inside the
+  tree and was decided DEAD. Absolute on both sides or neither.
+- **Walk with a denylist, not `rglob` and not `git ls-files`.** `rglob` indexes `node_modules/`,
+  `.venv/` and `vendor/`, so a doc naming a root `package.json` that does not exist counted
+  RESOLVED against `node_modules/lodash/package.json` — a false negative in the one check whose
+  purpose is finding dead references (#51). Switching to `git ls-files` fixed that and introduced
+  its mirror: a real file in a gitignored data dir is untracked, so a bare basename referring to
+  it read as DEAD. The denylist walk excludes vendored trees without excluding what an adopter
+  chose not to commit. And a **list** per basename, not one winner: `{p.name: p}` kept whichever
+  of two same-named files `rglob` yielded last, so a bare `helpers.py` with two answers resolved
+  silently while the sibling step reports the same input as a COLLISION.
+- **Absence assertions are span-scoped, never line-scoped** (#142). `audit-context` Step 4 had
+  skipped this class since v1.15.0 and this extractor did not, so two shipped checkers gave the
+  same input opposite dispositions — reported by an adopter who hit it twice, the second time in
+  the text they wrote to record the first. Line-scoping dropped 4 references on 2 lines in one
+  adopter repo, 3 of them load-bearing: a line routinely retires one path and names its live
+  replacement in the same sentence, so `**Deleted**:` binds the ONE backticked token that
+  follows it.
+- **A shape is checked before it is quarantined.** `[slug]` is a literal directory in Next.js and
+  SvelteKit, `<slug>.md` is legal on ext4. Four conventions, not two — `{a,b}` and `[slug]` are
+  neither placeholder markers nor glob stars and both reached the resolver and were reported DEAD
+  on an adopter run (#104, #106). Brace members are **not** expanded, and the measured cost of
+  that is nil: across 66 directories every member of every comma-brace fragment resolves. A draft
+  claimed two real losses from a member check asking `(root/member).is_file()` — which is #51's
+  own false positive. Filed as unprioritised (#121).
+- **The absolute-path rung must precede the cross-repo rung.** It sat below it for three releases,
+  unreachable for every path it was written for: a POSIX absolute path contains a `/` and its
+  first segment is `''`, never a top-level dir here, so the cross-repo rung took it first and —
+  pathlib discarding the left side of an absolute join — printed a false `DEAD … absent in the
+  sibling <parent>`. Windows forms arrive by the opposite route, no `/` at all: 10 false DEAD rows
+  in 8 repos, measured on an estate and never filed. `os.path.expanduser`, not
+  `Path.expanduser()`, which raises on a `~user` with no home.
+- **No directory-on-disk gate on the absolute arm, unlike the doc-relative arm.** The asymmetry is
+  deliberate: a `../` fragment is unambiguously about the author's own tree, while an absolute
+  path is a claim about *a* filesystem that may not be this one. With the gate,
+  `/opt/app/x.json` from another machine reads DEAD wherever `/opt/app` happens to exist here — a
+  false DEAD invented by the environment.
+- **`./` and `../` are doc-relative, lexical, and resolved against ONE base.** They reached the
+  cross-repo rung because `..` is not a top-level dir here, which then tested a path one level
+  above the one the fragment names and called a live file dead — its own reason said so, *absent
+  in the sibling `..`* (#106). A draft used two bases, the document's directory and the repo root;
+  the root base lands outside the tree for any `../` fragment, so a stray `RUNBOOK.md` beside the
+  repo silenced a dead reference. In the population this method creates that matters —
+  `memory/gotcha-log.md` exists in 35 git roots of one estate, `RUNBOOK.md` in 13. Nothing
+  exercised it: deleting that base left every row and ablation green.
+- **The cross-repo rung is not the rung-4 gate #93 rejected.** Rung 4 read a repo *name out of
+  prose*, recognisable only when that repo is on disk, so per-reference decidability was not
+  computable. Here the fragment qualifies itself — `AdopterRepo/scripts/x.py` names its repo in
+  the path — so no prose is parsed. A qualified sibling reference is the form the sibling step
+  tells authors to write, so a repo-local check invents phantom dead references in proportion to
+  how well an adopter follows that advice: measured on one adopter, 12 dead reported, 0 actually
+  dead, 9 of them qualified sibling paths. A sibling **on disk** decides it; an adopter measured a
+  genuinely dead cross-repo reference being reported `not checkable` on the one reference they
+  keep unfixed as a control, which is #93's sentence pointing the other way. ⚠️ Residual, and
+  narrower than the "shallow or partial checkout" phrasing that shipped in v1.34.0 and was wrong:
+  `--depth 1` truncates **history**, not the working tree, and reproduces nothing. Sparse checkout
+  does omit files, and there a file present upstream reads as a confirmed dead reference — seeded
+  in the fixture as a known, unfixed exposure. `--filter=blob:none` is **untested**: two drafts
+  claimed it as measured, both over a local `file://` remote, which answers *filtering not
+  recognized by server, ignoring* while still writing `promisor=true` into the config. Treat that
+  mode as unknown, not as safe.
+- **An unqualified directive value is not a path** (#141). `ExecStartPre=wait_for_edh.sh` is a
+  unit-file line and reached DEAD because the cross-repo arm keys on a first segment it does not
+  have. Only the unqualified form: `ExecStart=/usr/bin/x` still carries a `/`.
+- **Filename-shaped, not extension-shaped.** `env` in the whitelist captures `process.env`, a
+  ubiquitous code identifier no rung can resolve. The extractor shipped without this test and
+  reported `process.env` as DEAD on the first `/curate` that ran it.
+- **Strip one leading `@`, and only as a fallback.** `lstrip` is a character set, so it also ate
+  the `@` of a scoped npm path and printed `types/node/index.d.ts` — text the document never
+  contained.

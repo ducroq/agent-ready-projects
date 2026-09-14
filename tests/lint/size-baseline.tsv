@@ -3,8 +3,8 @@
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and every raise is
 # recorded below, oldest first — notes accumulate and are never replaced.
-# BUDGET 261510
-# SPILL 44883
+# BUDGET 251034
+# SPILL 52010
 # RAISED 2026-09-06 from 247526 to 247969: #133: the #118 remedy string shipped unconditional and can turn a resolved reference into an AMBIGUOUS finding; the caveat that scopes it is +443 b on templates/audit-context.md, seeded as T39/T40/N39 (reason restored 2026-09-06 — write_baseline used to overwrite each note with the next)
 # RAISED 2026-09-06 from 247969 to 248237: #140: UNRESOLVED had two causes printing one reason. +268 b on templates/audit-context.md, seeded as T41/T41b/N40 (reason restored 2026-09-06)
 # RAISED 2026-09-06 from 248237 to 248864: #149 (BLOCKER): review-changes could report a clean result on wholly unreviewed content — the root-commit fallback excluded the root, so a one-commit repo diffed to nothing and Step 1's terminator said 'nothing to review'. +627 b (measured; a draft of this line said +466, and the edit I called a trim was 77 b LARGER than what it replaced — third fabricated byte count in this session, same class as the defects being fixed) buys three runtime lines that name the excluded content and the companion command, plus a terminator clause the fallback cannot satisfy. THIRD RAISE TODAY: three correctness fixes to adopter-facing prose in one session, none paid by a shrink — if that keeps happening the budget is mis-calibrated, not the fixes. Seeded at tests/fixtures/baseline-fallback/
@@ -44,6 +44,7 @@
 # RAISED 2026-09-14 from 253774 to 260106: REVIEW-ROUND FIXES for the 0d67131..ee4b851 range: 4 lenses, 2 blockers + 8 warnings, every one a defect in what that range shipped rather than new content. The bytes are guards and corrections. BLOCKERS: the #136 stamp probe printed CANNOT VERIFY and then 'byte-identical' at exit 0 over an empty comparison set — the false PASS with its own evidence beside it, in the sub-step that forbids it eight lines above — now a three-outcome stampcheck() gated on a COUNT of what was compared, seven branches tested BY EXIT STATUS; and adopt.md's .gitignore remedy was inert for the .claude/ directory form (git cannot re-include a file whose parent is excluded) while naming check-ignore, which exits 0 with output in BOTH the broken and fixed case. Also: ls-files C-quotes non-ASCII paths (5 reported against a true 105) and is CWD-SCOPED while every git diff term beside it is repo-wide; the #153 diagnostic fired on the ordinary default-branch run; Step 0's matchers died under set -e before matcher 3 ran; tagfree with no argument was a false PASS and its demo line killed the shell under set -e; the probe's sed read 1 of the 6 stamp shapes this framework documents and not the one this repo uses. CORRECTIONS: the release window is NINE tags not eight (measured, v1.31.0-v1.36.1, bounded by v1.30.0 and v1.37.0 parsing) — also fixed in CLAUDE.md where it was pre-existing; the trailing-separator ablation as named returns ZERO and only a WIDENED gap leaks; the \\b portability claim now names three measured engines and states that BSD is untested; the BSD wc hang was unmeasured and is now hedged. Re-derived: curate +1888, review-changes +1809, update-drift +1516, release +909, gotcha-log +126, review-profile +84, total +6332, nothing else moved. H-022: hatch taken, no payment attempted — deleting a guard to afford a guard is not a trade this round can make.
 # ratcheted down 2026-09-14
 # RAISED 2026-09-14 from 260104 to 261510: v1.44.0 round cap. The first draft paid for the new rule by trimming prose in the same section; an adversarial lens found three of those trims were defects — one reversed a measurement's meaning, one dropped a guard against a known misreading, one left a dangling antecedent. Restored, plus a false 'flat cost across rounds' claim corrected to the per-target rise the ledger actually shows. Trimming load-bearing prose to stay under a ratchet is not a trade this file should make again.
+# ratcheted down 2026-09-14
 templates/adr.md	2115
 templates/audit-context.md	20038
 templates/checklists/architect-checklist.md	1263
@@ -52,7 +53,7 @@ templates/checklists/qa-checklist.md	1836
 templates/checklists/README.md	1097
 templates/checklists/test-checklist.md	1234
 templates/coordination.md	3909
-templates/curate.md	75534
+templates/curate.md	65058
 templates/gotcha-log.md	8517
 templates/hypothesis-log.md	3570
 templates/memory-index.md	3396
