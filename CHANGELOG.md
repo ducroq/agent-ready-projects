@@ -19,6 +19,47 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.44.0 (2026-09-14)
+
+Review depth cut on the maintainer's decision that the framework costs too much to run. MINOR:
+one new documented behaviour on an adopter-facing skill, and no existing consumer has to act.
+
+### `review-changes` — a round cap
+
+- **Two rounds maximum**, with a third only when round 2 found **the same defect a second time**
+  — a class rather than a one-off. A round is now defined in the file (one pass of the lens set,
+  however many lenses it contains); it never was, and the subsection next to it is about lens
+  counts, so "two rounds" was readable as "two lenses" and would have collapsed the battery the
+  tier table mandates at HIGH.
+- ⚠️ **The trigger's remedy is a census before it is a round.** This framework needed three rounds
+  to stop finding instances of one defect and what ended it was a one-line enumeration.
+- **The skill's existing warning is kept, not deleted to afford the cap**: a cap ships the
+  defects fixing introduces instead of catching them. The trade is stated with that cost.
+
+### 🔴 The review of this change found the argument for it was backwards
+
+The first draft asserted **"cost per acted finding is flat across rounds"**. The number was
+computed correctly and the population was wrong: it aggregated across unrelated targets. Within a
+single target the ratio *rises* — on the one recorded four-round sequence it roughly triples by
+round 4. That is the opposite reading, and it is the one that supports the cap. **A claim that
+argued against the rule it was cited for shipped as its justification, in the file that tells
+adopters to re-derive rather than quote.** Corrected, with the per-target command beside it.
+
+⚠️ **And three byte-trims were defects.** The cap pushed the file over its size ratchet and the
+bytes were taken from the surrounding prose. One trim reversed a measurement's meaning — removing
+*"every lens found the top blocker while"* left disjointness as the evidence for breadth, which
+the deleted clause existed to refuse and which `docs/rationale/review-changes.md` explicitly
+rejects. One dropped the guard against reading a benchmark round's zero as evidence that fixing
+is safe. One left a dangling antecedent. All restored, and **the budget was raised deliberately
+instead**: a ratchet is a prompt to justify a cost, not an instruction to find the bytes nearby.
+
+### Not shipped, maintainer-local
+
+`CLAUDE.md` and `memory/MEMORY.md` were cut substantially, and `CLAUDE.md`'s review tier dropped
+to LOW. Adopters consume none of it. The one correction that reaches a tracked file:
+`tests/lint/README.md` said rule 11's block was broken for eight releases; it was nine
+(v1.31.0–v1.36.1, bounded — v1.30.0 and v1.37.0 both parse).
+
 ## v1.43.0 (2026-09-14)
 
 Fifteen issues across four adopter-facing surfaces, every one a check that returned a wrong
