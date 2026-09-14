@@ -8,9 +8,30 @@ this repo and never travels.
 
 | Tier | File patterns | Depth |
 |------|-------------|-------|
-| **HIGH** | `templates/**`, `adopt.md`, `/README.md`, `docs/GUIDE.md`, `docs/verification-rationale.md`, `tests/**`, `scripts/**`, `.claude/skills/**`, `.gitignore` | Full battery (3-4 lenses) |
+| **HIGH** | `templates/**`, `adopt.md`, `/README.md`, `docs/GUIDE.md`, `docs/verification-rationale.md`, `tests/**`, `scripts/**`, `.claude/skills/**`, `.gitignore` | **One adversarial lens, scoped by subject** — plus the guarantee lens whenever the diff touches a guarantee surface below |
 | **MEDIUM** | `docs/GUIDE.md`, `templates/checklists/**`, `templates/test-fixtures/**` | Two lenses (adversarial + doc-accuracy) |
 | **LOW** | `CLAUDE.md`, `CHANGELOG.md`, `memory/**`, `docs/work-items/**`, `docs/rationale/**`, `docs/**` | One lens (adversarial) |
+
+⚠️ **HIGH dropped from a 3–4 lens battery to one adversarial lens on 2026-09-14 (v1.45.0), and this line
+is the profile catching up with practice rather than authorising something new.** v1.44.0 and v1.45.0 were
+both reviewed with one lens while this table still said battery — the drift class this repo files issues
+about, found by asking what the cap had actually saved.
+
+**What the two one-lens runs bought**: 3 blockers on v1.44.0 and 4 on v1.45.0, each at roughly a fifth of a
+battery's cost, on changes that had already passed lint, both fixture suites and the author's own read. One
+of them had silently zeroed a check. **Measured spend went from ~840k tokens per release to ~107k.**
+
+⚠️ **What it gives up, stated because the ledger says so plainly**: on a four-lens round, *two* lenses each
+found a blocker no other lens found. One lens will miss that class, and the two runs above cannot show
+otherwise — same author, same day, same reviewer model, and both changes were deletions, which have a
+narrow and predictable blast radius. **This is a cost decision taken on cost, not a finding that breadth
+was worthless.** Re-open it if a defect ships that a second lens would plausibly have caught.
+
+🔴 **The guarantee lens is NOT part of this cut, and the reason is mechanical.** Guarantees are HIGH-gated:
+a guarantee on a path tiered below HIGH can never fire, and the report renders that as a clean pass. Had
+HIGH simply become "one adversarial lens", every guarantee below would have stopped being checked with
+nothing saying so — the exact failure v1.45.0's retirement pass made in `curate` Step 5 and needed a lens
+to catch. **Whenever a diff touches a surface in "Guarantee surfaces" below, the guarantee lens runs too.**
 
 ⚠️ **`docs/rationale/**` and the rest of `docs/**` were MEDIUM until 2026-09-14 and are now LOW,
 deliberately.** Measured over two full batteries that day: of ~18 findings, **8 were shipped
@@ -28,6 +49,12 @@ re-opens a settled decision, not when anyone executes something — and it is no
 ⚠️ **`CLAUDE.md` moved MEDIUM → LOW on 2026-09-14**, on the same argument that moved `docs/**`:
 nobody installs it, so a wrong line costs one session rather than every adopter. It is still
 reviewed — one adversarial lens — and it is still the file the tier table itself is read from.
+
+⚠️ **The skill's magnitude gate says a diff over 200 lines gets a "full battery, whichever tier the paths
+fall in". For this repo, the HIGH row above IS the battery** — one adversarial lens, plus the guarantee
+lens where a guarantee surface is touched. A >200-line diff does not reinstate three lenses; if it did, the
+profile and the gate would prescribe different depths for the same change and nothing would say which wins.
+**Magnitude still escalates a LOW or MEDIUM diff up to that set** — the gate's job, unchanged.
 
 `**` crosses directory levels; a leading `/` anchors to the repo root. **The most specific
 matching pattern wins** — `templates/checklists/foo.md` is MEDIUM, not HIGH, even though
