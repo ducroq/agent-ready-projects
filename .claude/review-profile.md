@@ -102,6 +102,39 @@ Check it in this direction: read each entry below, then find its tier above.
   rule — *search the working tree, not the git index* — is the one that bit); and every report
   section it prints must be described in `templates/audit-context.md`, per its own header
 
+## Run budget
+
+**One lens-run per release, ≤120,000 tokens. Record the actual in `memory/review-ledger.tsv`.**
+
+⚠️ **The reason is measured and it is not the one you would guess: run cost varies little with
+scope.** Over the **41 cold runs in the ledger carrying a token count** (`narrow-fork` excluded — the
+config is retired — and the one killed run's 0 with it), the range is **40k–162k, mean 107k**; and
+within 2026-09-14 alone the narrowest run, one small prose diff, cost 86k against a broadest of 148k.
+The spread is real but it does not track how narrow the subject was, because the cost is the
+reviewer's own exploration and not the diff. **Only cutting the number of runs reliably cuts spend.**
+⚠️ **Not a controlled comparison**: nothing here holds the target constant while varying scope, so
+this is an observed range, not a demonstration that scope is irrelevant. Re-derive before quoting:
+`awk -F'\t' '$(1)~/^2026-/ && $(6)~/^[0-9]+$/ && $(6)>0 && $(2)!="narrow-fork" {print $(6), $(5)}' memory/review-ledger.tsv | sort -n`.
+
+Three consequences, all of them things this repo did in the week before the budget existed:
+
+- **A fix-round is a full run.** The `#173` and `#174` sequences paid 147k, 129k, 122k and 146k for
+  rounds *after* the first. Batch the fixes and review the batch once; the round cap in
+  `templates/review-changes.md` Step 5 already governs whether a second round runs at all.
+- **A new gate costs a run to review and saves the next release nothing.** Lint rules 14 and 15
+  cost ~255k in review on 2026-09-14 — more than two releases' worth — and neither reduces release
+  spend. Build gates *between* releases, deliberately, not inside one.
+- **`tests/**` gets no lens attention.** Fifteen lint rules and sixteen fixture suites cover it for
+  zero tokens. A lens there is paying 110k for what a gate already asserts.
+
+⚠️ **This section was written WITHOUT a lens pass, deliberately, and that is a departure from the
+magnitude gate** — which prescribes one adversarial pass for any diff, however small. Reviewing it
+would have cost ~110k against a budget whose first release saves ~240k, so the gate would have
+consumed most of what the rule exists to save in the act of approving it. Bounded: it is this
+repo's own profile, not an adopter-facing surface, and nothing executes it. **Not a precedent for
+skipping the pass on `templates/` or `.claude/skills/`, where the gate has measurably earned its
+cost every time it has run.**
+
 ## Test baseline
 
 ```bash
