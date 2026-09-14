@@ -8,87 +8,41 @@ Goal: make the framework cheaper to run without cutting the review of the shippe
 
 **Not in scope**: reducing lens count or round count on `templates/` and `.claude/skills/`. H-020 measured every axis there and found each buys something; the 2026-09-12 round found 5 blockers in a prose-only change.
 
-## Session plan — TOKEN REDUCTION ONLY (maintainer directive, 2026-09-14)
+## Session plan — TOKEN REDUCTION (maintainer directive, 2026-09-14)
 
-✅ **BOTH HALVES DONE, 2026-09-14 — see Current Status for the `memory/MEMORY.md` half.**
+✅ **Done.** `CLAUDE.md` and `memory/MEMORY.md` both cut; `CLAUDE.md` clears the soft flag in
+`templates/audit-context.md` Step 1. The auto-loaded set is still over the cap and **no further
+cut is scheduled** — the named candidates are spent, and what remains is current session state.
 
-✅ **`CLAUDE.md` is DONE — all three blocks, 2026-09-14** (`856fe66`, `32a86e9`, `6688972`).
-Hard Constraints 10,468 → 7,386, Architecture 8,052 → 4,591, Before You Start 7,201 → 5,384,
-whole file 36,270 → 27,364 chars / 28,393 bytes — **which clears the 35,000-byte soft flag in
-`templates/audit-context.md` Step 1 for the first time.** Every expectation in the table below
-was beaten or met except Before You Start (expected ~3k, landed 5,384: the rows that stayed
-long are routing a session cannot skip — "picking up where we left off" and the lint/CI row).
-The remaining target is `memory/MEMORY.md` (~42,700).
+**The method that worked**: find a duplicate, name the authority, delete the copy. **The method
+that has failed here**: tightening prose.
 
-⭐ **The finding, and it changes the method**: *every duplicate deleted had rotted, and twice the
-copy being deleted held the RIGHT answer.* `CLAUDE.md` said rule 11's block was broken for nine
-consecutive tags; `tests/lint/README.md`, the catalog that owns the rule, said eight. Deleting
-the duplicate would have deleted the correction and kept the error — it was written back into
-the catalog first. **Add to the method: before deleting a duplicate, diff it against the
-authority and write back whichever is right.** Same shape as the 38/35-vs-40/37 rot on
-2026-09-13, one step further: there the duplicate was wrong, here it was right.
+⭐ **Add to the method — every duplicate deleted this pass had rotted, and twice the copy being
+deleted held the right answer.** Diff a duplicate against its authority and write back whichever
+is right *before* deleting.
 
+⚠️ **And a structural section is a slot with a prescribed size.** `## Key Paths` was deleted
+outright on a correct duplication finding; `templates/curate.md` forbids trimming it and lint saw
+nothing. Growing such a section past its prescribed size is the same defect as deleting it.
 
-⛔ **The next session does this and nothing else.** No issues, no release, no battery. The
-maintainer exhausts a budget in a few hours and asked whether the framework earns its keep.
-
-**Target**: the auto-loaded set, **79,138 chars against this repo's own 40,000 cap**. Already cut
-32% from 116,501 on 2026-09-14. `CLAUDE.md` is now the larger half.
-
-**Measured, 2026-09-14 — the candidates, largest first. These numbers are current; re-measure
-only if the files have moved.**
-
-| block | chars | disposition |
-|---|---|---|
-| `CLAUDE.md` Hard Constraints | 10,513 | **The biggest single block.** Six constraints, each carrying its full derivation and instance history. The RULES are load-bearing; the derivations are not — they belong in `memory/gotcha-log.md`, which is where instances already live. Expect ~6k. |
-| `CLAUDE.md` Architecture | 8,696 | An annotated tree. The annotations restate each file's own header, which is the exact mistake the `tests/` block already made and had removed. Expect ~4k. |
-| `CLAUDE.md` Before You Start | 7,248 | A routing table that has grown prose. Its JOB is one line per trigger. The `Before committing structural changes` row alone is 1,763 chars. Expect ~3k. |
-| `memory/MEMORY.md` Current State | 31,204 | Still the bulk of the index after the archive. The 2026-09-07..14 blocks are now the oldest; the same archive move applies once they stop being current. |
-| `memory/MEMORY.md` Topic Files | 8,420 | A routing table with a "key insight" column that has become a summary. The insight belongs in the file. |
-
-**Method that worked and should be repeated**: find duplication, and archive a second narrative
-to a topic file. **Method that has failed here before**: tightening prose.
-
-**Order**: Hard Constraints → Architecture → Before You Start. Each is a separate commit with a
-before/after measurement, so a regression is attributable.
-
-**Verification each time** — the 2026-09-14 pass caught two defects this way, do not skip it:
-- Account for every `<!-- verify: -->` probe **by name** before and after. `curate` Step 0.5
-  scans memory *files*, plural, so a probe may move between them but must not vanish.
+**Verification each time**, which caught defects on every pass — do not skip it:
+- Account for every `<!-- verify: -->` probe **by name** before and after. A probe may move
+  between memory files but must not vanish, and one that hardcodes its own host file must be
+  repointed when the claim moves.
 - Run `bash tests/lint/run.sh` after each move: rule 1 catches a `CLAUDE.md` path that stops
-  resolving, rule 2 catches a topic file orphaned by removing whatever referenced it. Both fired
-  on 2026-09-14.
-
-⚠️ **Also unmeasured, and worth doing first because it is cheap**: whether the review re-tiering
-(`docs/**` → LOW, 2026-09-14) actually reduces spend or only moves it. One release will say.
+  resolving, rule 2 a topic file orphaned by removing what referenced it.
 
 ## Current Status
 
-**Savepoint 2026-09-14, token-reduction block.** `CLAUDE.md` reduction complete (three commits
-above, unpushed, no release). Nothing else was touched: no issues picked up, no battery run, per
-the directive. `bash tests/lint/run.sh` green after each commit; `CLAUDE.md`'s one verify probe
-accounted for by name before and after each and re-run green. One collateral fix outside
-`CLAUDE.md`: `tests/lint/README.md`'s rule-11 span corrected from eight releases to nine
-(v1.31.0–v1.36.1, bounded — v1.30.0 and v1.37.0 both parse) before the duplicate carrying the
-right answer was deleted.
+**Savepoint 2026-09-14.** Token reduction complete for both halves (unpushed, no release).
+Review depth cut separately on the maintainer's decision: round cap of two with a
+same-defect-in-a-second-file exception, `CLAUDE.md` to LOW, `narrow-fork` retired. The skill's
+own warning that a cap ships introduced defects was kept, not deleted to afford the budget.
 
-✅ **`memory/MEMORY.md` is DONE too, 2026-09-14** — 42,653 → 19,067 chars. The 2026-09-06 and
-2026-09-07 session blocks were appended verbatim to `memory/project_session_2026_09_06.md` and
-`memory/project_session_2026_09_07.md` (which already held distillations of the same sessions —
-the index was the second narrative), and the Topic Files table's 4,840-char per-hypothesis
-summary was deleted down to the count, its probe, and a pointer at the log.
+Filed #191 — Alibaba open-code-review / AACR-Bench, evaluated and parked; nothing started.
 
-⚠️ **Two probes moved files and both were re-run green in their new homes** — the v1.39.0 tag
-probe, and the 2026-09-06 wave probe, whose hardcoded path had to be repointed from
-`memory/MEMORY.md` to the archive file or it would have silently reported CANNOT VERIFY.
-
-**Auto-loaded set 79,976 → 47,471 chars against the 40,000 cap.** Still over, and **no further
-cut is scheduled**: both named candidates are spent, and the remaining bulk is the 2026-09-12 and
-2026-09-14 blocks, which are still current and are what a bare "continue" reads. The next cut
-needs a fresh measurement rather than this plan.
-
-**Next action**: the cheap unmeasured item — whether the `docs/**` → LOW re-tiering reduces spend
-or only moves it. One release will say.
+**Next**: the one cheap unmeasured item — whether the `docs/**` → LOW re-tiering reduces spend or
+only moves it. One release will say.
 
 **Previous savepoint — 2026-09-12, second block.** v1.41.0 is tagged and pushed. A later `/update-drift` + `/audit-context` pass committed `76d6581` (**not pushed, no release**) and filed #170-#174.
 
