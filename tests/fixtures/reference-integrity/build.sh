@@ -23,6 +23,13 @@ mkdir -p src/checks && touch src/checks/row_tail_real.py
 touch src/utils/redaction.py src/utils/time_utils.py src/models/temporal.py \
       src/utils/helpers.py src/lib/helpers.py data/.gitkeep docs/ARCHITECTURE.md \
       packages/worker/config/settings.py infra/main.tf analysis/index.qmd config/live.env
+# #175 — the four Node/TypeScript module extensions. One REAL file per extension,
+# so the silence half of each pair is measured per extension and not by family:
+# a typo in one alternative of the EXT group is invisible if `.mts` vouches for
+# `.cts`. Distinct basenames throughout — rung 2 matches on a path suffix, and
+# this fixture has been bitten three times by one case resolving on another's file.
+mkdir -p cfg
+touch cfg/live_vitest.mts cfg/live_eslint.mjs cfg/live_jest.cjs cfg/live_tsnode.cts
 # #54/#55/#56 material. `backlog.md` exists in THREE places on purpose: next to
 # the doc that references it bare (docs/guides/), in templates/, and under
 # packages/ — so a bare basename collides at rung 2 unless the doc-relative rung
@@ -181,6 +188,68 @@ the fix for the phantom below must not cost the path form its coverage.
 `process.env` is a code identifier, not a file. It can never resolve at any
 rung, and reporting it is the phantom-reference failure the whitelist exists
 to prevent, arriving through the whitelist rather than around it.
+
+# T48-T51 / N43-N46 — the Node/TypeScript module extensions (#175)
+`cfg/missing_vitest.mts`, `cfg/missing_eslint.mjs`, `cfg/missing_jest.cjs` and
+`cfg/missing_tsnode.cts` are broken references and must all be reported. Before
+these four joined the whitelist an adopter whose config layer is `.mts` got a
+CLEAN audit over references that were never extracted — the T11/T16 failure
+again, at the extensions where modern Node and TypeScript projects keep their
+configuration. The live instance was an adopter referencing `vitest.config.mts`
+in their project file: correct by luck, and a rename would never have been
+reported.
+
+`cfg/live_vitest.mts`, `cfg/live_eslint.mjs`, `cfg/live_jest.cjs` and
+`cfg/live_tsnode.cts` exist and must all stay silent. Four pairs rather than one:
+the whitelist is an alternation, and a misspelt alternative would be covered for
+by its neighbours if a single case stood for the group.
+
+# N47 / T52-T54 — a compound extension noun is not a path (#165, #176)
+The `.d.ts` signature is a TERM, not a reference: an extension named in prose.
+No rung can resolve it, so reporting it is the #70 phantom class arriving
+through a door `IDENTIFIER_EXT` cannot close — `ts` can never join that list
+without dropping every real bare `.ts` reference.
+
+⚠️ These three are the seeded TRUE POSITIVES the narrowing must not eat, and
+they are chosen to discriminate the denylist from the shape rule that was
+declined: `.meta.json`, `.key.json` and `.pa11yci.json` are broken references
+and must all still be reported. The first two match the proposed
+`{1,4}`-per-segment shape rule and are real filenames in the estate #165
+scanned, which is why that rule was measured and rejected rather than argued
+about. A green run with these absent could not tell the fix from a disabled
+extractor.
+
+# T57-T61 — five path shapes that are OUTSIDE the population (#122)
+`scripts/{a,b}.json` is a brace expansion, `docs/work-items/[slug].md` a bracket
+placeholder, `/opt/otherhost/config.json` root-absolute,
+`C:\projects\app\notes.md` a Windows path and `\\fileserver\share\spec.md`
+a UNC path. `PATH_RE`'s character classes hold none of `{ [ : \` and its first
+class no `/`, so none of the five is ever extracted. They must be NAMED as
+unexamined: an adopter whose project file carries them gets CLEAN from a run
+that never looked, and the report's only omission line reports dropped
+EXTENSIONS, which is the wrong axis for this class.
+
+`~/.claude/skills/curate/SKILL.md` is home-relative — a real path reference that
+cannot resolve against a repo root — so it is the sixth shape and is named too.
+
+They are not findings. Nothing here is known to be wrong — only unchecked, and
+saying which is the entire fix. Giving each shape a rung is a separate decision.
+
+N50 is the other direction, and these tokens were chosen by MEASUREMENT, not by
+listing what seemed risky: `rows[0].value`, `cfg["db"].host`, `df.loc[0].name`
+and `Optional[Path].name` are ordinary subscript code that a generic
+bracket rule reports as paths; `X\.Y\.Z` is a regex; `@types/node/index.d.ts`
+an npm package; `.cursor/rules/*.mdc` is dropped for a WHITELIST reason, which
+is the extensions line's business and not this section's. None may be listed.
+
+# N51 / N52 — T18's class, for the SECOND member `COMPOUND_EXT` adds (#165)
+`src/checks/absent_typedef.ts` and `.d.ts` <!-- placeholder -->
+The same two-filters-must-agree rule as T18, now that `_is_compound_ext_noun`
+joins `_is_identifier_not_path` as a reason a token is ineligible. If the new
+filter is applied only where findings are emitted and not where the eligible
+list is built, the marker binds to `.d.ts` and the real broken path beside it
+stays a silent finding. T18/N16 were seeded for the first member and nothing
+covered the second.
 
 # T18 — the marker must reach PAST an identifier to the real path
 `config/absent.env` and `process.env` <!-- placeholder -->

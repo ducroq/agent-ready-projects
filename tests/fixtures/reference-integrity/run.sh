@@ -37,6 +37,30 @@ declare -a CASES=(
   # is missing gets a clean audit having extracted nothing, and the instrument's
   # own "extensions not extracted" line reads as trivia under a zero.
   "T16 fabricated .qmd is caught|analysis/missing.qmd"
+  # #165/#176 — the coverage the compound-extension denylist must NOT cost.
+  # These three are not decoration: `.meta.json` and `.key.json` are silenced by
+  # the shape rule that was proposed and declined, and both are real filenames
+  # in the 33-repo estate that issue scanned. They are what makes the denylist a
+  # measurement rather than a preference, and they go red the moment someone
+  # replaces it with the "obvious" leading-dot shape test.
+  # ⚠️ MEASURED, both directions, 2026-09-14. Denylist removed: N47 fails alone.
+  # Shape rule substituted for the denylist: T52 and T53 fail and **T54 PASSES**.
+  # #165 offered `.pa11yci.json` as the counter-example to seed; seeding only
+  # that one would have certified the rejected fix GREEN. The sample has to
+  # contain the cases the author did NOT already have in mind, which is this
+  # repo's own seeded-true-positives rule turned on the issue's own suggestion.
+  "T52 a broken .meta.json is still reported|.meta.json"
+  "T53 a broken .key.json is still reported|.key.json"
+  "T54 a broken .pa11yci.json is still reported|.pa11yci.json"
+  # #175 — the same class as T11/T16 at the module extensions. One case per
+  # extension, deliberately: `EXT` is an alternation, so a case for `.mts` proves
+  # nothing about `.cts` and a misspelt alternative would hide behind its
+  # neighbours. Found live on an adopter whose project file references
+  # `vitest.config.mts`; the audit reported CLEAN, correct only by luck.
+  "T48 fabricated .mts is caught|cfg/missing_vitest.mts"
+  "T49 fabricated .mjs is caught|cfg/missing_eslint.mjs"
+  "T50 fabricated .cjs is caught|cfg/missing_jest.cjs"
+  "T51 fabricated .cts is caught|cfg/missing_tsnode.cts"
   # #70 — the loss this tightening could cause. `env` keeps its coverage for
   # the path form; only the identifier shape is dropped.
   "T17 broken .env with a directory is still caught|config/missing.env"
@@ -162,8 +186,35 @@ declare -a NEG=(
   # The failure #69's widening newly permits: every real .qmd becoming a
   # phantom. Adding an extension must buy coverage, not noise.
   "N14 a resolving .qmd stays silent|analysis/index.qmd"
+  # #175, the other direction — N14's rule per extension. Widening the whitelist
+  # must buy coverage, not turn every real config file into a phantom.
+  # ⚠️ DELIBERATELY INERT against this change, measured, not assumed: with the
+  # four extensions reverted these four still PASS, because an unextracted path
+  # is silent for the wrong reason. Like T24, they are CONTROLS — they go red if
+  # extraction ever outruns resolution for these extensions. T48-T51 are the
+  # cases that carry the sensitivity: all four fail on the revert, and nothing
+  # else in the suite moves.
+  "N43 a resolving .mts stays silent|cfg/live_vitest.mts"
+  "N44 a resolving .mjs stays silent|cfg/live_eslint.mjs"
+  "N45 a resolving .cjs stays silent|cfg/live_jest.cjs"
+  "N46 a resolving .cts stays silent|cfg/live_tsnode.cts"
   # #70 — the phantom itself. No rung can resolve `process.env`; it is not a file.
   "N15 process.env is an identifier, not a path|process.env"
+  # #165/#176 — the phantom itself, and the only token in the denylist. Every
+  # TypeScript project's prose contains it; on one adopter it was a permanent
+  # finding that no marker could legally clear, because the marker means "a path
+  # that was never meant to resolve" and this is not a path at all.
+  "N47 .d.ts is an extension named as a term, not a path|.d.ts"
+  # N51/N52 — #165's member of T18's class. An adversarial lens found it missing:
+  # the new filter joined a class that had exactly one seeded case, for the
+  # other member.
+  "N51 a marker beside .d.ts does not bind to it|.d.ts"
+  # The other half, and it mirrors N16 exactly: the marker must reach PAST the
+  # ineligible token to the real path, which is then EXCUSED — so the correct
+  # result is no finding, not a finding. A first draft asserted this as a
+  # T-case and it failed, because binding to the real path is the behaviour
+  # being asked for, not the defect.
+  "N52 the marker reaches past .d.ts to the real path|src/checks/absent_typedef.ts"
   "N15b a resolving .env with a directory stays silent|config/live.env"
   # #70/T18 — with the marker correctly reaching past the identifier, this is
   # placeheld rather than reported. Fails if only the findings loop is filtered.
@@ -379,6 +430,126 @@ fi
 # extracted also is not a finding — which is the silent-skip failure this whole
 # step is built against. Assert the counted section names them.
 PLACEHELD="$(printf '%s' "$OUT" | sed -n '/== SKIPPED as declared-placeholder/,/^  total:/p')"
+
+# ---- #122: shapes the extractor never took must be NAMED, not silently dropped.
+DROPPED="$(printf '%s' "$OUT" | sed -n '/== PATH SHAPES NOT EXTRACTED/,/^  total:/p')"
+# ⚠️ `total:` is an indented line too. Counting it made an empty-but-present
+# section read as one entry, so the vacuity FAIL below could never fire — the
+# same off-by-one that let T56's first draft pass on a section header.
+DROP_ROWS="$(printf '%s' "$DROPPED" | grep '^  ' | grep -v '^  total:' || true)"
+N_DROPPED="$(printf '%s' "$DROP_ROWS" | grep -c '[^[:space:]]' || true)"
+if [ "$N_DROPPED" -eq 0 ]; then
+  printf '  FAIL  T57-T61 measured nothing: the PATH SHAPES NOT EXTRACTED section is empty or absent\n'; FAIL=1
+else
+  while IFS='|' read -r label frag; do
+    [ -z "$label" ] && continue
+    if ! printf '%s' "$DROPPED" | grep -Fq "$frag"; then
+      printf '  FAIL  %s (not named as unextracted: %s)\n' "$label" "$frag"; FAIL=1
+    elif printf '%s' "$FINDINGS" | grep -Fq "$frag"; then
+      printf '  FAIL  %s (named AND reported as a finding: %s — it is unchecked, not broken)\n' "$label" "$frag"; FAIL=1
+    else
+      printf '  PASS  %s\n' "$label"
+    fi
+  done <<'SHAPES'
+T57 a brace expansion is named as unextracted|scripts/{a,b}.json
+T58 a bracket placeholder is named as unextracted|docs/work-items/[slug].md
+T59 a root-absolute path is named as unextracted|/opt/otherhost/config.json
+T60 a Windows path is named as unextracted|C:\projects\app\notes.md
+T61 a UNC path is named as unextracted|\\fileserver\share\spec.md
+SHAPES
+  # ⚠️ The other direction, and BOTH the gap and the controls were measured
+  # rather than guessed. An over-broad detector (drop the separator requirement)
+  # swept four more tokens in and NOT ONE case failed, so this section could
+  # have become a noise dump silently — noise is cheap to add here precisely
+  # because these are not findings.
+  #
+  # The first controls drafted for it were `process.env` and `.d.ts`, and they
+  # PASSED under that mutant: both are MATCHED by PATH_RE, so the detector skips
+  # them on the extracted-already test and the regex never sees them. Diffing
+  # the section between the two variants named the real leak — bare
+  # single-segment extension NOUNS, which PATH_RE cannot match because they have
+  # no name segment. Those are the controls, and they fail under the mutant.
+  # ⚠️ The first control set here was `.ts`/`.md`/`.qmd`, and an adversarial lens
+  # refuted it: those are bare extension NOUNS, which PATH_RE never matches, so
+  # they discriminated nothing about the shape rules. The tokens below are the
+  # ones a MEASUREMENT produced — a generic `[/\{[]` class reported 61 entries
+  # over this repo's own markdown and most were not paths. Each of these is
+  # reported by the rule that was written first and by none of the six named
+  # shapes, so they go red if anyone reaches for the generic form again.
+  #
+  # ⚠️ MEASURED 2026-09-14, and the two halves kill DIFFERENT wrong rules — which
+  # is why both are kept. Restore the generic `[/\\{[]`-plus-any-tail rule and
+  # the SEVEN measurement-derived tokens fail while the three bare nouns pass.
+  # Drop the separator requirement instead and only the three bare nouns fail.
+  # Either set alone certifies one of the two wrong directions as green.
+  for _tok in 'rows[0].value' 'cfg["db"].host' 'df.loc[0].name' \
+              'Optional[Path].name' 'X\.Y\.Z' '@types/node/index.d.ts' \
+              '.cursor/rules/*.mdc' '.ts' '.md' '.qmd'; do
+    # ⚠️ FIELD, not line-end. The first draft anchored on `$`, which works only
+    # while the fragment is the last column — add a reason column to the report
+    # and N50 passes forever while the detector it guards leaks freely. That is
+    # T29's lesson ("a needle keyed on column padding") one section over.
+    if printf '%s' "$DROP_ROWS" | awk '{print $2}' | grep -qxF "$_tok"; then
+      printf '  FAIL  N50 %s is listed as an unextracted path shape — the detector is over-broad\n' "$_tok"; FAIL=1
+    else
+      printf '  PASS  N50 %s is not reported as an unextracted path shape\n' "$_tok"
+    fi
+  done
+fi
+
+
+# T56 — #177 point 3. A marker is only checkable if the reader can see WHAT IT
+# WAS WEIGHED AGAINST. Rung 2 already printed its reason; rungs 3 and 4 excused a
+# marked path with a bare `declared-placeholder` and no rung named, so a marker
+# that is simply WRONG was excused in silence. One adopter had exactly one wrong
+# marker — on a live, tracked source file — and it was found by a review lens,
+# not by this checker.
+#
+# ⚠️ Adjudicating below rung 1 is NOT the fix, and that is why this is a report
+# change rather than a findings change: reporting STALE at rung 2 is precisely
+# what #56 removed, and N25 is the case that guards it. A repo shipping a
+# template AND instances of it then has no correct move — marked reports STALE,
+# unmarked reports COLLISION. So: name the rung, decide nothing differently.
+#
+# Structural, not per-case: any FUTURE fall-through that forgets to name its rung
+# fails this, which a needle on one path would not.
+#
+# ⚠️ That sentence was FALSE when first written, and two review lenses caught it
+# independently. The predicate read only rows containing `declared-placeholder`,
+# and the section also carries `angle-bracket segment` rows — one of which the
+# shipped oracle ALREADY emitted bare, with no rung, whenever rung 4 was not
+# runnable (a fresh clone with no neighbour: the environment clone-lint exists
+# for). So the check was scoped to one of two labels while claiming to cover
+# every fall-through, and the live counter-example sat in the same file. The
+# predicate is now EVERY entry row, and that arm names its reason.
+#
+# ⚠️ THE NON-VACUITY LINE IS NOT DECORATION. The first draft of this check sat
+# ABOVE the line that assigns PLACEHELD, so it ran against an unbound variable:
+# grep over empty input returns 0, the `|| true` swallowed the error, and it
+# reported PASS having measured NOTHING. That is #161's class exactly — a guard
+# whose green is indistinguishable from a real one — written into this fixture by
+# the change that was fixing #177. An empty section must FAIL here, not pass.
+# ⚠️ The predicate is ENTRY LINES, not the word. A first attempt grepped for
+# `declared-placeholder` anywhere in the section and counted the SECTION HEADER,
+# which carries the word and no rung — so it reported a phantom failure, and the
+# non-vacuity line above it could never have fired either, the header alone
+# satisfying it. Entries are indented two spaces; `total:` closes the section.
+PH_ROWS="$(printf '%s' "$PLACEHELD" | grep '^  ' | grep -v '^  total:' || true)"
+N_PH="$(printf '%s' "$PH_ROWS" | grep -c '[^[:space:]]' || true)"
+PH_EMPTY=0
+if [ "$N_PH" -eq 0 ]; then
+  printf '  FAIL  T56 measured nothing: no declared-placeholder entries in the report\n'
+  FAIL=1; PH_EMPTY=1
+fi
+BARE_PH="$(printf '%s' "$PH_ROWS" | grep -vc '—' || true)"
+if [ "$PH_EMPTY" -eq 1 ]; then
+  :   # already reported; a bare-count of 0 over an empty set is not a pass
+elif [ "$BARE_PH" -eq 0 ]; then
+  printf '  PASS  T56 every entry in the skipped section names the rung that excused it\n'
+else
+  printf '  FAIL  T56 %s declared-placeholder entr(y/ies) name no rung — a marker excused with no reason printed is not checkable\n' "$BARE_PH"; FAIL=1
+fi
+
 for want in "docs/RUNBOOK.md" "config/absent.env" "src/aggregators/never_anywhere.py" "orphan_note.md" \
             "src/aggregators/my_new_aggregator.py" "docs/work-items/<slug>.md" \
             "filters/<name>/<version>/config.yaml" "<slug>.md" "<root>/memory/MEMORY.md" \

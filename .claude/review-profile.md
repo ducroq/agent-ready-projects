@@ -44,6 +44,12 @@ Check it in this direction: read each entry below, then find its tier above.
   distinguishable in the output; exits non-zero on the failure it exists to detect
 - `templates/README.md`: naming map covers all templates, tool-specific paths correct,
   every skill carries its scope (user-global or project-local)
+- `tests/fixtures/reference-integrity/refcheck.py`: **Step 4's runtime since v1.40.0, not an
+  oracle** (#185) — a change here reaches every adopter who runs the step. Two invariants that
+  live only in the source today and were each violated in one session: it must not contradict
+  `SPEC.md`, which is normative and is NOT edited by the same change by default (SPEC's rung-2
+  rule — *search the working tree, not the git index* — is the one that bit); and every report
+  section it prints must be described in `templates/audit-context.md`, per its own header
 
 ## Test baseline
 

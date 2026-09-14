@@ -354,7 +354,7 @@ catch stale references. This framework's `refcheck` is substantially further alo
 rungs, a 40-case seeded fixture, an exit-status table, and a documented cross-repo rung — and it is
 buried in a methodology repo where no linter author would find it. **The overlap is real, the
 direction of value is clear, and the project is small enough that a well-formed contribution
-lands.** ⚠️ But note what we would be giving: `refcheck.py` is explicitly an *oracle*, not normative,
+lands.** ⚠️ But note what we would be giving: `refcheck.py` was explicitly an *oracle*, not normative — until v1.40.0, when Step 4 began telling adopters to run it (#185) —
 and porting it means porting its false-positive classes too.
 
 **3. AGENTS.md / the Agentic AI Foundation — the highest leverage and the slowest.** The standard's

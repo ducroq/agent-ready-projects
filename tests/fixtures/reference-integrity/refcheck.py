@@ -7,20 +7,33 @@ This exists so that a change to Step 4 can be *tested* rather than asserted.
 Run run.sh in this directory to exercise it against a fixture that seeds the
 failures Step 4 must catch.
 
-The skill text is normative; this is one faithful reading of it. If they
-disagree, the skill is right and this file is the bug.
+⚠️ THIS IS STEP 4'S RUNTIME, since v1.40.0 (commit 6e24366). The step says
+"Run the checker; do not re-derive its rules" and hands the adopter a path into
+this framework's clone. A fix here reaches every adopter who runs the step AS WRITTEN --
+which is not all of them; see the fallback gap in the next paragraph. It is not
+an oracle any more, and a fix here counts against the issue it closes.
+This paragraph said the opposite until 2026-09-14, two releases later (#185).
 
-Promoting this file to the *runtime* for Step 4 was attempted and shelved
-(see docs/work-items/model-fit.md). Two blockers, both unresolved: the installer
-ships only SKILL.md, so the script never reaches an adopter repo; and the manual
-fallback written for that case omitted the report-shape split, so it silently
-reproduced the v1.15.0 defect it was meant to replace. The idea is sound; the
-packaging is not. Do not re-attempt without solving distribution first.
+Distribution was the shelved blocker, recorded in docs/work-items/model-fit.md
+(which says the INSTALLER copies only SKILL.md; the "never reaches an adopter
+repo" phrasing is this header's own former wording, not a quote from that file). It was solved
+in the other direction -- the script is not shipped to the adopter, the adopter is
+sent to the script. The second blocker is still live and still unsolved: there is
+no manual fallback, so an adopter with no clone at that path gets a shell error
+and no Step 4 at all. The last fallback written omitted the report-shape split and
+silently reproduced the v1.15.0 defect it replaced, which is why none is written
+here rather than a bad one (#185).
+
+Where the skill still states behaviour in its own words -- the three-outcome
+verdict, the report sections -- the skill is normative and this file implements it.
+The extraction and resolution RULES are no longer stated there at all: they moved
+to SPEC.md beside this code at v1.40.0, and SPEC.md defers to the script.
 
 Output sections: FINDINGS (broken or ambiguous — the defects), RESOLVED BELOW
-RUNG 1 (enumerated, not defects), SKIPPED as asserted-absent, UNCONFIRMED (what
-this run could not decide), extensions in the tree the extractor misses, and —
-only when it applies — DOCUMENTS NOT READ.
+RUNG 1 (enumerated, not defects), SKIPPED as asserted-absent, PATH SHAPES NOT
+EXTRACTED (shapes outside the population, each labelled — #122), UNCONFIRMED
+(what this run could not decide), extensions in the tree the extractor misses,
+and — only when it applies — DOCUMENTS NOT READ.
 The RUNG 4 COVERAGE line always prints; only its explanatory body is conditional
 on there being no neighbour (#97). On the default path a VERDICT line closes the report and
 names the exit status, so the two cannot drift apart unnoticed; `--legacy` is a
@@ -61,7 +74,7 @@ UNCONFIRMED = 'UNRESOLVED (unconfirmed: rung 4 did not run)'
 # primary sources are .tf/.ipynb/.kt cannot be silently un-audited.
 EXT = (
     'py|md|yaml|yml|json|jsonl|sh|bash|zsh|ini|cfg|conf|toml|txt|csv|tsv|sql|db'
-    '|xml|html|css|js|ts|tsx|jsx|rs|go|java|rb|php|c|h|cpp|hpp|cs|kt|swift|r'
+    '|xml|html|css|js|ts|tsx|jsx|mjs|mts|cjs|cts|rs|go|java|rb|php|c|h|cpp|hpp|cs|kt|swift|r'
     '|lock|env|example|service|timer|socket|gitignore|dockerfile|tf|ipynb|proto'
     '|vue|svelte|rst|log|tag|svg|png|qmd'
 )
@@ -92,6 +105,34 @@ URLPATH_RE = re.compile(r'^[A-Za-z0-9_.<][A-Za-z0-9_./*<>-]*\.(?:' + EXT + r')$'
 # them, and tightening on argument rather than evidence is how a check loses
 # sensitivity nobody notices.
 IDENTIFIER_EXT = ('env',)
+
+# #165/#176 — the same phantom class arriving through a door IDENTIFIER_EXT
+# cannot close. A token that is ENTIRELY extension segments (`.d.ts`) is an
+# extension NAMED AS A TERM, not a path, and no rung can ever resolve it. It
+# cannot join IDENTIFIER_EXT: that rule tests the LAST segment, and `ts` there
+# would drop every real bare `.ts` reference.
+#
+# ⚠️ A DENYLIST, not a shape rule, and the shape rule was measured before it was
+# declined. `^\.[A-Za-z0-9]{1,4}(\.[A-Za-z0-9]{1,4})+$` looks equivalent and
+# silences `.meta.json` and `.key.json` too — both real filenames in the 33-repo
+# estate #165 scanned. The bound is proposed in #176, which checks it against
+# `.gitignore` and `.env.example`; `.pa11yci.json` comes from #165's list. Each
+# of those carries a segment longer than four characters (`example`, `pa11yci`),
+# which is exactly why the bound survives them -- and why checking only them
+# measures nothing about the tokens it does eat. The blanket "leading dot, no
+# slash" version is worse again: 13 tokens / 50 occurrences of coverage for one
+# phantom, and the dropped tokens stop being resolved, excused OR reported (#45).
+#
+# Seeded with `d.ts` alone — the one collision measured in a real tree.
+# `min.js`, `test.ts`, `spec.ts` and `stories.tsx` are the same shape and are
+# deliberately NOT listed, per the IDENTIFIER_EXT comment above: tightening on
+# argument rather than evidence is how a check loses sensitivity nobody notices.
+COMPOUND_EXT = ('d.ts',)
+
+
+def _is_compound_ext_noun(frag):
+    """True for a token that is only extension segments, e.g. `.d.ts`."""
+    return frag.startswith('.') and frag[1:].lower() in COMPOUND_EXT
 
 
 def _is_identifier_not_path(frag):
@@ -158,6 +199,69 @@ DELETED_RE = re.compile(r'\*\*Deleted\*\*:?\s*(\[[^\]\[]*\]\([^()\s]+\)|`[^`]+`)
 # invisible when rendered, greppable, machine-readable.
 PLACEHOLDER_RE = re.compile(r'<!--\s*placeholder\s*-->')
 SPAN_RE = re.compile(r'`[^`]*`')
+
+# #122 — the report has no way to say "I did not look at this". `PATH_RE`'s
+# character classes hold no `{`, `[`, `:` or `\`, and its first class no `/`, so
+# five reference shapes are silently OUTSIDE the population: brace expansions,
+# bracket placeholders, root-absolute paths, Windows paths and UNC paths. An
+# adopter whose project file names `C:\dev\notes.md` gets CLEAN from a run that
+# never looked at it, and nothing says so.
+#
+# ⚠️ The step's own doctrine is "report what the extractor dropped" — and what it
+# reported was dropped EXTENSIONS. A dropped SHAPE had no equivalent line, so the
+# one instrument built to make an omission visible was scoped to the wrong axis
+# for this class. That is the negatives rule turned on the step itself.
+#
+# This is the issue's option (a): NAME what was skipped, decide nothing. Widening
+# the population and giving each shape a rung is option (b), which needs a
+# disposition decision per shape and seeded cases per shape; nothing here
+# forecloses it.
+#
+# ⚠️ NAMED SHAPES, not a generic separator class — and the generic version was
+# written first, MEASURED, and refuted. `[/\\{[]` plus an extension tail looked
+# conservative and reported 61 entries / 26 distinct tokens over this repo's own
+# tracked markdown, most of them not path references at all: `X\.Y\.Z` (a
+# regex), `@types/node/index.d.ts` (an npm package), a git ref ending `v4.4.0`.
+# That is the #70 phantom class rebuilt one section down, in the file whose
+# whole subject is not doing that. The negative controls it shipped with were
+# `process.env`, `.d.ts`, `npm run build` and `os.path.join` — the four the
+# author already had in mind, which measures nothing.
+#
+# Each shape is listed and LABELLED, so the section states which one every entry
+# is and its footer cannot drift from its contents. Adding a shape means adding
+# a row here — the visible edit that widening a character class is not.
+# ⚠️ The tail is the EXTRACTOR'S OWN whitelist, not a generic `[A-Za-z0-9]{1,5}`.
+# The generic form let ordinary subscript code in: `rows[0].value`,
+# `cfg["db"].host`, `df.loc[0].name` and `Optional[Path].name` are all
+# "bracket placeholder" under it, and none is a path. Keying on EXT also keeps
+# the two omission axes from overlapping — `.cursor/rules/*.mdc` is dropped
+# because `mdc` is not whitelisted, which is the EXTENSIONS line's business, and
+# reporting it here would label a whitelist miss as a shape miss.
+TAIL = r'\.(?:' + EXT + r')$'
+UNEXTRACTED_SHAPES = (
+    ('brace group',         re.compile(r'^[^\s`]*\{[^\s`]*\}[^\s`]*' + TAIL)),
+    ('bracket placeholder', re.compile(r'^[^\s`]*\[[^\s`]+\][^\s`]*' + TAIL)),
+    ('root-absolute',       re.compile(r'^/[^\s`]*' + TAIL)),
+    ('home-relative',       re.compile(r'^~/[^\s`]*' + TAIL)),
+    ('Windows path',        re.compile(r'^[A-Za-z]:\\[^\s`]*' + TAIL)),
+    ('UNC path',            re.compile(r'^\\\\[^\s`]+' + TAIL)),
+)
+
+
+def _unextracted_shapes(raw_line):
+    """Backticked spans that look like a path and that PATH_RE did not take."""
+    out = []
+    for m in SPAN_RE.finditer(raw_line):
+        frag = m.group(0).strip('`').strip()
+        if not frag or PATH_RE.fullmatch('`' + frag + '`'):
+            continue
+        if URLISH.match(frag) or '://' in frag:
+            continue
+        for label, rx in UNEXTRACTED_SHAPES:
+            if rx.match(frag):
+                out.append((frag, label))
+                break
+    return out
 # A markdown link's TEXT is a display label, not a reference (#55). The house
 # style this framework recommends is exactly ``[`writing-guide.md`](templates/writing-guide.md)``
 # — a backticked filename as the label with the real path in the URL — so the
@@ -494,6 +598,7 @@ def check(root, sources, sibling_roots=None):
     # not reported as defects: nothing here is known to be wrong, only unchecked.
     undecided_markers = []
     unchecked = []   # link URLs declined with a stated reason (#55)
+    dropped_shapes = []   # backticked path shapes outside the population (#122)
 
     missing = []
     for src in sources:
@@ -510,6 +615,9 @@ def check(root, sources, sibling_roots=None):
             # here rather than lower so the strikethrough and deleted-span
             # collectors below see the same masked line.
             line = _mask_link_labels(raw_line)
+            for _sh, _lbl in _unextracted_shapes(raw_line):
+                if (src, _sh, _lbl) not in dropped_shapes:   # a token repeats per line
+                    dropped_shapes.append((src, _sh, _lbl))
             cands = _candidates(raw_line)
             # A link URL this checker declines to resolve is REPORTED rather
             # than dropped — every URL `LINK_RE` matches, plus a count of the
@@ -557,7 +665,8 @@ def check(root, sources, sibling_roots=None):
             placeheld_frags = set()
             eligible = [c for c in cands
                         if '*' not in c[2] and not URLISH.match(c[2])
-                        and not _is_identifier_not_path(c[2])]
+                        and not _is_identifier_not_path(c[2])
+                        and not _is_compound_ext_noun(c[2])]
             for pm in PLACEHOLDER_RE.finditer(_mask_spans(line)):
                 before = [c for c in eligible if c[1] <= pm.start()]
                 if before:
@@ -595,6 +704,8 @@ def check(root, sources, sibling_roots=None):
                     continue  # a hostname is not a path
                 if _is_identifier_not_path(frag):
                     continue  # `process.env` is not a file (#70)
+                if _is_compound_ext_noun(frag):
+                    continue  # `.d.ts` is an extension named as a term (#165)
                 if frag in covered:
                     skipped.append((src, frag, 'asserted-absent'))
                     continue
@@ -692,9 +803,14 @@ def check(root, sources, sibling_roots=None):
                     # prescribes would have written that falsehood into the document.
                     if ((frag.startswith(STATE_DIRS) or STATE_SHAPE.search(frag))
                             and not _is_source_file(frag)):  # #108
+                        # #177 point 3 — NAME the rung that excused it. A marker is
+                        # only checkable if the reader can see what it was weighed
+                        # against; rung 2 already said so and rungs 3 and 4 did not,
+                        # so a wrong marker here was excused with no reason printed.
                         placeheld.append((src, frag,
-                                          'declared-placeholder'
-                                          if frag in placeheld_frags else 'angle-bracket segment'))
+                                          ('declared-placeholder'
+                                           if frag in placeheld_frags else 'angle-bracket segment')
+                                          + ' — decided at rung 3 (runtime state)'))
                         continue
                     # Both arms above are LOCAL. A marker on a path that lives in a
                     # SIBLING repo resolved nowhere, was excused, and left the checked
@@ -737,13 +853,15 @@ def check(root, sources, sibling_roots=None):
                         # (#120) stays, because there it is actionable: no marker is
                         # asserting the path is not meant to resolve.
                         placeheld.append((src, frag,
-                                          'declared-placeholder'
-                                          if frag in placeheld_frags
-                                          else 'angle-bracket segment'))
+                                          ('declared-placeholder'
+                                           if frag in placeheld_frags
+                                           else 'angle-bracket segment')
+                                          + ' — decided at rung 4 (matches several siblings)'))
                     elif rung4_runnable:
                         placeheld.append((src, frag,
-                                          'declared-placeholder'
-                                          if frag in placeheld_frags else 'angle-bracket segment'))
+                                          ('declared-placeholder'
+                                           if frag in placeheld_frags else 'angle-bracket segment')
+                                          + ' — rung 4 ran and found no sibling holding it'))
                     elif ANGLE_SEG_RE.search(frag):
                         # An angle-bracket segment is decided by a regex over the
                         # fragment, consulting nothing on disk — rung 4 declines it
@@ -759,7 +877,9 @@ def check(root, sources, sibling_roots=None):
                         # `declared-placeholder` — pointing its reader at the
                         # rung-4 coverage sentence, which is false for a row
                         # decided by shape and not by any rung.
-                        placeheld.append((src, frag, 'angle-bracket segment'))
+                        placeheld.append((src, frag,
+                                          'angle-bracket segment'
+                                          ' — decided by its shape, consulting nothing on disk'))
                     else:
                         # A `<!-- placeholder -->` marker is rung-4 traffic, and
                         # without a neighbour this arm cannot tell a legitimate
@@ -989,7 +1109,7 @@ def check(root, sources, sibling_roots=None):
     known = set(EXT.split('|'))
     unknown = sorted(e for e in tree_ext - known if e and len(e) <= 12)
     return (findings, resolved_weak, skipped, placeheld, unknown, missing,
-            len(siblings), unchecked, undecided_markers)
+            len(siblings), unchecked, undecided_markers, dropped_shapes)
 
 
 def _usage(msg):
@@ -1047,7 +1167,7 @@ def main():
         return 0
 
     (findings, weak, skipped, placeheld, unknown, missing, n_siblings, unchecked,
-     undecided_markers) = check(root, sources, sibling_roots)
+     undecided_markers, dropped_shapes) = check(root, sources, sibling_roots)
 
     # State rung 4's coverage as a fact rather than inferring a verdict per
     # reference. We cannot tell which unresolved paths a sibling would have
@@ -1084,6 +1204,18 @@ def main():
     for s, p, v in weak:
         print(f"  {s:24s} {p:44s} {v}")
     print(f"  total: {len(weak)}")
+
+    # #122 — the other axis of "report what the extractor dropped". Extensions
+    # were reported and SHAPES were not, so CLEAN could not be told apart from
+    # never-looked for five shapes. Not findings: nothing here is known to be
+    # wrong, only unexamined — which is the whole point of saying it out loud.
+    if dropped_shapes:
+        print("\n== PATH SHAPES NOT EXTRACTED (outside the population, not checked) ==")
+        for s_, frag, lbl in dropped_shapes:
+            print(f"  {s_:24s} {frag:44s} {lbl}")
+        print(f"  total: {len(dropped_shapes)}")
+        print("  Backticked, path-shaped, never extracted — each labelled with the shape\n"
+              "  that put it here. A CLEAN verdict above says nothing about them.")
 
     print("\n== SKIPPED as declared-placeholder ==")
     for s, p, v in placeheld:
