@@ -130,6 +130,40 @@ Every one of these was a number that no longer matched the thing it counted, and
 7. `docs/` ETH figures — 3%/4%/19% correct for v1, superseded by v2, propagated to **7 files**
 8. `docs/the-context-engineering-landscape.md` — every star count stale 2–3×, 4 dead links, 3 invented author names
 
+## Priority order — by SILENCE, not by surface (2026-09-14)
+
+**Surface tells you how to batch; this tells you what to do first.** The axis is this repo's own top value: a check that passes when it should not is worse than one that is noisy, because everything downstream of it is unreliable and nothing says so.
+
+⚠️ **This is a JUDGMENT pass, not a measurement, and an automated one was tried and thrown away.** Keyword-matching issue bodies for *silently / blind to / indistinguishable / never fires* put **31 of 50** in tier 1 — because that is the vocabulary every issue here is written in. The instrument matched the prose style, not the defect class. Same failure as the "14 table rows" that were case-definition delimiters, same day. **Re-tier by reading, or not at all.**
+
+**TIER 1 — a shipped check returns a wrong answer and nothing signals it.** Fix these first regardless of which cluster they sit in.
+
+| # | what stays broken | cluster |
+|---|---|---|
+| #175 | a broken reference to `.mts`/`.mjs`/`.cjs`/`.cts` reports **CLEAN** | refcheck |
+| #154 | a gitignored build tree resolves a path that should not, so a dead ref reads as live | refcheck |
+| #122 | four reference shapes sit outside Step 4's population — never checked, never reported as unchecked | refcheck |
+| #134 | `update-drift` is blind to the idiomatic `commit <hash>` pin, so a behind project reads as current | update-drift |
+| #135 | Step 3 checks for marker strings, not that the block parses — an adopter's broken copy passes | update-drift |
+| #136 | a probe that hardcodes its version expires exactly when it has something to report | update-drift |
+| #145 | `review-changes` Step 1 cannot observe untracked files; a new file reviews as nothing | review-changes |
+| #153 | no check that HEAD is ahead of `$BASE`, so a moved checkout yields "nothing to review" | review-changes |
+| #166 | the v1.40.0 profile split silently drops an adopter's own lenses | review-changes |
+| #164 | the BOM strip does not fire under one-true-awk, and the comment reads as if it does | review-changes |
+| #138 | an ablation that fails to apply is silent; its green is indistinguishable from a real one | fixtures |
+| #161 | `ablate()` scores PASS when its kill-set is already failing — a broken guard certifies itself | fixtures |
+| #157 | `--update` erases the moved-bytes warning `--raise-budget` is guarded against erasing | fixtures |
+| #114 | `curate` compresses the project file with nothing asserting the load-bearing facts survived | curate |
+| #184 | **the check for the class that just shipped six instances is not written** | estate |
+
+**TIER 2 — following the shipped docs produces a broken result.** #169 (13 inert skill copies across the estate — a script run, not a code change), #171 (the v1.41.0 tag ships templates stamped v1.40.0; **rides v1.42.0 automatically**).
+
+**TIER 3 — noise, precision and record-keeping.** The remaining ~33. Each is individually legitimate; together they are why the tracker will never reach zero by working it in order. ⛔ **These want a decision, not a queue position** — defer with a stated reason, or close. The Mechanized table has a `rejected` status and the rationale for keeping rejects (*"a shape rejected twice is a shape to look at again"*); **the tracker has no equivalent, and that is the gap that makes this feel like chasing.**
+
+**Arrival rate, measured 2026-09-14** — 75 filed against 30 closed over the two full weeks to 09-13; 153 filed total since 07-27. It arrives in bursts (one adopter running `/update-drift` across a release gap files ~20 in an afternoon). **"Clear them all" is not a goal that can be met, and pursuing it is what produces the treadmill feeling.** Tier 1 + tier 2 is ~17 and *is* reachable.
+
+⚠️ **Who is generating this: not us.** Of the 50 open, **1** is pure self-audit; 26 name an adopter source and 19 name both. The backlog is real downstream work, not the review apparatus eating itself. (Keyword instrument, so crude — "adopter" appears both where one reported it and where one is merely affected.)
+
 ## Backlog triage — 50 open, batched by surface (2026-09-14)
 
 **Goal: clear the tracker over several sessions.** Batching is by *surface*, because one review round covers a whole batch — that is the only real lever on cost here. Work largest-first; the big clusters have the most internal merging.
