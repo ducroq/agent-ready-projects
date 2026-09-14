@@ -33,7 +33,9 @@ NOT_A_GATE=" review-bench "
 # A floor, not a target: suites are only ever added, so this rises and never falls
 # without a deliberate edit. Lower it only when a suite is deleted on purpose, and
 # say why in the same commit.
-MIN_GATES=16   # 15 -> 16: tests/fixtures/autoload-ratchet/ added (lint rule 15).
+MIN_GATES=18   # 16 -> 18: tests/fixtures/save-as-header/ and tests/fixtures/opt-comment/
+               # added (lint rules 16 and 17, the first two Mechanized rows to go live).
+               # PREVIOUSLY 15 -> 16: tests/fixtures/autoload-ratchet/ added (lint rule 15).
                # PREVIOUSLY 14 -> 15: tests/fixtures/step15-corpus/ added (lint rule 14). Left at 14,
                # the floor tolerated one suite silently disappearing, and the likeliest
                # one is the newest.
