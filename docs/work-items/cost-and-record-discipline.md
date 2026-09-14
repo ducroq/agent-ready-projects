@@ -8,6 +8,41 @@ Goal: make the framework cheaper to run without cutting the review of the shippe
 
 **Not in scope**: reducing lens count or round count on `templates/` and `.claude/skills/`. H-020 measured every axis there and found each buys something; the 2026-09-12 round found 5 blockers in a prose-only change.
 
+## Session plan — TOKEN REDUCTION ONLY (maintainer directive, 2026-09-14)
+
+⛔ **The next session does this and nothing else.** No issues, no release, no battery. The
+maintainer exhausts a budget in a few hours and asked whether the framework earns its keep.
+
+**Target**: the auto-loaded set, **79,138 chars against this repo's own 40,000 cap**. Already cut
+32% from 116,501 on 2026-09-14. `CLAUDE.md` is now the larger half.
+
+**Measured, 2026-09-14 — the candidates, largest first. These numbers are current; re-measure
+only if the files have moved.**
+
+| block | chars | disposition |
+|---|---|---|
+| `CLAUDE.md` Hard Constraints | 10,513 | **The biggest single block.** Six constraints, each carrying its full derivation and instance history. The RULES are load-bearing; the derivations are not — they belong in `memory/gotcha-log.md`, which is where instances already live. Expect ~6k. |
+| `CLAUDE.md` Architecture | 8,696 | An annotated tree. The annotations restate each file's own header, which is the exact mistake the `tests/` block already made and had removed. Expect ~4k. |
+| `CLAUDE.md` Before You Start | 7,248 | A routing table that has grown prose. Its JOB is one line per trigger. The `Before committing structural changes` row alone is 1,763 chars. Expect ~3k. |
+| `memory/MEMORY.md` Current State | 31,204 | Still the bulk of the index after the archive. The 2026-09-07..14 blocks are now the oldest; the same archive move applies once they stop being current. |
+| `memory/MEMORY.md` Topic Files | 8,420 | A routing table with a "key insight" column that has become a summary. The insight belongs in the file. |
+
+**Method that worked and should be repeated**: find duplication, and archive a second narrative
+to a topic file. **Method that has failed here before**: tightening prose.
+
+**Order**: Hard Constraints → Architecture → Before You Start. Each is a separate commit with a
+before/after measurement, so a regression is attributable.
+
+**Verification each time** — the 2026-09-14 pass caught two defects this way, do not skip it:
+- Account for every `<!-- verify: -->` probe **by name** before and after. `curate` Step 0.5
+  scans memory *files*, plural, so a probe may move between them but must not vanish.
+- Run `bash tests/lint/run.sh` after each move: rule 1 catches a `CLAUDE.md` path that stops
+  resolving, rule 2 catches a topic file orphaned by removing whatever referenced it. Both fired
+  on 2026-09-14.
+
+⚠️ **Also unmeasured, and worth doing first because it is cheap**: whether the review re-tiering
+(`docs/**` → LOW, 2026-09-14) actually reduces spend or only moves it. One release will say.
+
 ## Current Status
 
 **Savepoint 2026-09-12, second block.** v1.41.0 is tagged and pushed. A later `/update-drift` + `/audit-context` pass committed `76d6581` (**not pushed, no release**) and filed #170-#174.
