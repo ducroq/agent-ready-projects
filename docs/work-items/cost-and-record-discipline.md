@@ -34,6 +34,34 @@ nothing. Growing such a section past its prescribed size is the same defect as d
 
 ## Current Status
 
+**Savepoint 2026-09-14, later still — the big-file lever is REFUTED, measured.**
+
+⭐ **File size is not a token cost in this repo, because nothing reads these files whole.**
+Across 21 session transcripts and 123 subagent transcripts: `CHANGELOG.md` (543,155 bytes, ~135k
+tokens if read) has **0 full-file Reads**, 1 bounded Read, and **205 bash accesses** — grep and sed,
+which cost the size of their output. `memory/gotcha-log.md` 0 and 151; `memory/hypothesis-log.md`
+0 and 92. Subagents read **extracted diffs from scratchpad**, never the source files: 0 full Reads
+of any `templates/*.md`.
+
+⚠️ **Instrument stated, because these are all negatives**: `grep -ho '"name":"Read","input":{"file_path":"…"}'`
+over `~/.claude/projects/<slug>/**.jsonl`. A positive looks like
+`"name":"Read","input":{"file_path":"…/scratchpad/full.diff"}` — 95 such calls exist in the
+subagent transcripts, which is what makes the zeros mean absence rather than a broken pattern.
+
+**So: archiving the changelog tail would save approximately nothing**, and I recommended it as the
+single biggest lever, ~120k per release, without checking. The corroborated claim is the opposite
+one, and the run budget in `.claude/review-profile.md` already rests on it: **the cost is the
+reviewing agent's own exploration, not what it reads.** Two instruments now agree — the ledger's
+flat per-run cost across scopes, and this transcript census.
+
+**What this leaves for release spend**: run count, and nothing else that has been measured. The
+budget is one lens-run per release, ≤120k.
+
+⚠️ **And it re-opens Cluster B's question rather than answering it.** Retirement of old log entries
+is still worth doing — a 107-entry gotcha log with 3 resolved markers is unreadable by a human and
+`curate` Step 1.3 flags ~67 of them every run — but **the reason is not tokens**, and any proposal
+that argues from file size is arguing from this refuted premise.
+
 **Savepoint 2026-09-14, later — `templates/review-changes.md` audited, per the step-2 entry in the
 previous savepoint's ordered list. VERDICT: nothing in it retires** — but **on three of seven
 components having an attested catch, not on all seven**. The other four are unfired, unattributable
