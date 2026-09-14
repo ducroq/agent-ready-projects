@@ -215,3 +215,124 @@ The guard's own comment in the skill states the mechanism and the decision. This
 The guard was never a false negative — it fired before and after. The defect was a reader acting on it believing tables were the only casualty: **a message that understates what it lost, inside the guard added to remove exactly that silence.**
 
 **Seeded at** `tests/fixtures/step15-tables/` as T8 with T9 as its control. Ablation A6 is the only one in that suite that tests a *message* rather than a firing, because `ablate()` scores cases by empty against non-empty and cannot see a finding whose text is wrong. ⚠️ A6's first draft was itself vacuous: it mutated the same literal the assertion grepped for, so it could not fail by construction, and the assertion it "proved" was a substring test that passed a message re-asserting #144's own false narrowing. Both were found by review, not by the suite.
+
+## v1.43.0 — four Step 1 / profile defects (#145, #153, #164, #166)
+
+Detail moved out of the skill body so an adopter does not pay for it on every invocation.
+
+### #145 — Step 1 could not observe untracked files
+
+`git diff` in every form lists only files git has seen. Step 1's classification ran on
+`--stat`, `--cached --stat`, the baseline term and `--summary -M`, none of which reports an
+untracked file — while the magnitude gate carved out *"a new executable, or any new file in a
+HIGH path"*. The same file says, one paragraph away, **a carve-out you cannot observe is not in
+force**; this was that sentence's own class, one file-state over.
+
+Not a regression: the reporter checked v1.17.0, v1.19.0, v1.22.0, v1.26.1, v1.31.0 and
+v1.37.0 — `grep -c untracked` over the Step 1 span is 0 at every tag, and the whole-file count
+went 0 → 2 only when Step 1.5 arrived with its own `ls-files --others`. Step 1.5 having it was
+never a substitute: that step checks markdown validity and assigns no tiers.
+
+They noticed because the commit introducing the skill in their repo was 695 lines, **645 of
+them in new untracked files**, and `git diff --summary` returned empty on it. They have carried
+a local fix since v1.17.0 and recorded the divergence in their skill header so a merge would
+not silently undo it.
+
+### #153 — HEAD contained in the baseline
+
+The third member of the family #149 and the unresolved-baseline guard already cover, and the
+only one where every existing guard reports healthy: `$BASE` resolves, `^{commit}` passes, no
+fallback fires, and every diff term is *correctly* empty because HEAD is already an ancestor of
+the baseline. The terminator then says "nothing to review".
+
+| state | `$BASE` resolves | fallback fires | diff empty | reported |
+|---|---|---|---|---|
+| baseline unresolvable | no | yes | maybe | unresolved-baseline finding |
+| root-commit fallback (#149) | yes (to root) | yes | yes, if one commit | finding, via `ROOTFALLBACK` |
+| **HEAD contained in `$BASE`** | **yes** | **no** | **yes, always** | **"nothing to review"** |
+
+Found by running the skill on a branch carrying three unreviewed commits after a concurrent
+session moved the checkout back to `master`. It is also the *likeliest* of the three in ordinary
+use — being on the base branch, a detached HEAD, a worktree someone else moved, or reviewing
+after the fast-forward already landed. A diagnostic rather than an abort, because the state is
+legitimate when reviewing merged work.
+
+⚠️ **Worth revisiting**: reviewing by explicit ref range (`git diff master..<branch>`) is immune
+to all three rows. `HEAD` is ambient state, and Step 1 already treats ambient state as the thing
+to pin down. Not taken here — it changes the skill's whole interface.
+
+### #164 — the octal BOM strip and one-true-awk
+
+v1.39.0 replaced `substr($0, 1, 3)` with an octal `sub()`, and the comment shipped with it read
+as though the octal spelling settled portability. The parenthetical *"(nawk here is mawk)"* was
+the tell. Measured by the reporting adopter across four implementations:
+
+```
+mawk 1.3.4            match=YES
+gawk 5.3.2            match=YES
+busybox awk 1.37.0    match=YES
+original-awk 20250804 match=NO     <- LC_ALL=C makes it match; any UTF-8 locale does not
+```
+
+End-to-end on a BOM'd file whose last frontmatter line carries a pipe — the exact #52 shape the
+skip exists to remove — original-awk reports a phantom malformed table and the other three are
+clean.
+
+**The direction is safe**, which is why this is a comment fix and not a code fix: the skip does
+not fire, so the pre-fix false positive returns as visible noise rather than silence. Three
+alternatives were checked and declined before filing: `\xef` fails there too (gawk extension),
+`index()` + `substr()` is worse (original-awk counts *characters* in UTF-8 mode, the precise
+trap the comment already warns about), and `LC_ALL=C` on the invocation would flip gawk's
+`length()`/`substr()` to bytes inside the emphasis-masking loop.
+
+⚠️ Not re-verified in this repo: this machine carries only mawk, and its `nawk` is a symlink to
+mawk — the same condition that produced the original over-claim. The measurement is the
+adopter's, and the comment now says so.
+
+### #166 — the profile had no slot for lenses
+
+v1.40.0 moved `review-changes` to user-global and split the project's half into
+`.claude/review-profile.md` — four sections, none of which holds a lens. For an adopter whose
+project-local copy had only been *re-tiered*, a clean port. For one that had **added lenses**,
+lossy and silent: the skill refuses on a *missing* profile and cannot tell a complete profile
+from a half-ported one.
+
+The reporting repo defined five lenses against the shipped four, and the sets did not nest —
+`config-shape` and `concurrency-and-budget` local-only, `shell-correctness` global-only,
+`adversarial` and `doc-accuracy` shared but carrying project-specific text. Adopting as shipped
+would have dropped `config-shape`, the lens guarding the surface behind that repo's worst
+recorded bug: a group key with no `url` of its own yields nothing *and its children are never
+visited*, so 13 feeds sat `enabled: true` collecting nothing for about nine months with no
+error, no warning and no zero-yield alert.
+
+The same repo's retired skill also carried an anchored extractor for the Step 1.5 awk block plus
+a `bash -n` rule — written after that block shipped unparseable in nine consecutive tags, and
+after the repo re-broke it locally *in the comment warning about it*. On retirement that had
+nowhere to go either. Hence the third new section: the split assumed a project's half is data,
+and some of it is procedure.
+
+⚠️ **Not taken, and worth deciding separately**: a required-section list, so an incomplete
+profile fails the way a missing one does. It would close the silent half of this issue — the
+new sections are optional, so a profile that loses them still passes.
+
+⚠️ **The `.gitignore` edge, also from #166**: an adopter with a `.claude/*` ignore and no
+negation writes a profile that is untracked. `git status` stays clean, the local session works,
+and every fresh clone and deploy target gets no profile and a refusal.
+
+### Why the emphasis guard is as narrow as it is (measurements moved out of the skill, v1.43.0)
+
+The skill body carried these figures until v1.43.0; they are evidence for a decision already
+taken, which is what this file is for.
+
+- The **table** check reached a **39% false-positive rate** before it was anchored. That is why
+  the emphasis check was written to report only the shape actually observed to break, rather
+  than every shape that could in principle break.
+- Widening it to the one-token form costs **33 hits over a 5,168-file estate** — a precision
+  change, tracked as #158, not a correctness one.
+- Weaker discriminators were measured and rejected: *"a risky token anywhere on a bold line"*
+  reported **28 lines** in this repo, and *"two of them"* still reported **15** — every
+  risk-tier row, where `**HIGH**` opens and closes inside one cell while the globs sit in the
+  next. Only a token inside an *open* bold run can be joined by a formatter, so adjacency is
+  the discriminator.
+- Broader rules still rejected: counting `**` per line, and balancing across lines. Both fire on
+  ordinary bold and on multi-line spans.

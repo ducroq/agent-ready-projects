@@ -57,9 +57,25 @@ ROOTFALLBACK=          # initialised, or a later `set -u` reader aborts on it
     echo "  list carries the same term and the same hole."; } >&2
 }
 
+# #153 — a baseline can RESOLVE and still leave every term legitimately empty:
+# HEAD already contained in $BASE (on the base branch, a detached older commit, a
+# worktree someone moved, a landed fast-forward). No other guard fires, so
+# unreviewed commits report as a clean review. A diagnostic, not an abort.
+if git merge-base --is-ancestor HEAD "$BASE" 2>/dev/null; then
+  { echo "HEAD IS CONTAINED IN $BASE — nothing on this branch is absent from the"
+    echo "  baseline, so an empty diff below is expected and is NOT a clean review."
+    echo "  If you expected changes you are not on the branch you think: check"
+    echo "  'git branch --show-current' and 'git log --oneline $BASE..<your-branch>'."
+    echo "  Report this as a FINDING, never as a clean result."; } >&2
+fi
+
 git diff --shortstat "$BASE"...HEAD    # committed on this branch
 git diff --shortstat                   # unstaged
 git diff --cached --shortstat          # staged
+# #145 — no `git diff` variant lists a file git has not seen, so the gate carve-out
+# for "any new file in a HIGH path" fired on a class this step could not observe.
+# Step 1.5 having ls-files is no substitute: it checks markdown, not tiers.
+git ls-files --others --exclude-standard    # untracked, not ignored
 ```
 
 **Resolving a name is not enough — it has to resolve to a commit.** A ref can look fine and diff to nothing. That is why the block validates `^{commit}` and, on failure, falls back to the root commit and says so: an unresolved baseline and a clean tree produce identical output.
@@ -68,10 +84,13 @@ The loop covers the cases where `origin/HEAD` is absent: `git init` + `git remot
 
 ⚠️ **`$BASE` lives in a shell, and Step 1.5 needs it. Run Step 1.5's blocks in the same shell invocation as this one** — paste them together, or re-run this block at the top of that shell. A tool call that starts a fresh shell does not inherit it, and Step 1.5 is written to abort rather than proceed with the term missing. That abort is the intended behaviour: the alternative is Step 1.5 quietly reviewing a fraction of the change, which is #64 one step later.
 
-Now run `git diff --stat "$BASE"...HEAD`, `git diff --stat` and `git diff --cached --stat` to see the changed files, and `git diff --summary -M "$BASE"...HEAD` alongside them. That was #64 surviving its own fix in the place nobody re-read. **`--stat` alone cannot see a mode change, a rename, a submodule, or a binary** — all four render as zero or near-zero lines, and three of them are carve-outs below. A carve-out you cannot observe is not in force; `--summary` without the baseline term cannot observe any of them on a pushed branch. Classify each changed file into a risk tier:
+Now run `git diff --stat "$BASE"...HEAD`, `git diff --stat` and `git diff --cached --stat` to see the changed files, `git diff --summary -M "$BASE"...HEAD` alongside them, and `git ls-files --others --exclude-standard` for the ones git has not seen — **an untracked file is a changed file and gets a tier like any other** (#145). That was #64 surviving its own fix in the place nobody re-read. **`--stat` alone cannot see a mode change, a rename, a submodule, or a binary** — all four render as zero or near-zero lines, and three of them are carve-outs below. A carve-out you cannot observe is not in force; `--summary` without the baseline term cannot observe any of them on a pushed branch. Classify each changed file into a risk tier:
 
 **Read `.claude/review-profile.md` now** — it holds this project's risk tiers,
-guarantee surfaces, test baseline and carve-outs. The tier table is **not** in this skill,
+guarantee surfaces, test baseline, carve-outs, and any **project lenses** or
+**project additions to the shipped lenses** (#166; both optional, both additive —
+they never replace the lens set below, and a profile written before v1.43.0 has
+neither section, which is not an error). The tier table is **not** in this skill,
 deliberately: this file ships identically to every project, and a table of one project's
 paths silently classifies every other project's changes as LOW.
 
@@ -110,6 +129,13 @@ The tier above is set by *path*. Depth is also set by *size* — but size is the
 git diff --shortstat "$BASE"...HEAD    # committed on this branch
 git diff --shortstat                   # unstaged
 git diff --cached --shortstat          # staged
+# Untracked lines count toward the magnitude too — none of the three terms above
+# sees them, and a change can be mostly new files (#145). No `xargs -r`: that is
+# a GNU extension, and on BSD/macOS empty input runs `wc -l` with no arguments,
+# which reads stdin and HANGS. This prints 0 on an empty list.
+git ls-files --others --exclude-standard |
+  while IFS= read -r f; do wc -l < "$f"; done |
+  awk '{ n += $(1) } END { print n + 0, "untracked lines" }'
 ```
 
 
@@ -129,7 +155,7 @@ If only LOW files changed **and the gate above does not escalate**, run Step 1.5
 
 **If a changed file matches no pattern, treat it as MEDIUM, and name it in the report under "Unclassified" even when a HIGH file in the same diff makes the tier moot.** The naming is the point: an unrecognized path is usually new shipped content whose tier nobody has decided yet, and it will keep arriving un-triaged until someone adds a row. Do not silently drop it, and do not default it to LOW. **If it is executable or is copied into an adopter's tree, escalate it to HIGH rather than leaving it at MEDIUM** — MEDIUM omits both the guarantee-preservation and shell-correctness lenses, which are exactly the two that shipped content needs.
 
-If no files changed, report "nothing to review" and stop — but only after `$BASE` resolved **and the block printed no `BASELINE UNRESOLVED` line**. ⚠️ Key on the printed line, not the variable: a fallback baseline *resolves* while excluding the root's own content, so an empty result there is the unresolved-baseline finding, and `git show --stat <root>` is what shows you what the diff omitted (#149). A clean tree because everything is merged and a clean tree because the work is already pushed are indistinguishable from `git diff` alone, and the second is a full PR. If the baseline could not be resolved, that is the finding; report it instead of a clean result.
+If no files changed, report "nothing to review" and stop — but only after `$BASE` resolved **and the block printed neither a `BASELINE UNRESOLVED` nor a `HEAD IS CONTAINED IN` line**. ⚠️ **The second is the state with no other tell** (#153): the baseline resolves, `^{commit}` passes, no fallback fires, and every term is legitimately empty because HEAD is already in the baseline — so three unreviewed commits report as a clean review. Key on the printed line there too; it is a finding, not a pass. ⚠️ Key on the printed line, not the variable: a fallback baseline *resolves* while excluding the root's own content, so an empty result there is the unresolved-baseline finding, and `git show --stat <root>` is what shows you what the diff omitted (#149). A clean tree because everything is merged and a clean tree because the work is already pushed are indistinguishable from `git diff` alone, and the second is a full PR. If the baseline could not be resolved, that is the finding; report it instead of a clean result.
 
 ## Step 1.5 — Structural pre-check
 
@@ -165,6 +191,12 @@ The lenses below all read *content*: does this path exist, is this flag right, w
     # in units awk does not agree on — bytes in mawk, CHARACTERS in gawk under a
     # UTF-8 locale, where the BOM is one. MEASURED on mawk and busybox awk (nawk
     # here is mawk), green on the CI awk the substr form failed on.
+    # ⚠️ OCTAL DOES NOT SETTLE PORTABILITY, and this comment used to read as if
+    # it did: under one-true-awk in a UTF-8 locale the sub does not fire at all
+    # (mawk, gawk and busybox strip it; original-awk does not, LC_ALL=C flips
+    # it). Safe direction — you get the #52 false positive back, noise not
+    # silence — and there is no free fix. Measured by an adopter, NOT re-verified
+    # here: this box has only mawk and its nawk is a symlink to it (#164).
     { if (NR == 1) sub(/^\357\273\277/, "")
       sub(/\r$/, "") }              # CRLF: strip before anything reads the line,
                                      # or isdelim() never matches and no table in
@@ -213,22 +245,15 @@ The lenses below all read *content*: does this path exist, is this flag right, w
       }
       if (fch != "") next
       # Emphasis spans — the third construct with Step 1.5’s property: correct in
-      # the diff, wrong when rendered (#50). Deliberately NARROW. The table check
-      # reached a 39% false-positive rate before being anchored, so this reports
-      # only the shape actually observed to break: TWO backticked tokens whose
-      # content abuts `**`, inside one open bold run. A formatter can join the
-      # runs and corrupt both. ⚠️ The ONE-token form is what prettier 3.8.1 was
-      # measured to corrupt, and it passes here in silence: a BACKSTOP, not
-      # coverage (#151). Widening costs 33 hits over a 5,168-file estate — a
-      # precision change, measured and tracked as #158. Broader
-      # rules (counting `**` per line, balancing across lines) were rejected —
-      # they fire on ordinary bold and on multi-line spans.
+      # the diff, wrong when rendered (#50). Deliberately NARROW: it reports only
+      # TWO backticked tokens whose content abuts `**` inside one open bold run,
+      # which a formatter can join and corrupt. ⚠️ The ONE-token form is what
+      # prettier 3.8.1 was measured to corrupt, and it passes here in silence —
+      # a BACKSTOP, not coverage (#151, precision tracked as #158).
       # Mask each code span to ONE character — \001 if its content abuts `**`,
       # \002 otherwise — so bold runs can be paired positionally. Adjacency is
-      # the discriminator, and nothing weaker works: "a risky token anywhere on a
-      # bold line" reported 28 lines here, and "two of them" still reported 15 —
-      # every risk-tier row, where `**HIGH**` opens AND CLOSES in one cell and the
-      # globs sit in the next. Only a token INSIDE an open bold run can be joined.
+      # the discriminator and nothing weaker works; only a token INSIDE an open
+      # bold run can be joined.
       { masked = ""; rest = $(0)
         while (match(rest, /`[^`]*`/)) {
           inner = substr(rest, RSTART + 1, RLENGTH - 2)
@@ -306,6 +331,11 @@ That count is files *in scope*, not files you edited: the baseline term includes
 ## Step 2 — Execute review lenses
 
 For each lens, spawn a subagent with the specific prompt below. Run lenses concurrently.
+
+**Run the profile's `Project lenses` too, and append its `Project additions` to the matching
+shipped prompts** (#166). They are additive: a project lens never replaces one below, and a
+project addition never replaces the shipped text it extends. A profile with neither section
+runs exactly the set below.
 
 **Invariant: every file named in the guarantee lens must sit in the HIGH row of Step 1.** The lens is HIGH-gated. A file it defines a guarantee for but that tiers below HIGH has a guarantee that can *never* be checked — and the report renders "no HIGH files changed" as a clean pass, so the failure is silent and looks like success. Whenever you add an entry to the guarantee lens, add its path to the HIGH row in the same edit; if a path does not deserve HIGH, it does not deserve a guarantee entry. Check the invariant in the direction that catches it: read each guarantee entry and find its tier, not the other way round.
 

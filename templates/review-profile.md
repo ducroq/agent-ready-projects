@@ -52,3 +52,30 @@ apply and cannot be removed here. Add project-specific ones — files whose dang
 their size:
 
 - `path/to/file`: *why a few bytes here is a large change*
+
+## Project lenses
+
+Extra lenses this project runs, and when. **The skill's own lens set always runs too** — this
+section adds, it never replaces. One per entry: the name, the trigger, and the prompt the
+subagent gets.
+
+⚠️ **This section exists because the v1.40.0 split silently lost one.** The skill refuses on a
+*missing* profile and cannot tell a complete one from a half-ported one, so a lens that is not
+written here is not run and nothing says so (#166).
+
+- `lens-name` — fires on: `path/glob/**`
+  *The prompt. What it must refute, and what a positive looks like.*
+
+## Project additions to the shipped lenses
+
+Text appended to the shipped `adversarial` / `doc-accuracy` / `guarantee-preservation` prompts
+for this project. Use this when a shipped lens is *right* but needs local vocabulary, rather
+than forking it into a project lens.
+
+- **adversarial**: *what to attack here that the generic prompt would not know to*
+
+## Project procedure kept with the profile
+
+Some of a project's half is **procedure, not data** — a local extractor, an extra parse check.
+The split assumed tiers, paths and guarantees. Put procedure here and point the project file at
+it, rather than leaving it in a skill that is no longer read.
