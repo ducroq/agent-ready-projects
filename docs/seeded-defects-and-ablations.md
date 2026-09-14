@@ -139,6 +139,100 @@ the proper fix turned that fixture red.
 **Whenever a change makes a check more permissive, seed the failures it must still catch —
 and get those from someone other than the person who wrote the change.**
 
+## The general case: a guard that measures something ADJACENT to its claim
+
+The two rules above are about reading an *ablation's* result. This is the same failure without
+an ablation anywhere, and it is the one you will meet in your own code first.
+
+**A guard can measure something genuinely next to the claim it is taken as evidence for.** That
+adjacency is the whole problem: a guard measuring *nothing* looks wrong immediately, so nobody
+ships it. These look right, return a plausible number, and are wrong.
+
+Seven instances across two independent estates in one day, none of them ablations and none
+reachable by a lexer:
+
+| what the guard measured | what it was read as proving |
+|---|---|
+| PDF byte size | PDF content — an error page passed as a success for a week |
+| `git status` file list | that the content changed — a file already listed stays listed |
+| `grep -c` over an alternation | which of the alternatives matched |
+| the review tier assigned | the real population — tiers written over gitignored paths |
+| a `grep -v` filter | the content field — it matched the path prefix and excluded the file under test |
+| a cited phrase | the file the phrase had been moved out of |
+| a printed verdict word | the exit status, which was never set |
+
+**The move that settles all seven is one sentence: state what a positive looks like, then
+produce one.** A guard that has never been shown failing has been *read*, not tested.
+
+### The sub-shape worth its own name: an instrument that could not have found what it was pointed at
+
+Three of the seven were this, and it is the one that survives review, because the output is a
+number and the number is plausible.
+
+A sweep for use-before-assign returned "no first-use found" for every variable in a script that
+plainly uses them. The search pattern was `"\$$v"`. Re-run correctly with a bracket expression,
+`"[\$]{\?$v"`, the same sweep saw 47 references and caught a seeded case.
+
+⚠️ **Then the diagnosis was wrong in a way that would have propagated the bug.** It was first
+explained as *"`$$` is the shell's PID"*. It is not — the backslash escapes the first `$`, so
+the pair never forms:
+
+```bash
+v=FOO
+printf '%s\n' "\$$v"    # -> $FOO        the escaped form: no PID
+printf '%s\n' "$$v"     # -> 796764v     the PID appears only when UNescaped
+```
+
+The pattern really was `$FOO`, and it matched nothing for an unrelated reason — that `$` was
+read as an end-of-line anchor. ⚠️ **And here a third factor appeared, which is why this example
+is written out in full rather than asserted: the two greps disagree.**
+
+```bash
+printf 'line with $FOO in it\n' > s.txt
+
+grep -c '$FOO'   s.txt   # ugrep 7.8.4 -> 0     GNU grep 3.12 -> 1
+grep -c '\$FOO'  s.txt   # both -> 1
+grep -c '[$]FOO' s.txt   # both -> 1
+```
+
+An unescaped mid-pattern `$` is **engine-dependent**, and `grep` on the machine where this was
+found is a shell function shimming to ugrep while GNU grep sits at `/usr/bin/grep`. A first
+draft of this very section reported the `0` as a plain fact, because that is what the shim
+returned — an absolute in a description, shipped without its scope, in the document about
+instruments being wrong. Run `grep --version` before trusting either number.
+
+**The consequence is bigger than the example.** Any check invoked as bare `grep` runs whichever
+engine the reader's shell resolves, not the one it was written and seeded against. A rule
+containing an unescaped mid-pattern `$` can therefore return a clean zero on one machine and a
+correct count on another — and by the doctrine of this whole page, a rule that cannot match is
+indistinguishable from a rule with nothing to find. Escape it, or bracket it.
+
+The bracket expression fixes it by making `$` literal **to the regex engine**, not by
+suppressing a PID. The repair was correct and the explanation was not — so a reader who takes
+away *"beware `$$`"* escapes the dollar, still gets zero, and concludes the sweep is clean.
+**When an instrument is repaired, check that its explanation was repaired too; the explanation
+is what the next person reuses.**
+
+### The rule
+
+> **A sweep returning ZERO must be shown finding something before its zero is believed.**
+
+That is the seeded-positive discipline of this whole page, pointed at the checker instead of at
+the code. It costs one deliberately broken input.
+
+⚠️ **A sweep is a one-time check; a language guard is standing.** `set -euo pipefail` at the top
+of a shell script makes the use-before-assign class fail loudly instead of silently, and no
+sweep is a substitute for it. Use both: the guard for the code you will write tomorrow, the
+sweep for the code already there.
+
+### Why this is documentation and not a rule in your linter
+
+We looked. The lexical cousins *are* mechanizable and we ship a rule for them — a mutation equal
+to its target, an empty expected kill set. This class is **semantic**: whether `git status`
+answers "did the content change" depends on what the claim was, and no pattern over the text
+reaches that. Two candidate lint rules were built and declined here after measurement. Expect to
+catch these by asking the question, not by running something.
+
 ## Starting small
 
 You do not need a harness. The minimum viable version is a directory of known-bad files and
