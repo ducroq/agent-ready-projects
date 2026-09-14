@@ -45,9 +45,14 @@ The source framework that teaches the layered memory method for AI coding agents
 
 ## Architecture
 
+⚠️ **Orientation only — where things live.** Each file's own header, README or runner
+comment is the authority on what it does and why; a second copy here rots (the `tests/`
+block once kept `reference-integrity`'s count commands and returned 38/35 against a true
+40/37). Do not re-annotate this tree to make something handy.
+
 ```
 agent-ready-projects/
-├── .claude/                   <- Gitignored except the two tracked children below (see .gitignore)
+├── .claude/                   <- Gitignored EXCEPT two tracked children (`git ls-files .claude/`)
 │   ├── skills/                <- Reference installs — the source a global install derives from
 │   └── review-profile.md      <- THIS repo's review tiers (v1.40.0); every repo writes its own
 ├── README.md                  <- The guide (public-facing on-ramp)
@@ -55,94 +60,49 @@ agent-ready-projects/
 ├── CHANGELOG.md               <- Versioned release notes; maintainer release process at top
 ├── CLAUDE.md                  <- This file (agent orientation, maintainer-local but committed)
 ├── LICENSE                    <- MIT
-├── docs/                      <- Full reference guide + rationale + worked examples + archive
-│   ├── rationale/             <- WHY a skill says what it says: superseded drafts and the
-│   │                             measurements that refuted them, moved out of the skill
-│   │                             bodies so adopters stop paying for this repo's litigation
-│   │                             on every invocation. Nothing is duplicated between the
-│   │                             two — if a claim is in both, one of them is wrong
-│   ├── GUIDE.md
+├── docs/
+│   ├── GUIDE.md               <- Full reference
 │   ├── verification-rationale.md
-│   ├── seeded-defects-and-ablations.md
-│   │                          <- Seeded fixtures + ablations, taught tool-agnostically (#130)
+│   ├── seeded-defects-and-ablations.md   <- Adopter-facing, linked from README + GUIDE (#130)
+│   ├── rationale/             <- WHY a skill says what it says — superseded drafts and the
+│   │                             measurements that refuted them, kept OUT of the skill bodies.
+│   │                             Nothing is duplicated: a claim in both means one is wrong
 │   ├── guide/                 <- Four-page visual walkthrough
 │   ├── work-items/            <- Per-work-item context files (v1.11.0)
-│   ├── archive/               <- LANDSCAPE.md, COMPARISON.md, METHODOLOGY.md (per 2026-04-14 pivot)
-│   └── ...
-├── templates/                 <- Tool-agnostic starter files adopters consume
+│   └── archive/               <- LANDSCAPE / COMPARISON / METHODOLOGY (per 2026-04-14 pivot)
+├── templates/                 <- Tool-agnostic starter files adopters consume; naming map in
+│   │                             templates/README.md, which is the authority on install paths
 │   ├── project-file.md        <- Layer 1
-│   ├── memory-index.md        <- Layer 3 index (Claude Code auto-memory tools)
+│   ├── RUNBOOK.md             <- Layer 2
+│   ├── memory-index.md        <- Layer 3 index
 │   ├── gotcha-log.md          <- Layer 4
-│   ├── hypothesis-log.md      <- Future-evidence provisional positions
-│   ├── RUNBOOK.md             <- Layer 2 operational doc
-│   ├── work-item.md           <- Multi-session work tracking with savepoint (v1.11.0)
-│   ├── curate.md              <- End-of-session curation skill
-│   ├── audit-context.md       <- Periodic structural audit skill
-│   ├── review-changes.md      <- Diff-driven pre-commit review skill (v1.12.0)
-│   ├── review-profile.md     <- The per-repo half of review-changes (v1.40.0): risk tiers
-│   │                             and guarantee surfaces. Installed at .claude/review-profile.md
-│   │                             — the SAME path for every tool, per templates/README.md
-│   ├── release.md             <- Release skill: bump classification + preconditions, stops before publishing
-│   ├── update-drift.md        <- Drift skill: triage the releases a project is behind; user-global
-│   ├── adr.md                 <- Architecture Decision Record template
 │   ├── coordination.md        <- Layer 5 (multi-contributor)
-│   ├── review-agent.md        <- Reusable review-agent skeleton
-│   ├── test-verify-memory.md  <- Behavioral-test pattern (Phase B/C precedent)
-│   ├── test-fixtures/         <- Fixtures for behavioral tests
-│   ├── checklists/            <- Per-stage validation checklists
-│   └── README.md              <- Tool-agnostic naming map
-├── scripts/                   <- Shipped maintainer/adopter tooling
-│   └── install-global-skills.sh
-│                              <- Install + verify user-global skills; scan an estate for inert copies.
-│                                 Refuses to install from a tree that is not at a release tag (#33)
+│   ├── curate.md, audit-context.md, review-changes.md, release.md, update-drift.md
+│   │                          <- The five skills. review-profile.md is the per-repo half of
+│   │                             review-changes (v1.40.0), installed at .claude/review-profile.md
+│   └── hypothesis-log.md, work-item.md, adr.md, review-agent.md, test-verify-memory.md,
+│       test-fixtures/, checklists/, README.md
+├── scripts/install-global-skills.sh
+│                              <- Install + verify user-global skills; scan an estate for inert
+│                                 copies. Refuses a tree that is not at a release tag (#33)
 ├── .github/workflows/checks.yml
-│                              <- CI (#115): lint + every fixture on push and PR. No path filters —
-│                                 scoping saves 2 min and buys back the selection mechanism the
-│                                 workflow exists to remove. Green means the deterministic checks
-│                                 passed; it does NOT mean reviewed
-├── tests/                     <- Self-tests for this repo (Phase A: structural lint)
-│                                 ⚠️ Rationale lives in the file itself — a fixture's README.md, or
-│                                 its runner's comment header. READ IT BEFORE LOOSENING ANYTHING:
-│                                 rejected predicates, constructed-vs-bitten rows, and the
-│                                 read-before-loosening warnings. Per-fixture case DIGITS were
-│                                 DROPPED here rather than moved, deliberately — a digit rots, and
-│                                 most fixtures carry no census count at all; three now carry the
-│                                 re-deriving command instead (#93). ⚠️ Key Paths below NAMES five of
-│                                 these and points here for the rest — the per-rule detail is the
-│                                 22KB catalog in tests/lint/README.md, not this file (2026-09-14).
-│                                 The copy of reference-integrity's T/N commands that stood here
-│                                 returned 38/35 against a true 40/37 — a duplicated command that
-│                                 rotted, which is the whole argument for not keeping one
-│   ├── lint/                  <- Deterministic structural checks (no LLM); catalog in lint/README.md
-│   │   ├── skill-sync.sh      <- Rule 6:  templates/<name>.md vs .claude/skills/<name>/SKILL.md
-│   │   ├── provision-quote.sh <- Rule 7:  provisioning a canonical row without quoting it (#42)
-│   │   ├── size-ratchet.sh    <- Rule 8:  adopter-facing templates growing unmeasured
-│   │   ├── dollar-digit.sh    <- Rule 9:  a bare $0-$9 in a skill body is an argument word (#77)
-│   │   ├── vacuous-guard.sh   <- Rule 10: an ablation that cannot kill anything (#79's shape)
-│   │   ├── block-parses.sh    <- Rule 11: a fenced bash block an adopter copies must parse (#105)
-│   │   ├── private-names.sh   <- Rule 12: a private project name in a tracked file. The name list
-│   │   │                         is deliberately NOT tracked, so an absent list is a SKIP, never a pass
-│   │   └── maintainer-path.sh <- Rule 13: `docs/rationale/` cited from a surface adopters install (#139)
-│   └── fixtures/              <- Seeded-defect fixtures: a check that finds nothing here is failing.
-│       │                         One line each; the file is the reference
-│       ├── reference-integrity/  <- ⚠️ refcheck.py IS what audit-context Step 4 runs since v1.40.0 —
-│       │                            it sends the adopter here, so a fix DOES reach them (#185)
-│       ├── skill-template-sync/  <- lint rule 6
-│       ├── provisioning-quote/   <- lint rule 7
-│       ├── size-ratchet/         <- lint rule 8, plus the #131 spill rows
-│       ├── dollar-digit/         <- lint rule 9
-│       ├── vacuous-guard/        <- lint rule 10
-│       ├── block-parses/         <- lint rule 11
-│       ├── private-names/        <- lint rule 12; its own name list is synthetic
-│       ├── maintainer-path/      <- lint rule 13; the class is at ZERO in the real tree
-│       ├── clone-lint/           <- lint rules 1-2 in the environments this repo is NOT developed in
-│       ├── verify-runner/        <- curate Step 0 sub-step 5's runner (#34). ~90s, the slowest here
-│       ├── dead-reference/       <- curate Step 0.1's extractor
-│       ├── step15-tables/        <- review-changes Step 1.5 (#50, #52, #103, #144)
-│       ├── baseline-fallback/    <- review-changes Step 1's baseline fallback (#149)
-│       ├── installer-release-guard/ <- the installer's release guard (#33)
-│       └── review-bench/         <- measures a REVIEW CONFIG, not a checker (H-016). NOT a gate:
-│                                    no pass/fail, and its recall numbers are a LOWER BOUND
+│                              <- CI (#115): lint + every fixture, push and PR, no path filters.
+│                                 Its own header carries what it does NOT check
+├── tests/                     <- Self-tests for this repo
+│                                 ⚠️ READ THE FILE BEFORE LOOSENING ANYTHING: rejected predicates,
+│                                 constructed-vs-bitten rows and read-before-loosening warnings
+│                                 live in each fixture's README.md or its runner's header, never
+│                                 here. Per-fixture case digits are deliberately absent (#93)
+│   ├── lint/                  <- Thirteen deterministic structural rules, no LLM.
+│   │                             ⚠️ tests/lint/README.md is the rule catalog; Key Paths below
+│   │                             names only the five most often reached for
+│   └── fixtures/              <- Seeded-defect fixtures, one dir per check: a check that finds
+│                                 nothing HERE is failing. tests/run-fixtures.sh enumerates them,
+│                                 so the directory listing is the current list. Two are special:
+│                                 reference-integrity/ (refcheck.py IS audit-context Step 4's
+│                                 runtime since v1.40.0, so a fix there reaches adopters — #185)
+│                                 and review-bench/ (scores a REVIEW CONFIG, not a checker; no
+│                                 pass/fail, recall is a LOWER BOUND — H-016)
 └── memory/                    <- Session memory (gitignored — maintainer-local)
     ├── MEMORY.md              <- Index + current state
     └── project_*.md           <- Topic files (migrated 2026-06-09 from user-level)
