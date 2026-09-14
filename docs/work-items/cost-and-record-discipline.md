@@ -34,6 +34,59 @@ nothing. Growing such a section past its prescribed size is the same defect as d
 
 ## Current Status
 
+**Savepoint 2026-09-14, later — `templates/review-changes.md` audited, per the step-2 entry in the
+previous savepoint's ordered list. VERDICT: nothing in it retires** — but **on three of seven
+components having an attested catch, not on all seven**. The other four are unfired, unattributable
+or days old, and undercounted evidence argues *against* retirement, which is the safe direction.
+⚠️ A draft of this line read *"every component has a catch"* with this table directly beneath it
+saying otherwise four times — the headline-disagrees-with-its-own-table class the profile cites,
+committed in the pass that cites it.
+
+| Component | What it has caught here | Verdict |
+|---|---|---|
+| Step 1 baseline block | #64: a whole pushed branch reviewed as empty — the class that created the step. ⚠️ Its two printed guards fire in CI on every run (`tests/fixtures/baseline-fallback/run.sh` asserts both, and the CHANGELOG re-measurement recording that
+the same guard now prints — grep it by phrase, not by line number: the file grows from the top); what they have never done is fire on **organic content here**, because this repo always resolves `origin/HEAD` | keep; the population is other people's repos |
+| Step 1.5 structural pre-check | **Measured today, not recalled**: 106 markdown files, 3 hits, **2 true positives** — a 17-cell row in `memory/MEMORY.md` (the hypothesis-log probe's pipes) and the two-glob bold shape in `.claude/review-profile.md`. Both fixed in this pass | keep — it has a subject |
+| ↳ emphasis sub-check (#50) | **Its first true positive on organic content here, today.** It has had a seeded true positive in CI since #50 (`tests/fixtures/step15-tables/run.sh` t6, ablations A4/A5), so it was never a check with no subject — but on real files its only local appearances were its own false positives (#159) | keep; the skill's *"a BACKSTOP, not coverage"* now has an organic catch to point at |
+| Step 2, all four lenses | Each has a *unique* catch in `memory/review-ledger.tsv`: guarantee — row 57's survival audit, the one no other lens ran; adversarial — rows 55/58/66, most findings per round; doc-accuracy — the H-022 direction error against the hypothesis' own decision rule (row 54, *"ONLY lens"*); shell-correctness — `set -u#` (row 56, *"no other lens reached it first"*) and the `set -eo pipefail` abort (row 45). ⚠️ A draft credited `set -u#` to adversarial and the install-source defect to doc-accuracy alone; the ledger says shell-correctness and *"2 of 3 lenses did"* | keep all four |
+| Step 3.1 mechanization triage | 4 `proposed`, 1 `rejected`, **0 `live`** — its own bar (a seeded positive making the check go red) has never been met. Two days old (#127, v1.41.0, 2026-09-12) | too young to retire; **due date, not a verdict** |
+| Step 4 `### Unclassified` slot | **No record of it ever naming a file**, since v1.15.0 (#26) — and the record *cannot* answer, because review reports live in transcripts and are never archived | unattributable; Step 8's last clause failing one level up |
+| Step 5 round cap + budget | Shipped today (v1.44.0, 2026-09-14) — zero days; that is open item 1 | measure at next release |
+
+🔴 **TWO of the four shipped lenses no longer run here** — doc-accuracy and shell-correctness. The
+guarantee lens is explicitly **not** part of the v1.45.0 cut: the HIGH row runs it whenever a diff
+touches a guarantee surface, and it ran today (ledger row 60). Their catch record cannot grow in
+the only repo that keeps one, so at the next audit their honest entry is *"no catch since
+2026-09-14, because they were not run"* — indistinguishable from *"no subject"* unless written
+down now. Written down here; that is the whole remedy available.
+⚠️ **And MEDIUM is unreachable in this profile**, which is why doc-accuracy really never runs:
+`docs/GUIDE.md` sits in both the HIGH and MEDIUM rows, and `templates/checklists/**` and
+`templates/test-fixtures/**` are subsets of HIGH's `templates/**`. The profile states a
+most-specific-wins rule; nothing states precedence between a row and a superset row it duplicates.
+Pre-existing, load-bearing for the claim above, **not yet filed**.
+
+🔴 **The sharpest finding of the audit, and it is not the one the first draft wrote down: Step 1.5
+cannot see `memory/` at all here.** All four terms of its file list are git-sourced, `memory/` is
+gitignored (`git check-ignore -v memory/MEMORY.md` → `.gitignore:17:/memory/`; `git ls-files
+memory/ | wc -l` → 0; a non-empty result would have listed tracked memory files), so **14 of the
+106 markdown files are invisible to it** — including the memory layer whose *"predominantly wide
+tables"* is the step's own stated motivation. The 17-cell row found today could never have been
+reached by running the skill as shipped. **Not yet filed.**
+
+⭐ **What actually made this audit decidable — and it is a harder lesson than "run the check".**
+The profile defect survived **four** diff-scoped chances: `.claude/review-profile.md` is in the
+changed-file set of `eea6530`, `616efa7`, `b3af55d` and `1c443eb`, and the shape was present in
+all four, while Step 1.5 claims to run *"at every tier and every magnitude"* on every changed
+markdown file. So the finding is **Step 1.5 is not being run, or its output is not being acted
+on** — not that the record failed to point at the file. The whole-tree run is what exposed that;
+a shipped-skill addition on the strength of it would be the wrong lesson from the right
+measurement. **Nothing proposed for `templates/audit-context.md` yet.**
+
+⚠️ **Not retirable, and the reason is worth keeping**: 65 of the 125 lines of Step 1.5's awk are
+comments, and 115 of 346 code-block lines across the file. That is the biggest single block of
+reading cost in the skill — and the record shows three attempts to widen the fence rule, each
+buying a worse class (#150). **Deleting those comments is the loosening they exist to prevent.**
+
 **Savepoint 2026-09-14, end of session. v1.44.0 and v1.45.0 both released**, tagged, pushed,
 globals refreshed after each.
 

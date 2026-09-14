@@ -33,11 +33,18 @@ HIGH simply become "one adversarial lens", every guarantee below would have stop
 nothing saying so — the exact failure v1.45.0's retirement pass made in `curate` Step 5 and needed a lens
 to catch. **Whenever a diff touches a surface in "Guarantee surfaces" below, the guarantee lens runs too.**
 
-⚠️ **`docs/rationale/**` and the rest of `docs/**` were MEDIUM until 2026-09-14 and are now LOW,
-deliberately.** Measured over two full batteries that day: of ~18 findings, **8 were shipped
-behaviour** an adopter would hit and **9 were about the record** — our own numbers and prose
-describing our own past work (a release window off by one, an ablation described wrongly, a
-headline count that disagreed with the table under it). Every blocker in both batteries was in
+⚠️ **The rationale tree and the rest of the docs tree were MEDIUM until 2026-09-14 and are now LOW,
+deliberately.**
+The two patterns moved are `docs/rationale/**` and `docs/**` — two of the six the single LOW row
+carries. They sit on a line of their own because **a bolded phrase must never end in a
+`**`-suffixed glob** (the shape matrix in `CHANGELOG.md` — `grep -n 'single glob, no later code
+span' CHANGELOG.md`; no line number, the file grows from the top): that form breaks under prettier 2 and 3.8.1
+too, and Step 1.5 reports only the two-glob form, so the checker is a backstop and the rule above
+is the thing to follow.
+Measured over two full batteries that day: of ~18 findings, **8 were shipped behaviour** an adopter
+would hit and **9 were about the record** — our own numbers and prose describing our own past work
+(a release window off by one, an ablation described wrongly, a headline count that disagreed with
+the table under it). Every blocker in both batteries was in
 `templates/` or `.claude/skills/`. The doc-accuracy lens over prose about our own history cost
 roughly half the review spend and produced nothing an adopter runs.
 
