@@ -34,6 +34,57 @@ nothing. Growing such a section past its prescribed size is the same defect as d
 
 ## Current Status
 
+**Savepoint 2026-09-14, final — the pre-release sweep. Items 2-5 of "what's left" closed; 2 and 3
+closed by DECLINING, with the reason.**
+
+🔶 **5 — two exemption mechanisms tightened; the third attempt REVERTED.** A round refuted the
+first build of all three:
+
+- `lint-skip: maintainer-path` grants the skip only when **every** occurrence of the path on that
+  line sits inside an `https://` run. ⚠️ The first build tested for `https://` anywhere on the line,
+  and `grep -F` yields one hit per line — so one unrelated URL laundered a genuinely dead reference
+  beside it (`Background at https://example.com/ — details in docs/rationale/x.md <marker>` scored
+  rc 0). Seeded as `t6_urlbeside.md`, ablation A4.
+- `lint-skip: opt-comment` (rule 17) reports a marker on a line with no defect, **and is honoured
+  only where it is policed**. ⚠️ The first build honoured it everywhere while policing only shell,
+  so a marker in a markdown fenced block was never checked **and still suppressed the real defect on
+  its line** — in `templates/*.md`, the surface adopters copy. One predicate now governs both.
+  Seeded as T10, ablation A4.
+- 🔴 **`lint-skip: not-executable` (rule 11): added and REVERTED.** The marker means *do not run
+  this*, not *this fails to parse* — a destructive illustration, a fill-in template and a block
+  demonstrating rule 17's own defect all parse cleanly and all legitimately carry it, the third by
+  construction. **A marker can be policed only where it asserts something the checker can
+  re-derive.**
+- ⚠️ **`tests/fixtures/block-parses/` has no ablations** (`grep -c ablat` → 0) while the catalog
+  claimed two until today. Corrected in the catalog; the missing ablations are not written.
+
+🔴 **4 — Step 8 was run against `audit-context`, `update-drift` and `release` and CANNOT DECIDE.
+The per-step numbers a draft of this entry published are WITHDRAWN.** The instrument was
+`grep -rnoE '<skill>.{0,25}Step [0-9]'` over `memory/` and `CHANGELOG.md`, and it fails three ways,
+two found by review rather than by me: it counts prose *about* a step as readily as a catch *by*
+one; its window crosses skill-name boundaries, so it credited `audit-context` with a **Step 0 that
+does not exist** (`grep -c 'Step 0' templates/audit-context.md` → 0; the hits are a heading reading
+*"`audit-context` Step 5 and `curate` Step 0.2"*); and every `Step 8` hit records Step 8 being
+*authored*, today, never run. **No step of any of the three is established as dead or as live.**
+Nothing retires on absent evidence — the same safe direction the `review-changes` audit took. The
+fix is Step 8's own last clause, already shipped: record the finding *and the step that found it*.
+⚠️ **This run also produced evidence against Step 8's headline** — *"the tell is available on day
+one and costs one grep"* — and `templates/audit-context.md` has not been changed to say so.
+
+✅ **3 — the three remaining skill bodies decline the provenance trim, measured.** The class that
+yielded 5,760 bytes in `review-changes` (refuted drafts, "until v1.4x", "a first draft said")
+appears **0 / 1 / 2 times** across `audit-context`, `update-drift` and `release` — with the command,
+because a recount using a different one is indistinguishable from a surface change:
+`grep -ciE 'first draft|earlier draft|a draft|refuted|superseded' templates/<name>.md`. There is no
+equivalent fat; trimming further means cutting rules or the field evidence a rule rests on, which
+the `review-changes` round demonstrated costs seven warnings their teeth.
+
+✅ **2 — `curate`'s two structural options are DECLINED for now, and blocked on the same thing.**
+Shipping the 10KB verify runner as a sibling file adds a second install artifact and a tool-agnostic
+surface for a skill that must travel self-contained; and *"does all of Step 0 need to run every
+session"* is exactly the question Step 8 cannot yet decide, for exactly the reason above. **Revisit
+both once two or three audits have logged findings with attribution.**
+
 **Savepoint 2026-09-14, later still — the big-file lever is REFUTED, measured.**
 
 ⭐ **File size is not a token cost in this repo, because nothing reads these files whole.**

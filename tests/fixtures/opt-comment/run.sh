@@ -41,8 +41,8 @@ want_clean "N2 legal set-lines the loose draft flagged are silent" "$WORK/n2"
 # N3 — a DECLARED exemption. A fixture seeding this very defect is not the defect;
 # ten of this repo's runners seed heredocs, so without this the rule fires on the
 # next seeded case.
-mkdir -p "$WORK/n3"; printf 'printf %s "set -u# seeded"   # lint-skip: opt-comment\n' x > "$WORK/n3/seed.sh"
-printf 'set -u# demo   # lint-skip: opt-comment\n' >> "$WORK/n3/seed.sh"
+mkdir -p "$WORK/n3"
+printf 'set -u# demo   # lint-skip: opt-comment\n' > "$WORK/n3/seed.sh"
 want_clean "N3 a declared exemption is not reported" "$WORK/n3"
 
 # T1 — the live shape, in shell.
@@ -62,6 +62,20 @@ else
   echo "  FAIL  T3 setup: bash -n now rejects this, so the rule's whole premise needs re-measuring"; FAIL=1
 fi
 
+# T9 — and the exemption is bounded: a marker on a line with NO defect is STALE.
+# Without this, a declaration outlives what it declared and licenses whatever is
+# written on that line next — the unused-suppression property the prior art has
+# and the first draft of this rule did not.
+mkdir -p "$WORK/t9"; printf 'echo hello   # lint-skip: opt-comment\n' > "$WORK/t9/stale.sh"
+want_fail "T9 a marker on a line with no defect is reported STALE" "$WORK/t9" "STALE EXEMPTION"
+
+# T10 — THE INTERLOCK. A marker in markdown is not policed for staleness, so it
+# must not be honoured either. Before the fix it was honoured everywhere: a stale
+# marker in a fenced block went unreported AND suppressed the real defect that
+# landed on its line — in `templates/*.md`, the surface adopters copy.
+mkdir -p "$WORK/t10"; printf '# Doc\n\n```bash\nset -eo pipefail# guard   # lint-skip: opt-comment\n```\n' > "$WORK/t10/doc.md"
+want_fail "T10 a marker in markdown does not suppress a real defect" "$WORK/t10" "NEVER APPLIED"
+
 # T4 — an empty population is not a clean one.
 mkdir -p "$WORK/t4"
 want_rc "T4 no files at all exits 2, never 0" "$WORK/t4" 2
@@ -76,18 +90,28 @@ old, new = os.environ["OLD"], os.environ["NEW"]
 if old not in s: sys.exit("ABLATION ANCHOR MISSING: %r" % old)
 pathlib.Path(sys.argv[2]).write_text(s.replace(old, new, 1))
 ' "$RULE" "$mut" || { printf '  FAIL  ablation %s could not be applied\n' "$label"; FAIL=1; return; }
-  for c in t1 t2 t3; do run "$WORK/$c" "$mut"; [ "$RC" -eq 0 ] && got="$got,$c"; done
+  for c in t1 t2 t3 t9 t10; do [ -d "$WORK/$c" ] || continue; run "$WORK/$c" "$mut"; [ "$RC" -eq 0 ] && got="$got,$c"; done
   got="${got#,}"
   if [ "$got" = "$want" ]; then printf '  PASS  ablation %s stops catching exactly [%s]\n' "$label" "$want"
   else printf '  FAIL  ablation %s should stop catching [%s], stopped [%s]\n' "$label" "$want" "$got"; FAIL=1; fi
 }
-# A1 restores the FIRST DRAFT predicate, keyed on the flag run. It must stop
-# catching exactly T2 — the `set -eo pipefail#` shape where the `#` welds to the
+# A1 restores the FIRST DRAFT predicate, keyed on the flag run. Kill set is T2 and
+# T10 — both use the `set -eo pipefail#` shape the first draft misses, T10 inside
+# markdown. Re-measured when T10 was added rather than carried forward: the set
+# widened, and a `want` carried forward would have gone green on a stale claim.
+# It must stop catching exactly T2 — the `set -eo pipefail#` shape where the `#` welds to the
 # option NAME. That is the ablation the header argues for; a `set`->`setZZZ`
 # mutant would only prove the grep exists, which T1-T3 already prove.
 ablate "A1 the first-draft predicate (keyed on the flag run)" \
-  'set([[:space:]]+[-+]?[A-Za-z]+)+#' \
-  'set([[:space:]]+-[a-zA-Z]+)#' "t2"
+  "grep -nE '^[[:space:]]*set([[:space:]]+[-+]?[A-Za-z]+)+#' \"\$f\"" \
+  "grep -nE '^[[:space:]]*set([[:space:]]+-[a-zA-Z]+)#' \"\$f\"" "t2,t10"
+
+# A3 removes the stale-marker scan. Only T9 flips.
+ablate "A3 no unused-suppression detection" 'done < <(stale_scan "$f")' 'done < <(: )' "t9"
+
+# A4 — honour the marker everywhere while policing only shell, which is the state
+# the interlock blocker describes. T10 flips: the markdown marker suppresses again.
+ablate "A4 honour the marker where it is not policed" 'if policed "$f"; then' 'if true; then' "t10"
 # A2 restores the SECOND draft — "any non-space before a `#` on a set line" — the
 # loosening that looks more general and flagged five legal lines. It must break N2,
 # the legal-content control, which is not in the ablation set above.

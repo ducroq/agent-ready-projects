@@ -78,6 +78,16 @@ while read -r file line blk; do
     found=1; continue
   fi
   if head -1 "$blk" | grep -qF -- "$MARKER"; then
+    # ⚠️ NO unused-suppression check here, and the attempt to add one was REVERTED
+    # on 2026-09-14. `not-executable` means DO NOT RUN THIS, not "this fails to
+    # parse": a destructive illustration, a fill-in template, and a block that
+    # demonstrates rule 17's welded-option defect all parse cleanly and all
+    # legitimately carry the marker — the third by construction, since rule 17's
+    # whole premise is that `bash -n` passes on its defect. Enforcing parse-failure
+    # would order the marker removed from exactly those blocks and leave no way to
+    # say "do not run this" about a well-formed one. The marker's name is the
+    # contract; rules 13 and 17 police THEIR markers because theirs assert a
+    # property the checker can re-derive, and this one does not.
     skipped=$((skipped + 1)); continue
   fi
   if ! err=$(bash -n "$blk" 2>&1); then

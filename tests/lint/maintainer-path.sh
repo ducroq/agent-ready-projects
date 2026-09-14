@@ -44,14 +44,34 @@ POP=$( { git ls-files -- templates .claude/skills
 
 nfiles=$(printf '%s\n' "$POP" | grep -c .)
 npat=$(printf '%s\n' "$DENY" | grep -c .)
-found=0
+found=0; exempted=0
 while IFS= read -r f; do
   [ -f "$f" ] || continue
   while IFS="$(printf '\t')" read -r pat why; do
     [ -n "$pat" ] || continue
     while IFS= read -r hit; do
       [ -n "$hit" ] || continue
-      case "$hit" in *"lint-skip: maintainer-path"*) continue ;; esac
+      # ⚠️ A DECLARED exemption must still be a valid reference, or the escape
+      # hatch passes exactly the dead pointer this rule exists to catch. Measured:
+      # the bare marker let `See docs/rationale/x.md <!-- lint-skip -->` through in
+      # a scratch repo. The only legitimate reason to name this path on an
+      # adopter surface is a URL, which resolves for a reader who has no such
+      # directory — so the exemption is granted only when the matched path sits
+      # inside an `https://` run on the same line.
+      case "$hit" in
+        *"lint-skip: maintainer-path"*)
+          # ⚠️ EVERY occurrence must sit inside a URL run, not merely "a URL is on
+          # the line". `grep -F` yields one hit per LINE, so testing for `https://`
+          # anywhere let one unrelated URL exempt a second, genuinely dead
+          # reference beside it — measured: `Background at https://example.com/ —
+          # details in docs/rationale/x.md <marker>` scored rc 0. Stripping the URL
+          # runs and re-testing is what closes it.
+          stripped=$(printf '%s' "$hit" | sed -E 's#https?://[^[:space:]]*##g')
+          case "$stripped" in
+            *"$pat"*) printf '%s:%s [INVALID EXEMPTION: the lint-skip is declared, but this reference is not inside a URL — a repo-relative path is dead in every adopter clone, which is what this rule catches]\n' "$f" "$hit" ;;
+            *) exempted=$((exempted + 1)); continue ;;
+          esac ;;
+      esac
       ln=${hit%%:*}
       echo "$f:$ln: references the maintainer-only path '$pat' — $why. An adopter's clone has no such file, so this pointer is dead on every install (#139)"
       found=1
@@ -65,5 +85,5 @@ done <<EOF
 $POP
 EOF
 
-echo "maintainer-path: $nfiles adopter-installed file(s) scanned for $npat maintainer-only path(s)" >&2
+echo "maintainer-path: $nfiles adopter-installed file(s) scanned for $npat maintainer-only path(s); $exempted declared-exempt (URL form)" >&2
 [ "$found" -eq 0 ] || exit 1

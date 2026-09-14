@@ -47,6 +47,42 @@ trap 'rm -rf "$WORK"' EXIT
 # -print0: a path with a space or newline is legal and must not be word-split.
 find . -name '.git' -prune -o -type f \( -name '*.sh' -o -name '*.md' -o -name '*.bash' \) -print0 > "$WORK/pop" || exit 2
 
+# ⚠️ SELF-REFERENCE, and it is a known axis in this repo (#174): a marker cannot be
+# written ABOUT in its own syntax. This file defines the marker string and its
+# fixture constructs it, so every mention there reads as a stale declaration. Both
+# are skipped from the STALE scan only — the defect scan still covers them, which
+# is the half that matters, since the original instance was in two fixture runners.
+# ⚠️ ONE predicate for both halves, and this is the blocker that made it so. The
+# marker used to be honoured everywhere while the stale scan covered only shell,
+# so a marker in markdown was never policed AND still suppressed the real defect
+# that landed on its line — measured in a `templates/*.md` fenced block, the exact
+# surface adopters copy. "The defect scan still covers markdown in full" was false
+# for precisely the lines the trade gave up. Now: where a marker is not policed, it
+# is not honoured. A demonstration in markdown is reported — noise, not silence.
+policed() {
+  case "$1" in
+    *.sh|*.bash) ;;
+    *) return 1 ;;
+  esac
+  # The definition and its test write the marker without meaning it. A closed set:
+  # both are shell, both are policed for defects, neither is policed for staleness.
+  case "$1" in
+    */tests/lint/opt-comment.sh|*/tests/fixtures/opt-comment/run.sh) return 1 ;;
+  esac
+  return 0
+}
+
+stale_scan() {
+  # ⚠️ The stale scan fired on FOUR self-reference sites in a row — this rule, its
+  # fixture, its catalog row and a work-item paragraph — because every document
+  # that WRITES the marker carries it on a line with no defect. Patching them one
+  # at a time is whack-a-mole. That is #174's axis: change where the marker is
+  # read, not what it is.
+  policed "$1" || return 0
+  grep -n 'lint-skip: opt-comment' "$1" 2>/dev/null |
+    grep -vE '^[0-9]+:[[:space:]]*set([[:space:]]+[-+]?[A-Za-z]+)+#'
+}
+
 n=0; bad=0; skipped=0; unread=0
 while IFS= read -r -d '' f; do
   n=$((n + 1))
@@ -71,10 +107,22 @@ while IFS= read -r -d '' f; do
     # Declared, never guessed — the same disposition rules 11 and 13 take. A line
     # that DEMONSTRATES the defect (a fixture seeding it, a doc quoting it) is not
     # the defect, and without this the rule fires on the next seeded case.
-    case "$hit" in *"lint-skip: opt-comment"*) skipped=$((skipped + 1)); continue ;; esac
+    if policed "$f"; then
+      case "$hit" in *"lint-skip: opt-comment"*) skipped=$((skipped + 1)); continue ;; esac
+    fi
     echo "$f:$hit — a shell option welded to a comment: \`#\` opens a comment only at a word start, so this passes the option as written, errors at rc 2, and the option is NEVER APPLIED. \`bash -n\` passes on it (#160). Put whitespace before the \`#\`."
     bad=$((bad + 1))
   done < <(grep -nE '^[[:space:]]*set([[:space:]]+[-+]?[A-Za-z]+)+#' "$f" 2>/dev/null)
+  # ⚠️ A marker on a line the predicate does not match is STALE: it exempts
+  # nothing today and whatever is written on that line tomorrow. Same rule the
+  # prior art carries, and the same one rule 14's exemption was tightened to.
+  while IFS= read -r stale; do
+    case "$stale" in
+      *"lint-skip: opt-comment"*)
+        printf '%s:%s [STALE EXEMPTION: the line carries `lint-skip: opt-comment` but no welded option is present — remove it, or it licenses whatever lands here next]\n' "$f" "$stale"
+        bad=$((bad + 1)) ;;
+    esac
+  done < <(stale_scan "$f")
 done < "$WORK/pop"
 
 [ "$n" -gt 0 ] || { echo "rule 17: no shell or markdown files found — the population is empty, not clean" >&2; exit 2; }
