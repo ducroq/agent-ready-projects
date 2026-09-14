@@ -1,13 +1,13 @@
 # Release
 
-<!-- SAVE AS: .claude/skills/release/SKILL.md (Claude Code)
+<!-- SAVE AS: <repo>/.claude/skills/release/SKILL.md (Claude Code, PROJECT-LOCAL — see
+     docs/GUIDE.md "Where a skill lives"; do not copy this file verbatim, its
+     frontmatter is inside this comment. In a clone, prefer
+     agent-ready-projects/.claude/skills/release/SKILL.md)
      For other tools, run this as a release-time prompt manually.
 
-     This is a skill (/release) that walks a version release: classify the
-     bump, verify preconditions, write the changelog entry, sync version
-     references, commit — and stop before publishing. The judgment it
-     encodes is the bump decision, the part that drifts when it lives only
-     in a prose header.
+     The judgment it encodes is the bump decision, the part that drifts when
+     it lives only in a prose header.
 
      Note `disable-model-invocation: true` below — unlike curate and
      review-changes, this skill is deliberately user-invocable only

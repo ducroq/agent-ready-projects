@@ -1,10 +1,9 @@
 # Test Verify Memory
 
-<!-- SAVE AS: .claude/skills/test-verify-memory/SKILL.md (Claude Code)
-
-     Tests the self-verifying memory protocol from the curate skill (Step 0.5).
-     Uses fixture files with known expected outcomes to validate that the agent
-     correctly detects claim types, runs verify commands, and reports results.
+<!-- SAVE AS: <repo>/.claude/skills/test-verify-memory/SKILL.md (Claude Code,
+     PROJECT-LOCAL; do not copy this file verbatim, its frontmatter is inside
+     this comment. No install to prefer; whether it should have one is
+     undecided -- skill-sync.sh KNOWN_UNPAIRED.)
 
      Claude Code skills require SKILL.md as the entry point inside a
      named directory under .claude/skills/. Add frontmatter:

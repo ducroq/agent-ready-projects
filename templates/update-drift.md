@@ -1,18 +1,15 @@
 # Update — Framework Drift
 
-<!-- SAVE AS: ~/.claude/skills/update-drift/SKILL.md (Claude Code, USER-GLOBAL)
+<!-- SAVE AS: ~/.claude/skills/update-drift/SKILL.md (Claude Code, USER-GLOBAL — see
+     docs/GUIDE.md "Where a skill lives"; do not copy this file verbatim, its
+     frontmatter is inside this comment. Prefer .claude/skills/update-drift/SKILL.md
+     from this repo.)
      For other tools, run this as a start-of-session prompt manually.
 
-     Scope: user-global. The drift question is identical in every adopter
-     repo, and no repo needs its own variant — see "Where a skill lives"
-     in docs/GUIDE.md. Do NOT install this project-locally alongside a
-     global copy; the local one would be inert.
-
-     This promotes adopt.md §3 ("Update — am I behind?") from a
-     copy-paste prompt into a skill. §3 is the one of adopt.md's three
-     prompts that fires repeatedly — assess and adopt fire once per
-     project — which is what earns it a slot under the cadence rule in
-     docs/GUIDE.md.
+     Do NOT install this project-locally alongside a global copy; the local
+     one would be inert. Why global, and why this skill earns a slot at all:
+     docs/GUIDE.md "Where a skill lives" and the rhythm section above it —
+     not restated here, where it would be a second copy to keep true.
 
      ---
      name: update-drift

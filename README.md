@@ -47,6 +47,7 @@ Add layers as your project needs them — not before:
 13. **Review-changes skill** — [`templates/review-changes.md`](templates/review-changes.md) for diff-driven pre-commit review — picks review lenses based on what changed
 14. **Structural audit** — [`templates/audit-context.md`](templates/audit-context.md) to catch framework-level decay monthly
 15. **Release skill** — [`templates/release.md`](templates/release.md) once you cut versioned releases — classifies the semver bump, verifies preconditions, drafts the changelog entry, stops before publishing
+16. **Framework-drift skill** — [`templates/update-drift.md`](templates/update-drift.md) once you pin a framework and want to know when you are behind it — lists the releases between your pin and the latest and triages each into adopt / decline-with-reason / not-applicable / already-in-force, stopping before it edits anything normative
 
 ### Already have docs?
 
@@ -120,6 +121,8 @@ Ready-to-use starter files in [`templates/`](templates/). Tool-agnostic — rena
 - **[`audit-context.md`](templates/audit-context.md)** — Periodic structural audit of the layered memory system
 - **[`review-changes.md`](templates/review-changes.md)** — Diff-driven pre-commit review with risk-based lens selection
 - **[`release.md`](templates/release.md)** — Release skill: classify the semver bump, verify preconditions, draft the changelog entry, sync version strings — stops before tagging or pushing
+- **[`review-profile.md`](templates/review-profile.md)** — The per-repo half of `review-changes`: your risk tiers and guarantee surfaces. One per repo, never shared — `review-changes` stops where it is missing rather than defaulting every path to low risk
+- **[`update-drift.md`](templates/update-drift.md)** — Framework-drift skill: find the version stamps, list the intervening releases, triage each one; verifies by running rather than reading, and stops before editing
 - **[`coordination.md`](templates/coordination.md)** — Layer 5: contributors, shared constraints, WIP, conventions (multi-contributor projects only)
 - **[`physics-tests/`](docs/archive/physics-tests/)** — *archived, unproven.* A test-scaffolding family for physics simulation code that never got validated against a live simulator; kept in `docs/archive/` for anyone who wants to run it and report back, not shipped as a template.
 - **[`checklists/`](templates/checklists/)** — Validation checklists for each workflow stage

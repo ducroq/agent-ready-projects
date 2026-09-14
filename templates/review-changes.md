@@ -1,11 +1,10 @@
 # Review Changes
 
-<!-- SAVE AS: .claude/skills/review-changes/SKILL.md (Claude Code)
+<!-- SAVE AS: ~/.claude/skills/review-changes/SKILL.md (Claude Code, USER-GLOBAL — see
+     docs/GUIDE.md "Where a skill lives"; do not copy this file verbatim, its
+     frontmatter is inside this comment. Prefer .claude/skills/review-changes/SKILL.md
+     from this repo.) A project-local copy is INERT — the global one shadows it.
      For other tools, run this as a pre-commit prompt manually.
-
-     This is a skill (/review-changes) that reviews staged or unstaged
-     changes against the previous commit. It picks review lenses based on
-     what changed — not every change needs the full multi-model battery.
 
      Claude Code skills require SKILL.md as the entry point inside a
      named directory under .claude/skills/. Add frontmatter:
