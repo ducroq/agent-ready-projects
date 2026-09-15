@@ -2,12 +2,13 @@
 # Lock a reduction in:  bash tests/lint/autoload-ratchet.sh . --update
 # Pay for growth deliberately:  ... --raise "why this must get bigger"
 # Every raise is recorded below, oldest first; notes accumulate, never replace.
-# BYTES 36810
+# BYTES 36861
 # LINES 95
 # seeded 2026-09-14
 # ratcheted down 2026-09-14
 # ratcheted down 2026-09-14
 # ratcheted down 2026-09-14
 # ratcheted down 2026-09-15
+# RAISED 2026-09-15 from 36810b/95l to 36861b/95l: 51 bytes: #197 added to the index's open list — a seventh tracked item, none of the six closed. Trimmed to the list's house terseness first; the alternative was leaving a new open item out of the section a bare 'continue' reads.
 CLAUDE.md	26371
-memory/MEMORY.md	10439
+memory/MEMORY.md	10490
