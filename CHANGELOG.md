@@ -19,7 +19,7 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.45.1 (candidate, unreleased)
+## v1.45.1 (2026-09-14)
 
 **PATCH.** No existing consumer has to act, and there is no new artifact — both changes are
 refinements to existing ones. Precedent: v1.10.1, documentation-only → PATCH. (A draft of this
