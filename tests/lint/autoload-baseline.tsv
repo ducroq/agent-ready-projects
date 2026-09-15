@@ -2,13 +2,14 @@
 # Lock a reduction in:  bash tests/lint/autoload-ratchet.sh . --update
 # Pay for growth deliberately:  ... --raise "why this must get bigger"
 # Every raise is recorded below, oldest first; notes accumulate, never replace.
-# BYTES 36861
-# LINES 95
+# BYTES 37094
+# LINES 96
 # seeded 2026-09-14
 # ratcheted down 2026-09-14
 # ratcheted down 2026-09-14
 # ratcheted down 2026-09-14
 # ratcheted down 2026-09-15
 # RAISED 2026-09-15 from 36810b/95l to 36861b/95l: 51 bytes: #197 added to the index's open list — a seventh tracked item, none of the six closed. Trimmed to the list's house terseness first; the alternative was leaving a new open item out of the section a bare 'continue' reads.
+# RAISED 2026-09-15 from 36861b/95l to 37094b/96l: 233 bytes / +1 line: routing row for memory/project_session_2026_09_15.md. SECOND RAISE THIS SESSION on this instrument, by the author who took the first 40 minutes earlier — recorded as H-022 evidence leaning CONFIRM, not waved through. No shrink attempted this time: the one candidate found (Topic Files rows duplicating CLAUDE.md Before You Start routing for project_dead_end_pattern_rollout.md and project_framework_pivot.md) is a which-table-owns-routing decision, surfaced to the maintainer rather than resolved in passing.
 CLAUDE.md	26371
-memory/MEMORY.md	10490
+memory/MEMORY.md	10723
