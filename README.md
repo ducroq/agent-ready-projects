@@ -48,6 +48,7 @@ Add layers as your project needs them — not before:
 14. **Structural audit** — [`templates/audit-context.md`](templates/audit-context.md) to catch framework-level decay monthly
 15. **Release skill** — [`templates/release.md`](templates/release.md) once you cut versioned releases — classifies the semver bump, verifies preconditions, drafts the changelog entry, stops before publishing
 16. **Framework-drift skill** — [`templates/update-drift.md`](templates/update-drift.md) once you pin a framework and want to know when you are behind it — lists the releases between your pin and the latest and triages each into adopt / decline-with-reason / not-applicable / already-in-force, stopping before it edits anything normative
+17. **Backtrack skill** — [`templates/backtrack.md`](templates/backtrack.md) when sessions run long enough to drift from what they were asked for — returns to the opening ask, ledgers each thread as closed / partial / open / not-ours, lands what it can, and reports the arc; runs before `curate`
 
 ### Already have docs?
 
