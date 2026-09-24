@@ -50,6 +50,30 @@ inside a work tree, with an empty `--show-prefix` — and compares no path strin
 against the old guard; P7 (a checkout nested in another repo) still refuses, and fails when the
 prefix arm is ablated. ⚠️ Not run on Windows: the seed simulates the mismatch with a git shim.
 
+### `refcheck.py` (audit-context Step 4) — a documents repo lost most of its references silently (#199)
+
+The extension whitelist was calibrated on code repos. An extension outside it never reaches a rung,
+so it is neither reported nor counted: one adopter keeping correspondence, invoices and LaTeX had
+25 references invisible against 15 visible, and a `.tex` file cited three times as evidence did not
+exist. Three changes:
+
+- **Sixteen document extensions join the whitelist**: `pdf docx doc xlsx xls eml msg ics tex bib
+  cls sty odt ods jpg jpeg`, the set the adopter measured (16 findings, 0 false positives, on their
+  repo). ⚠️ Not measured on a code repo: `msg` and `doc` could collide with identifiers such as
+  `err.msg`. That would show up as a visible false finding; `IDENTIFIER_EXT` is the remedy once a
+  collision is measured, per its own comment.
+- **`--ext a,b` widens it per run.** It rebuilds every regex compiled from the list and then checks
+  that the new extension reaches the extractor. Setting the list alone would have left the run
+  reading like a working one, which is what the adopter's wrapper hit. A malformed value exits 64.
+- **`REFERENCES NOT EXTRACTED` counts the cost**, printed before the findings: backticked spans
+  in the audited documents that end in an unlisted extension and are path-shaped (a `/`, or an
+  extension present in the tree). This repo's own `docs/GUIDE.md` shows two `.mdc` references that
+  had never been checked.
+
+The exit contract is unchanged: an unextracted reference is counted, not ruled on. Seeded as T62
+and N53 (one pair per extension), T63-T65, N54 and N55. Each change was ablated and turned exactly
+its own case red. T25's "outside the whitelist" link moved from `.pdf` to `.xcf`.
+
 ## v1.45.1 (2026-09-14)
 
 **PATCH.** No existing consumer has to act, and there is no new artifact — both changes are

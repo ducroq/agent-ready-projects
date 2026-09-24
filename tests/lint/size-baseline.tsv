@@ -3,7 +3,7 @@
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and every raise is
 # recorded below, oldest first — notes accumulate and are never replaced.
-# BUDGET 240776
+# BUDGET 240992
 # SPILL 60656
 # RAISED 2026-09-06 from 247526 to 247969: #133: the #118 remedy string shipped unconditional and can turn a resolved reference into an AMBIGUOUS finding; the caveat that scopes it is +443 b on templates/audit-context.md, seeded as T39/T40/N39 (reason restored 2026-09-06 — write_baseline used to overwrite each note with the next)
 # RAISED 2026-09-06 from 247969 to 248237: #140: UNRESOLVED had two causes printing one reason. +268 b on templates/audit-context.md, seeded as T41/T41b/N40 (reason restored 2026-09-06)
@@ -58,10 +58,11 @@
 # RAISED 2026-09-24 from 239704 to 240441: #200: stampcheck derives the global-skill list from the installer at the stamped tag — +737 bytes, all of it check logic
 # RAISED 2026-09-24 from 240441 to 240777: #200 review round: zsh-safe ${P}: and explicit split, and refusing a GLOBAL_SKILLS list set across two lines instead of passing on its first half — +336 b. ⚠️ The first +737 was locked before the round, the lesson this file already records twice.
 # ratcheted down 2026-09-24
+# RAISED 2026-09-24 from 240776 to 240992: #199: audit-context Step 4 names the REFERENCES NOT EXTRACTED count and --ext (+216 b). Locked BEFORE its review round, because the session stop hook requires a push; review fixes will adjust it.
 templates/README.md	12042
 templates/RUNBOOK.md	2795
 templates/adr.md	2115
-templates/audit-context.md	22276
+templates/audit-context.md	22492
 templates/checklists/README.md	1097
 templates/checklists/architect-checklist.md	1263
 templates/checklists/implement-checklist.md	1329
