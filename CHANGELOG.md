@@ -116,6 +116,13 @@ assertion rather than one spelling. Seeded N57–N61, one per form, all failing 
 T66, the control the issue asked for: a positive probe on a missing file stays a finding. A widening that skips any
 `-f` turns T66 red. The `find`-plus-empty idiom is not covered, as the issue suggested splitting it out.
 
+### Lint rule 8: `--update` records a moved-bytes payment instead of erasing it (#157)
+
+`--update` is what the rule tells you to run on a shrink, and it rewrote the spill line with no trace when part of
+the shrink had only moved into `docs/rationale/`. It now writes the transfer into the permanent baseline note and
+prints it, which is the guard `--raise-budget` already had. Seeded P7 (the transfer is recorded) and N6 (a genuine
+shrink's note claims none). P7 fails against the previous script. Maintainer tooling.
+
 ## v1.45.1 (2026-09-14)
 
 **PATCH.** No existing consumer has to act, and there is no new artifact — both changes are

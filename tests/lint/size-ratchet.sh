@@ -100,7 +100,16 @@ if [ "$mode" = "--update" ]; then
     exit 2
   fi
   # At or under budget: the rows refresh and the ceiling follows the surface down.
-  write_baseline "$now_total" "ratcheted down $(date +%Y-%m-%d)"
+  # #157 — the same guard --raise-budget has: when docs/rationale/ grew, part of
+  # this "shrink" MOVED, and rewriting SPILL would erase the only evidence. So the
+  # transfer is written into the permanent note, and said out loud.
+  note="ratcheted down $(date +%Y-%m-%d)"
+  sp_was=$(read_spill); sp_now=$(measure_spill)
+  if [ -n "$sp_was" ] && [ "$sp_now" -gt "$sp_was" ]; then
+    note="$note from ${budget:-none} to $now_total, while docs/rationale/ grew ${sp_was} -> ${sp_now} (+$((sp_now - sp_was))): part of this payment MOVED (#131, #157)"
+    echo "      NOTE: docs/rationale/ grew ${sp_was} -> ${sp_now} (+$((sp_now - sp_was))) in this same change; recorded in the baseline note (#157)." >&2
+  fi
+  write_baseline "$now_total" "$note"
   echo "baseline updated: $(grep -vc '^#' "$BASELINE") file(s), budget now $now_total bytes"
   exit 0
 fi

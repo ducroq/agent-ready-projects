@@ -89,6 +89,21 @@ spill_case P6-bytes-moved-to-unbudgeted-docs YES m_moved
 m_real_shrink() { printf 'a\n' > "$1/templates/one.md"; }
 spill_case N5-genuine-shrink-is-not-a-transfer NO m_real_shrink
 
+# #157 — --update is the path the tool TELLS you to run on a shrink, and it used
+# to rewrite SPILL with no trace of the transfer. P7: the moved-bytes --update
+# leaves the transfer in the baseline note. N6: a genuine shrink's note does not
+# claim one — the control that stops "write the spill every time" passing P7.
+update_note() {  # update_note <id> <expect: YES|NO> <mutator>
+  local r="$WORK/$1"; mkdir -p "$r"; mktree "$r"; "$3" "$r"
+  bash "$CHECK" "$r" --update >/dev/null 2>&1
+  if grep -q '^# ratcheted down .*part of this payment MOVED' "$r/tests/lint/size-baseline.tsv"; then got=YES; else got=NO; fi
+  if ! grep -q '^# ratcheted down' "$r/tests/lint/size-baseline.tsv"; then printf '  FAIL  %s — --update wrote no note; it did not run\n' "$1"; FAIL=1
+  elif [ "$got" = "$2" ]; then printf '  PASS  %s\n' "$1"
+  else printf '  FAIL  %s — expected the transfer recorded %s, got %s\n' "$1" "$2" "$got"; FAIL=1; fi
+}
+update_note P7-update-records-the-transfer YES m_moved
+update_note N6-update-after-real-shrink-claims-none NO m_real_shrink
+
 # N6 — the other control: rationale growing on its own, with no template shrink,
 # is not a transfer either. Without this, "warn whenever docs/rationale grows"
 # would score both rows above.
