@@ -123,6 +123,12 @@ the shrink had only moved into `docs/rationale/`. It now writes the transfer int
 prints it, which is the guard `--raise-budget` already had. Seeded P7 (the transfer is recorded) and N6 (a genuine
 shrink's note claims none). P7 fails against the previous script. Maintainer tooling.
 
+### `docs/seeded-defects-and-ablations.md` — an ablation that never lands (#138)
+
+A mutation that fails to apply leaves the check unmutated, and its PASS looks exactly like a real one. Four
+instances, three from adopters applying this page. The page now names the class and three guards: prove the mutant
+applied, prove it ran, and anchor the extraction needle and print its match count.
+
 ## v1.45.1 (2026-09-14)
 
 **PATCH.** No existing consumer has to act, and there is no new artifact — both changes are
