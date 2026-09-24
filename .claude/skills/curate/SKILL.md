@@ -264,7 +264,6 @@ Check for context rot from *previous* sessions. This catches what the session-fo
      # that forbids it. The success line is now gated on a COUNT of what was
      # actually compared, not on the absence of a difference.
      stampcheck() {
-       want="audit-context curate update-drift"
        R=$(git rev-parse --show-toplevel 2>/dev/null) ||
          { echo "CANNOT VERIFY: not in a git repo"; return 2; }
        [ -n "${FRAMEWORK:-}" ] && [ -d "$FRAMEWORK/.git" ] ||
@@ -280,6 +279,15 @@ Check for context rot from *previous* sessions. This catches what the session-fo
              "$R/CLAUDE.md" 2>/dev/null | head -1 |
            grep -oE "v?[0-9]+\.[0-9]+\.[0-9]+$" | sed "s/^v*/v/")
        [ -n "$P" ] || { echo "CANNOT VERIFY: no framework stamp in CLAUDE.md"; return 2; }
+       # ⚠️ DERIVE the list at the stamped tag, never restate it: a hardcoded
+       # one missed review-changes for five releases (#200).
+       git -C "$FRAMEWORK" rev-parse -q --verify "$P^{commit}" >/dev/null ||
+         { echo "CANNOT VERIFY: $P is not in the framework clone — fetch tags"; return 2; }
+       t=$(git -C "$FRAMEWORK" show "$P:scripts/install-global-skills.sh" 2>/dev/null) ||
+         { echo "CANNOT VERIFY: $P predates the global-skills installer (v1.15.0)"; return 2; }
+       want=$(printf '%s\n' "$t" | sed -n 's/^GLOBAL_SKILLS="\([^"]*\)".*/\1/p')
+       k=$(echo $want | wc -w | tr -d ' ')
+       [ "$k" -gt 0 ] || { echo "CANNOT VERIFY: no GLOBAL_SKILLS list in $P's installer"; return 2; }
        n=0; d=0
        for s in $want; do
          i="$HOME/.claude/skills/$s/SKILL.md"
@@ -287,7 +295,7 @@ Check for context rot from *previous* sessions. This catches what the session-fo
          # ⚠️ SPLIT the pipeline. Piped, a `git show` that fails — the normal
          # state right after an upstream release, stamp bumped and clone not
          # fetched — is swallowed and `diff` supplies the verdict, so the
-         # re-armed probe accuses three clean installs of drifting.
+         # re-armed probe accuses every clean install of drifting.
          t=$(git -C "$FRAMEWORK" show "$P:.claude/skills/$s/SKILL.md" 2>/dev/null) ||
            { echo "CANNOT VERIFY: $P is not in the framework clone — fetch tags"; return 2; }
          printf '%s\n' "$t" | diff -q - "$i" >/dev/null ||
@@ -295,13 +303,13 @@ Check for context rot from *previous* sessions. This catches what the session-fo
          n=$((n + 1))
        done
        [ "$d" = 0 ] || return 1
-       [ "$n" = 3 ] || { echo "CANNOT VERIFY: compared $n of 3 skills"; return 2; }
-       echo "3 global skills byte-identical to $P"
+       [ "$n" = "$k" ] || { echo "CANNOT VERIFY: compared $n of $k skills"; return 2; }
+       echo "$k global skills byte-identical to $P: $want"
      }
      stampcheck; echo "  exit=$?"
      ```
 
-     Every branch was executed, not read: clean, a seeded drift (exit 1), no stamp, skill absent, and outside a repo. The `2>/dev/null` matters — without it git's own `fatal:` prints beside CANNOT VERIFY and reads as the failure.
+     Every branch was executed, not read: clean, a seeded drift (exit 1), no stamp, skill absent, outside a repo, an unfetched tag, a stamp older than the installer. The `2>/dev/null` matters — without it git's own `fatal:` prints beside CANNOT VERIFY and reads as the failure.
 
      ⚠️ **Compare against the REFERENCE INSTALL (`.claude/skills/<name>/SKILL.md`), never `templates/<name>.md`** — the template's `SAVE AS` comment is frontmatter in the install, a structural residue no tag clears, so every run reads as drift. **Preconditions, not universal**: a framework clone at `$FRAMEWORK`, skills installed globally.
    - **Assume nothing about the working directory.** The runner may be invoked from anywhere, and a relative command silently changes meaning when it is — `git ls-remote origin` checked a remote from the project root and, run one directory over, reported ERROR for a healthy claim. Address the target absolutely: `git -C /path/to/repo …`, absolute paths for files.

@@ -19,6 +19,23 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.45.2 (candidate, unreleased)
+
+**Bump provisional** — classify it from the diff at release, per `templates/release.md` Step 2.
+
+### `templates/curate.md` Step 0.5 — `stampcheck` checked 3 global skills, not 4 (#200)
+
+The probe hardcoded `want="audit-context curate update-drift"` and a denominator of `3`. v1.40.0 made
+`review-changes` the fourth global skill, so **a drifted `review-changes` install passed clean** —
+reproduced against the shipped probe: `3 global skills byte-identical to v1.45.1`, exit 0.
+
+**The list is now derived, not restated**: read from `GLOBAL_SKILLS` in
+`scripts/install-global-skills.sh` *at the stamped tag*, and the count is taken from it. An older
+stamp is checked against the skills that were global at that version. Two new CANNOT VERIFY
+outcomes: a stamp older than the installer (v1.15.0), and an installer whose list cannot be read —
+the latter is what a future change to that line's shape produces, instead of a false PASS.
+**Adopters who copied the probe**: replace the `want=` line and the two `3`s together.
+
 ## v1.45.1 (2026-09-14)
 
 **PATCH.** No existing consumer has to act, and there is no new artifact — both changes are
