@@ -114,7 +114,9 @@ Only `! test -f x` was skipped as asserted-absent. `[ ! -f x ]`, `test ! -f x`, 
 same assertion spelled differently, were reported as broken references on every audit. The pattern now matches the
 assertion rather than one spelling. Seeded N57–N61, one per form, all failing against the previous checker, and
 T66, the control the issue asked for: a positive probe on a missing file stays a finding. A widening that skips any
-`-f` turns T66 red. The `find`-plus-empty idiom is not covered, as the issue suggested splitting it out.
+`-f` turns T66 red. The `find`-plus-empty idiom is not covered, as the issue suggested splitting it out. Review found the wider pattern also matched an
+example *quoted* in a code span, which excused a real broken reference to the same path on that line. A span
+holding the negation operator is now masked first. Seeded T67.
 
 ### Lint rule 8: `--update` records a moved-bytes payment instead of erasing it (#157)
 
@@ -135,6 +137,14 @@ The unmutated program is now scored with the same rule every ablation uses. If i
 every ablation reports UNSCORED and the suite fails. Reproduced with the BOM strip broken: the old fixture printed
 `PASS ablation A2` beside n9's FAIL in the same log, and the new one marks all ablations UNSCORED. ⚠️ Only this
 fixture's helper. Other fixtures with their own `ablate()` still have the class, so #161 stays open.
+
+### `curate` verify runner: a timeout is named as the runner's limit, and counted (#152)
+
+At the default 30s one adopter's green estate read 37 errors, and at 90s it read 1, because its probes ran `pytest`.
+A timed-out row now gives the limit it hit, and a separate line counts the timeouts and says to raise
+`VERIFY_TIMEOUT`. The summary line's format is unchanged. The step also tells the reader to count the rows received
+against the summary: the runner's counters always agree with each other, so only the reader can see a capture that
+lost rows (77 of 109 once, under tmpfs pressure). Fixture M1b.
 
 ## v1.45.1 (2026-09-14)
 

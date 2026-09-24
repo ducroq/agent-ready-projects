@@ -168,6 +168,8 @@ declare -a CASES=(
   "T63 a broken link to a .pdf is now a finding|records/missing_linked.pdf"
   # #155 — the control: a POSITIVE existence probe must not read as negated.
   "T66 a positive probe on a missing file is still a finding|docs/wanted.md"
+  # #155 review — a QUOTED negation is a mention; it must not excuse the path.
+  "T67 a negation quoted in a code span does not excuse the same path|docs/quoted-target.md"
 )
 # #199 — one case per documents-repo extension, for #175's reason: EXT is an
 # alternation, and a misspelt alternative hides behind its neighbours.

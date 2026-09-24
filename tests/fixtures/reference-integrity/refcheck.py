@@ -388,6 +388,7 @@ ANGLE_SEG_RE = re.compile(r'<[^<>/]+>')
 # #155 — the ASSERTION, not one spelling: `! test -f x`, `! [ -f x ]`,
 # `test ! -f x`, `[ ! -f x ]`, and `-e` for each. A plain `[ -f x ]` has no `!`
 # and must stay a reference (T66). The `find`-plus-empty idiom is not covered.
+NEG_OP_RE = re.compile(r'!\s*(?:test|\[)|(?:test|\[)\s+!')
 NEGATED_RE = re.compile(
     r'(?:!\s*(?:test|\[)\s+-[fe]|(?:test|\[)\s+!\s+-[fe])\s+[`"\']?([A-Za-z0-9_./-]+)')
 
@@ -672,7 +673,14 @@ def check(root, sources, sibling_roots=None):
                 covered |= {c[2] for c in _candidates(m.group(1))}
             for m in DELETED_RE.finditer(raw_line):
                 covered |= {c[2] for c in _candidates(m.group(1))}
-            for m in NEGATED_RE.finditer(line):
+            # A span QUOTING the whole test (`[ ! -f x ]` as an example) is a
+            # mention, not an assertion, so it is masked; a span holding only the
+            # path, as in `! test -f \`x\``, is not. Unmasked, a quoted example
+            # silently excused a real broken `x` on the same line (#155 review).
+            neg_line = SPAN_RE.sub(
+                lambda m: ' ' * len(m.group(0)) if NEG_OP_RE.search(m.group(0)) else m.group(0),
+                line)
+            for m in NEGATED_RE.finditer(neg_line):
                 covered.add(m.group(1))
 
             # #45 — paths that were never meant to resolve. Two markers: an

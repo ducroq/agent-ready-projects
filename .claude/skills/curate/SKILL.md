@@ -163,7 +163,7 @@ Check for context rot from *previous* sessions. This catches what the session-fo
    case "${VERIFY_TIMEOUT:-30}" in *[!0-9]*|'') echo "VERIFY_TIMEOUT must be whole seconds" >&2; exit 2 ;; esac
    TMPD=$(mktemp -d); trap 'rm -rf "$TMPD"' EXIT
    TO=""; command -v timeout >/dev/null 2>&1 && TO="timeout ${VERIFY_TIMEOUT:-30}"
-   pass=0 fail=0 err=0 manual=0 cannot=0 bad=0 seen=0 n=0
+   pass=0 fail=0 err=0 manual=0 cannot=0 bad=0 seen=0 n=0 tmo=0
 
    while IFS=$'\034' read -r kind file cmd; do
      if [ "$kind" != C ]; then
@@ -193,7 +193,7 @@ Check for context rot from *previous* sessions. This catches what the session-fo
        FAIL*)                                               # cannot be told from evidence, so
          [ "$rc" -ne 0 ] || note="  ! output begins FAIL yet it exited 0 — if that is a verdict, rewrite it" ;;
      esac
-     if   [ -n "$TO" ] && [ "$rc" -eq 124 ]; then d=ERROR; err=$((err + 1)); head1="(timed out)"
+     if   [ -n "$TO" ] && [ "$rc" -eq 124 ]; then d=ERROR; err=$((err + 1)); tmo=$((tmo + 1)); head1="(timed out at ${VERIFY_TIMEOUT:-30}s — the runner's limit, not the claim's)"
      elif [ "$rc" -eq 127 ];  then d=ERROR; err=$((err + 1)); [ -n "$head1" ] || head1="(command not found)"
      elif [ -z "$head1" ];    then d=ERROR; err=$((err + 1)); head1="(no output — it proved nothing)"
      elif [ "$rc" -eq 0 ];    then d=PASS;  pass=$((pass + 1))
@@ -206,13 +206,14 @@ Check for context rot from *previous* sessions. This catches what the session-fo
    annotations=$(grep -ahoiE '<!--[[:space:]]*verify:' "$@" | wc -l)
    printf 'ran %d of %d annotations — %d pass, %d fail, %d error, %d cannot-verify; %d manual, %d malformed\n' \
      "$n" "$annotations" "$pass" "$fail" "$err" "$cannot" "$manual" "$bad"
+   [ "$tmo" -eq 0 ] || echo "$tmo error(s) timed out — raise VERIFY_TIMEOUT before reading them as findings"
    [ "$seen" -gt 0 ] || { [ "$bad" -eq 0 ] && echo 'ZERO COMMANDS EXTRACTED — a defect in the runner or the annotations, never a pass.' \
                                            || echo 'NO USABLE ANNOTATIONS — every one found was malformed.'; exit 2; }
    [ $((pass + fail + err)) -gt 0 ] || { echo 'NOTHING PRODUCED A VERDICT — every annotation was manual or unreachable.'; exit 2; }
    [ $((fail + err + bad)) -eq 0 ] || exit 1
    ````
 
-   **Zero commands extracted is a defect, never a pass** — and so is a count the reader cannot account for. The runner's last line reconciles commands run against `<!--`-shaped annotations in the same files; account for the difference item by item. Documentation of the syntax — code spans, fenced examples — is the expected explanation; an annotation the extractor could not see is a bug in the annotation or in the runner. It is the same trap as reading memory-file dates with `git log` where `memory/` is gitignored — the recommended setup, and this framework's own: `git log` returns **empty with exit 0** for every file, so the check reports nothing stale having examined nothing. The step reports nothing wrong *precisely when* it has examined nothing. The exit status says which case you are in: **2** means the run itself cannot be trusted — no files given, an operand that is not a readable file, nothing extracted, or nothing that produced a verdict because every annotation was manual or unreachable — **1** means a claim failed, errored or was malformed, and **0** means everything reachable checked out. Do not report a run you did not read the exit status of.
+   **Zero commands extracted is a defect, never a pass** — and so is a count the reader cannot account for. The runner's last line reconciles commands run against `<!--`-shaped annotations in the same files; account for the difference item by item. Documentation of the syntax — code spans, fenced examples — is the expected explanation; an annotation the extractor could not see is a bug in the annotation or in the runner. It is the same trap as reading memory-file dates with `git log` where `memory/` is gitignored — the recommended setup, and this framework's own: `git log` returns **empty with exit 0** for every file, so the check reports nothing stale having examined nothing. The step reports nothing wrong *precisely when* it has examined nothing. The exit status says which case you are in: **2** means the run itself cannot be trusted — no files given, an operand that is not a readable file, nothing extracted, or nothing that produced a verdict because every annotation was manual or unreachable — **1** means a claim failed, errored or was malformed, and **0** means everything reachable checked out. Do not report a run you did not read the exit status of. **Count the rows you received against that line too**: only the reader can see a capture that lost rows — 77 of 109, once, under tmpfs pressure (#152).
 
    **Dispositions** — first match wins, and the order matters because one command can satisfy several:
 
@@ -221,7 +222,7 @@ Check for context rot from *previous* sessions. This catches what the session-fo
    | Command begins `manual` (then a space, a colon, or nothing) | **MANUAL CHECK NEEDED** | Nothing is run. Surface the noted reason to the engineer. `manual-check.sh` is a command, not a note. |
    | The annotation cannot be read as one command | **MALFORMED** | Five shapes: no closing `-->` on the line; a second `<!-- verify:` before the first one closes; an opener that sits inside a code span while its `-->` sits outside it, so markdown and the author disagree about whether it is documentation; an empty command; and — reported against the file rather than a line — a fence that opens and never closes, which silently swallows every annotation after it. Loud rather than skipped: a dropped annotation is a claim nobody checked. |
    | First non-blank line of **stdout** begins `CANNOT VERIFY` | **CANNOT VERIFY** | The check could not reach what it needed — a powered-off machine, an absent credential. Neither a pass nor a failure, and must not be reported as either. **The prefix wins regardless of exit status**, so a guard is free to exit 2. A colon and a reason are conventional and strongly preferred. stderr is captured separately and deliberately: an `ssh` guard's `Warning: Permanently added …` would otherwise arrive first and mask the prefix. |
-   | Timed out | **ERROR** | Default 30s, `VERIFY_TIMEOUT` to change it, and only where `timeout` is on `PATH` — without it a hanging command hangs the step. |
+   | Timed out | **ERROR** | Default 30s, `VERIFY_TIMEOUT` to change it, and only where `timeout` is on `PATH` — without it a hanging command hangs the step. Often too low: an adopter's green estate read 37 errors at 30s, 1 at 90s (#152). |
    | Exit 127 | **ERROR** | Command not found; the verify command itself is stale. |
    | No output on stdout | **ERROR** | A command that prints nothing has proved nothing, *whatever its exit status*. Fix the command — see the writing rules — rather than relaxing the rule. Note this outranks the two rows below: `exit 3` in silence is ERROR, not FAIL. |
    | Exit 0 | **PASS** | |

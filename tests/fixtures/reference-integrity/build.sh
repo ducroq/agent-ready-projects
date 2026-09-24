@@ -50,6 +50,7 @@ mkdir -p records; for e in $DOCEXT; do touch "records/live_$e.$e"; done
   echo '`docs/gone-e.md` <!-- verify: ! [ -f docs/gone-e.md ] -->'
   echo '`docs/gone-f.md` <!-- verify: ! test -e "docs/gone-f.md" -->'
   echo '`docs/wanted.md` <!-- verify: [ -f docs/wanted.md ] -->'
+  echo 'Quoting the idiom: `[ ! -f docs/quoted-target.md ]` skips it, but `docs/quoted-target.md` is a real reference.'
 } > docs/NEGATED.md
 # #54/#55/#56 material. `backlog.md` exists in THREE places on purpose: next to
 # the doc that references it bare (docs/guides/), in templates/, and under
