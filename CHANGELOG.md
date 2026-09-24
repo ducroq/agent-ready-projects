@@ -23,6 +23,21 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 **Bump provisional** — classify it from the diff at release, per `templates/release.md` Step 2.
 
+### Skill templates say what to diff an install against, where the reader looks (#187)
+
+Comparing an installed skill with `templates/<name>.md` leaves a residue that no tag clears (18 of 23 changed lines
+at v1.42.0 were the header turning into frontmatter), so it always reads as drift. Three independent readers took that
+wrong turn in one day, one of them a cold review lens. The five skill templates with a reference install now say, in
+the header beside the install instruction: diff against `.claude/skills/<name>/SKILL.md`, never this file. The rule
+dates from #99 and v1.35.0; what is new is where it is stated. Header comment only; the installed body is unchanged.
+
+### `templates/curate.md` Step 0.5 — a probe needing a literal `|` builds it with `printf '\174'` (#186)
+
+The escape rule for `|` depends on whether the claim sits in a table. Moving a row into a bullet silently turned one
+adopter's escaped `\|` into GNU BRE alternation, and the probe matched every line and could never fail. The new
+writing rule gets the character out of the line. Measured caveat: this works in BRE and with `-F`, but under
+`grep -E` the built `|` is alternation again.
+
 ### `templates/curate.md` Step 0.5 — `stampcheck` checked 3 global skills, not 4 (#200)
 
 The probe hardcoded `want="audit-context curate update-drift"` and a denominator of `3`. v1.40.0 made

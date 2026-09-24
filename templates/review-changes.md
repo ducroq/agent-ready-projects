@@ -4,6 +4,7 @@
      docs/GUIDE.md "Where a skill lives"; do not copy this file verbatim, its
      frontmatter is inside this comment. Prefer .claude/skills/review-changes/SKILL.md
      from this repo.) A project-local copy is INERT — the global one shadows it.
+     Diff an install against THAT file, never this one: the header differs by construction (#187).
      For other tools, run this as a pre-commit prompt manually.
 
      Claude Code skills require SKILL.md as the entry point inside a

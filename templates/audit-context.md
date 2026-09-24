@@ -3,6 +3,7 @@
 <!-- SAVE AS: ~/.claude/skills/audit-context/SKILL.md (Claude Code, USER-GLOBAL — see docs/GUIDE.md
      "Where a skill lives"; do not copy this file verbatim, its frontmatter is
      inside this comment. Prefer .claude/skills/audit-context/SKILL.md from this repo.)
+     Diff an install against THAT file, never this one: the header differs by construction (#187).
      For other tools, run this as an ad-hoc prompt when needed.
 
      This is a skill (/audit-context) that audits the structural health

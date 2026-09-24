@@ -4,6 +4,7 @@
      docs/GUIDE.md "Where a skill lives"; do not copy this file verbatim, its
      frontmatter is inside this comment. Prefer .claude/skills/update-drift/SKILL.md
      from this repo.)
+     Diff an install against THAT file, never this one: the header differs by construction (#187).
      For other tools, run this as a start-of-session prompt manually.
 
      Do NOT install this project-locally alongside a global copy; the local

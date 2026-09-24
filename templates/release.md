@@ -4,6 +4,7 @@
      docs/GUIDE.md "Where a skill lives"; do not copy this file verbatim, its
      frontmatter is inside this comment. In a clone, prefer
      agent-ready-projects/.claude/skills/release/SKILL.md)
+     Diff an install against THAT file, never this one: the header differs by construction (#187).
      For other tools, run this as a release-time prompt manually.
 
      The judgment it encodes is the bump decision, the part that drifts when
