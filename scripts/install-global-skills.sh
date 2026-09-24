@@ -91,8 +91,12 @@ add_detail() { detail=$(printf '%s\n%s' "$detail" "$1"); }
 
 if ! command -v git >/dev/null 2>&1; then
   unreleased="git is not available here, so the released state cannot be determined"
-elif [ "$(git rev-parse --show-toplevel 2>/dev/null)" != "$(pwd -P)" ]; then
-  # Not `--is-inside-work-tree`: that answers true for a checkout sitting INSIDE
+elif [ "$(git rev-parse --is-inside-work-tree 2>/dev/null)" != true ] ||
+     [ -n "$(git rev-parse --show-prefix 2>/dev/null)" ]; then
+  # An EMPTY prefix is what says the cwd is the work-tree root. Never compare
+  # `--show-toplevel` to `pwd -P` as strings: on Git Bash they print one
+  # directory as `C:/x` and `/c/x`, so every Windows install refused (#198).
+  # `--is-inside-work-tree` alone answers true for a checkout sitting INSIDE
   # some other repository, whose tags have nothing to do with these skills. Both
   # this arm and the one above are load-bearing for the DIAGNOSIS rather than the
   # verdict — the comparison below refuses those states anyway, with a worse

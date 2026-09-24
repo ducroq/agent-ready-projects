@@ -39,6 +39,16 @@ a zsh modifier, and a bare `$want` does not word-split there.
 **Adopters who copied the probe**: replace the whole function. `want=` now needs `$P`, so
 swapping that one line in place breaks it.
 
+### `scripts/install-global-skills.sh` — the release guard refused every Windows install (#198)
+
+The work-tree-root arm string-compared `git rev-parse --show-toplevel` to `pwd -P`. Git Bash prints
+one directory as `C:/x` from the first and `/c/x` from the second, so a clean tree sitting on its
+release tag was refused and `--force` became the only way through. The arm now asks git directly —
+inside a work tree, with an empty `--show-prefix` — and compares no path strings. Seeded as
+`N16-toplevel-spelled-differently` in `tests/fixtures/installer-release-guard/`, which fails
+against the old guard; P7 (a checkout nested in another repo) still refuses, and fails when the
+prefix arm is ablated. ⚠️ Not run on Windows: the seed simulates the mismatch with a git shim.
+
 ## v1.45.1 (2026-09-14)
 
 **PATCH.** No existing consumer has to act, and there is no new artifact — both changes are

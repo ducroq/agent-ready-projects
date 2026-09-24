@@ -306,6 +306,18 @@ done
 out=$(PATH="$root/bin" CLAUDE_SKILLS_DIR="$root/dest" "$root/bin/bash" "$root/scripts/install-global-skills.sh" 2>&1); rc=$?
 judge "$id" INSTALL "curate: installed" "$root" "$rc" "$out"
 
+# git and the shell spell the SAME directory differently — Git Bash prints
+# `C:/x` from `--show-toplevel` and `/c/x` from `pwd -P`. Simulated with a git
+# shim that answers `--show-toplevel` as `<root>/.`: the old string comparison
+# refused a clean tree at its tag, so every Windows install needed --force (#198).
+id=N16-toplevel-spelled-differently
+root="$WORK/$id"; mkdir -p "$root/bin"; mkrepo "$root"
+realgit=$(type -P git)
+printf '#!/bin/sh\n[ "$*" = "rev-parse --show-toplevel" ] && { printf "%%s/.\\n" "$(%s rev-parse --show-toplevel)"; exit 0; }\nexec %s "$@"\n' "$realgit" "$realgit" > "$root/bin/git"
+chmod +x "$root/bin/git"
+out=$(PATH="$root/bin:$PATH" CLAUDE_SKILLS_DIR="$root/dest" bash "$root/scripts/install-global-skills.sh" 2>&1); rc=$?
+judge "$id" INSTALL "curate: installed" "$root" "$rc" "$out"
+
 # No git at all. The arm measured INERT before this case existed: with git gone,
 # the work-tree-root comparison fails too and refuses anyway — so the check was
 # carrying only its message. A PATH holding everything the script needs EXCEPT
