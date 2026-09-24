@@ -64,14 +64,16 @@ exist. Three changes:
   collision is measured, per its own comment.
 - **`--ext a,b` widens it per run.** It rebuilds every regex compiled from the list and then checks
   that the new extension reaches the extractor. Setting the list alone would have left the run
-  reading like a working one, which is what the adopter's wrapper hit. A malformed value exits 64.
+  reading like a working one, which is what the adopter's wrapper hit. A malformed value exits 64;
+  an already-listed one is a no-op (it once appended an empty alternative that made every `name.` a
+  phantom finding, caught in review and seeded as N56).
 - **`REFERENCES NOT EXTRACTED` counts the cost**, printed before the findings: backticked spans
   in the audited documents that end in an unlisted extension and are path-shaped (a `/`, or an
   extension present in the tree). This repo's own `docs/GUIDE.md` shows two `.mdc` references that
   had never been checked.
 
 The exit contract is unchanged: an unextracted reference is counted, not ruled on. Seeded as T62
-and N53 (one pair per extension), T63-T65, N54 and N55. Each change was ablated and turned exactly
+and N53 (one pair per extension), T63-T65, N54, N55 and N56. Each change was ablated and turned exactly
 its own case red. T25's "outside the whitelist" link moved from `.pdf` to `.xcf`.
 
 ## v1.45.1 (2026-09-14)

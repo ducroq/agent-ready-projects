@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Reference implementation of audit-context Step 4 (reference integrity).
 
-    python3 refcheck.py [--legacy] <repo-root> <doc> [<doc> ...]
+    python3 refcheck.py [--legacy] [--sibling-root DIR] [--ext a,b] <repo-root> <doc> [<doc> ...]
 
 This exists so that a change to Step 4 can be *tested* rather than asserted.
 Run run.sh in this directory to exercise it against a fixture that seeds the
@@ -33,7 +33,8 @@ Output sections: FINDINGS (broken or ambiguous — the defects), RESOLVED BELOW
 RUNG 1 (enumerated, not defects), SKIPPED as asserted-absent, PATH SHAPES NOT
 EXTRACTED (shapes outside the population, each labelled — #122), UNCONFIRMED
 (what this run could not decide), extensions in the tree the extractor misses,
-and — only when it applies — DOCUMENTS NOT READ.
+and — only when they apply — DOCUMENTS NOT READ and REFERENCES NOT EXTRACTED
+(backticked references in an unlisted extension, counted — #199).
 The RUNG 4 COVERAGE line always prints; only its explanatory body is conditional
 on there being no neighbour (#97). On the default path a VERDICT line closes the report and
 names the exit status, so the two cannot drift apart unnoticed; `--legacy` is a
@@ -1189,13 +1190,17 @@ def main():
                 sys.exit(_usage('--ext: not an extension: %r' % e))
             extra.append(e)
         del argv[i:i + 2]
-    if extra:
-        _set_ext(EXT + '|' + '|'.join(e for e in extra if e not in EXT.split('|')))
-        # Prove it took: a widened list the regexes never saw reads exactly like
-        # a working run, which is the failure this flag exists to remove.
-        for e in extra:
-            if not PATH_RE.fullmatch('`a/b.%s`' % e):
-                sys.exit(_usage('--ext %s did not reach the extractor' % e))
+    # Only NEW names: an already-listed one appended as `EXT + '|'` left an
+    # empty alternative, and every `name.` token became a phantom finding.
+    new = [e for e in dict.fromkeys(extra) if e not in EXT.split('|')]
+    if new:
+        _set_ext(EXT + '|' + '|'.join(new))
+    # Prove it took: a widened list the regexes never saw reads exactly like
+    # a working run, which is the failure this flag exists to remove. And
+    # prove the blast radius: a bare trailing dot must still match nothing.
+    for e in extra:
+        if not PATH_RE.fullmatch('`a/b.%s`' % e) or PATH_RE.fullmatch('`a/b.`'):
+            sys.exit(_usage('--ext %s did not reach the extractor cleanly' % e))
     # #96: an UNRECOGNISED `--` argument used to be consumed as <repo-root>, the
     # real root became a source document, and the run returned `DEFECTS (exit 1)`
     # — exit 1 being the status #93 gave the meaning "a rung ruled on something".

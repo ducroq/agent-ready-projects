@@ -369,6 +369,13 @@ if printf '%s' "$EXTOUT" | sed -n '/== FINDINGS/,/^  total:/p' | grep -qF 'asset
    && ! printf '%s' "$FINDINGS" | grep -qF 'assets/art/missing_poster.xcf'; then
   printf '  PASS  T64 --ext turns a counted reference into a checked one\n'
 else printf '  FAIL  T64 — --ext xcf did not make assets/art/missing_poster.xcf a finding\n'; FAIL=1; fi
+# N56 — an --ext naming only already-listed extensions appended an EMPTY
+# alternative, and every `name.` token became a phantom (Sonnet review, #199).
+printf 'A bare trailing dot is not a path: `weird.` and `readme.`\n' > "$WORK/repo/docs/DOTS.md"
+DOTS="$(python3 refcheck.py --ext pdf,PDF,tf "$WORK/repo" docs/DOTS.md 2>&1 || true)"
+if printf '%s' "$DOTS" | grep -qE 'weird\.|readme\.'; then
+  printf '  FAIL  N56 — --ext with already-listed names made a bare trailing dot a path\n'; FAIL=1
+else printf '  PASS  N56 --ext with already-listed names changes nothing\n'; fi
 rc=0; python3 refcheck.py --ext 'x y' "$WORK/repo" CLAUDE.md >/dev/null 2>&1 || rc=$?
 if [ "$rc" = 64 ]; then printf '  PASS  N55 a malformed --ext is a usage error (64), not a verdict\n'
 else printf '  FAIL  N55 — a malformed --ext exited %s, not 64\n' "$rc"; FAIL=1; fi
