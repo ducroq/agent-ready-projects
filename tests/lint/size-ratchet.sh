@@ -171,7 +171,7 @@ if [ -n "$spill_was" ] && [ "$spill_now" -ne "$spill_was" ]; then
   d=$((spill_now - spill_was)); sign=+; [ "$d" -lt 0 ] && { sign=-; d=$(( -d )); }
   echo "      docs/rationale/ ${spill_was} -> ${spill_now} (${sign}${d}) — REPORTED, not budgeted (#131)" >&2
   if [ "$now_total" -lt "$budget" ] && [ "$spill_now" -gt "$spill_was" ]; then
-    echo "      ⚠️ the surface shrank while docs/rationale/ grew: some of this payment MOVED bytes rather than removing them. Adopters read both." >&2
+    echo "      ⚠️ the surface shrank while docs/rationale/ grew: some of this payment MOVED bytes rather than removing them. Adopters never get docs/rationale/ (rule 13), so a move out of a skill body is a real saving for them — say so if it was one, and check it was not a deletion in disguise." >&2
   fi
 fi
 [ "$issues" -eq 0 ] || exit 1

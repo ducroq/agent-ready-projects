@@ -88,6 +88,11 @@ candidate. It skips where no tag exists, which includes CI. Maintainer tooling; 
 block files named by ordinal alone, and the not-executable marker honoured anywhere in a block. Each mutant must
 still report an unclosed-fence control. Maintainer tooling.
 
+### Lint rule 8's spill warning no longer says adopters read `docs/rationale/` (#194)
+
+Rule 13 exists because adopters never get that directory. The warning still reports a shrink that moved bytes
+rather than removing them; it no longer tells the author that the move bought adopters nothing. Maintainer tooling.
+
 ## v1.45.1 (2026-09-14)
 
 **PATCH.** No existing consumer has to act, and there is no new artifact — both changes are
