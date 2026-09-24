@@ -76,6 +76,18 @@ The exit contract is unchanged: an unextracted reference is counted, not ruled o
 and N53 (one pair per extension), T63-T65, N54, N55 and N56. Each change was ablated and turned exactly
 its own case red. T25's "outside the whitelist" link moved from `.pdf` to `.xcf`.
 
+### Lint rule 18 — a release tag whose CHANGELOG.md block is still a candidate (#197)
+
+`v1.45.1` was tagged with its block still reading `(candidate, unreleased)`. `tests/lint/released-heading.sh`
+checks that every `v[0-9]*` tag (prereleases excluded) has a `## <tag>` block and that the block is not a
+candidate. It skips where no tag exists, which includes CI. Maintainer tooling; nothing an adopter installs.
+
+### Lint rule 11's fixture gains ablations (#196)
+
+`tests/fixtures/block-parses/` had none, and the lint catalog claimed two. It now has three: the parse disabled,
+block files named by ordinal alone, and the not-executable marker honoured anywhere in a block. Each mutant must
+still report an unclosed-fence control. Maintainer tooling.
+
 ## v1.45.1 (2026-09-14)
 
 **PATCH.** No existing consumer has to act, and there is no new artifact — both changes are
