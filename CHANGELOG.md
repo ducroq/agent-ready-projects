@@ -31,10 +31,13 @@ reproduced against the shipped probe: `3 global skills byte-identical to v1.45.1
 
 **The list is now derived, not restated**: read from `GLOBAL_SKILLS` in
 `scripts/install-global-skills.sh` *at the stamped tag*, and the count is taken from it. An older
-stamp is checked against the skills that were global at that version. Two new CANNOT VERIFY
-outcomes: a stamp older than the installer (v1.15.0), and an installer whose list cannot be read —
-the latter is what a future change to that line's shape produces, instead of a false PASS.
-**Adopters who copied the probe**: replace the `want=` line and the two `3`s together.
+stamp is checked against the skills that were global at that version. Three new CANNOT VERIFY
+outcomes: a tag missing from the framework clone, no installer at that tag, and an installer that
+does not set the list on exactly one `GLOBAL_SKILLS="…"` line — so a list split across a `+=` line
+refuses rather than passing on its first half. The probe also runs under zsh now: `"$P:s…"` was
+a zsh modifier, and a bare `$want` does not word-split there.
+**Adopters who copied the probe**: replace the whole function. `want=` now needs `$P`, so
+swapping that one line in place breaks it.
 
 ## v1.45.1 (2026-09-14)
 

@@ -280,23 +280,26 @@ Check for context rot from *previous* sessions. This catches what the session-fo
            grep -oE "v?[0-9]+\.[0-9]+\.[0-9]+$" | sed "s/^v*/v/")
        [ -n "$P" ] || { echo "CANNOT VERIFY: no framework stamp in CLAUDE.md"; return 2; }
        # ⚠️ DERIVE the list at the stamped tag, never restate it: a hardcoded
-       # one missed review-changes for five releases (#200).
-       git -C "$FRAMEWORK" rev-parse -q --verify "$P^{commit}" >/dev/null ||
+       # one missed review-changes for four releases (#200). `${P}`, not `$P`,
+       # before a colon — zsh reads `$P:s` as a modifier.
+       git -C "$FRAMEWORK" rev-parse -q --verify "${P}^{commit}" >/dev/null ||
          { echo "CANNOT VERIFY: $P is not in the framework clone — fetch tags"; return 2; }
-       t=$(git -C "$FRAMEWORK" show "$P:scripts/install-global-skills.sh" 2>/dev/null) ||
-         { echo "CANNOT VERIFY: $P predates the global-skills installer (v1.15.0)"; return 2; }
+       t=$(git -C "$FRAMEWORK" show "${P}:scripts/install-global-skills.sh" 2>/dev/null) ||
+         { echo "CANNOT VERIFY: no installer at $P (it predates v1.15.0, or moved)"; return 2; }
        want=$(printf '%s\n' "$t" | sed -n 's/^GLOBAL_SKILLS="\([^"]*\)".*/\1/p')
        k=$(echo $want | wc -w | tr -d ' ')
-       [ "$k" -gt 0 ] || { echo "CANNOT VERIFY: no GLOBAL_SKILLS list in $P's installer"; return 2; }
+       c=$(printf '%s\n' "$t" | grep -c '^[[:space:]]*GLOBAL_SKILLS+\{0,1\}=')
+       [ "$k" -gt 0 ] && [ "$c" = 1 ] ||
+         { echo "CANNOT VERIFY: $P's installer does not set GLOBAL_SKILLS on one line"; return 2; }
        n=0; d=0
-       for s in $want; do
+       for s in $(echo $want); do   # $(…) splits in zsh too; a bare $want does not
          i="$HOME/.claude/skills/$s/SKILL.md"
          [ -f "$i" ] || { echo "CANNOT VERIFY: $s is not installed"; continue; }
          # ⚠️ SPLIT the pipeline. Piped, a `git show` that fails — the normal
          # state right after an upstream release, stamp bumped and clone not
          # fetched — is swallowed and `diff` supplies the verdict, so the
          # re-armed probe accuses every clean install of drifting.
-         t=$(git -C "$FRAMEWORK" show "$P:.claude/skills/$s/SKILL.md" 2>/dev/null) ||
+         t=$(git -C "$FRAMEWORK" show "${P}:.claude/skills/$s/SKILL.md" 2>/dev/null) ||
            { echo "CANNOT VERIFY: $P is not in the framework clone — fetch tags"; return 2; }
          printf '%s\n' "$t" | diff -q - "$i" >/dev/null ||
            { echo "DRIFT: $s differs from $P"; d=1; }
@@ -309,7 +312,7 @@ Check for context rot from *previous* sessions. This catches what the session-fo
      stampcheck; echo "  exit=$?"
      ```
 
-     Every branch was executed, not read: clean, a seeded drift (exit 1), no stamp, skill absent, outside a repo, an unfetched tag, a stamp older than the installer. The `2>/dev/null` matters — without it git's own `fatal:` prints beside CANNOT VERIFY and reads as the failure.
+     Every branch was executed, not read: clean, a seeded drift (exit 1), no stamp, skill absent, outside a repo, `FRAMEWORK` unset, an unfetched tag, a stamp older than the installer, a list set on two lines — under bash, dash and zsh. The `2>/dev/null` matters — without it git's own `fatal:` prints beside CANNOT VERIFY and reads as the failure.
 
      ⚠️ **Compare against the REFERENCE INSTALL (`.claude/skills/<name>/SKILL.md`), never `templates/<name>.md`** — the template's `SAVE AS` comment is frontmatter in the install, a structural residue no tag clears, so every run reads as drift. **Preconditions, not universal**: a framework clone at `$FRAMEWORK`, skills installed globally.
    - **Assume nothing about the working directory.** The runner may be invoked from anywhere, and a relative command silently changes meaning when it is — `git ls-remote origin` checked a remote from the project root and, run one directory over, reported ERROR for a healthy claim. Address the target absolutely: `git -C /path/to/repo …`, absolute paths for files.
