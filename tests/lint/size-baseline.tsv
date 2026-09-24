@@ -3,7 +3,7 @@
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and every raise is
 # recorded below, oldest first — notes accumulate and are never replaced.
-# BUDGET 242270
+# BUDGET 242269
 # SPILL 60656
 # RAISED 2026-09-06 from 247526 to 247969: #133: the #118 remedy string shipped unconditional and can turn a resolved reference into an AMBIGUOUS finding; the caveat that scopes it is +443 b on templates/audit-context.md, seeded as T39/T40/N39 (reason restored 2026-09-06 — write_baseline used to overwrite each note with the next)
 # RAISED 2026-09-06 from 247969 to 248237: #140: UNRESOLVED had two causes printing one reason. +268 b on templates/audit-context.md, seeded as T41/T41b/N40 (reason restored 2026-09-06)
@@ -61,6 +61,7 @@
 # RAISED 2026-09-24 from 240776 to 240992: #199: audit-context Step 4 names the REFERENCES NOT EXTRACTED count and --ext (+216 b). Locked BEFORE its review round, because the session stop hook requires a push; review fixes will adjust it.
 # RAISED 2026-09-24 from 240992 to 241834: #186 (+347, curate Step 0.5 writing rule for a literal |) and #187 (+99 x5, one header line per skill template naming what to diff an install against). Locked after a NOT REFUTED review.
 # RAISED 2026-09-24 from 241834 to 242270: #152: verify runner names and counts timeouts, disposition row and row-count sentence (+436 b). Locked BEFORE its review round because the session stop hook requires a push; review fixes will adjust it.
+# ratcheted down 2026-09-24
 templates/README.md	12042
 templates/RUNBOOK.md	2795
 templates/adr.md	2115
@@ -71,7 +72,7 @@ templates/checklists/implement-checklist.md	1329
 templates/checklists/qa-checklist.md	1836
 templates/checklists/test-checklist.md	1234
 templates/coordination.md	3909
-templates/curate.md	56895
+templates/curate.md	56894
 templates/gotcha-log.md	8858
 templates/hypothesis-log.md	3570
 templates/memory-index.md	3396
