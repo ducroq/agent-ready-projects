@@ -31,15 +31,16 @@ reproduced against the shipped probe: `3 global skills byte-identical to v1.45.1
 
 **The list is now derived, not restated**: read from `GLOBAL_SKILLS` in
 `scripts/install-global-skills.sh` *at the stamped tag*, and the count is taken from it. An older
-stamp is checked against the skills that were global at that version. Three new CANNOT VERIFY
-outcomes: a tag missing from the framework clone, no installer at that tag, and an installer that
-does not set the list on exactly one `GLOBAL_SKILLS="…"` line — so a list split across a `+=` line
-refuses rather than passing on its first half. The probe also runs under zsh now: `"$P:s…"` was
-a zsh modifier, and a bare `$want` does not word-split there.
+stamp is checked against the skills that were global at that version. New CANNOT VERIFY outcomes:
+no installer at that tag, and an installer that assigns `GLOBAL_SKILLS` more than once — so a list
+extended by `+=`, `export`, or a second assignment on the same line refuses rather than passing on
+its first half. ⚠️ Not every shape: a loop reading a second variable (`for s in $GLOBAL_SKILLS
+$EXTRA`) still passes on the first. The probe also ran clean under zsh with its default options:
+`"$P:s…"` was a zsh modifier, and a bare `$want` does not word-split there.
 **Adopters who copied the probe**: replace the whole function. `want=` now needs `$P`, so
 swapping that one line in place breaks it.
 
-### `scripts/install-global-skills.sh` — the release guard refused every Windows install (#198)
+### `scripts/install-global-skills.sh` — the release guard refused installs under Git Bash (#198)
 
 The work-tree-root arm string-compared `git rev-parse --show-toplevel` to `pwd -P`. Git Bash prints
 one directory as `C:/x` from the first and `/c/x` from the second, so a clean tree sitting on its

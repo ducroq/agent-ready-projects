@@ -95,7 +95,7 @@ elif [ "$(git rev-parse --is-inside-work-tree 2>/dev/null)" != true ] ||
      [ -n "$(git rev-parse --show-prefix 2>/dev/null)" ]; then
   # An EMPTY prefix is what says the cwd is the work-tree root. Never compare
   # `--show-toplevel` to `pwd -P` as strings: on Git Bash they print one
-  # directory as `C:/x` and `/c/x`, so every Windows install refused (#198).
+  # directory as `C:/x` and `/c/x`, so installs there refused (#198).
   # `--is-inside-work-tree` alone answers true for a checkout sitting INSIDE
   # some other repository, whose tags have nothing to do with these skills. Both
   # this arm and the one above are load-bearing for the DIAGNOSIS rather than the
