@@ -41,6 +41,16 @@ mkdir -p records; for e in $DOCEXT; do touch "records/live_$e.$e"; done
   echo; echo 'T65 — never extracted, so counted: `assets/art/missing_poster.xcf`.'
   echo 'N54 — an identifier is not path-shaped, so not counted: `self.xcfdata`.'
 } > docs/RECORDS.md
+# #155 — one case per spelling of negated existence, and T66, the control a
+# careless widening inverts: a POSITIVE probe on a missing file stays a finding.
+{ echo '# N57-N61 / T66 — negated existence (#155)'; echo
+  echo '`docs/gone-b.md` <!-- verify: [ ! -f docs/gone-b.md ] -->'
+  echo '`docs/gone-c.md` <!-- verify: test ! -f docs/gone-c.md -->'
+  echo '`docs/gone-d.md` <!-- verify: [ ! -e docs/gone-d.md ] -->'
+  echo '`docs/gone-e.md` <!-- verify: ! [ -f docs/gone-e.md ] -->'
+  echo '`docs/gone-f.md` <!-- verify: ! test -e "docs/gone-f.md" -->'
+  echo '`docs/wanted.md` <!-- verify: [ -f docs/wanted.md ] -->'
+} > docs/NEGATED.md
 # #54/#55/#56 material. `backlog.md` exists in THREE places on purpose: next to
 # the doc that references it bare (docs/guides/), in templates/, and under
 # packages/ — so a bare basename collides at rung 2 unless the doc-relative rung

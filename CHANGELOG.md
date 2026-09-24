@@ -108,6 +108,14 @@ still report an unclosed-fence control. Maintainer tooling.
 Rule 13 exists because adopters never get that directory. The warning still reports a shrink that moved bytes
 rather than removing them; it no longer tells the author that the move bought adopters nothing. Maintainer tooling.
 
+### `refcheck.py` recognises every spelling of "this file must not exist" (#155)
+
+Only `! test -f x` was skipped as asserted-absent. `[ ! -f x ]`, `test ! -f x`, `[ ! -e x ]` and `! [ -f x ]`, the
+same assertion spelled differently, were reported as broken references on every audit. The pattern now matches the
+assertion rather than one spelling. Seeded N57–N61, one per form, all failing against the previous checker, and
+T66, the control the issue asked for: a positive probe on a missing file stays a finding. A widening that skips any
+`-f` turns T66 red. The `find`-plus-empty idiom is not covered, as the issue suggested splitting it out.
+
 ## v1.45.1 (2026-09-14)
 
 **PATCH.** No existing consumer has to act, and there is no new artifact — both changes are

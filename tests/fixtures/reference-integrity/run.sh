@@ -10,7 +10,7 @@ WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 bash build.sh "$WORK" >/dev/null
 
-DOCS="CLAUDE.md docs/RECORDS.md docs/ADVERSARIAL.md docs/MONOREPO.md docs/EXOTIC.md docs/PLACEHOLDERS.md docs/RUNG4.md docs/guides/LINKS.md templates/TEMPLATE_CLAUDE.md memory/MEMORY.md memory/gotcha-log.md docs/REMEDY.md"
+DOCS="CLAUDE.md docs/RECORDS.md docs/NEGATED.md docs/ADVERSARIAL.md docs/MONOREPO.md docs/EXOTIC.md docs/PLACEHOLDERS.md docs/RUNG4.md docs/guides/LINKS.md templates/TEMPLATE_CLAUDE.md memory/MEMORY.md memory/gotcha-log.md docs/REMEDY.md"
 # --sibling-root pins the search to the fixture. Without it the search
 # reaches the system temp dir and adopts stray repos, including fixtures
 # left behind by an interrupted run of this harness.
@@ -166,6 +166,8 @@ declare -a CASES=(
   # #199 — a link to a record was DECLINED before .pdf joined the whitelist
   # (T25's old seed); it must now be checked, and reported when broken.
   "T63 a broken link to a .pdf is now a finding|records/missing_linked.pdf"
+  # #155 — the control: a POSITIVE existence probe must not read as negated.
+  "T66 a positive probe on a missing file is still a finding|docs/wanted.md"
 )
 # #199 — one case per documents-repo extension, for #175's reason: EXT is an
 # alternation, and a misspelt alternative hides behind its neighbours.
@@ -265,6 +267,11 @@ declare -a NEG=(
   "N27 a **Deleted** markdown link stays suppressed|dlink_gone.md"
   "N28 a placeholder on a markdown link covers it|futuredoc.md"
 )
+NEG+=("N57 [ ! -f x ] is asserted-absent|docs/gone-b.md"
+      "N58 test ! -f x is asserted-absent|docs/gone-c.md"
+      "N59 [ ! -e x ] is asserted-absent|docs/gone-d.md"
+      "N60 ! [ -f x ] is asserted-absent|docs/gone-e.md"
+      "N61 ! test -e \"x\" is asserted-absent|docs/gone-f.md")
 for e in pdf docx doc xlsx xls eml msg ics tex bib cls sty odt ods jpg jpeg; do
   NEG+=("N53 a resolving .$e stays silent|records/live_$e.$e")
 done

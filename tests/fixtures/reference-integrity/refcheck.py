@@ -385,7 +385,11 @@ def _mask_spans(line):
     return SPAN_RE.sub(lambda m: ' ' * len(m.group(0)), line)
 # A `<...>` segment announces itself; `docs/work-items/<slug>.md` needs no marker.
 ANGLE_SEG_RE = re.compile(r'<[^<>/]+>')
-NEGATED_RE = re.compile(r'!\s*test\s+-f\s+`?([A-Za-z0-9_./-]+)`?')
+# #155 — the ASSERTION, not one spelling: `! test -f x`, `! [ -f x ]`,
+# `test ! -f x`, `[ ! -f x ]`, and `-e` for each. A plain `[ -f x ]` has no `!`
+# and must stay a reference (T66). The `find`-plus-empty idiom is not covered.
+NEGATED_RE = re.compile(
+    r'(?:!\s*(?:test|\[)\s+-[fe]|(?:test|\[)\s+!\s+-[fe])\s+[`"\']?([A-Za-z0-9_./-]+)')
 
 
 def _tree(root):
