@@ -20,7 +20,16 @@ n=0; bad=0
 while IFS= read -r t; do
   case "$t" in ''|*-*) continue ;; esac
   n=$((n + 1))
-  h=$(awk -v t="$t" '$1 == "##" && $2 == t { print; exit }' CHANGELOG.md)
+  # CR stripped (a CRLF file put `\r` on the tag when it was the last field), and
+  # headings inside ``` fences or <!-- --> comments skipped: this CHANGELOG
+  # quotes bad headings as examples, and the first match wins (#197 review).
+  h=$(awk -v t="$t" '
+    { sub(/\r$/, "") }
+    /^```/ { fence = !fence; next }
+    fence { next }
+    incom { if (index($0, "-->")) incom = 0; next }
+    /^[ \t]*<!--/ { if (!index($0, "-->")) incom = 1; next }
+    $1 == "##" && $2 == t { print; exit }' CHANGELOG.md)
   if [ -z "$h" ]; then
     echo "CHANGELOG.md: $t is tagged but has no '## $t' block"; bad=1
   else

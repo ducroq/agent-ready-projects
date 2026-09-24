@@ -27,6 +27,8 @@ repo "$WORK/n2" $'## v1.2.0 (candidate, unreleased)\n\n## v1.1.0 (2026-01-02)\n\
 repo "$WORK/n3" $'## v2.0.0-rc1 (candidate, unreleased)\n\n## v1.0.0 (2026-01-01)' v1.0.0 v2.0.0-rc1 wip
 repo "$WORK/n4" $'## v1.10.0 (2026-01-03)\n\n## v1.1.0 (candidate, unreleased)' v1.10.0
 repo "$WORK/s1" "$DATED"
+repo "$WORK/n5" $'## v1.0.0\r\n\n## v0.9.0 (2026-01-01)\r' v1.0.0 v0.9.0
+repo "$WORK/n6" $'# Changelog\n\nA bad heading, quoted:\n```\n## v1.0.0 (candidate, unreleased)\n```\n<!--\n## v1.0.0 (candidate, unreleased)\n-->\n\n## v1.0.0 (2026-01-01)' v1.0.0
 # c — both defects at once: each ablation must lose ITS case and keep the other.
 repo "$WORK/c" $'## v1.1.0 (candidate, unreleased)\n\n## v1.0.0 (2026-01-01)' v1.0.0 v1.1.0 v1.2.0
 
@@ -37,6 +39,8 @@ want_clean "N2 an untagged candidate block is the normal state" "$WORK/n2"
 want_clean "N3 prerelease and non-version tags are not releases" "$WORK/n3"
 # N4 — exact field match: v1.1.0's candidate block must not be read as v1.10.0's.
 want_clean "N4 v1.10.0 is not matched by the v1.1.0 heading"     "$WORK/n4"
+want_clean "N5 CRLF headings, one ending at the tag"             "$WORK/n5"
+want_clean "N6 a candidate heading quoted in a fence or comment" "$WORK/n6"
 run "$WORK/s1"
 if [ "$RC" -eq 3 ] && grep -q 'SKIPPED' "$ERR"; then printf '  PASS  S1 no release tags is SKIPPED (3), not clean\n'
 else printf '  FAIL  S1 — no tags gave rc=%s, not 3\n' "$RC"; FAIL=1; fi
