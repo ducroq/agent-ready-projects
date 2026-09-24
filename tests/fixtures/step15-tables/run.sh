@@ -167,6 +167,26 @@ want_quiet n10_kanban_fm.md     "frontmatter with a BLANK LINE before the first 
 want_exact t10_hr_table.md "t10_hr_table.md:7: row has 3 cells, table defines 2 — the excess is dropped when rendered" \
   "a leading --- is a THEMATIC BREAK: the file is well-formed and its lossy row must be reported, not silenced (#151)"
 
+# score <awk-file> — the files this program gets WRONG, by the same rule every
+# ablation uses. #161: an ablation cannot fail on a case that already fails, so
+# the unmutated program is scored first and ablations over a non-empty result
+# are UNSCORED, never PASS — a broken guard used to certify its own ablation.
+score() {
+  local got=""
+  for f in t1_lf_lossy.md t2_crlf_lossy.md t3_fm_then_table.md t4_empty_excess.md t5_header_mismatch.md t6_emphasis.md t7_unclosed_fm.md t8_fm_loses_all.md t9_fm_control.md t10_hr_table.md t11_indent_fence_fp.md n1_crlf_clean.md n2_frontmatter.md n3_fenced.md n4_glob_no_bold.md n5_bold_and_code.md n6_tier_row.md n9_bom_fm.md n10_kanban_fm.md n11_fm_comment.md n12_fm_quoted.md; do
+    o="$(awk -v F="$f" -f "$1" "$f")"
+    case "$f" in
+      t*) [ -z "$o" ] && got="$got,$f" ;;
+      n*) [ -n "$o" ] && got="$got,$f" ;;
+    esac
+  done
+  printf '%s' "${got#,}"
+}
+BASE_WRONG="$(score "$WORK/check.awk")"
+if [ -n "$BASE_WRONG" ]; then
+  printf '  FAIL  the unmutated program already gets [%s] wrong — every ablation below is UNSCORED (#161)\n' "$BASE_WRONG"; FAIL=1
+fi
+
 # Ablations. Each reverts one guard; the kill sets are MEASURED by running them.
 ablate() {
   local label="$1" old="$2" new="$3" want="$4" got
@@ -177,16 +197,9 @@ old, new = os.environ['OLD'], os.environ['NEW']
 if s.count(old) != 1: sys.exit('site occurs %d times, not once' % s.count(old))
 pathlib.Path(sys.argv[2]).write_text(s.replace(old, new))
 PY
-  got=""
-  for f in t1_lf_lossy.md t2_crlf_lossy.md t3_fm_then_table.md t4_empty_excess.md t5_header_mismatch.md t6_emphasis.md t7_unclosed_fm.md t8_fm_loses_all.md t9_fm_control.md t10_hr_table.md t11_indent_fence_fp.md n1_crlf_clean.md n2_frontmatter.md n3_fenced.md n4_glob_no_bold.md n5_bold_and_code.md n6_tier_row.md n9_bom_fm.md n10_kanban_fm.md n11_fm_comment.md n12_fm_quoted.md; do
-    o="$(awk -v F="$f" -f "$WORK/mut.awk" "$f")"
-    case "$f" in
-      t*) [ -z "$o" ] && got="$got,$f" ;;
-      n*) [ -n "$o" ] && got="$got,$f" ;;
-    esac
-  done
-  got="${got#,}"
-  if [ "$got" = "$want" ]; then printf '  PASS  ablation %s fails exactly [%s]\n' "$label" "$want"
+  got="$(score "$WORK/mut.awk")"
+  if [ -n "$BASE_WRONG" ]; then printf '  UNSCORED  ablation %s — the unmutated program is already failing\n' "$label"
+  elif [ "$got" = "$want" ]; then printf '  PASS  ablation %s fails exactly [%s]\n' "$label" "$want"
   else printf '  FAIL  ablation %s should fail [%s], failed [%s]\n' "$label" "$want" "$got"; FAIL=1; fi
 }
 

@@ -129,6 +129,13 @@ A mutation that fails to apply leaves the check unmutated, and its PASS looks ex
 instances, three from adopters applying this page. The page now names the class and three guards: prove the mutant
 applied, prove it ran, and anchor the extraction needle and print its match count.
 
+### step15-tables: ablations over an already-failing program are UNSCORED, not PASS (#161, this fixture)
+
+The unmutated program is now scored with the same rule every ablation uses. If it already gets a case wrong,
+every ablation reports UNSCORED and the suite fails. Reproduced with the BOM strip broken: the old fixture printed
+`PASS ablation A2` beside n9's FAIL in the same log, and the new one marks all ablations UNSCORED. ⚠️ Only this
+fixture's helper. Other fixtures with their own `ablate()` still have the class, so #161 stays open.
+
 ## v1.45.1 (2026-09-14)
 
 **PATCH.** No existing consumer has to act, and there is no new artifact — both changes are
