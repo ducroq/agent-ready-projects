@@ -29,11 +29,11 @@ a sentence or a table row in an existing skill or template.
 
 - **`update-drift` Step 2 (#156, #148).** A new **Superseded** outcome, for a change a later release in the same gap
   changed again. The Decline row now says to cite the upstream issue where one exists, not a version: a
-  version-pinned note goes stale on the upstream's cadence, and nothing on the adopter's side notices.
+  version-pinned note goes stale on the upstream's cadence, and nothing on the adopter's side notices. With no issue, the version is the only handle.
 - **`update-drift` Step 0 (#137), and `curate` Step 0.** A subdirectory with its own project file and stamp is a
   separate adopter. Report it and run the skill there.
 - **`update-drift` Step 1 and `release` Step 1 (#147).** A diff confined to the `framework:` stamp line is not an
-  adopter-facing change, since every release bumps it.
+  adopter-facing change, since every release bumps it. `update-drift` gives the command that tells the two apart.
 - **`release` Step 1 (#192, H-015).** Before writing `Closes #N` for an issue filed against a skill, name the
   adopter-installed file that changed. It is a question to look, not a gate.
 - **`curate` Step 0 sub-step 6 (#143).** Files the project file tells the agent to read every session are listed on

@@ -105,7 +105,11 @@ Then check the templates directory too, if the project ships one: releases habit
 
 For each stamp, read that framework's changelog and list every version between the pinned one (exclusive) and the latest (inclusive). Name the count.
 
-**Ignore a diff confined to a template's `framework:` stamp line**: every release bumps it. What usually needs reading is a change to install instructions or to a template you copied and now own.
+**Ignore a diff confined to a template's `framework:` stamp line**: every release bumps it. `0` here means stamp-only (the second `grep` drops only the `---`/`+++` headers, not an added `- bullet`):
+
+```bash
+git diff vOLD..vNEW -- templates/<file>.md | grep -E '^[-+]' | grep -Ev '^(\+\+\+|---) ' | grep -vc 'framework:'
+```
 
 Prefer a local clone if one exists (`~/repos/<framework>/CHANGELOG.md`), else the published URL. If the clone is behind its own remote, say so.
 
@@ -118,7 +122,7 @@ Every release gets exactly one of:
 | Outcome | Means | What it must carry |
 |---------|-------|--------------------|
 | **Adopt** | Lands as a concrete change here | Which file(s), and what the change is |
-| **Decline** | Applies, but this project shouldn't take it | **The reason.** This is the load-bearing one. Cite the upstream issue where one exists, not a version: a version-pinned note goes stale on their cadence, unnoticed |
+| **Decline** | Applies, but this project shouldn't take it | **The reason.** This is the load-bearing one. Cite the upstream issue where one exists, not a version: a version-pinned note goes stale on their cadence, unnoticed. With no issue, the version is the only handle |
 | **Not applicable** | No counterpart surface in this project | Which surface is missing |
 | **Already in force** | The behaviour is present but undocumented here | What to correct in the docs |
 | **Superseded** | A later release in this same gap changed it again | Which release. Triage that one instead |
