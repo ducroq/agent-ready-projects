@@ -378,6 +378,29 @@ if printf '%s' "$EXTOUT" | sed -n '/== FINDINGS/,/^  total:/p' | grep -qF 'asset
    && ! printf '%s' "$FINDINGS" | grep -qF 'assets/art/missing_poster.xcf'; then
   printf '  PASS  T64 --ext turns a counted reference into a checked one\n'
 else printf '  FAIL  T64 — --ext xcf did not make assets/art/missing_poster.xcf a finding\n'; FAIL=1; fi
+# #154 — resolutions inside a GITIGNORED directory are listed, never ruled.
+# T68: a build tree answering a lookup is listed under its ignored directory.
+# N62: a TRACKED file inside an ignored directory is not (check-ignore skips the
+# index) — the control a blanket-ignore rule gets wrong. N63: no finding either
+# way, so the exit is unchanged. N64: outside git the section says so.
+IG="$WORK/ig154"; mkdir -p "$IG/.next/types" "$IG/dist" "$IG/src"
+( cd "$IG" && git init -q . && git config user.email f@x && git config user.name f
+  printf '.next/\ndist/\n' > .gitignore; touch .next/types/routes.d.ts dist/app.js src/ok.ts
+  git add .gitignore src && git add -f dist/app.js && git commit -qm x
+  printf '`.next/types/routes.d.ts` and `dist/app.js` and `src/ok.ts`\n' > D.md )
+IGO="$(python3 refcheck.py --sibling-root "$IG" "$IG" D.md 2>&1)"; igrc=$?
+IGS="$(printf '%s' "$IGO" | sed -n '/RESOLVED INSIDE A GITIGNORED/,/total:/p')"
+if grep -qE '^  \.next/ +1 reference' <<<"$IGS"; then printf '  PASS  T68 a build tree answering a lookup is listed under its ignored directory\n'
+else printf '  FAIL  T68 — .next/ is not listed in the gitignored-directory section\n'; FAIL=1; fi
+if grep -qF 'dist/' <<<"$IGS"; then printf '  FAIL  N62 — a TRACKED file inside an ignored directory was listed\n'; FAIL=1
+else printf '  PASS  N62 a tracked file inside an ignored directory is not listed\n'; fi
+if [ "$igrc" -eq 0 ]; then printf '  PASS  N63 listing is not ruling: the run stays CLEAN (exit 0)\n'
+else printf '  FAIL  N63 — the listing changed the exit status to %s\n' "$igrc"; FAIL=1; fi
+NG="$WORK/ng154"; mkdir -p "$NG"; touch "$NG/x.md"; printf '`x.md`\n' > "$NG/D.md"
+if python3 refcheck.py "$NG" D.md 2>&1 | grep -qF 'GITIGNORED DIRECTORY: not checked (not a git work tree)'; then
+  printf '  PASS  N64 outside git the section says it did not check\n'
+else printf '  FAIL  N64 — outside git the section is silent\n'; FAIL=1; fi
+
 # N56 — an --ext naming only already-listed extensions appended an EMPTY
 # alternative, and every `name.` token became a phantom (Sonnet review, #199).
 printf 'A bare trailing dot is not a path: `weird.` and `readme.`\n' > "$WORK/repo/docs/DOTS.md"

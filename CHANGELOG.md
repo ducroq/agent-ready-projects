@@ -61,6 +61,17 @@ means something only over an otherwise-green run. Seeded by breaking released-he
 and A1, which would have printed PASS beside it, now prints UNSCORED. Hand-written ablations outside a helper
 (dollar-digit's A8, for one) are not covered. Maintainer tooling.
 
+### `refcheck.py`: references that resolve inside a gitignored directory are listed (#154)
+
+A generated build tree (`.next/`) answers lookups on the author's disk and not in CI: a false resolution, or a false
+COLLISION when it holds a second copy. Git cannot tell that apart from project state kept out of git on purpose
+(`memory/`), and a fix keyed on "ignored" was reverted on 2026-09-14 after it turned 27 findings into 87. So this
+lists instead of ruling. A new section groups every rung-1, 1b and 2 resolution (and every collision candidate) that
+landed inside a gitignored directory under the shortest ignored ancestor. The reader decides which is build output.
+There are no new findings and the exit code is unchanged. `git check-ignore` skips tracked files, so a tracked
+`dist/` is not listed, and outside a git work tree the section says it did not check. Seeded T68 and N62–N64; N62
+fails when the tracked-file exemption is ablated. Rung 4 (sibling repos) is not covered.
+
 ## v1.46.0 (2026-09-25)
 
 **MINOR.** Cuts what adopters pay per run: `curate` goes from 56.9k to about 25k characters and
