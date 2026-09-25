@@ -404,7 +404,9 @@ if python3 refcheck.py --sibling-root "$IG" "$IG" E.md 2>&1 | grep -qE '^  \.nex
 else printf '  FAIL  N65 — an out-of-tree path collapsed the gitignored-directory section\n'; FAIL=1; fi
 # N64 — outside git, and with NOTHING resolving: the section must still say so.
 NG="$WORK/ng154"; mkdir -p "$NG"; printf 'no references here\n' > "$NG/D.md"
-if python3 refcheck.py "$NG" D.md 2>&1 | grep -qF 'GITIGNORED DIRECTORY: not checked (not a git work tree)'; then
+# GIT_CEILING_DIRECTORIES, or a repo anywhere above $WORK makes this a work tree:
+# CI failed N64 twice on exactly that (the checker was right; the case was not).
+if GIT_CEILING_DIRECTORIES="$WORK" python3 refcheck.py "$NG" D.md 2>&1 | grep -qF 'GITIGNORED DIRECTORY: not checked (not a git work tree)'; then
   printf '  PASS  N64 outside git the section says it did not check\n'
 else printf '  FAIL  N64 — outside git the section is silent\n'; FAIL=1; fi
 
