@@ -3,7 +3,7 @@
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and every raise is
 # recorded below, oldest first — notes accumulate and are never replaced.
-# BUDGET 179790
+# BUDGET 180945
 # SPILL 169962
 # RAISED 2026-09-06 from 247526 to 247969: #133: the #118 remedy string shipped unconditional and can turn a resolved reference into an AMBIGUOUS finding; the caveat that scopes it is +443 b on templates/audit-context.md, seeded as T39/T40/N39 (reason restored 2026-09-06 — write_baseline used to overwrite each note with the next)
 # RAISED 2026-09-06 from 247969 to 248237: #140: UNRESOLVED had two causes printing one reason. +268 b on templates/audit-context.md, seeded as T41/T41b/N40 (reason restored 2026-09-06)
@@ -84,6 +84,7 @@
 # RAISED 2026-09-25 from 178349 to 178742: #163: the frontmatter comment states its lost-detection cost instead of denying it
 # RAISED 2026-09-25 from 178742 to 179556: #183 truth pass over constraint rows and #114 sentinel survival check, both in curate
 # RAISED 2026-09-25 from 179556 to 179790: mawk-portable 3-space strip in Step 1.5, with its reason
+# RAISED 2026-09-25 from 179790 to 180945: #178 gotcha-log archive procedure (retirement destination)
 templates/README.md	12042
 templates/RUNBOOK.md	2795
 templates/adr.md	2115
@@ -95,7 +96,7 @@ templates/checklists/qa-checklist.md	1836
 templates/checklists/test-checklist.md	1234
 templates/coordination.md	3909
 templates/curate.md	26595
-templates/gotcha-log.md	9113
+templates/gotcha-log.md	10268
 templates/hypothesis-log.md	3570
 templates/memory-index.md	3396
 templates/project-file.md	6695

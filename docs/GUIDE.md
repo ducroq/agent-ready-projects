@@ -376,7 +376,7 @@ This isn't daily reading. It's a searchable archive. When an agent (or you) hits
 A concrete example: "staging migration fails with timeout" appears in the gotcha log. After it comes up in three sessions, it gets promoted to `infrastructure.md` as "if staging migrations time out, run them with `--lock-timeout=60s` — the shared database has long-running queries." After it affects deployments, data backfills, and test setup, it gets promoted to the memory index as a universal gotcha.
 
 **The retirement pattern**: Promotion moves lessons upward. Retirement moves them out. At end-of-session curation, the agent flags candidates for retirement — you review and confirm:
-- Gotchas whose root cause is fixed → mark resolved in the log (don't delete — it's history)
+- Gotchas whose root cause is fixed → mark resolved in the log (don't delete — it's history). Once a grep of the log mostly returns resolved entries, move the resolved ones from before the current month to `gotcha-log-archive.md` beside it; the procedure and its checks are in `templates/gotcha-log.md`
 - Topic file entries describing behavior that was refactored away → remove
 - Memory index entries fully encoded in the project file or in the code itself → remove from memory, they've reached their permanent home
 - Monthly: the agent audits all memory files and proposes a batch of retirements. Pruning should keep pace with growth.
