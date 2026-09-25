@@ -19,9 +19,7 @@ Pre-commit review of pending changes. Scope and depth are driven by what changed
 
 ## Step 1 — Diff and classify
 
-Resolve the review baseline first — **every command in this step depends on it.**
-
-**The baseline is the default branch — `@{u}` only on the default branch itself.** On a branch that is committed and pushed but not merged — the commonest state in which anyone wants a pre-merge review — `@{u}` is *empty*, because the upstream exists and is current. Every `@{u}`-derived term then reports zero and the step reads as "nothing to review" on a whole PR. Resolve it once, **here, before anything else in this step**, and reuse it everywhere below — the tier table, the magnitude gate and Step 1.5 all read `$BASE`:
+Resolve the baseline first; everything below reads `$BASE`. It is the default branch — `@{u}` only on the default branch itself, since on a pushed, unmerged branch `@{u}` is empty.
 
 ```bash
 # Every arm ends in a success, or `set -e` aborts before the fallback that is the
@@ -82,55 +80,31 @@ git -C "$(git rev-parse --show-toplevel)" -c core.quotePath=false \
     ls-files --others --exclude-standard    # untracked, not ignored
 ```
 
-**Resolving a name is not enough — it has to resolve to a commit.** A ref can look fine and diff to nothing. That is why the block validates `^{commit}` and, on failure, falls back to the root commit and says so: an unresolved baseline and a clean tree produce identical output.
+**Run Step 1.5 in the same shell invocation as this block**; a fresh shell does not inherit `$BASE`.
 
-The loop covers the cases where `origin/HEAD` is absent: `git init` + `git remote add` with no fetch, and older git. ⚠️ It does **not** cover a remote whose default branch is neither `main` nor `master` *and* whose `origin/HEAD` is unset: a repo defaulting to `develop` falls through to the root-commit fallback, which reviews everything **except the root commit's own content** — see the fallback's own comment; it is a fallback rather than the intended path, and it under-reports rather than over-reporting (#149).
+List the changed files with `git diff --stat "$BASE"...HEAD`, `git diff --stat`, `git diff --cached --stat`, `git diff --summary -M "$BASE"...HEAD` (renames, modes, binaries and submodules are invisible to `--stat`) and `git ls-files --others --exclude-standard` — an untracked file is a changed file and gets a tier.
 
-⚠️ **`$BASE` lives in a shell, and Step 1.5 needs it. Run Step 1.5's blocks in the same shell invocation as this one** — paste them together, or re-run this block at the top of that shell. A tool call that starts a fresh shell does not inherit it, and Step 1.5 is written to abort rather than proceed with the term missing. That abort is the intended behaviour: the alternative is Step 1.5 quietly reviewing a fraction of the change, which is #64 one step later.
+**Read `.claude/review-profile.md` now.** It holds this project's risk tiers, guarantee surfaces, test baseline and carve-outs, plus three optional, additive sections: **Project lenses** and **Project additions to the shipped lens prompts** (used in Step 2), and **Project procedure kept with the profile** (run it here). A profile without them (written before v1.43.0) is not an error.
 
-Now run `git diff --stat "$BASE"...HEAD`, `git diff --stat` and `git diff --cached --stat` to see the changed files, `git diff --summary -M "$BASE"...HEAD` alongside them, and `git ls-files --others --exclude-standard` for the ones git has not seen — **an untracked file is a changed file and gets a tier like any other** (#145). That was #64 surviving its own fix in the place nobody re-read. **`--stat` alone cannot see a mode change, a rename, a submodule, or a binary** — all four render as zero or near-zero lines, and three of them are carve-outs below. A carve-out you cannot observe is not in force; `--summary` without the baseline term cannot observe any of them on a pushed branch. Classify each changed file into a risk tier:
+**If `.claude/review-profile.md` does not exist, STOP and say so** — do not proceed on defaults or invent a table, since every path would fall through to LOW. Point the reader at `templates/review-profile.md` in the framework.
 
-**Read `.claude/review-profile.md` now** — it holds this project's risk tiers,
-guarantee surfaces, test baseline, carve-outs, and three optional sections a
-project may add (#166): **Project lenses** and **Project additions to the shipped
-lens prompts**, both read in Step 2, and **Project procedure kept with the profile**,
-which you read HERE if it is present — it holds local checks the project wants
-run that are procedure rather than data. All three are additive and never replace
-what ships; a profile written before v1.43.0 has none of them, which is not an
-error. The tier table is **not** in this skill,
-deliberately: this file ships identically to every project, and a table of one project's
-paths silently classifies every other project's changes as LOW.
-
-⛔ **If `.claude/review-profile.md` does not exist, STOP and say so. Do not proceed on
-defaults, and do not invent a table.** There is no safe default: with no profile every path
-falls through to LOW, which is the one outcome indistinguishable from a review that ran and
-found the change unimportant. Report the missing profile as the result, and point the reader
-at `templates/review-profile.md` in the framework. Refusing is cheap; a silently-LOW battery
-on a HIGH change is what this skill exists to prevent.
-
-Classify each changed file using the profile's tier table, then apply the magnitude gate below.
-⚠️ **The gate's carve-outs are part of THIS file and always apply**; a profile may add to them
-but never remove one.
+Classify each changed file using the profile's tier table, then apply the magnitude gate. Its carve-outs always apply; a profile may add to them but never remove one.
 
 ### Magnitude gate
 
-The tier above is set by *path*. Depth is also set by *size* — but size is the weaker signal, so the exceptions are stated first and override everything below them.
+**Always full depth, regardless of size:**
 
-**Always full depth, regardless of size.** Each of these is dangerous *because* it is small, and each would otherwise slip through on line count alone:
-
-- **`.gitignore`** — see the paragraph above; one line has exposed private content in a public repo.
-- **Renames and moves** — `git diff --stat` reports `0 insertions(+), 0 deletions(-)` under `-M`, while every reference to the old path breaks.
-- **Permission changes** — also zero insertions and deletions, and invisible without `--summary`. A `chmod -x` on a shipped script makes it unrunnable for everyone downstream.
-- **Binary files and submodule pointers** — the other two members of the zero-line class. A submodule bump changes one line and can move an arbitrary amount of code.
-- **Any change to a shell script or an executable, wherever it lives** — `scripts/**` and `tests/**` are both HIGH because they are code that runs on someone else's machine, and shell breaks in one character. A small edit would otherwise lose the shell-correctness lens, which is the reason those paths are HIGH at all.
-- **Any non-frontmatter edit to a reference install** (`.claude/skills/**`) — HIGH because a defect there ships to every install derived from it; that is as true of a three-line body edit as of a frontmatter one.
+- **`.gitignore`** — one line can expose private content in a public repo.
+- **Renames and moves** — zero lines under `-M`, while every reference to the old path breaks.
+- **Permission changes** — zero lines, visible only with `--summary`. A `chmod -x` makes a shipped script unrunnable downstream.
+- **Binary files and submodule pointers** — a submodule bump changes one line and can move any amount of code.
+- **Any change to a shell script or an executable, wherever it lives** — shell breaks in one character, and a small edit would otherwise lose the shell-correctness lens, which is the reason those paths are HIGH at all.
+- **Any non-frontmatter edit to a reference install** (`.claude/skills/**`) — a defect there ships to every install derived from it.
 - **Frontmatter edits to those same files** — removing one `---` silently unregisters a skill.
+- **A new executable, or any new file in a HIGH path** — its tier has not been decided yet.
+- **Any diff that removes or loosens a check** — a deleted guard, a weakened assertion, a broadened exclusion. Loosenings are characteristically a handful of lines.
 
-  *Both bullets used to end a bolded phrase with a `**`-suffixed glob, and prettier corrupts that shape. **The rule worth remembering is the shape** — never end a bolded phrase with such a glob; put the path in a parenthetical, as above. Step 1.5 reports the TWO-token form of it and is silent on the one-token form, so the check is a backstop and **the shape is the thing to remember** (#151).*
-- **A new executable, or any new file in a HIGH path** — the tier for new content has not been decided yet.
-- **Any diff that removes or loosens a check** — a deleted guard, a weakened assertion, a broadened exclusion. Loosenings are characteristically a handful of lines, and this is the class the seeded-true-positives rule exists for.
-
-**Otherwise size sets the depth.** Size means the whole change that will land, not the slice in front of you — 10 lines committed locally plus 15 staged is a 25-line change, and reviewing each half on its own means nothing ever sees the whole. `$BASE` is already resolved at the top of this step; do not resolve it again.
+**Otherwise size sets the depth** — the whole change that will land, all four terms together:
 
 ```bash
 git diff --shortstat "$BASE"...HEAD    # committed on this branch
@@ -149,8 +123,7 @@ git -C "$(git rev-parse --show-toplevel)" ls-files -z --others --exclude-standar
   awk '{ n += $(1) } END { print n + 0, "untracked lines" }'
 ```
 
-
-Line count is a proxy, and in these templates a weak one — they are written one sentence per line, so replacing two dense normative paragraphs is four changed lines while a whitespace reflow is a hundred. **When the line count and your read of the change disagree, the line count is wrong.** Escalate.
+When the line count and your read of the change disagree, the line count is wrong: escalate.
 
 | Changed lines | Depth |
 |---------------|-------|
@@ -158,21 +131,15 @@ Line count is a proxy, and in these templates a weak one — they are written on
 | **20–200** | Path tier as above |
 | **> 200** | Full battery, whichever tier the paths fall in |
 
-Run that single pass in a **fresh context** — a subagent if your tool provides them, otherwise a separate pass that re-reads the diff from scratch. Reviewing your own edit in the context that produced it is the self-certification failure this skill exists to prevent; the saving comes from running *one* independent reviewer instead of four, not from dropping independence.
+Run the single pass in a **fresh context** (a subagent, or a pass that re-reads the diff from scratch), never in the context that wrote the change. If only LOW files changed and the gate does not escalate, run Step 1.5, one adversarial pass, then Step 3. Where gate and tier disagree, the gate wins.
 
-The gate changes how many lenses run. It never changes *whether* a change is reviewed — every diff still gets at least one adversarial pass.
+**A changed file matching no pattern is MEDIUM — HIGH if executable or copied into an adopter's tree — and is named under "Unclassified" in the report**, even when a HIGH file makes the tier moot.
 
-If only LOW files changed **and the gate above does not escalate**, run Step 1.5, then do a single adversarial pass and skip to Step 3. Step 1.5 is never skipped — it is deterministic and costs nothing, and LOW is where the memory files that motivated it live. The gate wins where the two disagree: a 400-line change to `memory/**` is still a large change, and tier is about blast radius, not size.
-
-**If a changed file matches no pattern, treat it as MEDIUM, and name it in the report under "Unclassified" even when a HIGH file in the same diff makes the tier moot.** The naming is the point: an unrecognized path is usually new shipped content whose tier nobody has decided yet, and it will keep arriving un-triaged until someone adds a row. Do not silently drop it, and do not default it to LOW. **If it is executable or is copied into an adopter's tree, escalate it to HIGH rather than leaving it at MEDIUM** — MEDIUM omits both the guarantee-preservation and shell-correctness lenses, which are exactly the two that shipped content needs.
-
-If no files changed, report "nothing to review" and stop — but only after `$BASE` resolved **and the block printed neither a `BASELINE UNRESOLVED` nor a `HEAD IS CONTAINED IN` line**. ⚠️ **The second is the state with no other tell** (#153): the baseline resolves, `^{commit}` passes, no fallback fires, and every term is legitimately empty because HEAD is already in the baseline — so three unreviewed commits report as a clean review. Key on the printed line there too; it is a finding, not a pass. ⚠️ Key on the printed line, not the variable: a fallback baseline *resolves* while excluding the root's own content, so an empty result there is the unresolved-baseline finding, and `git show --stat <root>` is what shows you what the diff omitted (#149). A clean tree because everything is merged and a clean tree because the work is already pushed are indistinguishable from `git diff` alone, and the second is a full PR. If the baseline could not be resolved, that is the finding; report it instead of a clean result.
+If no files changed, report "nothing to review" and stop — unless the block printed `BASELINE UNRESOLVED` or `HEAD IS CONTAINED IN`, which is a finding, never a clean result.
 
 ## Step 1.5 — Structural pre-check
 
-Runs at **every tier and every magnitude**, before any lens, on every changed markdown file — the single-adversarial-pass gate above trims lenses, not this. It is deterministic, so it costs nothing to run and does not need a model to evaluate, which is the reason it is a step rather than a lens.
-
-The lenses below all read *content*: does this path exist, is this flag right, what would a future session do wrong. None of them asks whether the file is still **valid markdown** after the edit. That gap matters disproportionately here, because the memory layer is predominantly wide tables — inventories, index files, machine lists — where a row is one very long line. A `|` added inside a cell (a regex like `'recordfail|initrdfail'`, an `||` in a shell fragment, an alternation in a note) pushes cells past the end of the table, and **GFM drops the excess silently**. It reads fine as prose in the diff and is wrong only when rendered, so a human reviewer and an adversarial lens both pass it.
+Runs at **every tier and every magnitude**, before any lens, on every changed markdown file. It catches markdown that reads fine in the diff but renders wrong — chiefly a `|` in a table cell, whose excess cells GFM drops silently.
 
 ```bash
   : "${BASE:?run the Step 1 baseline block in THIS shell invocation — a fresh shell does not inherit it}"
@@ -280,19 +247,16 @@ The lenses below all read *content*: does this path exist, is this flag right, w
 done
 ```
 
-The file list is the union of unstaged, staged, **everything committed on this branch**, and **untracked** — `git diff` in any form never lists a file git has not seen, and a brand-new document is where fresh corruption is most likely. `core.quotePath=false` is load-bearing: git otherwise renders a non-ASCII path as `"caf\303\251.md"`, which does not end in `.md`, so the file is dropped from both the check and the count with no error.
+Fix every hit before running the lenses:
 
-**The delimiter row defines the table, and only *excess* cells are reported.** GFM inserts empty cells when a row is short and discards them when a row is long, so a short row renders exactly as intended and is not a defect — a section-divider row like `| **PART ONE** |` inside a wide table is idiomatic, not corruption. A long row loses data.
+- *Row with excess cells*, or *header that disagrees with its delimiter row*: escape as `\|` (inside backticks too), or move the command out of the table.
+- *Unclosed code fence*: close it.
+- *Two backticked tokens abutting the bold marker inside one bold span*: separate them, or take one out of the bold run.
+- *Unclosed YAML frontmatter*: no check ran on any line of that file. Close the delimiter and **run Step 1.5 again**.
 
-Hits come in five shapes: a row whose excess cells are discarded, a header that disagrees with its own delimiter row (which means GFM renders no table at all), an unbalanced code fence, two backticked tokens abutting `**` inside one bold span, and a frontmatter that opens and never closes. Fix each before running the lenses, **with the repair its shape calls for.** *Row and header*: escape as `\|`, or move the command out of the table — this includes pipes inside backticks, since GFM splits a row into cells *before* it parses inline content and its spec says so explicitly, so a `|` in an inline-code span breaks the row exactly like a bare one. *Fence*: close it. *Emphasis*: separate the two backticked tokens, or take one out of the bold run. ⚠️ *Frontmatter*: this one is a **denominator signal**, not a table defect — no check ran on any line of that file, so close the delimiter and **run Step 1.5 again**. Until you do, that file's real findings are unknown (#144, #150).
+Treat a row hit as real until you have looked at it. Known false positives: a setext heading, a spaced `- - -`, frontmatter not at line 1, a table inside a fenced block indented four or more spaces, and unrecognised frontmatter whose closing `---` reads as a delimiter row. Do not "fix" those. **Known blind spots:** tables in blockquotes or with no delimiter row, the one-token emphasis form; a lone-CR file can go **entirely silent**. Before widening any of these trades, read <https://github.com/ducroq/agent-ready-projects/blob/master/docs/rationale/review-changes.md> <!-- lint-skip: maintainer-path — a URL, not a repo-relative path: it resolves for a reader with no such directory. -->.
 
-**Treat a hit as real until you have looked at it, not as proven** — this applies to the *row* shape, the only one with a documented false-positive class. A row hit says the row supplies more cells than the delimiter defines, which is a loss only when those cells carry content, and it says nothing about whether you are looking at a table at all: a setext heading, a spaced `- - -` break and frontmatter that does not begin at line 1 can each report (#52).
-
-**Known blind spots, so a clean result is not read as more than it is.** Tables inside blockquotes are not examined, nor is a table whose delimiter row is missing — this finds lossy rows in well-formed tables and is not a markdown validator. The emphasis guard is a **backstop, not coverage**: it needs two risky tokens in one bold run, the one-token form goes unreported, and prose *quoting* the shape can itself report (#151, #158, #159). A fenced block indented four or more spaces is scanned as markdown, so a table inside it can report — a *documented* false positive, not an unfixed one (#150) — and frontmatter is the same trade: one whose first deciding line is a block sequence, a `%YAML` directive or a spaced key is not recognised, and its closing `---` can report as a delimiter row. **Lone CR is the one that matters**: awk sees the file as a single record, and with anything above the first fence the file goes **entirely silent**, which is indistinguishable from a clean run.
-
-⚠️ **Three attempts to widen the fence rule each bought a worse class. The attempts, and what each cost, are in <https://github.com/ducroq/agent-ready-projects/blob/master/docs/rationale/review-changes.md> <!-- lint-skip: maintainer-path — a URL, not a repo-relative path: it resolves for a reader with no such directory. --> before touching any of these trades.**
-
-The command prints nothing on a clean run — which is also what it prints when the file list was empty. **Report the count alongside the result** so the two are distinguishable:
+A clean run and an empty file list both print nothing, so **report the count alongside the result:**
 
 ```bash
   : "${BASE:?run the Step 1 baseline block in THIS shell invocation — a fresh shell does not inherit it}"
@@ -303,18 +267,13 @@ The command prints nothing on a clean run — which is also what it prints when 
   sort -u | grep -c '\.md$'
 ```
 
-That count is files *in scope*, not files you edited: the baseline term includes everything committed on this branch, and `ls-files --others` includes every untracked markdown in the tree. If it is zero while the Step 1 diff listed markdown files, the pipeline is broken — not the changes clean. It reads `$BASE` from Step 1, **in the same shell**: an unset `$BASE` aborts this pipeline rather than dropping its largest term, so a fresh shell gives you a loud failure and not a small number.
+If it is zero while Step 1 listed markdown files, the pipeline is broken, not the changes clean.
 
 ## Step 2 — Execute review lenses
 
-For each lens, spawn a subagent with the specific prompt below. Run lenses concurrently.
+For each lens, spawn a subagent with the prompt below; run lenses concurrently. Also run the profile's `Project lenses`, and append its `Project additions to the shipped lens prompts` to the matching prompts.
 
-**Run the profile's `Project lenses` too, and append its `Project additions to the shipped lens
-prompts` to the matching prompts** (#166). They are additive: a project lens never replaces one below, and a
-project addition never replaces the shipped text it extends. A profile with neither section
-runs exactly the set below.
-
-**Invariant: every path with a guarantee must sit in the profile's HIGH row.** The lens is HIGH-gated, so a guarantee on a lower-tiered path can *never* fire — and the report renders that as a clean pass, a silent failure that looks like success. Both halves live in `.claude/review-profile.md`, so check it inside one file, and in the direction that catches it: read each guarantee entry, then find its tier. If a path does not deserve HIGH, it does not deserve a guarantee entry.
+**Every path with a guarantee must sit in the profile's HIGH row**, or the HIGH-only lens never fires on it. Check each guarantee entry's tier.
 
 ### Lens: guarantee-preservation (HIGH only)
 
@@ -427,7 +386,7 @@ Report: SHELL OK or SHELL ISSUE, with specific bug if found.
 
 ## Step 3 — Synthesize
 
-Combine all lens reports. Structural hits from Step 1.5 do not enter this table — they were fixed before the lenses ran; carry their count into the Step 4 summary instead. A hit you deliberately left unfixed enters here as a BLOCKER with the lens recorded as `structural`, and the summary count still includes it.
+Combine all lens reports. Step 1.5 hits were fixed before the lenses ran; carry their count into the Step 4 summary. A hit you deliberately left unfixed enters here as a BLOCKER with lens `structural`.
 
 For each finding:
 - **Severity**: BLOCKER (must fix before commit) / WARNING (should fix) / NOTE (consider)
@@ -441,20 +400,12 @@ If only WARNING/NOTE: recommend the user review and decide.
 
 ## Step 3.1 — Mechanization triage
 
-Run this on the findings already in context. It spawns no subagent and needs no new context — it costs the output tokens of the triage itself and nothing more.
+No subagent. For **each** finding, answer: **could a deterministic check have found this?**
 
-For **each** finding, answer one question: **could a deterministic check have found this?**
+- **Yes** — name what it greps, parses or runs, and the file it lands in.
+- **No** — say why, in four words or fewer (`needs intent`, `one-off`, `judgment call`). A blank is not an answer.
 
-- **Yes** — name what it greps, parses or runs, and the file it lands in. A shape you can state in one sentence is usually scriptable; one that needs the diff's intent is not.
-- **No** — say why, in four words or fewer (`needs intent`, `one-off`, `judgment call`). A blank is not an answer; it is indistinguishable from a finding nobody triaged.
-
-⚠️ **Naming a check is not writing one, and the row is not done until the check fires on a seeded case.** A check that has never caught anything is indistinguishable from one that does not work — the method is at <https://github.com/ducroq/agent-ready-projects/blob/master/docs/seeded-defects-and-ablations.md> — a URL, not a repo-relative path: this skill is user-global and runs with the cwd of whatever repo is under review, where `docs/` is someone else's tree. Record the named check in the gotcha log's **Mechanized** table as `proposed` — the log is wherever your project keeps it (`memory/gotcha-log.md`, `docs/gotcha-log.md`; `templates/README.md` has the map). It becomes `live` only once a seeded positive has made it go red.
-
-⚠️ **Ask what the check measures, not only what it reports, and beware the one that measures something ADJACENT to the claim** — byte size standing in for content, a file *listed* standing in for a file *changed*, a printed verdict word standing in for an exit status. A guard that measures nothing looks wrong and never ships; one that measures the neighbouring thing returns a plausible number and does. **State what a positive looks like, then produce one.**
-
-⚠️ **Mark a `proposed` row's check path with `<!-- placeholder -->`, immediately after the path and in the same cell** — `` `tests/lint/count-commands.sh` <!-- placeholder --> ``. It covers the nearest path *before* it, so a marker further along the row binds to whatever path came last — harmless in a bare row whose trailing cells hold no path, wrong the moment one does. The file does not exist yet, so a reference-integrity audit reports a path that does not resolve; the marker is what tells the auditor this is a declared placeholder rather than a dead link. Without it every proposed row becomes a standing false finding, which trains readers to dismiss that audit. ⚠️ **That exact marker, no other** — one the reading end was never taught is worse than none, because it stops the author looking while the finding is still in the list.
-
-**Why a step and not advice.** A finding that becomes a check is paid once; a finding that stays a finding is paid every round, forever, at full lens price. It is the one lever that *plausibly* makes review cheaper **and** better rather than trading one against the other — the axes you might cut instead (lenses, independence) each have measured evidence they buy something, and round count is the one axis nothing here contradicts. ⚠️ **This lever itself is unmeasured**: an expectation, not a result.
+Record each named check in the gotcha log's **Mechanized** table as `proposed`, with `<!-- placeholder -->` right after its path in the same cell (`` `tests/lint/count-commands.sh` <!-- placeholder --> ``) so a reference audit does not report it dead. It becomes `live` only once a seeded positive has made it go red (<https://github.com/ducroq/agent-ready-projects/blob/master/docs/seeded-defects-and-ablations.md>). Check it measures the claim, not something adjacent (bytes for content, a file listed for a file changed).
 
 ## Step 4 — Report
 
@@ -495,30 +446,22 @@ was skipped.]
 - **Verdict**: [READY TO COMMIT | FIX BLOCKERS FIRST | REVIEW WARNINGS]
 ```
 
-The Unclassified list is not cosmetic and is not made moot by a HIGH file elsewhere in the same diff. An unrecognized path is usually new shipped content whose tier nobody has decided yet; naming it is what gets a row added, and until someone adds one it will keep arriving un-triaged.
-
 ## Step 5 — Fixing, and whether to run another round
 
-**Reviewing is not where the cost is. Fixing is.** In this framework's own ledger, a large share of findings classified `missed` or `introduced` were defects the previous round's own fixes created. **Re-derive it, never quote it** — note `$(N)`, not `$N`, or the substituter eats the field refs (#77): `awk -F'\t' '$(1)~/^2026-/{f+=$(9); i+=$(12); m+=$(11)} END{print i, m, f}' <ledger>`. ⚠️ Seeded-benchmark rows carry `introduced` 0 by construction, so the whole-ledger ratio is low for a reason that has nothing to do with fixing. **A round cap does not remove the defects fixing creates; it ships them.**
+Fixing is a major source of new defects.
 
-- **A fix is a change, and takes the tier of the file it lands in.** Treating it as a correction too small and too well-understood to re-read is self-certification in miniature: small is why loosenings hide, and knowing the intent is what stops you seeing the result.
-- **Re-read the steps that consume what you changed.** These defects live in the *relationship between* steps, so re-reading the fixed step alone finds nothing.
-- **Fix one finding at a time when findings touch the same file.** Batched fixes interact, and the interaction is invisible in a diff showing them as separate hunks.
-- **Name what the fix could have broken before another round.** If you cannot name a candidate you have not looked; if you can, that is the next round's scope — far narrower than a battery. ⚠️ **Naming a candidate does not by itself license the round — the cap below governs whether it runs at all.**
+- A fix is a change, and takes the tier of the file it lands in.
+- Re-read the steps that consume what you changed.
+- Fix one finding at a time when findings touch the same file.
+- Name what the fix could have broken; that is the next round's scope, if the cap allows one.
 
 ### Round cap
 
-**A round is one pass of the lens set, however many lenses it contains** — not one lens, and not a re-run of a deterministic check.
-
-**Two rounds maximum.** A third runs only when round 2 found **the same defect a second time** — a second instance anywhere, in this file or another, which makes it a class rather than a one-off. ⚠️ **When that trigger fires, the remedy is a census before it is a round**: enumerate every site the class could occupy and check them all at once. This framework needed three rounds to stop finding instances of one defect, and the thing that ended it was a one-line enumeration, not the third round.
-
-⚠️ **A cost decision, and it buys the risk named above**: a cap ships the introduced defects instead of catching them. What makes the trade pay is that **within a single target, tokens per acted finding rises with each round** — on the one recorded four-round sequence it roughly tripled from round 1 to round 4. Re-derive before quoting: `awk -F'\t' '$(1)~/^2026-/ && $(10)>0 {print $(5), $(4), $(6)/$(10)}' <ledger>`, compared **within one target**; aggregating across targets hides the effect and once read as flat here. **Re-open the cap on a measured rise in that per-target ratio's flattening, or on a class of defect a capped round demonstrably shipped — not on one missed finding**, which is the trade working as described.
+A round is one pass of the lens set, however many lenses it contains — not a re-run of a deterministic check. **Two rounds maximum.** A third runs only when round 2 found **the same defect a second time**, anywhere — a class — and then enumerate every site the class could occupy and check them all before running it. The cap is a cost decision: on the one measured four-round sequence, tokens per acted finding rose each round, compared within one target. Re-open it on a measured flattening of that per-target ratio, or on a class of defect a capped round demonstrably shipped, not on one missed finding.
 
 ### Budget the round before you spawn it
 
-State the lens set and the ceiling **before** starting; record the cost after. Left unbudgeted, a review tends to expand toward the most expensive form available — observed here as four lenses on one diff, two stopped part-way for cost.
+State the lens set and the ceiling before starting; record the cost after. A lens stopped part-way returns nothing.
 
-- **Decide the lens set up front.** Stopping a reviewer part-way spends its cost to that point and returns nothing. A lens not worth its cost should not be started.
-- **Never run a lens for a class a deterministic check covers *completely*.** Partial coverage is not coverage: where the tier table mandates a lens and a check covers only part of its class, the tier table wins — say which part the check already settled, and let the lens have the rest.
-- ⚠️ **Do not economise by collapsing lenses into the author's own context.** This is about *whose context* the reviewer holds, not how many run: one independent reviewer instead of four is a legitimate saving, and the magnitude gate prescribes that for small diffs. Asking the questions inside the context that wrote the change is not — that reviewer holds the author's blind spots, the failure this skill exists to prevent. Measured twice: two lenses once returned **disjoint** findings; and on a four-lens round *every* lens found the top blocker while **two of them each found a blocker no other lens did**. Breadth buys the defects nobody predicted — not disjointness.
-- **Promote rather than re-catch.** Step 3.1 triages each round's findings into checks; this is where the loop closes. **Read the Mechanized table in Step 1, before choosing lenses** — not here, which is read before Step 3.1 has ever run. ⚠️ A `live` row is not a reason to drop a lens the tier table mandates: it covers one *shape*, a lens covers a *class*, and the bullet above governs — partial coverage is not coverage. Use it to narrow a lens's scope, never to skip one.
+- Do not run a lens for a class a deterministic check covers *completely*; where coverage is partial, run it and say which part the check already settled. Read the Mechanized table in Step 1, before choosing lenses: a `live` row may narrow a mandated lens, never skip it: a row covers one shape, a lens a class.
+- Never collapse lenses into the author's own context. Fewer independent reviewers is a legitimate saving; none is not.
