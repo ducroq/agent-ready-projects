@@ -38,6 +38,20 @@ blocks and step numbers are unchanged; narratives and issue histories moved to `
 Two instructions changed: audit-context's Unconfirmed bucket now points at Step 9, where it lives
 (it said Step 8); release again says which version to propose for a first release.
 
+### `templates/project-file.md` and `templates/curate.md` — adopter bloat measures
+
+Adopter repos grow the way this one did. agent-ready-papers carries a 35k project file, 404k of memory and a 96k
+gotcha log, against a 6.4k template. Three measures:
+
+- **`project-file.md` Hard Constraints** starts with a real rule instead of a placeholder: lead with the point, no
+  narrative. That file is loaded every session, and narrative is what grows it.
+- **`curate` Step 0 sub-step 6** flags a project file over about 15k characters on its own, even when the auto-loaded
+  set is under budget.
+- **`curate` Step 0, above about 300k**, also proposes an archive pass: resolved gotchas, closed hypotheses, old
+  session files and done work items move into an `archive/` folder beside them. The read-surface measurement now
+  excludes `*/archive/*`, and was checked against a seeded tree (a folder merely named with "archive" is still
+  counted). It proposes and does not move, in keeping with Step 0's "don't fix anything".
+
 ## v1.46.0 (2026-09-25)
 
 **MINOR.** Cuts what adopters pay per run: `curate` goes from 56.9k to about 25k characters and

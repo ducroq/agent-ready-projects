@@ -29,11 +29,11 @@ Before tending memory, go back to what this session was asked to do. The detour 
 # a few thousand files and `tail -1` then reports one batch's total (measured:
 # 6000 files reported 105,600 of 600,000), and `wc -m` counts characters, which
 # is what the threshold below is in. Both failures were silent and both read LOW.
-find memory docs/work-items -type f -name '*.md' -print0 2>/dev/null \
+find memory docs/work-items -type f -name '*.md' -not -path '*/archive/*' -print0 2>/dev/null \
   | xargs -0 cat | wc -m
 ```
 
-**Above roughly 300k characters, do not read the corpus.** Work from metadata and the verify runner, and do not improvise a dead-reference check. Curate **the index and the newest topic file only**, and say in the report which files you did not open.
+**Above roughly 300k characters, do not read the corpus.** Work from metadata and the verify runner, and do not improvise a dead-reference check. Curate **the index and the newest topic file only**, and say in the report which files you did not open. **And propose an archive pass**: resolved gotchas, closed hypotheses, old session files and done work items move into an `archive/` folder beside them (`memory/archive/`, `docs/work-items/archive/`), which the measurement above excludes. Propose it; do not move anything in this step.
 
 Check for context rot from *previous* sessions. **Read metadata, not documents**: headers, probe output, `stat`. Fetch a body only when you are going to act on it.
 
@@ -202,6 +202,8 @@ Check for context rot from *previous* sessions. **Read metadata, not documents**
    - **Stale (no movement, no trigger)**: Count open entries. If more than ~10, flag as memory-cluttering — promote to ADRs or mark `dormant` / closed.
 
 6. **Auto-loaded size budget — the whole set, not the project file alone.** Sum **every file your tool loads without being asked** (for Claude Code, the project file *and* the user-level memory index), and compare the total against the budget. Claude Code warns at 40k chars; the soft target is under 35k. **List the set before measuring**, and name any file not counted. Budget the index in characters, not lines.
+
+   **Flag a project file over ~15k characters on its own**, even when the set is under budget: a template-sized one is ~6k, and past 15k it is carrying narrative (one adopter's reached 35k).
 
    If the set is approaching or over budget:
    - **First, check for formatter table padding.** If a markdown formatter (prettier, dprint, markdownlint) pads tables, measure the de-padded size (cells stripped to `| value |`) before proposing any cut.
