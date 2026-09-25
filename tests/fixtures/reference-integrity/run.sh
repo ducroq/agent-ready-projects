@@ -406,9 +406,14 @@ else printf '  FAIL  N65 — an out-of-tree path collapsed the gitignored-direct
 NG="$WORK/ng154"; mkdir -p "$NG"; printf 'no references here\n' > "$NG/D.md"
 # GIT_CEILING_DIRECTORIES, or a repo anywhere above $WORK makes this a work tree:
 # CI failed N64 twice on exactly that (the checker was right; the case was not).
-if GIT_CEILING_DIRECTORIES="$WORK" python3 refcheck.py "$NG" D.md 2>&1 | grep -qF 'GITIGNORED DIRECTORY: not checked (not a git work tree)'; then
+NGO="$(GIT_CEILING_DIRECTORIES="$WORK" python3 refcheck.py "$NG" D.md 2>&1)"
+if grep -qF 'GITIGNORED DIRECTORY: not checked (not a git work tree)' <<<"$NGO"; then
   printf '  PASS  N64 outside git the section says it did not check\n'
-else printf '  FAIL  N64 — outside git the section is silent\n'; FAIL=1; fi
+else printf '  FAIL  N64 — outside git the section is silent\n'; FAIL=1
+  # Say WHY, so a CI-only failure is diagnosable from the log alone.
+  printf '        git says: %s\n' "$(GIT_CEILING_DIRECTORIES="$WORK" git -C "$NG" rev-parse --show-toplevel 2>&1 | head -1)"
+  printf '%s\n' "$NGO" | grep -iE 'GITIGNORED|Traceback|Error|VERDICT' | sed 's/^/        | /' | head -8
+fi
 
 # N56 — an --ext naming only already-listed extensions appended an EMPTY
 # alternative, and every `name.` token became a phantom (Sonnet review, #199).
