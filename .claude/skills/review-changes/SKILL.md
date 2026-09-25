@@ -192,13 +192,23 @@ Runs at **every tier and every magnitude**, before any lens, on every changed ma
       # (fixed in 3.9.6) and passes here in silence — a BACKSTOP, not coverage
       # (#151, #158). Each code span is masked to one character so
       # bold runs pair positionally; adjacency is the discriminator.
+      # A span opens on a run of N backticks and closes on the next run of
+      # exactly N, as in CommonMark, so a double-backtick span QUOTING this shape
+      # is one span, not two risky tokens (#159). An unclosed run is literal.
       { masked = ""; rest = $(0)
-        while (match(rest, /`[^`]*`/)) {
-          inner = substr(rest, RSTART + 1, RLENGTH - 2)
+        while (match(rest, /`+/)) {
+          s = RSTART; n = RLENGTH; after = substr(rest, s + n); t = after; off = 0; cl = 0
+          while (match(t, /`+/)) {
+            if (RLENGTH == n) { cl = off + RSTART; break }
+            off += RSTART + RLENGTH - 1; t = substr(t, RSTART + RLENGTH)
+          }
+          if (!cl) { masked = masked substr(rest, 1, s + n - 1); rest = after; continue }
+          inner = substr(after, 1, cl - 1)
+          if (inner ~ /^ .* $/) inner = substr(inner, 2, length(inner) - 2)
           mark = "\002"
           if (inner ~ /\*\*$/ || inner ~ /^\*\*/) mark = "\001"
-          masked = masked substr(rest, 1, RSTART - 1) mark
-          rest = substr(rest, RSTART + RLENGTH)
+          masked = masked substr(rest, 1, s - 1) mark
+          rest = substr(after, cl + n)
         }
         masked = masked rest
         inb = 0; nrisk = 0

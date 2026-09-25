@@ -34,6 +34,23 @@ a sentence or a table row in an existing skill or template.
   separate adopter. Report it and run the skill there.
 - **`update-drift` Step 1 and `release` Step 1 (#147).** A diff confined to the `framework:` stamp line is not an
   adopter-facing change, since every release bumps it. `update-drift` gives the command that tells the two apart.
+- **`update-drift` Step 0 (#211).** The matchers run through `command grep`, so a shell function or alias running
+  another engine cannot substitute it, and a grep exit of 2 prints `MATCHER FAILED`, in the matcher block and the
+  reconciliation alike, instead of reading as "no pins" or shrinking the stamped side. ugrep 7.8.4 rejects matchers 1
+  and 3 as too complex; the old `2>/dev/null || :` hid that. Absent operands are dropped before the search, so exit 2
+  cannot come from one, and no operand at all stops the block rather than letting `grep -r` search the whole tree.
+- **`update-drift` Step 0 known holes (#134).** A stamp split across lines escapes every matcher; only the
+  reconciliation finds it.
+- **`review-changes` Step 1.5 (#159).** The emphasis mask now pairs backtick runs by length, as CommonMark does,
+  so a double-backtick span quoting the corruptible shape is one code span and no longer reports. Risky tokens in
+  double-backtick spans inside real bold still do (fixture `t12`, ablation `A12`). Rule 14 ships no exemptions now;
+  its fixture tests the mechanism on a seeded row.
+- **Lint rule 20 (#160, maintainer infrastructure).** `bash -n` over every shell file under `tests/` and `scripts/`,
+  where two of #160's four quoting breaks landed and rule 11 never looked. Seeded fixture `tests/fixtures/shell-parse/`.
+  It parses only: a backtick pair in double quotes parses as a command substitution and is not caught.
+- **Lint rule 21 (#171, maintainer infrastructure).** The scaffolding templates' `framework:` stamps must match a
+  dated top `CHANGELOG.md` block, else the highest reachable tag, and that tag's own templates must carry its version.
+  The v1.41.0 slip (stamps bumped after the tag) fails the first check before tagging and the third after.
 - **`release` Step 1 (#192, H-015).** Before writing `Closes #N` for an issue filed against a skill, name the
   adopter-installed file that changed. It is a question to look, not a gate.
 - **`curate` Step 0 sub-step 6 (#143).** Files the project file tells the agent to read every session are listed on

@@ -23,15 +23,12 @@ ROOT="$PWD"
 RULE="$ROOT/tests/lint/step15-corpus.sh"
 WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
 FAIL=0
-# "" means: no override, use the checker's built-in list. Named rather than bare
-# so a reader can tell a deliberate use of the shipped exemptions from an omission.
-SHIPPED=""
-
-# The one CHANGELOG line the shipped exemption points at, quoted verbatim from
-# the real file so the fixture cannot drift from the exemption it tests. Extracted
-# by pattern, never by line number — CHANGELOG.md grows from the top.
-EXEMPT_LINE=$(grep -m1 'An adopter porting the magnitude gate' "$ROOT/CHANGELOG.md")
-[ -n "$EXEMPT_LINE" ] || { echo "FAIL  could not find the exempted CHANGELOG line — the exemption or the line moved"; exit 1; }
+# The checker ships NO exemptions since #159 fixed the false positive the one row
+# covered, so the mechanism is tested against a SEEDED row instead: a genuine
+# emphasis hit, and an exemption naming it by line substring and finding shape.
+EXEMPT_LINE='See **the `src/**` and `docs/**` trees** for detail.'
+SEEDED="$WORK/seeded-exemptions"
+printf 'CHANGELOG.md\tSee **the `src/**`\ttwo backticked tokens abutting\tfixture seed\n' > "$SEEDED"
 
 # build <dir> [--no-exempt-line] [--no-md]
 # A minimal repo carrying only what rule 14 reads: the template it extracts from,
@@ -134,13 +131,13 @@ want_fail "T2 gitignored lossy row is reported (the skill cannot reach it)" "$WO
 # found and then exempted. Asserting the hit count is what makes this a test of
 # the exemption rather than a second copy of the control.
 build "$WORK/t3"
-want_clean "T3 the #159 CHANGELOG prose is found, then exempted" "$WORK/t3" "$SHIPPED" 1
+want_clean "T3 the seeded CHANGELOG hit is found, then exempted" "$WORK/t3" "$SEEDED" 1
 
 # T4 — and the exemption is bounded: once its line is gone it is STALE, and a
 # stale exemption fails the rule rather than sitting there silencing whatever
 # occupies that file next.
 build "$WORK/t4" --no-exempt-line
-want_fail "T4 an exemption matching nothing is reported STALE" "$WORK/t4" "STALE EXEMPTION" "$SHIPPED"
+want_fail "T4 an exemption matching nothing is reported STALE" "$WORK/t4" "STALE EXEMPTION" "$SEEDED"
 
 # T5 — a broken instrument must not read as clean. Mangle the extraction anchor.
 build "$WORK/t5"
@@ -160,16 +157,16 @@ want_rc "T6 absent template exits 2, never 0" "$WORK/t6" 2
 # declared, so it fails rather than silently widening.
 build "$WORK/t7"
 { echo "# Changelog"; echo; printf '%s\n' "$EXEMPT_LINE"; echo; printf '%s\n' "$EXEMPT_LINE"; } > "$WORK/t7/CHANGELOG.md"
-want_fail "T7 an exemption matching twice is reported OVER-BROAD" "$WORK/t7" "OVER-BROAD" "$SHIPPED"
+want_fail "T7 an exemption matching twice is reported OVER-BROAD" "$WORK/t7" "OVER-BROAD" "$SEEDED"
 
 # T8 — THE TRANSFER CASE, and it is why the exemption carries a shape. A review
-# built this one: delete the #159 prose, put a genuinely LOSSY ROW on a line that
+# built this one: delete the exempted line, put a genuinely LOSSY ROW on a line that
 # happens to carry the same phrase, and the pre-shape mechanism suppressed a data
 # -losing defect at rc 0 with no stale report. The row must now be reported.
 build "$WORK/t8" --no-exempt-line
 { echo "# Changelog"; echo; echo "| a | b |"; echo "|---|---|"
-  echo "| An adopter porting the magnitude gate | 2 | 3 |"; } > "$WORK/t8/CHANGELOG.md"
-want_fail "T8 an exemption cannot transfer to a different finding shape" "$WORK/t8" "the excess is dropped" "$SHIPPED"
+  echo '| See **the `src/**` | 2 | 3 |'; } > "$WORK/t8/CHANGELOG.md"
+want_fail "T8 an exemption cannot transfer to a different finding shape" "$WORK/t8" "the excess is dropped" "$SEEDED"
 
 # T9 — a file that could not be examined is a finding, not a silent skip. awk
 # exits non-zero and prints nothing, which is what a clean file prints.
@@ -179,7 +176,7 @@ chmod 000 "$WORK/t9/unreadable.md"
 if [ -r "$WORK/t9/unreadable.md" ]; then
   echo "  SKIP  T9 — the file is still readable (running as root?); this case asserts nothing here"
 else
-  want_fail "T9 an unexaminable file is reported, not counted as scanned" "$WORK/t9" "could not examine" "$SHIPPED"
+  want_fail "T9 an unexaminable file is reported, not counted as scanned" "$WORK/t9" "could not examine" "$SEEDED"
 fi
 # ⚠️ Permissions are restored at the END of the run, not here. Restoring them
 # before the ablations made the file readable again, so its seeded lossy row
@@ -201,7 +198,7 @@ pathlib.Path(sys.argv[2]).write_text(s.replace(old, new, 1))
 ' "$RULE" "$mut" || { printf '  FAIL  ablation %s could not be applied\n' "$label"; FAIL=1; return; }
   for c in t1 t2 t4 t7 t8 t9; do
     [ -d "$WORK/$c" ] || continue
-    run "$WORK/$c" "$mut"
+    run "$WORK/$c" "$mut" "$SEEDED"
     [ "$RC" -eq 0 ] && got="$got,$c"
   done
   got="${got#,}"
