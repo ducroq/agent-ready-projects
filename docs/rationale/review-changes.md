@@ -403,6 +403,15 @@ than decisive — Obsidian writes `---`, a blank, then the key, and 10 files in 
 open with a `#` comment. A quoted key counts. `#` cannot be made to decide: a YAML comment is
 indistinguishable from a heading.
 
+**Its residual cost includes lost detection (#163).** v1.39.0 said the cost was false positives
+only. An adopter refuted that two ways, both reproduced and pinned as `b14`/`b15` in
+`tests/fixtures/step15-tables/`. English opens with a key too (`Note:`, `Summary:`), so after a
+leading `---` such a line arms the skip and every line up to the next `---` is lost with no
+diagnostic: #151's failure mode, one line down. And an unrecognised frontmatter (first deciding line
+a block sequence) that holds an indented fence reports an unclosed fence and loses the rest of the
+file. No fix ships: three are already recorded as refuted, and a decider that tells prose from YAML
+by one line has not been found. The skill's blind-spot list names the first.
+
 **What the row shape can report that is not a table at all.** `isdelim()` accepts a bare `---` and
 its guard is satisfied by a pipe in the *previous* line, so a setext heading, a spaced `- - -`
 break, and frontmatter that does not begin at line 1 can each report. Classes and repros in #52.

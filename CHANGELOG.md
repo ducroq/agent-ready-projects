@@ -63,6 +63,19 @@ a sentence or a table row in an existing skill or template.
 - **Lint rule 23 (#168, maintainer infrastructure).** In `docs/vv/verification-log.md`, a source whose step table
   records PARTIAL, NEEDS WORK or FAIL may not be rated VERIFIED, and no claim ID it names may be ESTABLISHED in the
   claim registry. Run on the pre-fix files it reports the Gloaguen block and S2-1, S2-3, S2-4.
+- **`review-changes` Step 1.5 (#163).** The frontmatter comment no longer claims its residual cost is false
+  positives only. Key-shaped prose (`Note: ...`) after a leading `---` silently loses every line up to the next
+  `---`, and unrecognised frontmatter holding a fence loses the rest of the file. Both are named as blind spots and
+  pinned in the fixture (`b14`, `b15`); no fix ships, since three are already recorded as refuted.
+- **`curate` Step 2 (#183).** Constraint rows in the Promoted table (those stating current behaviour) are re-read
+  for truth, not only counted, with `checked YYYY-MM-DD` noted in the Promoted-to cell; pattern rows state no fact
+  and are exempt.
+- **`curate` Step 0 sub-step 6 and Step 3 (#114).** Before trimming the project file or rewriting the memory index,
+  name the facts it may not lose (version line, Hard Constraints' operative clauses, anything a verify probe reads)
+  and `grep -F` each afterwards; a missing one is a finding, not an under-budget success.
+- **`review-changes` Step 1.5: a fence indented 1-3 spaces is recognised under mawk.** The strip was
+  `sub(/^ ? ? ?/, ...)`, which mawk 1.3.4 (Ubuntu's default awk) reads as one space, so a 2-space-indented fence
+  was scanned as markdown. Now a `substr` loop; fixture `n14`. Found by review of #163's pins.
 - **`release` Step 1 (#192, H-015).** Before writing `Closes #N` for an issue filed against a skill, name the
   adopter-installed file that changed. It is a question to look, not a gate.
 - **`curate` Step 0 sub-step 6 (#143).** Files the project file tells the agent to read every session are listed on
