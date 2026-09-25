@@ -35,9 +35,10 @@ a sentence or a table row in an existing skill or template.
 - **`update-drift` Step 1 and `release` Step 1 (#147).** A diff confined to the `framework:` stamp line is not an
   adopter-facing change, since every release bumps it. `update-drift` gives the command that tells the two apart.
 - **`update-drift` Step 0 (#211).** The matchers run through `command grep`, so a shell function or alias running
-  another engine cannot substitute it, and a grep exit of 2 prints `MATCHER FAILED` instead of reading as "no pins".
-  ugrep 7.8.4 rejects matchers 1 and 3 as too complex; the old `2>/dev/null || :` hid that. Absent operands are now
-  dropped before the search, so exit 2 cannot come from one.
+  another engine cannot substitute it, and a grep exit of 2 prints `MATCHER FAILED`, in the matcher block and the
+  reconciliation alike, instead of reading as "no pins" or shrinking the stamped side. ugrep 7.8.4 rejects matchers 1
+  and 3 as too complex; the old `2>/dev/null || :` hid that. Absent operands are dropped before the search, so exit 2
+  cannot come from one, and no operand at all stops the block rather than letting `grep -r` search the whole tree.
 - **`update-drift` Step 0 known holes (#134).** A stamp split across lines escapes every matcher; only the
   reconciliation finds it.
 - **`review-changes` Step 1.5 (#159).** The emphasis mask now pairs backtick runs by length, as CommonMark does,

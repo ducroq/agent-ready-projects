@@ -28,18 +28,18 @@ What varies is the **separator** — emphasis before or after the colon, a paren
 **Choose the operands first, and do NOT default to `<project file> <template dir>`** — with no `templates/`, the project file reconciles **against itself** and reports clean. **Use every directory the project writes prose into** — typically the project file plus `docs/`, `memory/`, `.claude/`, and `templates/` where it exists; a framework named only outside the operands is invisible to every check below. Absent operands are not an error, so name them explicitly:
 
 ```bash
-CANDIDATES="<project file> docs memory .claude templates"   # SAY which are absent
 OPERANDS=""
-for o in $CANDIDATES; do
+for o in "<project file>" docs memory .claude templates; do   # SAY which are absent
   if [ -e "$o" ]; then OPERANDS="$OPERANDS $o"; else echo "operand absent, not searched: $o"; fi
 done
+: "${OPERANDS:?no operand exists, so nothing can be searched}"
 # ⚠️ `command grep` bypasses a shell function or alias that runs another engine,
 # and exit 2 is a FAILED matcher, not "no pins" (#211): ugrep 7.8.4 rejects
 # matchers 1 and 3 as too complex. Absent operands are already dropped, so exit 2
 # cannot be one. `|| rc=$?` keeps a no-match exit 1 from killing a `set -e` run.
 # LABEL each matcher: an unlabelled empty region reads the same whether the
 # matcher found nothing or never ran.
-m() { rc=0; command grep "$@" || rc=$?; [ "$rc" -le 1 ] || echo "MATCHER FAILED (exit $rc): this is not 'no pins'"; }
+m() { rc=0; command grep "$@" || rc=$?; [ "$rc" -le 1 ] || echo "MATCHER FAILED (exit $rc): this is not 'no pins'" >&2; }
 echo "--- 1. version-shaped pins"
 m -rnE "agent-ready-[a-z]+(-[a-z][a-z]+)*[^0-9]{0,60}v?[0-9]+\.[0-9]+[0-9.]*" $OPERANDS
 echo "--- 2. commit-hash pins"
@@ -63,15 +63,16 @@ No matcher here is exhaustive, so do not read a clean matcher run as a clean res
 That guard fires only on **zero** hits; find two stamps of three and the miss is invisible. So state the denominator:
 
 ```bash
+# Uses m() from the block above: run both in one shell.
 M=$(mktemp); S=$(mktemp); trap 'rm -f "$M" "$S"' EXIT
 # every (file, framework) PAIR that is mentioned...
-command grep -rnoE "agent-ready-[a-z]+(-[a-z][a-z]+)*" $OPERANDS |
+m -rnoE "agent-ready-[a-z]+(-[a-z][a-z]+)*" $OPERANDS |
   sed -E 's/:[0-9]+:/:/' | LC_ALL=C sort -u > "$M" || :
 # ...against every pair a stamp was actually found for
-{ command grep -roE "agent-ready-[a-z]+(-[a-z][a-z]+)*[^0-9]{0,60}v?[0-9]+\.[0-9]+[0-9.]*" $OPERANDS || :
-  command grep -roE "agent-ready-[a-z]+(-[a-z][a-z]+)*[^A-Za-z0-9]{0,24}[0-9a-f]{7,40}" $OPERANDS || :
+{ m -roE "agent-ready-[a-z]+(-[a-z][a-z]+)*[^0-9]{0,60}v?[0-9]+\.[0-9]+[0-9.]*" $OPERANDS
+  m -roE "agent-ready-[a-z]+(-[a-z][a-z]+)*[^A-Za-z0-9]{0,24}[0-9a-f]{7,40}" $OPERANDS
   # Matcher 3 too, or a pin only it finds reads as UNSTAMPED here (#134).
-  command grep -roEi "agent-ready-[a-z]+(-[a-z][a-z]+)*[^0-9]{0,40}\b(commit|rev|sha|ref|pinned to)[^A-Za-z0-9]{1,4}[0-9a-f]{7,40}" $OPERANDS || :
+  m -roEi "agent-ready-[a-z]+(-[a-z][a-z]+)*[^0-9]{0,40}\b(commit|rev|sha|ref|pinned to)[^A-Za-z0-9]{1,4}[0-9a-f]{7,40}" $OPERANDS
 } | awk '{ i = index($(0), ":agent-ready-"); f = substr($(0), 1, i - 1); r = substr($(0), i + 1)
        # A stamp belongs to the LAST name before it, not the first (#134).
        while (match(r, /agent-ready-[a-z]+(-[a-z][a-z]+)*/)) { n = substr(r, RSTART, RLENGTH); r = substr(r, RSTART + RLENGTH) }
@@ -81,7 +82,7 @@ printf 'mentioned pairs: %s  stamped pairs: %s\n' "$(wc -l < "$M")" "$(wc -l < "
 LC_ALL=C comm -23 "$M" "$S"
 ```
 
-Do not simplify the block: the `(file, framework)` unit (a file pinning two frameworks reads as stamped when only one pin matched), the printed counts (with mistyped operands `comm` prints nothing at exit 0), `sort -u` and `LC_ALL=C` on both sides and on `comm`, and `|| :` on each grep each prevent a wrong difference. **Keep the operands disjoint** — overlap, such as adding `.` or a parent of another operand, makes `comm -23` report a stamped file as unstamped.
+Do not simplify the block: the `(file, framework)` unit (a file pinning two frameworks reads as stamped when only one pin matched), the printed counts (with mistyped operands `comm` prints nothing at exit 0), `sort -u` and `LC_ALL=C` on both sides and on `comm`, and `m()` on each grep (a matcher that cannot run says so instead of shrinking the stamped side) each prevent a wrong difference. **Keep the operands disjoint** — overlap, such as adding `.` or a parent of another operand, makes `comm -23` report a stamped file as unstamped.
 
 **Report both counts and every file in the difference.** Each one gets a disposition out loud: *a stamp the matcher missed* (read the line, name the shape, use it) or *a mention that is not a pin*.
 

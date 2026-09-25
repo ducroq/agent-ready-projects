@@ -3,7 +3,7 @@
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and every raise is
 # recorded below, oldest first — notes accumulate and are never replaced.
-# BUDGET 178145
+# BUDGET 178259
 # SPILL 169215
 # RAISED 2026-09-06 from 247526 to 247969: #133: the #118 remedy string shipped unconditional and can turn a resolved reference into an AMBIGUOUS finding; the caveat that scopes it is +443 b on templates/audit-context.md, seeded as T39/T40/N39 (reason restored 2026-09-06 — write_baseline used to overwrite each note with the next)
 # RAISED 2026-09-06 from 247969 to 248237: #140: UNRESOLVED had two causes printing one reason. +268 b on templates/audit-context.md, seeded as T41/T41b/N40 (reason restored 2026-09-06)
@@ -79,6 +79,7 @@
 # RAISED 2026-09-25 from 176991 to 177167: #147 stamp-only diff command and #148 no-issue arm, required by the Sonnet review round
 # RAISED 2026-09-25 from 177167 to 177506: #211 matcher-failure detection (command grep, exit-2 check, operand pruning) and #134 multi-line stamp hole
 # RAISED 2026-09-25 from 177506 to 178145: #159 CommonMark backtick-run pairing in the Step 1.5 emphasis mask
+# RAISED 2026-09-25 from 178145 to 178259: #211 review: guard the reconciliation matchers too, and stop on no operands
 templates/README.md	12042
 templates/RUNBOOK.md	2795
 templates/adr.md	2115
@@ -110,5 +111,5 @@ templates/test-fixtures/memory/verified-fail.md	166
 templates/test-fixtures/memory/verified-manual.md	155
 templates/test-fixtures/memory/verified-pass.md	135
 templates/test-verify-memory.md	6000
-templates/update-drift.md	16618
+templates/update-drift.md	16732
 templates/work-item.md	3860
