@@ -3,7 +3,7 @@
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and every raise is
 # recorded below, oldest first — notes accumulate and are never replaced.
-# BUDGET 182318
+# BUDGET 182363
 # SPILL 169962
 # RAISED 2026-09-06 from 247526 to 247969: #133: the #118 remedy string shipped unconditional and can turn a resolved reference into an AMBIGUOUS finding; the caveat that scopes it is +443 b on templates/audit-context.md, seeded as T39/T40/N39 (reason restored 2026-09-06 — write_baseline used to overwrite each note with the next)
 # RAISED 2026-09-06 from 247969 to 248237: #140: UNRESOLVED had two causes printing one reason. +268 b on templates/audit-context.md, seeded as T41/T41b/N40 (reason restored 2026-09-06)
@@ -89,10 +89,11 @@
 # ratcheted down 2026-09-25
 # RAISED 2026-09-25 from 181915 to 181981: #179 review: measured range instead of an unmeasured ~2%
 # RAISED 2026-09-25 from 181981 to 182318: #117 audit-context Step 4 names its scope
+# RAISED 2026-09-25 from 182318 to 182363: #117 review: attribute the 86 to its measurement
 templates/README.md	12042
 templates/RUNBOOK.md	2795
 templates/adr.md	2115
-templates/audit-context.md	17530
+templates/audit-context.md	17575
 templates/checklists/README.md	1097
 templates/checklists/architect-checklist.md	1263
 templates/checklists/implement-checklist.md	1329

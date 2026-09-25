@@ -53,11 +53,9 @@ run() {
 pass() { printf '  PASS  %s\n' "$1"; }
 bad()  { printf '  FAIL  %s\n' "$1"; FAIL=1; }
 
-score() {  # score <blocks-dir>  -> sets T1_OK, T2_OK
+score() {  # score <blocks-dir>  -> sets T1_OK
   tree "$WORK/t1"; B="$1" SKIP="" run "$1" "$WORK/t1" "$WORK/fakebin:"
   if grep -q 'MATCHER FAILED' "$WORK/err"; then T1_OK=1; else T1_OK=0; fi
-  tree "$WORK/t2"; B="$1" SKIP=1 run "$1" "$WORK/t2"
-  if grep -qE 'EMPTY|not found' "$WORK/out" "$WORK/err"; then T2_OK=1; else T2_OK=0; fi
 }
 export B SKIP
 
@@ -75,26 +73,25 @@ score "$WORK/real"
 # rather than print a smaller stamped side as if it were a finding.
 [ "$T1_OK" = 1 ] && pass "T1 a failing engine is reported by the CONSUMER block, not only the producer" \
                  || bad "T1 the reconciliation swallowed a failed matcher — err: $(head -2 "$WORK/err" | tr '\n' ' ')"
-# T2 — the consumer run WITHOUT its producer (a fresh shell, which Step 0 warns
-# against) must not read as a clean reconciliation.
-[ "$T2_OK" = 1 ] && pass "T2 the consumer without its producer is loud, not clean" \
-                 || bad "T2 the consumer ran without m() and looked clean — out: $(tr '\n' ' ' < "$WORK/out")"
+# No case for the consumer run WITHOUT its producer: extract() already requires
+# the consumer to call m, and an undefined m fails loudly by construction, so such
+# a case could not fail (review finding).
 
 # ── Ablation: the pre-review consumer ─────────────────────────────────────────
 # A1 puts back what the #211 fix first shipped: the reconciliation on bare grep
-# with its errors discarded. T1 must flip; T2 need not.
+# with its errors discarded. T1 must flip.
 if [ "$FAIL" -ne 0 ]; then echo "  UNSCORED  ablation A1 — a seeded case already failed in this run (#161)"
 else
   mkdir -p "$WORK/abl"; cp "$WORK/real/blk1.sh" "$WORK/abl/"
-  # Exactly the pre-review lines: the piped mention grep kept its pipe, the three
-  # stamp greps each ended `2>/dev/null || :`.
-  sed -E -e 's/^m (-rnoE .*) \$OPERANDS \|$/command grep \1 $OPERANDS 2>\/dev\/null |/' \
-         -e 's/^([{ ]*)m (-roEi? .*) \$OPERANDS$/\1command grep \2 $OPERANDS 2>\/dev\/null || :/' \
+  # The pre-review lines as a92d33a shipped them: `command grep` with no guard,
+  # the piped mention grep unchanged, each stamp grep ending in a bare `|| :`.
+  sed -E -e 's/^m (-rnoE .*) \$OPERANDS \|$/command grep \1 $OPERANDS |/' \
+         -e 's/^([{ ]*)m (-roEi? .*) \$OPERANDS$/\1command grep \2 $OPERANDS || :/' \
          "$WORK/real/blk2.sh" > "$WORK/abl/blk2.sh"
   if cmp -s "$WORK/real/blk2.sh" "$WORK/abl/blk2.sh"; then bad "ablation A1 changed nothing — its site moved"
   else
     score "$WORK/abl"
-    [ "$T1_OK" = 0 ] && pass "ablation A1 (consumer on bare grep, errors discarded) stops T1" \
+    [ "$T1_OK" = 0 ] && pass "ablation A1 (the pre-review consumer, unguarded grep) stops T1" \
                      || bad "ablation A1 did not stop T1 — the case does not test the edge"
   fi
 fi
