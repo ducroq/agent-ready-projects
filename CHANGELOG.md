@@ -153,7 +153,11 @@ file. **A hyphenated name was cut at its first hyphen**, so `agent-ready-foo-bar
 one framework disappeared from the count. And **the stamped list ran only matchers 1 and 2**, so a pin that only
 matcher 3 (`commit <sha>`, added for this issue in v1.43.0) finds was reported as unstamped. Names now match
 `agent-ready-[a-z]+(-[a-z][a-z]+)*`. Segments of two or more letters are required so that a `-v1.2.0` suffix stays
-out of the name. Matcher 3 now feeds the stamped list. An unpinned mention is still reported (checked as a control).
+out of the name. Matcher 3 now feeds the stamped list. An unpinned mention is still reported (checked as a control). Review found the stamped list credited a stamp to the
+*first* name in the match. In `agent-ready-foo agent-ready-bar commit d89ec62` that made the unpinned `foo` read as
+stamped and flagged the pinned `bar`. The stamp now goes to the last name before it. ⚠️ Residuals, both measured: a
+suffix shaped like a name segment (`agent-ready-projects-style`) adds a noise row but masks nothing, and a name and
+version split across two lines is still invisible to every matcher.
 
 ### reference-integrity `SPEC.md`: which marker to use when forced, and what a marker costs (#177 points 1–2)
 

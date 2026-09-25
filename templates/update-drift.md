@@ -92,7 +92,10 @@ grep -rnoE "agent-ready-[a-z]+(-[a-z][a-z]+)*" $OPERANDS 2>/dev/null |
   grep -roE "agent-ready-[a-z]+(-[a-z][a-z]+)*[^A-Za-z0-9]{0,24}[0-9a-f]{7,40}"     $OPERANDS 2>/dev/null || :
   # Matcher 3 too, or a pin only it finds reads as UNSTAMPED here (#134).
   grep -roEi "agent-ready-[a-z]+(-[a-z][a-z]+)*[^0-9]{0,40}\b(commit|rev|sha|ref|pinned to)[^A-Za-z0-9]{1,4}[0-9a-f]{7,40}" $OPERANDS 2>/dev/null || :
-} | sed -E 's/^(.*):(agent-ready-[a-z]+(-[a-z][a-z]+)*).*/\1:\2/' | LC_ALL=C sort -u > "$S"
+} | awk '{ i = index($(0), ":agent-ready-"); f = substr($(0), 1, i - 1); r = substr($(0), i + 1)
+       # A stamp belongs to the LAST name before it, not the first (#134).
+       while (match(r, /agent-ready-[a-z]+(-[a-z][a-z]+)*/)) { n = substr(r, RSTART, RLENGTH); r = substr(r, RSTART + RLENGTH) }
+       print f ":" n }' | LC_ALL=C sort -u > "$S"
 printf 'mentioned pairs: %s  stamped pairs: %s\n' "$(wc -l < "$M")" "$(wc -l < "$S")"
 [ -s "$M" ] || echo 'EMPTY — the mention grep matched nothing. Check the operands before reading this as clean.'
 LC_ALL=C comm -23 "$M" "$S"

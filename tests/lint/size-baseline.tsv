@@ -3,7 +3,7 @@
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and every raise is
 # recorded below, oldest first — notes accumulate and are never replaced.
-# BUDGET 242599
+# BUDGET 242858
 # SPILL 60656
 # RAISED 2026-09-06 from 247526 to 247969: #133: the #118 remedy string shipped unconditional and can turn a resolved reference into an AMBIGUOUS finding; the caveat that scopes it is +443 b on templates/audit-context.md, seeded as T39/T40/N39 (reason restored 2026-09-06 — write_baseline used to overwrite each note with the next)
 # RAISED 2026-09-06 from 247969 to 248237: #140: UNRESOLVED had two causes printing one reason. +268 b on templates/audit-context.md, seeded as T41/T41b/N40 (reason restored 2026-09-06)
@@ -63,6 +63,7 @@
 # RAISED 2026-09-24 from 241834 to 242270: #152: verify runner names and counts timeouts, disposition row and row-count sentence (+436 b). Locked BEFORE its review round because the session stop hook requires a push; review fixes will adjust it.
 # ratcheted down 2026-09-24
 # RAISED 2026-09-25 from 242269 to 242599: #134: update-drift Step 0 names allow hyphen segments (x7) and matcher 3 feeds the stamped list (+330 b). Locked BEFORE its review round (stop hook requires a push); fixes will adjust it.
+# RAISED 2026-09-25 from 242599 to 242858: #134 review: stamp credited to the LAST name before it via a portable awk (review found the first-name credit masked a real miss). Round 2, locked after the fix.
 templates/README.md	12042
 templates/RUNBOOK.md	2795
 templates/adr.md	2115
@@ -94,5 +95,5 @@ templates/test-fixtures/memory/verified-fail.md	166
 templates/test-fixtures/memory/verified-manual.md	155
 templates/test-fixtures/memory/verified-pass.md	135
 templates/test-verify-memory.md	6000
-templates/update-drift.md	23488
+templates/update-drift.md	23747
 templates/work-item.md	3860
