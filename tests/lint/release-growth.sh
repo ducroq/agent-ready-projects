@@ -15,37 +15,50 @@
 set -u
 root="${1:?usage: release-growth.sh <repo-root>}"
 cd "$root" || exit 2
+git rev-parse --git-dir >/dev/null 2>&1 || { echo "release-growth: $root is not a git repository" >&2; exit 2; }
 [ -f CHANGELOG.md ] || { echo "release-growth: no CHANGELOG.md in $root" >&2; exit 2; }
 
-head=$(awk '{ sub(/\r$/, "") } /^```/ { f = !f; next } f { next }
-            /^## v[0-9]+\.[0-9]+\.[0-9]+/ { print; exit }' CHANGELOG.md)
-[ -n "$head" ] || { echo "release-growth: no '## vX.Y.Z' block in CHANGELOG.md" >&2; exit 2; }
-v=$(printf '%s\n' "$head" | awk '{ print $2 }')
+# Headings inside fences (``` or ~~~) and HTML comments are skipped, as in rule 18.
+headings() { awk '
+  { sub(/\r$/, "") }
+  /^(```|~~~)/ { fence = !fence; next }
+  fence { next }
+  incom { if (index($0, "-->")) incom = 0; next }
+  /^[ \t]*<!--/ { if (!index($0, "-->")) incom = 1; next }
+  { print NR "\t" $0 }' CHANGELOG.md; }
+top=$(headings | awk -F'\t' '$2 ~ /^## v[0-9]+\.[0-9]+\.[0-9]+/ { print; exit }')
+[ -n "$top" ] || { echo "release-growth: no '## vX.Y.Z' block in CHANGELOG.md" >&2; exit 2; }
+line=${top%%	*}; head=${top#*	}
+v=$(printf '%s\n' "$head" | grep -oE '^## v[0-9]+\.[0-9]+\.[0-9]+' | cut -c4-)
 case "$head" in *candidate*|*unreleased*)
   echo "release-growth: top block $v is a candidate — nothing to check until it is dated" >&2; exit 0 ;;
 esac
 
-base=$(git tag --merged HEAD --list 'v[0-9]*' 2>/dev/null | sed '/-/d' | grep -vxF "$v" | sort -V | tail -1)
+# The previous release: the highest non-prerelease tag reachable from HEAD that sorts below v.
+tags=$(git tag --merged HEAD --list 'v[0-9]*') || { echo "release-growth: git tag failed" >&2; exit 2; }
+base=$(printf '%s\n%s\n' "$tags" "$v" | sed '/-/d; /^$/d' | sort -t. -k1.2,1n -k2,2n -k3,3n -u |
+       awk -v v="$v" '$0 == v { print p; exit } { p = $0 }')
 [ -n "$base" ] || { echo "release-growth: SKIPPED — no release tag before $v here, so NOTHING was compared" >&2; exit 3; }
 
-size_at() { git ls-tree -r -l "$1" -- templates 2>/dev/null |
-            awk -F'\t' '$2 ~ /\.md$/ { split($1, a, " "); s += a[4] } END { print s + 0 }'; }
-old=$(size_at "$base")
+# Tracked templates/**/*.md only, on both sides, so ignored scratch files never count.
+size_at() { git -c core.quotePath=false ls-tree -r -l -z "$1" -- templates 2>/dev/null |
+            awk -v RS='\0' -F'\t' '$2 ~ /\.md$/ { split($1, a, " "); if (a[4] ~ /^[0-9]+$/) s += a[4] } END { print s + 0 }'; }
 if git rev-parse --verify --quiet "refs/tags/$v" >/dev/null; then new=$(size_at "$v"); where="tag $v"
-else new=$(find templates -name '*.md' -type f -print0 | xargs -0 cat | wc -c | tr -d ' '); where="working tree"
+else new=$(git ls-files -z -- 'templates/*.md' | xargs -0 cat 2>/dev/null | wc -c | tr -d ' '); where="working tree, tracked files"
 fi
+old=$(size_at "$base")
 [ "$old" -gt 0 ] && [ "$new" -gt 0 ] || { echo "release-growth: could not measure templates/ ($base=$old, $where=$new)" >&2; exit 2; }
 
 echo "release-growth: $v ($where) $new bytes against $base $old bytes" >&2
 grow=$((new - old))
 [ "$grow" -gt 0 ] || exit 0
 
-block=$(awk -v h="$head" '$0 == h { f = 1; next } f && /^## v[0-9]/ { exit } f' CHANGELOG.md)
+block=$(awk -v start="$line" '{ sub(/\r$/, "") } NR > start && /^## v[0-9]/ { exit } NR > start' CHANGELOG.md)
 said=$(printf '%s\n' "$block" | grep -oE 'Adopter-facing size[^0-9+-]*\+[0-9,]+ bytes' | head -1 | grep -oE '\+[0-9,]+' | tr -d '+,')
 if [ -z "$said" ]; then
   echo "CHANGELOG.md: $v grows templates/ by +$grow bytes since $base and its block does not say so — add 'Adopter-facing size: +$grow bytes' and why"
   exit 1
-elif [ "$said" != "$grow" ]; then
+elif [ "$((10#$said))" -ne "$grow" ]; then
   echo "CHANGELOG.md: $v says 'Adopter-facing size: +$said bytes' but templates/ grew +$grow bytes since $base"
   exit 1
 fi
