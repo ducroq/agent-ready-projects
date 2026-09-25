@@ -45,7 +45,10 @@ Check for content that's in the wrong layer:
 ## Step 4 — Reference integrity
 
 For every file path mentioned in the project file, memory index, and gotcha log: verify the
-file exists, and flag the broken ones.
+file exists, and flag the broken ones. **Those three and no others** (#117): a changelog,
+session log or ADR narrates history, and quoting a path there is not a reference to it. Run on
+this framework's own `CHANGELOG.md` the checker reported 86 findings, most of them quotations.
+Do not pass a gotcha-log archive either. The gotcha log is the one narrative document in scope.
 
 **Run the checker; do not re-derive its rules.** `tests/fixtures/reference-integrity/refcheck.py`
 in this framework's clone implements all of them — path extraction, the five resolution rungs,

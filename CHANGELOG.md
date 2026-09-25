@@ -22,6 +22,14 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.48.1 (candidate, unreleased)
+
+**Bump provisional**: classify it from the diff at release, per `templates/release.md` Step 2.
+
+- **`audit-context` Step 4 scope (#117).** Names its three documents as the whole scope: a changelog, session log or
+  ADR narrates, and running the checker on this framework's `CHANGELOG.md` reported 86 findings, mostly quotations.
+  A gotcha-log archive is not passed either. The gotcha log stays the one narrative document in scope.
+
 ## v1.48.0 (2026-09-25)
 
 **MINOR.** Adds behaviour, and no existing consumer has to act, so rule 2 of `templates/release.md` Step 2 fires, as
