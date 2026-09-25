@@ -10,7 +10,7 @@ ISSUES=0
 SKIPPED=0
 fail() { printf 'FAIL  %s\n' "$1"; ISSUES=$((ISSUES + 1)); }
 
-echo "[1/22] CLAUDE.md path references resolve on disk"
+echo "[1/23] CLAUDE.md path references resolve on disk"
 # The two documented maintainer dirs (.claude/, memory/) are gitignored, so their
 # CONTENTS are absent from every fresh clone — CI's included. A file reference under
 # one of them is exempt only when it is BOTH absent AND still gitignored: a tracked
@@ -155,7 +155,7 @@ elif [ "$r1_checked" -eq 0 ] && [ "$r1_dirs" -gt 0 ]; then
   fail "rule 1 extracted 0 FILE references while $r1_dirs directory reference(s) were found — the file pattern is matching nothing"
 fi
 
-echo "[2/22] memory/MEMORY.md index integrity"
+echo "[2/23] memory/MEMORY.md index integrity"
 # ⚠️ SKIPPED IS NOT A PASS. memory/ is gitignored maintainer-local state, so on a
 # fresh clone this file is absent and the rule can check NOTHING. Before #115 that
 # was silent: `grep` wrote "No such file or directory" to stderr, the loop read an
@@ -196,7 +196,7 @@ else
   printf '      %s index reference(s) and %s topic file(s) checked\n' "$r2_refs" "$r2_files"
 fi
 
-echo "[3/22] skill template embedded SKILL.md frontmatter"
+echo "[3/23] skill template embedded SKILL.md frontmatter"
 for f in templates/*.md; do
   grep -q 'SAVE AS:.*\.claude/skills/' "$f" || continue
   block=$(awk '/<!--/{c=1} c{print} /-->/{c=0}' "$f")
@@ -206,7 +206,7 @@ for f in templates/*.md; do
     || fail "$f: skill template missing \`description:\` in SAVE AS comment"
 done
 
-echo "[4/22] installed skills are loadable"
+echo "[4/23] installed skills are loadable"
 # Rule 3 checks that each template CARRIES installable frontmatter in its SAVE AS
 # comment. It cannot check that an install CONVERTED it. That gap is not theoretical:
 # an adopter repo was found holding all three skills copied verbatim, SAVE AS comment
@@ -239,7 +239,7 @@ for d in .claude/skills/*/; do
     || fail "$f: frontmatter has no non-empty \`description:\` — the agent is never told when to use it"
 done
 
-echo "[5/22] top-level YAML frontmatter closure"
+echo "[5/23] top-level YAML frontmatter closure"
 for f in templates/*.md templates/checklists/*.md memory/*.md; do
   [ -f "$f" ] || continue
   [ "$(head -1 "$f")" = '---' ] || continue
@@ -247,7 +247,7 @@ for f in templates/*.md templates/checklists/*.md memory/*.md; do
     || fail "$f: opens with \`---\` but no closing \`---\` within first 30 lines"
 done
 
-echo "[6/22] skill templates and reference installs agree"
+echo "[6/23] skill templates and reference installs agree"
 # Rules 3 and 4 check each side in isolation; neither compares them. Factored into
 # its own script so tests/fixtures/skill-template-sync/ can drive it against seeded
 # drift — a run over this repo finds nothing, which is also what a broken check
@@ -281,7 +281,7 @@ else
 fi
 rm -f "$sync_out" "$sync_err"
 
-echo "[7/22] a skill that provisions a canonical row must quote it"
+echo "[7/23] a skill that provisions a canonical row must quote it"
 # Factored out for the same reason rule 6 is: the check needs a fixture with
 # seeded true positives, and tests/lint/README.md's own "adding a rule" checklist
 # says so. The first draft of this rule was inline, had no fixture, and shipped a
@@ -300,7 +300,7 @@ else
 fi
 rm -f "$pq_out" "$pq_err"
 
-echo "[8/22] adopter-facing templates have not grown"
+echo "[8/23] adopter-facing templates have not grown"
 # The surface nobody measured. curate.md went 11,358 -> 37,971 bytes across
 # eight releases, more than half of it in one session, and the framework had no
 # instrument that would have said so. A ratchet rather than a budget: no
@@ -323,7 +323,7 @@ rm -f "$sz_out" "$sz_err"
 # rule forbids. The first draft died on `$9: unbound variable` under set -u —
 # and printed NOTHING, because the expansion fails before echo emits anything.
 # (`$0` had already expanded to the script path.)
-echo '[9/22] no bare $0-$9 in a skill body'
+echo '[9/23] no bare $0-$9 in a skill body'
 # The one class no runtime check in this repo can reach. Skill ARGUMENTS are
 # substituted into the skill BODY between the file and the model, so a bare
 # `$0` in an embedded awk program ships as the first argument word: #77, where
@@ -347,7 +347,7 @@ else
 fi
 rm -f "$dd_out" "$dd_err"
 
-echo '[10/22] no ablation that cannot kill anything'
+echo '[10/23] no ablation that cannot kill anything'
 # The narrowest of the three shapes reviews keep re-finding, and the only one
 # that is decidable lexically. Two forms: a mutation whose replacement equals its
 # target modulo whitespace, and an ablation declaring an empty kill set. Both
@@ -369,7 +369,7 @@ else
 fi
 rm -f "$vg_out" "$vg_err"
 
-echo '[11/22] no fenced bash block that an adopter copies fails to parse'
+echo '[11/23] no fenced bash block that an adopter copies fails to parse'
 # Rule 11 — #105. `templates/review-changes.md`'s Step 1.5 block carried an ASCII
 # apostrophe inside a single-quoted awk program; the apostrophe closed it and the
 # block was a shell syntax error for eight releases. Nothing here could see it:
@@ -394,7 +394,7 @@ else
 fi
 rm -f "$bp_out" "$bp_err"
 
-echo "[12/22] no private project name in a tracked file"
+echo "[12/23] no private project name in a tracked file"
 # ⚠️ SKIPPED IS NOT A PASS, and here it is the common case: the name list cannot
 # be tracked without publishing exactly what it protects, so it lives outside the
 # repo and an absent list means this rule checked NOTHING. That is reported as a
@@ -416,7 +416,7 @@ else
 fi
 rm -f "$pn_out" "$pn_err"
 
-echo "[13/22] no maintainer-only path referenced from an adopter-installed surface"
+echo "[13/23] no maintainer-only path referenced from an adopter-installed surface"
 # Rule 13 — #139, promoted from a review finding per #127. `docs/rationale/`
 # holds THIS repo's litigation about its own skills; no template tells an adopter
 # to create it, so a skill body pointing there is dead on every install. v1.37.0
@@ -440,7 +440,7 @@ else
 fi
 rm -f "$mp_out" "$mp_err"
 
-echo "[14/22] review-changes Step 1.5 finds nothing in this repo's own markdown"
+echo "[14/23] review-changes Step 1.5 finds nothing in this repo's own markdown"
 # Rule 14 — audited 2026-09-14. The check already shipped and already worked;
 # what it was not doing is RUNNING. `.claude/review-profile.md` carried a
 # corruptible two-glob bold span through four consecutive commits that touched
@@ -472,7 +472,7 @@ else
 fi
 rm -f "$s15_out" "$s15_err"
 
-echo "[15/22] the auto-loaded set only ratchets down"
+echo "[15/23] the auto-loaded set only ratchets down"
 # Rule 15 — rule 8's mechanism pointed at the surface nobody was charging.
 # `audit-context`'s 40,000 is where Claude Code WARNS, not a budget anyone chose,
 # and it declines to prescribe a character count for the index at all. So: no
@@ -496,7 +496,7 @@ else
 fi
 rm -f "$al_out" "$al_err"
 
-echo "[16/22] a skill template's SAVE AS agrees with how the skill is installed"
+echo "[16/23] a skill template's SAVE AS agrees with how the skill is installed"
 # Rule 16 — #184, promoted from a review finding per #127. A template copied
 # verbatim to a SKILL.md path carries its frontmatter inside a comment, so the
 # skill REGISTERS AS NOTHING — it fails by doing nothing. Three review rounds were
@@ -517,7 +517,7 @@ else
 fi
 rm -f "$sa_out" "$sa_err"
 
-echo "[17/22] no shell option welded to a comment"
+echo "[17/23] no shell option welded to a comment"
 # Rule 17 — #160, promoted from a review finding. `#` opens a comment only at a
 # word start, so `set -u# why` passes `-u#` as an option, errors at rc 2, and
 # NEVER APPLIES the option. ⚠️ `bash -n` PASSES on it — measured — so #160's
@@ -536,7 +536,7 @@ else
 fi
 rm -f "$oc_out" "$oc_err"
 
-echo "[18/22] every release tag has a dated CHANGELOG.md block"
+echo "[18/23] every release tag has a dated CHANGELOG.md block"
 # Rule 18 — #197. v1.45.1 was tagged and pushed with its block still reading
 # "(candidate, unreleased)"; three checks agreed it was released because each read
 # the tag, none the heading adopters read. SKIPS where no release tag exists (CI
@@ -555,7 +555,7 @@ else
 fi
 rm -f "$rh_out" "$rh_err"
 
-echo "[19/22] a release that grows the adopter-facing surface says so"
+echo "[19/23] a release that grows the adopter-facing surface says so"
 # Rule 19 — H-022. Rule 8's budget can always be raised, so it never limited
 # growth. When the top CHANGELOG.md block is dated, templates/ is compared with
 # the previous release tag, and growth must be stated in that block as
@@ -575,7 +575,7 @@ else
 fi
 rm -f "$rg_out" "$rg_err"
 
-echo "[20/22] every shell file under tests/ and scripts/ parses"
+echo "[20/23] every shell file under tests/ and scripts/ parses"
 # Rule 20 — #160. Rule 11 parses the fenced bash adopters copy; nothing parsed the
 # fixtures and scripts, where two of #160's four quoting breaks landed. A fixture
 # that does not parse still runs every line above the break and reads like a
@@ -593,7 +593,7 @@ else
 fi
 rm -f "$sp_out" "$sp_err"
 
-echo "[21/22] scaffolding templates carry the release they ship in"
+echo "[21/23] scaffolding templates carry the release they ship in"
 # Rule 21 — #171. The v1.41.0 tag shipped templates stamped v1.40.0, and
 # templates/release.md Step 5 had named that class in prose. Checks the stamps
 # against a dated top CHANGELOG.md block (runs in CI), else the highest reachable
@@ -613,7 +613,7 @@ else
 fi
 rm -f "$ts_out" "$ts_err"
 
-echo "[22/22] install paths on GUIDE.md, templates/README.md and adopt.md agree with the installer"
+echo "[22/23] install paths on GUIDE.md, templates/README.md and adopt.md agree with the installer"
 # Rule 22 — #195. Rule 16 binds each template's SAVE AS header; these three
 # surfaces carry further hand-maintained copies of the same scope fact, and #184
 # began in GUIDE.md. Reads prefixed install paths only; see the checker header.
@@ -629,6 +629,23 @@ else
   while IFS= read -r line; do [ -n "$line" ] && fail "$line"; done < "$ss_out"
 fi
 rm -f "$ss_out" "$ss_err"
+
+echo "[23/23] a verification rating is the floor of its steps"
+# Rule 23 — #168. A source whose step table records PARTIAL, NEEDS WORK or FAIL
+# was rated VERIFIED, and its claims ESTABLISHED, for five months. Reads
+# docs/vv/verification-log.md and joins docs/vv/claims/claim_registry.md by claim
+# ID. Fixture at tests/fixtures/rating-floor/.
+rf_out=$(mktemp); rf_err=$(mktemp)
+bash tests/lint/rating-floor.sh . >"$rf_out" 2>"$rf_err"; rf_rc=$?
+cat "$rf_err"
+if [ $rf_rc -gt 1 ]; then
+  fail "rule 23 checker could not run (exit $rf_rc) — this rule checked nothing"
+elif ! grep -q 'source block(s)' "$rf_err"; then
+  fail "rule 23 checker produced no coverage line — this rule checked nothing"
+else
+  while IFS= read -r line; do [ -n "$line" ] && fail "$line"; done < "$rf_out"
+fi
+rm -f "$rf_out" "$rf_err"
 
 echo
 if [ "${SKIPPED:-0}" -gt 0 ]; then
