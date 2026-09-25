@@ -8,6 +8,16 @@ End-of-session curation for the agent-ready-projects framework.
 
 Review the session's work and update the layered memory system:
 
+## Before Step 0 — Close the session's arc
+
+Before tending memory, go back to what this session was asked to do. The detour you are standing in is not the arc.
+
+1. **Re-read the opening ask in its own words**, from the transcript or the compaction summary.
+2. **Take stock from artefacts, not memory**: `git status --short` and `git log --oneline -6` in every repo the session touched, and any external system it changed (a service, a watcher, a flag left on). Files you did not write mean **another session is working here**: do not commit or tidy its work, and say so in the report.
+3. **Mark each thread** closed, partial (name the missing part), open (displaced, declined or blocked), or not yours (needs the engineer or someone else). A declined offer is closed.
+4. **Land what can be landed now.** Recompute any number that goes into a deliverable instead of copying it. Leave pushes, deploys and anything irreversible to the engineer, with the command ready.
+5. Open threads go into the active work item's Current Status in Step 3; the list heads the Step 6 report.
+
 ## Step 0 — Freshness check
 
 **Measure the read surface first, and say the number.**
@@ -268,6 +278,7 @@ Fix what you can. Flag anything that needs engineer input.
 ## Step 6 — Report
 
 Summarize what you changed:
+- **Arc**: the opening ask, then each thread closed / partial / open / not yours (from Before Step 0)
 - **Freshness**: Gotcha log headers reconciled against the `**Problem**` count, and the Promoted table read (from Step 0)
 - **Verification**: State claims checked — N passed, N failed, N unverified, N errored, N manual check needed, N cannot verify, N malformed (from Step 0). Report all seven, even zeros, plus **N commands run of M annotations**, the difference, and the exit status
 - **Index self-consistency**: N identifiers cited by more than one *entry*, and N contradicting pairs among them (from Step 0). Report both; say whether zero meant nothing to compare. Quote any pair verbatim
