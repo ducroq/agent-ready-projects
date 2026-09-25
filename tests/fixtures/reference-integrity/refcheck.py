@@ -14,7 +14,7 @@ which is not all of them; see the fallback gap in the next paragraph. It is not
 an oracle any more, and a fix here counts against the issue it closes.
 This paragraph said the opposite until 2026-09-14, two releases later (#185).
 
-Distribution was the shelved blocker, recorded in docs/work-items/model-fit.md
+Distribution was the shelved blocker, recorded in docs/work-items/archive/model-fit.md
 (which says the INSTALLER copies only SKILL.md; the "never reaches an adopter
 repo" phrasing is this header's own former wording, not a quote from that file). It was solved
 in the other direction -- the script is not shipped to the adopter, the adopter is

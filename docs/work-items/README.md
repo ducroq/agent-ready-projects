@@ -8,3 +8,5 @@
      Pointer format, in the memory index's Current State section — or the
      project file's "Active work" section where the tool has no auto-memory:
        - [Short description] → docs/work-items/slug.md [in progress] -->
+
+Finished work items move to `archive/`. Curate does not read that folder.

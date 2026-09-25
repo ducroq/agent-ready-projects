@@ -14,7 +14,7 @@ Diagnosis, four-lens review battery, and the discarded alternatives are in this 
 - [x] First plan drafted and reviewed by a 4-lens battery; **6 blockers, plan substantially rewritten**
 - [x] Magnitude gate added to `review-changes` Step 1 — carve-outs authored first; single pass runs in a fresh context, not inline. **Ready.**
 - [x] `refcheck.py` bug fixes — `BARE_STATE` removed, `OSError`/`UnicodeDecodeError` handling, exit non-zero when documents go unread, rung-4 coverage disclosed as a fact. File stays in `tests/fixtures/` as the oracle. **Ready.**
-- [x] Cross-vendor review (DeepSeek) run on the diff — 1 genuine catch my Claude battery missed, 2 verifiably false claims. Recorded in `memory/project_multi_vendor_review_battery.md`.
+- [x] Cross-vendor review (DeepSeek) run on the diff — 1 genuine catch my Claude battery missed, 2 verifiably false claims. Recorded in `memory/archive/project_multi_vendor_review_battery.md`.
 - [ ] **SHELVED — promoting `refcheck.py` to the Step 4 runtime.** Attempted, reviewed twice, unwound. Two unresolved blockers, both about packaging rather than the idea:
   - `scripts/install-global-skills.sh` copies only `SKILL.md`, so the script never reached an adopter repo. **The generalisation originally written here — "a user-global skill cannot depend on a repo-relative file" — is false, measured 2026-08-08; see Decisions.** The blocker is this repo's installer, not the platform.
   - The manual fallback written to cover that case carried the resolution rungs but *not* the report-shape split, the "don't call fragments written-stale" rule, or the extension whitelist — so it silently reproduced the v1.15.0 defect the runtime was meant to remove.
