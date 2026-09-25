@@ -463,5 +463,5 @@ A round is one pass of the lens set, however many lenses it contains — not a r
 
 State the lens set and the ceiling before starting; record the cost after. A lens stopped part-way returns nothing.
 
-- Do not run a lens for a class a deterministic check covers *completely*; where coverage is partial, run it and say which part the check already settled. Read the Mechanized table in Step 1, before choosing lenses: a `live` row may narrow a mandated lens, never skip it.
+- Do not run a lens for a class a deterministic check covers *completely*; where coverage is partial, run it and say which part the check already settled. Read the Mechanized table in Step 1, before choosing lenses: a `live` row may narrow a mandated lens, never skip it: a row covers one shape, a lens a class.
 - Never collapse lenses into the author's own context. Fewer independent reviewers is a legitimate saving; none is not.

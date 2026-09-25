@@ -27,16 +27,16 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 Before Step 0, curate now goes back to the session's opening ask, takes stock from git state rather
 than memory, marks each thread closed / partial / open / not yours, and lands only what the ask
-covers. Open threads go to the active work item. It also flags changes the session did not make,
+covers. It commits only where the project says to, turns off anything left running, and sends open
+threads to the active work item (or the index's Current State). It also flags changes the session did not make,
 which may be a parallel session in the repo. Adapted from the `backtrack` skill @jwasys proposed in
 #201, folded into curate instead of shipping as a sixth global skill.
 
 ### `templates/curate.md` and `templates/review-changes.md` — bodies thinned
 
 curate 45.5k → 23k characters, review-changes 43.5k → 27k, paid on every run. Code blocks and step
-numbers are unchanged; narratives and issue histories moved to `docs/rationale/`. Three instructions
-changed: curate names exit 127 (runner not found); review-changes says not to run a lens a check
-covers completely, and scopes its round-cap cost claim to the one measured sequence.
+numbers are unchanged; narratives and issue histories moved to `docs/rationale/`. One instruction
+changed: curate names exit 127 (runner not found).
 
 ### `templates/curate.md` Step 0 — the verify runner ships as `scripts/verify-runner.sh`
 

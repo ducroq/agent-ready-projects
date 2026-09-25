@@ -30,7 +30,7 @@ Before tending memory, go back to what this session was asked to do. The detour 
 1. **Re-read the opening ask in its own words**, from the transcript or the compaction summary.
 2. **Take stock from artifacts, not memory**: `git status --short` and `git log --oneline -6` in every repo the session touched, any document that names its own gap (a work item's success criteria, a pending version), and any external system the session changed (a service, a watcher, a flag left on). Changes you did not make may mean **another session is working here**, or the user's own edits: do not commit or tidy them, and report them as unexplained.
 3. **Mark each thread** closed, partial (name the missing part), open (displaced or blocked), or not yours (needs the engineer or someone else). A declined offer is closed.
-4. **Land only what the opening ask covers and the engineer has not declined.** Recompute any number that goes into a deliverable instead of copying it. Commit only if this project commits without asking. Turn off any stimulus or watcher the session started, and state what is left running. Leave pushes, deploys and anything irreversible to the engineer, with the command ready.
+4. **Land only what the session was asked for (the opening ask or a later explicit request) and not declined.** Recompute any number that goes into a deliverable instead of copying it. Commit only if the project file or the engineer says to commit without asking; otherwise leave it staged and say so. Turn off any stimulus or watcher the session started, and state what is left running. Leave pushes, deploys and anything irreversible to the engineer, with the command ready.
 5. Open threads go into the active work item's Current Status in Step 3, or into the memory index's Current State if there is none; the list heads the Step 6 report.
 
 ## Step 0 — Freshness check
@@ -89,7 +89,7 @@ Check for context rot from *previous* sessions. **Read metadata, not documents**
 
    Probes run with `bash -c` in the current directory. Pass every file that holds a probe.
 
-   **Zero commands extracted is a defect, never a pass.** Account for the difference in the `ran N of M` line item by item: syntax documentation (code spans, fenced examples) is expected; anything else is a bug. Exit status: **2** means the run itself cannot be trusted — no files given, an operand that is not a readable file, nothing extracted, or nothing produced a verdict because every annotation was manual or unreachable; **1** means a claim failed, errored or was malformed; **0** means everything reachable checked out; **127** means the runner script itself was not found (wrong `$CLONE` or a failed fetch), which is not a claim result. Read the exit status, and count the rows you received against `ran N of M` — a capture can lose rows.
+   **Zero commands extracted is a defect, never a pass.** Account for the difference in the `ran N of M` line item by item: syntax documentation (code spans, fenced examples) is expected; anything else is a bug. Exit status: **2** means the run itself cannot be trusted — no files given, an operand that is not a readable file, nothing extracted, or nothing produced a verdict because every annotation was manual or unreachable; **1** means a claim failed, errored or was malformed; **0** means everything reachable checked out; **127** means the runner script itself was not found (wrong `$CLONE` or failed fetch), not a claim result. Read the exit status, and count the rows you received against `ran N of M` — a capture can lose rows.
 
    **Dispositions** — first match wins:
 
@@ -292,12 +292,11 @@ Fix what you can. Flag anything that needs engineer input.
 
 ## Step 6 — Report
 
-Summarize what you changed:
-- **Arc**: the opening ask, then each thread closed / partial / open / not yours (from Before Step 0)
-- **Freshness**: Gotcha log headers reconciled against the `**Problem**` count, and the Promoted table read (from Step 0)
-- **Verification**: State claims checked — N passed, N failed, N unverified, N errored, N manual check needed, N cannot verify, N malformed (from Step 0). Report all seven, even zeros, plus **N commands run of M annotations**, the difference, and the exit status
-- **Index self-consistency**: N identifiers cited by more than one *entry*, and N contradicting pairs among them (from Step 0). Report both; say whether zero meant nothing to compare. Quote any pair verbatim
-- **Gotchas**: New entries added, entries resolved or promoted, and **N promoted patterns re-checked, N recurred** (from Step 2). Report both, even zeros. Name any pattern that recurred *after* promotion
+- **Arc**: the opening ask, then each thread closed / partial / open / not yours
+- **Freshness**: Gotcha log headers reconciled against the `**Problem**` count, and the Promoted table read
+- **Verification**: State claims checked — N passed, N failed, N unverified, N errored, N manual check needed, N cannot verify, N malformed. Report all seven, even zeros, plus **N commands run of M annotations**, the difference, and the exit status
+- **Index self-consistency**: N identifiers cited by more than one *entry*, and N contradicting pairs among them. Report both; say whether zero meant nothing to compare. Quote any pair verbatim
+- **Gotchas**: New entries added, entries resolved or promoted, and **N promoted patterns re-checked, N recurred**. Report both, even zeros. Name any pattern that recurred *after* promotion
 - **Memory index**: Updates made
-- **Doc sync**: Project file, runbook, backlog updates made or flagged (from Step 4)
-- **Action needed**: Anything flagged that requires engineer decision
+- **Doc sync**: Project file, runbook, backlog updates made or flagged
+- **Action needed**: anything needing an engineer decision
