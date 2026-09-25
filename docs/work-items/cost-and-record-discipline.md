@@ -18,7 +18,7 @@ Goal: make the framework cheaper to run without cutting review of the shipped su
 
 - **Last action**: v1.46.0 released (tagged and pushed 2026-09-25; global skills refreshed). It carries #202's fixes and token-reduction steps 1–3: the curate read surface went from 658k to 160k chars, curate's skill body from 56.9k to about 25k, review-changes' from 43.5k to about 27k, and the verify runner moved to `scripts/verify-runner.sh`. #201's arc idea is folded into curate as H-031.
 - **Next action** (handoff 2026-09-25; a session elsewhere can pick this up):
-  1. **Branch `thin-claude-md`, pushed, not merged.** It cuts `CLAUDE.md` from 26k to 14.5k characters. An adversarial review was still running when the session ended: re-run one adversarial pass on `git diff master...thin-claude-md -- CLAUDE.md` (did any routing row or Hard Constraint get weaker?), fix what it finds, then open a PR and merge.
+  1. **Branch `thin-claude-md`, pushed, not merged.** It cuts `CLAUDE.md` from 26k to 14.5k characters. Reviewed (one adversarial pass): its two lost instructions and one clarification are restored. Open a PR and merge.
   2. **Adopter bloat measures, approved by the maintainer for v1.46.1.** Projects using the framework grow the same way this repo did: agent-ready-papers has a 35k project file, 404k of memory and a 96k gotcha log, against a 6.4k template. Add:
      - a "lead with the point, no narrative" rule to `templates/project-file.md`'s Hard Constraints;
      - a flag in curate Step 0 sub-step 6 for a project file over ~15k characters;
