@@ -34,6 +34,12 @@ a sentence or a table row in an existing skill or template.
   separate adopter. Report it and run the skill there.
 - **`update-drift` Step 1 and `release` Step 1 (#147).** A diff confined to the `framework:` stamp line is not an
   adopter-facing change, since every release bumps it. `update-drift` gives the command that tells the two apart.
+- **`update-drift` Step 0 (#211).** The matchers run through `command grep`, so a shell function or alias running
+  another engine cannot substitute it, and a grep exit of 2 prints `MATCHER FAILED` instead of reading as "no pins".
+  ugrep 7.8.4 rejects matchers 1 and 3 as too complex; the old `2>/dev/null || :` hid that. Absent operands are now
+  dropped before the search, so exit 2 cannot come from one.
+- **`update-drift` Step 0 known holes (#134).** A stamp split across lines escapes every matcher; only the
+  reconciliation finds it.
 - **`release` Step 1 (#192, H-015).** Before writing `Closes #N` for an issue filed against a skill, name the
   adopter-installed file that changed. It is a question to look, not a gate.
 - **`curate` Step 0 sub-step 6 (#143).** Files the project file tells the agent to read every session are listed on
