@@ -2,8 +2,8 @@
 # Lock a reduction in:  bash tests/lint/autoload-ratchet.sh . --update
 # Pay for growth deliberately:  ... --raise "why this must get bigger"
 # Every raise is recorded below, oldest first; notes accumulate, never replace.
-# BYTES 23585
-# LINES 90
+# BYTES 23580
+# LINES 89
 # seeded 2026-09-14
 # ratcheted down 2026-09-14
 # ratcheted down 2026-09-14
@@ -22,5 +22,6 @@
 # ratcheted down 2026-09-25
 # ratcheted down 2026-09-25
 # RAISED 2026-09-25 from 23363b/90l to 23585b/90l: review of the CLAUDE.md cut restored two dropped instructions (why memory/ stays gitignored; read the self-certification row before green-lighting) and the shadowing clarifier, +222 bytes; the cut is still -11.5k
-CLAUDE.md	14974
-memory/MEMORY.md	8611
+# ratcheted down 2026-09-25
+CLAUDE.md	15036
+memory/MEMORY.md	8544

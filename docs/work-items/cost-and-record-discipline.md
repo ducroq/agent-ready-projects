@@ -26,6 +26,7 @@ Goal: make the framework cheaper to run without cutting review of the shipped su
      Edit template and reference install together. Rule 19 will require the release block to state the growth.
   3. **Release v1.46.1**: steps 4 (#205) and 5, rule 19 (#206), and item 2 above.
   4. Measure H-020 (spend per release) and H-031 (curate's arc section, 10 runs).
+- **Update 2026-09-25 (later)**: items 1–3 are done: #207 merged, #208 shipped the bloat measures, and releases v1.46.1 through v1.48.1 are tagged. Item 4 is still open.
 - **Blockers**: none.
 
 **Before each cut**, check it still holds:
