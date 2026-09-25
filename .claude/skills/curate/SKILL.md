@@ -13,10 +13,10 @@ Review the session's work and update the layered memory system:
 Before tending memory, go back to what this session was asked to do. The detour you are standing in is not the arc.
 
 1. **Re-read the opening ask in its own words**, from the transcript or the compaction summary.
-2. **Take stock from artefacts, not memory**: `git status --short` and `git log --oneline -6` in every repo the session touched, and any external system it changed (a service, a watcher, a flag left on). Files you did not write mean **another session is working here**: do not commit or tidy its work, and say so in the report.
-3. **Mark each thread** closed, partial (name the missing part), open (displaced, declined or blocked), or not yours (needs the engineer or someone else). A declined offer is closed.
-4. **Land what can be landed now.** Recompute any number that goes into a deliverable instead of copying it. Leave pushes, deploys and anything irreversible to the engineer, with the command ready.
-5. Open threads go into the active work item's Current Status in Step 3; the list heads the Step 6 report.
+2. **Take stock from artifacts, not memory**: `git status --short` and `git log --oneline -6` in every repo the session touched, any document that names its own gap (a work item's success criteria, a pending version), and any external system the session changed (a service, a watcher, a flag left on). Changes you did not make may mean **another session is working here**, or the user's own edits: do not commit or tidy them, and report them as unexplained.
+3. **Mark each thread** closed, partial (name the missing part), open (displaced or blocked), or not yours (needs the engineer or someone else). A declined offer is closed.
+4. **Land only what the opening ask covers and the engineer has not declined.** Recompute any number that goes into a deliverable instead of copying it. Commit only if this project commits without asking. Turn off any stimulus or watcher the session started, and state what is left running. Leave pushes, deploys and anything irreversible to the engineer, with the command ready.
+5. Open threads go into the active work item's Current Status in Step 3, or into the memory index's Current State if there is none; the list heads the Step 6 report.
 
 ## Step 0 — Freshness check
 

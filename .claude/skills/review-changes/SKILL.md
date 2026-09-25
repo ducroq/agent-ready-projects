@@ -72,7 +72,7 @@ git -C "$(git rev-parse --show-toplevel)" -c core.quotePath=false \
 
 List the changed files with `git diff --stat "$BASE"...HEAD`, `git diff --stat`, `git diff --cached --stat`, `git diff --summary -M "$BASE"...HEAD` (renames, modes, binaries and submodules are invisible to `--stat`) and `git ls-files --others --exclude-standard` — an untracked file is a changed file and gets a tier.
 
-**Read `.claude/review-profile.md` now.** It holds this project's risk tiers, guarantee surfaces, test baseline and carve-outs, plus three optional, additive sections: **Project lenses** and **Project additions to the shipped lens prompts** (used in Step 2), and **Project procedure kept with the profile** (run it here).
+**Read `.claude/review-profile.md` now.** It holds this project's risk tiers, guarantee surfaces, test baseline and carve-outs, plus three optional, additive sections: **Project lenses** and **Project additions to the shipped lens prompts** (used in Step 2), and **Project procedure kept with the profile** (run it here). A profile without them (written before v1.43.0) is not an error.
 
 **If `.claude/review-profile.md` does not exist, STOP and say so** — do not proceed on defaults or invent a table, since every path would fall through to LOW. Point the reader at `templates/review-profile.md` in the framework.
 
@@ -86,7 +86,7 @@ Classify each changed file using the profile's tier table, then apply the magnit
 - **Renames and moves** — zero lines under `-M`, while every reference to the old path breaks.
 - **Permission changes** — zero lines, visible only with `--summary`. A `chmod -x` makes a shipped script unrunnable downstream.
 - **Binary files and submodule pointers** — a submodule bump changes one line and can move any amount of code.
-- **Any change to a shell script or an executable, wherever it lives** — shell breaks in one character, and a small edit would otherwise lose the shell-correctness lens.
+- **Any change to a shell script or an executable, wherever it lives** — shell breaks in one character, and a small edit would otherwise lose the shell-correctness lens, which is the reason those paths are HIGH at all.
 - **Any non-frontmatter edit to a reference install** (`.claude/skills/**`) — a defect there ships to every install derived from it.
 - **Frontmatter edits to those same files** — removing one `---` silently unregisters a skill.
 - **A new executable, or any new file in a HIGH path** — its tier has not been decided yet.
@@ -242,7 +242,7 @@ Fix every hit before running the lenses:
 - *Two backticked tokens abutting the bold marker inside one bold span*: separate them, or take one out of the bold run.
 - *Unclosed YAML frontmatter*: no check ran on any line of that file. Close the delimiter and **run Step 1.5 again**.
 
-A row hit can be a false positive (setext heading, spaced `- - -`, frontmatter not at line 1); look before fixing. **Known blind spots:** tables in blockquotes or with no delimiter row, the one-token emphasis form; a lone-CR file can go **entirely silent**. Before widening any of these trades, read <https://github.com/ducroq/agent-ready-projects/blob/master/docs/rationale/review-changes.md> <!-- lint-skip: maintainer-path — a URL, not a repo-relative path: it resolves for a reader with no such directory. -->.
+Treat a row hit as real until you have looked at it. Known false positives: a setext heading, a spaced `- - -`, frontmatter not at line 1, a table inside a fenced block indented four or more spaces, and unrecognised frontmatter whose closing `---` reads as a delimiter row. Do not "fix" those. **Known blind spots:** tables in blockquotes or with no delimiter row, the one-token emphasis form; a lone-CR file can go **entirely silent**. Before widening any of these trades, read <https://github.com/ducroq/agent-ready-projects/blob/master/docs/rationale/review-changes.md> <!-- lint-skip: maintainer-path — a URL, not a repo-relative path: it resolves for a reader with no such directory. -->.
 
 A clean run and an empty file list both print nothing, so **report the count alongside the result:**
 
@@ -436,7 +436,7 @@ was skipped.]
 
 ## Step 5 — Fixing, and whether to run another round
 
-Fixing is where new defects come from.
+Fixing is a major source of new defects.
 
 - A fix is a change, and takes the tier of the file it lands in.
 - Re-read the steps that consume what you changed.
@@ -445,11 +445,11 @@ Fixing is where new defects come from.
 
 ### Round cap
 
-A round is one pass of the lens set, however many lenses it contains — not a re-run of a deterministic check. **Two rounds maximum.** A third runs only when round 2 found **the same defect a second time**, anywhere — a class — and then enumerate every site the class could occupy and check them all before running it. The cap is a cost decision (tokens per acted finding rise each round); re-open it only on a class a capped round demonstrably shipped.
+A round is one pass of the lens set, however many lenses it contains — not a re-run of a deterministic check. **Two rounds maximum.** A third runs only when round 2 found **the same defect a second time**, anywhere — a class — and then enumerate every site the class could occupy and check them all before running it. The cap is a cost decision: on the one measured four-round sequence, tokens per acted finding rose each round, compared within one target. Re-open it on a measured flattening of that per-target ratio, or on a class of defect a capped round demonstrably shipped, not on one missed finding.
 
 ### Budget the round before you spawn it
 
 State the lens set and the ceiling before starting; record the cost after. A lens stopped part-way returns nothing.
 
-- Skip a lens only for a class a deterministic check covers *completely*. Read the Mechanized table in Step 1, before choosing lenses: a `live` row may narrow a mandated lens, never skip it.
+- Do not run a lens for a class a deterministic check covers *completely*; where coverage is partial, run it and say which part the check already settled. Read the Mechanized table in Step 1, before choosing lenses: a `live` row may narrow a mandated lens, never skip it.
 - Never collapse lenses into the author's own context. Fewer independent reviewers is a legitimate saving; none is not.

@@ -26,19 +26,17 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 ### `templates/curate.md` — a new first section: close the session's arc
 
 Before Step 0, curate now goes back to the session's opening ask, takes stock from git state rather
-than memory, marks each thread closed / partial / open / not yours, and lands what it can. Open
-threads go to the active work item; the list heads the report. It also names a case nothing caught
-before: files you did not write mean a parallel session is working in the repo. About 1.4k
-characters. Adapted from the `backtrack` skill proposed by @jwasys in #201. It is folded into curate
-instead of shipping as a sixth global skill, and it writes to the existing work-item layer, not a
-new file.
+than memory, marks each thread closed / partial / open / not yours, and lands only what the ask
+covers. Open threads go to the active work item. It also flags changes the session did not make,
+which may be a parallel session in the repo. Adapted from the `backtrack` skill @jwasys proposed in
+#201, folded into curate instead of shipping as a sixth global skill.
 
 ### `templates/curate.md` and `templates/review-changes.md` — bodies thinned
 
-curate 45.5k → 23.1k characters, review-changes 43.5k → 26.6k, paid on every run. Instructions,
-thresholds, tables and every code block are unchanged; incident narratives, measurement anecdotes
-and issue histories moved to `docs/rationale/`. curate's exit-status note now names 127 (runner
-not found).
+curate 45.5k → 23k characters, review-changes 43.5k → 27k, paid on every run. Code blocks and step
+numbers are unchanged; narratives and issue histories moved to `docs/rationale/`. Three instructions
+changed: curate names exit 127 (runner not found); review-changes says not to run a lens a check
+covers completely, and scopes its round-cap cost claim to the one measured sequence.
 
 ### `templates/curate.md` Step 0 — the verify runner ships as `scripts/verify-runner.sh`
 
