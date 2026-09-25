@@ -83,7 +83,7 @@ a sentence or a table row in an existing skill or template.
 - **`templates/gotcha-log.md` entry guidance (#179).** What to cut from a long entry (emphasis, self-narration,
   restatement) and what to keep (wrong and right values, mechanism, names, detection, the if/then rule).
 - **`curate` Step 0 sub-step 6 and `audit-context` Step 1 (#179).** Both name the unit with every number: `curate`
-  counts characters, `audit-context` bytes (~2% higher), so one file can pass one and fail the other at 35k.
+  counts characters, `audit-context` bytes (higher by the non-ASCII share, 0.4-1.9% measured here), so one file can pass one and fail the other at 35k.
 - **`release` Step 1 (#192, H-015).** Before writing `Closes #N` for an issue filed against a skill, name the
   adopter-installed file that changed. It is a question to look, not a gate.
 - **`curate` Step 0 sub-step 6 (#143).** Files the project file tells the agent to read every session are listed on
