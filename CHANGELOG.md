@@ -22,9 +22,15 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.48.1 (candidate, unreleased)
+## v1.48.1 (2026-09-25)
 
-**Bump provisional**: classify it from the diff at release, per `templates/release.md` Step 2.
+**PATCH.** Changes to existing artifacts and documentation only; nothing new to adopt, so the third row of
+`templates/release.md` Step 2 applies, per the v1.10.1 precedent. `audit-context` Step 4 names its three documents as
+its whole scope, `docs/seeded-defects-and-ablations.md` gains a section on recording refusals, and the maintainer suite
+gains its first cross-step fixture. Adopter-facing size: +382 bytes, the Step 4 scope sentence.
+
+**Consumers.** No action required. An adapted `audit-context` takes the scope rule by its marker string
+`Those three and no others`.
 
 - **`audit-context` Step 4 scope (#117).** Names its three documents as the whole scope: a changelog, session log or
   ADR narrates, and running the checker on this framework's `CHANGELOG.md` (v1.36.1, 32 sibling repos reachable) reported 86
