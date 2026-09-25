@@ -28,7 +28,8 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 Before Step 0, curate now goes back to the session's opening ask, takes stock from git state rather
 than memory, marks each thread closed / partial / open / not yours, and lands only what the ask
 covers. It commits only where the project says to, turns off anything left running, and sends open
-threads to the active work item (or the index's Current State). It also flags changes the session did not make,
+threads to the active work item (or the index's Current State); a closed arc is recorded in the
+session file. It also flags changes the session did not make,
 which may be a parallel session in the repo. Adapted from the `backtrack` skill @jwasys proposed in
 #201, folded into curate instead of shipping as a sixth global skill.
 

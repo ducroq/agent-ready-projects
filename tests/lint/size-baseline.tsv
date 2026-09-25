@@ -3,7 +3,7 @@
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and every raise is
 # recorded below, oldest first — notes accumulate and are never replaced.
-# BUDGET 194170
+# BUDGET 194306
 # SPILL 122601
 # RAISED 2026-09-06 from 247526 to 247969: #133: the #118 remedy string shipped unconditional and can turn a resolved reference into an AMBIGUOUS finding; the caveat that scopes it is +443 b on templates/audit-context.md, seeded as T39/T40/N39 (reason restored 2026-09-06 — write_baseline used to overwrite each note with the next)
 # RAISED 2026-09-06 from 247969 to 248237: #140: UNRESOLVED had two causes printing one reason. +268 b on templates/audit-context.md, seeded as T41/T41b/N40 (reason restored 2026-09-06)
@@ -70,6 +70,7 @@
 # RAISED 2026-09-25 from 192105 to 193283: curate gains 'Before Step 0 — Close the session's arc' (+1,178 bytes), folded from PR #201's backtrack skill instead of shipping it as a 7.6k global skill
 # RAISED 2026-09-25 from 193283 to 194174: review round 1 on the skill thinning restored instructions the cut had dropped (+891 bytes); net change of the thinning is still about -37k
 # ratcheted down 2026-09-25
+# RAISED 2026-09-25 from 194170 to 194306: curate arc section records a closed arc in the session file (+136 bytes), the durable half of #201's arcs.md without a new file; approved by the maintainer 2026-09-25
 templates/adr.md	2115
 templates/audit-context.md	22591
 templates/checklists/architect-checklist.md	1263
@@ -78,7 +79,7 @@ templates/checklists/qa-checklist.md	1836
 templates/checklists/README.md	1097
 templates/checklists/test-checklist.md	1234
 templates/coordination.md	3909
-templates/curate.md	24735
+templates/curate.md	24871
 templates/gotcha-log.md	8858
 templates/hypothesis-log.md	3570
 templates/memory-index.md	3396

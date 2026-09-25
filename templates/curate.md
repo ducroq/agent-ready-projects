@@ -31,7 +31,7 @@ Before tending memory, go back to what this session was asked to do. The detour 
 2. **Take stock from artifacts, not memory**: `git status --short` and `git log --oneline -6` in every repo the session touched, any document that names its own gap (a work item's success criteria, a pending version), and any external system the session changed (a service, a watcher, a flag left on). Changes you did not make may mean **another session is working here**, or the user's own edits: do not commit or tidy them, and report them as unexplained.
 3. **Mark each thread** closed, partial (name the missing part), open (displaced or blocked), or not yours (needs the engineer or someone else). A declined offer is closed.
 4. **Land only what the session was asked for (the opening ask or a later explicit request) and not declined.** Recompute any number that goes into a deliverable instead of copying it. Commit only if the project file or the engineer says to commit without asking; otherwise leave it staged and say so. Turn off any stimulus or watcher the session started, and state what is left running. Leave pushes, deploys and anything irreversible to the engineer, with the command ready.
-5. Open threads go into the active work item's Current Status in Step 3, or into the memory index's Current State if there is none; the list heads the Step 6 report.
+5. Open threads go into the active work item's Current Status in Step 3, or into the memory index's Current State if there is none. If the arc closed something, record the ask and the thread list in this session's file (Step 3), as a dated record, not a status board. The list heads the Step 6 report.
 
 ## Step 0 — Freshness check
 
