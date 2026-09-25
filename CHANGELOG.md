@@ -22,10 +22,21 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.47.1 (candidate, unreleased)
+## v1.48.0 (2026-09-25)
 
-**Bump provisional**: classify it from the diff at release, per `templates/release.md` Step 2. Seven small fixes, each
-a sentence or a table row in an existing skill or template.
+**MINOR.** Adds behaviour, and no existing consumer has to act, so rule 2 of `templates/release.md` Step 2 fires, as
+it did for v1.47.0 (planned as a PATCH, reclassified from the diff). New: a **Superseded** outcome and loud matcher
+failures in `update-drift`, a truth pass and a survival check in `curate`, an archive destination in `gotcha-log`, and
+an INFO listing of project-local skill copies in the installer's `--check`. One shipped bug is fixed: under mawk,
+`review-changes` Step 1.5 did not recognise a fence indented 2-3 spaces. Adopter-facing size: +6656 bytes, all new steps
+and their stated limits; nothing was thinned this release.
+
+**Consumers.** New adopters get everything. Existing adopters: installed skills keep working. Refresh the global
+installs with `scripts/install-global-skills.sh` once `v1.48.0` is tagged. An adapted copy takes each change by its
+marker string: `update-drift` — `MATCHER FAILED` and `command grep` (Step 0), `Superseded` (Step 2); `review-changes` —
+`substr(bare, 1, 1) == " "` (the mawk fix) and ``match(rest, /`+/)`` (#159); `curate` — `checked YYYY-MM-DD` and
+`grep -F` each; `audit-context` — `Name the unit`; `release` — `name the adopter-installed file`; `gotcha-log` —
+`gotcha-log-archive.md`.
 
 - **`update-drift` Step 2 (#156, #148).** A new **Superseded** outcome, for a change a later release in the same gap
   changed again. The Decline row now says to cite the upstream issue where one exists, not a version: a
