@@ -67,6 +67,11 @@ a sentence or a table row in an existing skill or template.
   positives only. Key-shaped prose (`Note: ...`) after a leading `---` silently loses every line up to the next
   `---`, and unrecognised frontmatter holding a fence loses the rest of the file. Both are named as blind spots and
   pinned in the fixture (`b14`, `b15`); no fix ships, since three are already recorded as refuted.
+- **`curate` Step 2 (#183).** Constraint rows in the Promoted table (those stating current behaviour) are re-read
+  for truth, not only counted, and stamped `checked YYYY-MM-DD`; pattern rows state no fact and are exempt.
+- **`curate` Step 0 sub-step 8 and Step 3 (#114).** Before trimming the project file or rewriting the memory index,
+  name the facts it may not lose (version line, Hard Constraints' operative clauses, anything a verify probe reads)
+  and `grep -F` each afterwards; a missing one is a finding, not an under-budget success.
 - **`release` Step 1 (#192, H-015).** Before writing `Closes #N` for an issue filed against a skill, name the
   adopter-installed file that changed. It is a question to look, not a gate.
 - **`curate` Step 0 sub-step 6 (#143).** Files the project file tells the agent to read every session are listed on
