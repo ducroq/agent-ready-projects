@@ -40,8 +40,6 @@ Issues still open on this work item's thread:
 - **#160**: rule 11 does not cover `tests/**/*.sh`. Attach the `set -u# <orphan>` class, which `bash -n` passes.
 - **#192**: ship H-015 to `templates/`, which means naming the adopter-installed file that changed before writing `Closes #N`.
 - **#191**: AACR-Bench as external evidence. Parked.
-- **#154**: build trees (`.next`, `build`, `out`, `.turbo`, `coverage`) resolve references and manufacture
-  COLLISIONs. An attempt was reverted on 2026-09-14; read the thread first.
 
 Also still to do (detail in the history file):
 - **Measure v1.44.0's re-tiering plus round cap** on total spend per release. Does it reduce spend or only move it? The cap removes the ledger's recall instrument (H-020).
