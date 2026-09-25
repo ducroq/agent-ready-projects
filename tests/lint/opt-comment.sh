@@ -33,8 +33,11 @@
 # comment"; the predicate is `set` at the start of a line. Measured misses, all of
 # which `bash -n` also passes: `shopt -s nullglob# x`, `export LC_ALL=C# x`,
 # `trap ... EXIT# x`, `readonly X=1# x`, `cd /tmp# x`, and any `set` that is not
-# line-initial (`if true; then set -u# x; fi`). `set` is where it has bitten;
-# widening to the other builtins needs its own seeded cases, not a guess.
+# line-initial (`if true; then set -u# x; fi`). `set` is where it has bitten.
+# WIDENED (#160) by a second predicate, welded_builtin() below, with its own
+# seeded cases: all eight of those shapes now report, and the legal lines that
+# kept the first predicate narrow stay quiet. What it still cannot see: a builtin
+# reached through `command`/`builtin`/`env`, and any other command.
 set -u
 
 root="${1:-}"
@@ -72,6 +75,52 @@ policed() {
   return 0
 }
 
+# Second predicate (#160). A `#` welded to the end of a word in a segment whose
+# command is one of these builtins, followed by whitespace or end of line, is not
+# a comment: the text is passed on as arguments. Quote-aware; stops at a real
+# comment; skips `$#`, `${#` and `=#` (a value), and a `#` inside a word (`a#b`).
+# `set` is read here only when it is NOT the first command on the line, and only
+# with option-shaped words, since the first predicate already owns that case and
+# vim `set statusline=%#W#` must stay quiet. Prints `<line>:<text>` like grep -n.
+welded_builtin() {
+  awk '
+    BEGIN { split("shopt export readonly declare local typeset trap cd umask set", b, " ")
+            for (k in b) isb[b[k]] = 1 }
+    function segcheck() {
+      if (!isb[cmd]) return 0
+      if (cmd != "set") return 1
+      if (segno == 1) return 0
+      return (substr(line, cstart, i - cstart) ~ /^set([ \t]+[-+]?[A-Za-z]+)+$/)
+    }
+    { line = $0; n = length(line); q = ""; segno = 0; newseg = 1; cmd = ""; cstart = 0; wstart = 1; inw = 0
+      for (i = 1; i <= n; i++) {
+        c = substr(line, i, 1)
+        if (q != "") { if (c == q) q = ""; else if (c == "\\" && q == "\"") i++; continue }
+        if (c == "\\") { i++; wstart = 0; continue }
+        if (c == "\"" || c == "\047") { q = c; wstart = 0; continue }
+        if (c == " " || c == "\t") { wstart = 1; continue }
+        # `(` after `=` or `$` opens an array or a substitution INSIDE the word,
+        # so its `)` is no boundary: `arr=(a b)# x` welds the # (review finding).
+        if (c == "(" && (substr(line, i - 1, 1) == "=" || substr(line, i - 1, 1) == "$")) { inw++; wstart = 0; continue }
+        if (c == ")" && inw > 0) { inw--; wstart = 0; continue }
+        if (c == ";" || c == "&" || c == "|" || c == "(" || c == ")" || c == "{" || c == "}") {
+          newseg = 1; wstart = 1; continue }
+        if (c == "#") {
+          if (wstart) break
+          p = substr(line, i - 1, 1); nx = substr(line, i + 1, 1)
+          if (p == "$" || p == "{" || p == "=") { wstart = 0; continue }
+          if ((nx == "" || nx == " " || nx == "\t") && segcheck()) { print NR ":" line; break }
+          wstart = 0; continue
+        }
+        if (wstart && newseg) {
+          w = substr(line, i); sub(/[ \t;&|(){}].*/, "", w)
+          if (w != "then" && w != "do" && w != "else" && w != "if" && w != "while" && w != "until" && w != "!") {
+            segno++; cmd = w; cstart = i; newseg = 0 }
+        }
+        wstart = 0
+      } }' "$1" 2>/dev/null
+}
+
 stale_scan() {
   # ⚠️ The stale scan fired on FOUR self-reference sites in a row — this rule, its
   # fixture, its catalog row and a work-item paragraph — because every document
@@ -79,8 +128,12 @@ stale_scan() {
   # at a time is whack-a-mole. That is #174's axis: change where the marker is
   # read, not what it is.
   policed "$1" || return 0
+  # Line 0 is a sentinel: with an EMPTY first file, awk NR == FNR is true for
+  # every stdin line too, and the stale scan would print nothing, silently.
+  { echo 0; welded_builtin "$1" | cut -d: -f1; } > "$WORK/wb.lines"
   grep -n 'lint-skip: opt-comment' "$1" 2>/dev/null |
-    grep -vE '^[0-9]+:[[:space:]]*set([[:space:]]+[-+]?[A-Za-z]+)+#'
+    grep -vE '^[0-9]+:[[:space:]]*set([[:space:]]+[-+]?[A-Za-z]+)+#' |
+    awk -F: 'NR == FNR { w[$1] = 1; next } !($1 in w)' "$WORK/wb.lines" -
 }
 
 n=0; bad=0; skipped=0; unread=0
@@ -113,6 +166,13 @@ while IFS= read -r -d '' f; do
     echo "$f:$hit — a shell option welded to a comment: \`#\` opens a comment only at a word start, so this passes the option as written, errors at rc 2, and the option is NEVER APPLIED. \`bash -n\` passes on it (#160). Put whitespace before the \`#\`."
     bad=$((bad + 1))
   done < <(grep -nE '^[[:space:]]*set([[:space:]]+[-+]?[A-Za-z]+)+#' "$f" 2>/dev/null)
+  while IFS= read -r hit; do
+    if policed "$f"; then
+      case "$hit" in *"lint-skip: opt-comment"*) skipped=$((skipped + 1)); continue ;; esac
+    fi
+    echo "$f:$hit — a \`#\` welded to a word is not a comment: \`#\` opens one only at a word start, so the word and the text after it are passed as ARGUMENTS. \`bash -n\` passes on it (#160). Put whitespace before the \`#\`."
+    bad=$((bad + 1))
+  done < <(welded_builtin "$f")
   # ⚠️ A marker on a line the predicate does not match is STALE: it exempts
   # nothing today and whatever is written on that line tomorrow. Same rule the
   # prior art carries, and the same one rule 14's exemption was tightened to.
