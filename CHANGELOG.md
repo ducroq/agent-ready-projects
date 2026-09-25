@@ -22,7 +22,18 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.46.1 (candidate, unreleased)
+## v1.47.0 (2026-09-25)
+
+**MINOR.** Adds behaviour, and no existing consumer has to act. `refcheck.py` prints a new section listing references
+that resolve inside a gitignored directory (#154) and no longer crashes beside an unreadable directory. `curate`
+proposes an archive pass above about 300k and flags a project file over about 15k characters. The project-file
+template opens its Hard Constraints with a real rule. Rule 2 of `templates/release.md` Step 2 therefore fires. The
+2026-09-25 handoff planned this as v1.46.1; it was reclassified from the diff at release. The adopter-facing size
+fell: `templates/` is 18,981 bytes smaller than at v1.46.0, mostly from the thinning in #205.
+
+**Consumers.** New adopters get everything. Existing adopters: installed skills keep working. Refresh the global
+installs with `scripts/install-global-skills.sh` once `v1.47.0` is tagged. An adapted `curate` gains the archive pass
+by taking the new Step 0 measurement line (`! -path '*/archive/*'`) and the paragraph after it.
 
 ### Lint rule 19 — a release that grows the adopter-facing surface says so (H-022)
 
