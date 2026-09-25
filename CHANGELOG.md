@@ -35,6 +35,9 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
   them in one shell against a failing grep engine: the consumer must report `MATCHER FAILED`. Ablation A1 restores
   the consumer as `a92d33a` shipped it, which the #211 review found broken while each block was correct alone, and
   T1 catches it.
+- **`docs/seeded-defects-and-ablations.md` (#123).** New section, "Recording what you decided not to do": record a
+  refused behaviour as a seeded negative case that fails if the behaviour returns, with the reason in its comment.
+  A refused idea with no behaviour to assert still needs a sentence where a reader will look.
 
 ## v1.48.0 (2026-09-25)
 

@@ -269,6 +269,24 @@ Grow it the same way: **every time a defect escapes, add the case that would hav
 it** — before fixing the defect, so you see the fixture fail first. A fixture that has
 never been red has never been tested either.
 
+## Recording what you decided not to do
+
+A change you build and then remove leaves no trace in the code, and a note about it in a
+changelog is findable only by someone who already knows to look. The next session re-derives
+it, sometimes with the same mistake. Write the removal down as a **seeded negative case**: a
+fixture that feeds the input the removed behaviour handled, and asserts the removed behaviour
+does *not* happen. Put the reason and the issue number in the case's comment.
+
+That record cannot go stale the way prose does. Re-adding the refused behaviour turns the
+fixture red, and the red run points at the comment explaining why it was refused. It costs
+almost nothing, because the fixture exists anyway. This framework's own reference-integrity
+suite carries two: N36 pins a diagnosis that was removed because it could not be told from a
+plain break, and N37 pins the controls for an extension list whose first version broke three
+real runtime paths (#118, #123).
+
+It covers refusals of *behaviour*. A refused idea with no behaviour to assert against (a
+positioning decision, a design not built) still needs a sentence somewhere a reader will look.
+
 ## Related
 
 - [Verification Rationale](verification-rationale.md) — the structural principles behind
