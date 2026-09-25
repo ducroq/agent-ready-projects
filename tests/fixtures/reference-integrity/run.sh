@@ -396,7 +396,14 @@ if grep -qF 'dist/' <<<"$IGS"; then printf '  FAIL  N62 — a TRACKED file insid
 else printf '  PASS  N62 a tracked file inside an ignored directory is not listed\n'; fi
 if [ "$igrc" -eq 0 ]; then printf '  PASS  N63 listing is not ruling: the run stays CLEAN (exit 0)\n'
 else printf '  FAIL  N63 — the listing changed the exit status to %s\n' "$igrc"; FAIL=1; fi
-NG="$WORK/ng154"; mkdir -p "$NG"; touch "$NG/x.md"; printf '`x.md`\n' > "$NG/D.md"
+# N65 (#154 review) — one landed path OUTSIDE the work tree must not collapse
+# the section: check-ignore exits 128 on it, which once blanked the whole batch.
+touch "$WORK/outside154.md"; printf '`../outside154.md` and `.next/types/routes.d.ts`\n' > "$IG/E.md"
+if python3 refcheck.py --sibling-root "$IG" "$IG" E.md 2>&1 | grep -qE '^  \.next/ +1 reference'; then
+  printf '  PASS  N65 a path outside the work tree does not blank the section\n'
+else printf '  FAIL  N65 — an out-of-tree path collapsed the gitignored-directory section\n'; FAIL=1; fi
+# N64 — outside git, and with NOTHING resolving: the section must still say so.
+NG="$WORK/ng154"; mkdir -p "$NG"; printf 'no references here\n' > "$NG/D.md"
 if python3 refcheck.py "$NG" D.md 2>&1 | grep -qF 'GITIGNORED DIRECTORY: not checked (not a git work tree)'; then
   printf '  PASS  N64 outside git the section says it did not check\n'
 else printf '  FAIL  N64 — outside git the section is silent\n'; FAIL=1; fi

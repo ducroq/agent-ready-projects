@@ -583,34 +583,49 @@ def _in_ignored_dirs(root, landed):
     (`.next/`) answers lookups on the author's disk and not in CI, while project
     state kept out of git on purpose (`memory/`) is fine, and git cannot tell
     them apart. `check-ignore` skips tracked files, so a tracked `dist/` is not
-    listed. None when this is not a git work tree."""
+    listed. None when `root` is not in a git work tree — decided up front, so an
+    empty list cannot hide it, and a path outside the tree is left out rather
+    than failing the whole batch (#154 review)."""
     import subprocess
+
+    def git(args, data=None):
+        try:
+            p = subprocess.run(['git', '-C', str(root)] + args, input=data,
+                               capture_output=True, text=True)
+        except OSError:
+            return None
+        return p
+
+    top = git(['rev-parse', '--show-toplevel'])
+    if top is None or top.returncode != 0 or not top.stdout.strip():
+        return None
+    top = pathlib.Path(top.stdout.strip()).resolve()
+    rootr = pathlib.Path(root).resolve()
+
+    where = {}   # repo-relative path -> landed entries
+    for src, frag, h, rung in landed:
+        try:
+            rel_ = (rootr / h).resolve().relative_to(top).as_posix()
+        except (ValueError, OSError):
+            continue   # outside the work tree: not git's question
+        where.setdefault(rel_, []).append((src, frag, rung))
 
     def ignored(paths):
         if not paths:
             return set()
-        try:
-            p = subprocess.run(['git', '-C', str(root), 'check-ignore', '--stdin', '-z'],
-                               input='\0'.join(paths) + '\0', capture_output=True, text=True)
-        except OSError:
-            return None
-        if p.returncode not in (0, 1):
-            return None
+        p = git(['-C', str(top), 'check-ignore', '--stdin', '-z'], '\0'.join(paths) + '\0')
+        if p is None or p.returncode not in (0, 1):
+            return set()
         return {x for x in p.stdout.split('\0') if x}
 
-    files = ignored(sorted({h for _, _, h, _ in landed}))
-    if files is None:
-        return None
-    anc = sorted({'/'.join(f.split('/')[:i]) + '/' for f in files
-                  for i in range(1, f.count('/') + 1)})
-    dirs = ignored(anc) or set()
+    files = ignored(sorted(where))
+    dirs = ignored(sorted({'/'.join(f.split('/')[:i]) + '/' for f in files
+                           for i in range(1, f.count('/') + 1)}))
     groups = {}
-    for src, frag, h, rung in landed:
-        if h not in files:
-            continue
-        cands = ['/'.join(h.split('/')[:i]) + '/' for i in range(1, h.count('/') + 1)]
-        top = next((d for d in cands if d in dirs), h)
-        groups.setdefault(top, []).append((src, frag, rung))
+    for f in files:
+        cands = ['/'.join(f.split('/')[:i]) + '/' for i in range(1, f.count('/') + 1)]
+        topdir = next((d for d in cands if d in dirs), f)
+        groups.setdefault(topdir, []).extend(where[f])
     return groups
 
 

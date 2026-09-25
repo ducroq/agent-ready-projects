@@ -70,7 +70,10 @@ lists instead of ruling. A new section groups every rung-1, 1b and 2 resolution 
 landed inside a gitignored directory under the shortest ignored ancestor. The reader decides which is build output.
 There are no new findings and the exit code is unchanged. `git check-ignore` skips tracked files, so a tracked
 `dist/` is not listed, and outside a git work tree the section says it did not check. Seeded T68 and N62–N64; N62
-fails when the tracked-file exemption is ablated. Rung 4 (sibling repos) is not covered.
+fails when the tracked-file exemption is ablated. Rung 4 (sibling repos) is not covered. Review found that one
+landed path outside the work tree made `check-ignore` fail the whole batch, which blanked the section under a false
+"not a git work tree". It also found that a run with nothing resolving skipped the git check entirely. Repo-ness is
+now decided once, up front, and out-of-tree paths are left out. Seeded N65.
 
 ## v1.46.0 (2026-09-25)
 
