@@ -406,13 +406,28 @@ else printf '  FAIL  N65 — an out-of-tree path collapsed the gitignored-direct
 NG="$WORK/ng154"; mkdir -p "$NG"; printf 'no references here\n' > "$NG/D.md"
 # GIT_CEILING_DIRECTORIES, or a repo anywhere above $WORK makes this a work tree:
 # CI failed N64 twice on exactly that (the checker was right; the case was not).
-NGO="$(GIT_CEILING_DIRECTORIES="$WORK" python3 refcheck.py "$NG" D.md 2>&1)"
+NGO="$(GIT_CEILING_DIRECTORIES="$WORK" python3 refcheck.py --sibling-root "$NG" "$NG" D.md 2>&1)" || :
 if grep -qF 'GITIGNORED DIRECTORY: not checked (not a git work tree)' <<<"$NGO"; then
   printf '  PASS  N64 outside git the section says it did not check\n'
 else printf '  FAIL  N64 — outside git the section is silent\n'; FAIL=1
   # Say WHY, so a CI-only failure is diagnosable from the log alone.
   printf '        git says: %s\n' "$(GIT_CEILING_DIRECTORIES="$WORK" git -C "$NG" rev-parse --show-toplevel 2>&1 | head -1)"
   printf '%s\n' "$NGO" | grep -iE 'GITIGNORED|Traceback|Error|VERDICT' | sed 's/^/        | /' | head -8
+fi
+
+# N66 — an UNREADABLE directory among the default sibling roots must not crash
+# the audit. It did, with a PermissionError traceback, on every non-root CI run
+# (it is what N64 kept hitting). Root reads everything, so it cannot seed this:
+# skipped there rather than passed vacuously.
+if [ "$(id -u)" -eq 0 ]; then
+  printf '  SKIP  N66 an unreadable sibling directory does not crash the audit (root cannot seed it)\n'
+else
+  UR="$WORK/ur66"; mkdir -p "$UR/locked/x" "$UR/w/repo"; chmod 000 "$UR/locked"
+  printf 'none\n' > "$UR/w/repo/D.md"
+  if URO="$(python3 refcheck.py "$UR/w/repo" D.md 2>&1)" && ! grep -q Traceback <<<"$URO"; then
+    printf '  PASS  N66 an unreadable sibling directory does not crash the audit\n'
+  else printf '  FAIL  N66 — an unreadable sibling directory crashed the audit\n'; FAIL=1; fi
+  chmod 755 "$UR/locked"
 fi
 
 # N56 — an --ext naming only already-listed extensions appended an EMPTY

@@ -629,6 +629,16 @@ def _in_ignored_dirs(root, landed):
     return groups
 
 
+def _is_repo_dir(p):
+    """An unreadable directory is not a sibling repo. Unguarded, one `chmod 000`
+    directory beside the audited repo (common in /tmp on a shared or CI host)
+    crashed the whole audit with a traceback before any document was read."""
+    try:
+        return p.is_dir() and (p / '.git').exists()
+    except OSError:
+        return False
+
+
 def check(root, sources, sibling_roots=None):
     root = pathlib.Path(root).resolve()
     siblings = []
@@ -636,8 +646,7 @@ def check(root, sources, sibling_roots=None):
         cand = pathlib.Path(cand)
         for pat in ('*', '*/*'):
             siblings += [p for p in cand.glob(pat)
-                         if p.is_dir() and (p / '.git').exists()
-                         and p.resolve() != root]
+                         if _is_repo_dir(p) and p.resolve() != root]
     # Sort on the full path, not the basename: `sorted` is stable, so same-named
     # siblings would otherwise keep set-iteration (hash) order, and the unmarked
     # rung-4 loop below breaks on the FIRST hit. Re-keying the listing cache fixed

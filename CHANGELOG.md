@@ -75,6 +75,15 @@ landed path outside the work tree made `check-ignore` fail the whole batch, whic
 "not a git work tree". It also found that a run with nothing resolving skipped the git check entirely. Repo-ness is
 now decided once, up front, and out-of-tree paths are left out. Seeded N65.
 
+### `refcheck.py` no longer crashes on an unreadable directory beside the audited repo
+
+Without `--sibling-root`, the checker looks for neighbouring repos in the audited repo's parent and grandparent
+directories. One unreadable directory there (common in `/tmp` on a shared or CI host) raised a `PermissionError`
+traceback before any document was read. An unreadable directory now counts as "not a repo". This was found because
+CI, which does not run as root, failed a new #154 case three times while it passed as root. Reproduced as an
+unprivileged user: the previous checker crashes and the new one reports CLEAN. Seeded N66, which skips when run as
+root.
+
 ## v1.46.0 (2026-09-25)
 
 **MINOR.** Cuts what adopters pay per run: `curate` goes from 56.9k to about 25k characters and
