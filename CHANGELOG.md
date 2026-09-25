@@ -16,10 +16,20 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      `git push --tags` until v1.21.0, contradicting `templates/release.md`
      Step 6 — which is the copy adopters follow.)
 
+     If the release grows templates/, state it in the dated block as
+     "Adopter-facing size: +N bytes" and why; lint rule 19 checks the number.
+
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
 ## v1.46.1 (candidate, unreleased)
+
+### Lint rule 19 — a release that grows the adopter-facing surface says so (H-022)
+
+Rule 8's size budget could always be raised, and was, 43 times, so it never limited growth. Rule 19
+checks at release instead: when the top block is dated, the bytes of `templates/` are compared with
+the previous release tag, and any growth must be stated in that block as `Adopter-facing size: +N
+bytes`, with N exact. Maintainer tooling; adopters are not affected.
 
 ### `templates/audit-context.md`, `templates/update-drift.md`, `templates/release.md` — bodies thinned
 
