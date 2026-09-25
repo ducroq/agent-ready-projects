@@ -19,6 +19,15 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.46.1 (candidate, unreleased)
+
+### `templates/audit-context.md`, `templates/update-drift.md`, `templates/release.md` — bodies thinned
+
+audit-context 22.4k → 16.8k characters, update-drift 23.6k → 15.3k, release 21.2k → 15.2k. Code
+blocks and step numbers are unchanged; narratives and issue histories moved to `docs/rationale/`.
+Two instructions changed: audit-context's Unconfirmed bucket now points at Step 9, where it lives
+(it said Step 8); release again says which version to propose for a first release.
+
 ## v1.46.0 (2026-09-25)
 
 **MINOR.** Cuts what adopters pay per run: `curate` goes from 56.9k to about 25k characters and

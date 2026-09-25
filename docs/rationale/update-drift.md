@@ -91,3 +91,123 @@ indistinguishable from a clean run — the failure Step 1.5 exists to prevent, o
 
 Marker presence says the text arrived. It says nothing about whether the block runs. **This rung
 is the only arm of the problem that does not depend on the framework.**
+
+## Moved out of the skill body on 2026-09-25
+
+Verbatim originals of every passage removed or shortened from `templates/update-drift.md` (and its reference install) in the 2026-09-25 token-reduction pass. The skill keeps the instruction; the narrative, measurements and history are here.
+
+### Header comment
+
+<!-- SAVE AS: ~/.claude/skills/update-drift/SKILL.md (Claude Code, USER-GLOBAL — see
+     docs/GUIDE.md "Where a skill lives"; do not copy this file verbatim, its
+     frontmatter is inside this comment. Prefer .claude/skills/update-drift/SKILL.md
+     from this repo.)
+     Diff an install against THAT file, never this one: the header differs by construction (#187).
+     For other tools, run this as a start-of-session prompt manually.
+
+     Do NOT install this project-locally alongside a global copy; the local
+     one would be inert. Why global, and why this skill earns a slot at all:
+     docs/GUIDE.md "Where a skill lives" and the rhythm section above it —
+     not restated here, where it would be a second copy to keep true.
+
+### Step 0
+
+A project may pin **more than one** framework. Find them all before comparing anything: a repo that adopts both a code framework and a writing framework carries two stamps that move independently, and a release that bumps one and leaves the other stale makes every later drift check report against the wrong baseline.
+
+The versions above are placeholders on purpose. What varies between the shapes is the **separator** — emphasis before or after the colon, a parenthetical, the word `framework`, or no colon at all — not the number. Real versions here would go stale and would be returned by every future release sweep as hits to re-triage.
+
+A matcher keyed to one of these reports an **unstamped project** when the stamp is merely written differently — which reads identically to "no framework adopted here" and is the wrong conclusion. Use a wide separator class, and a **second** matcher for a pin that is not a version:
+
+⚠️ **Choose the operands before you run anything, and do NOT default to `<project file> <template dir>`.** An adopter who ships no `templates/` directory sees the operands collapse to the project file alone — the block then reconciles that file **against itself** and reports clean. Measured on one adopter: widening to `CLAUDE.md docs memory .claude` moved the count from a self-consistent nothing to **33 mentioned pairs against 14 stamped**, and one of the names in the difference was a **third framework the narrow sweep never saw at all**, mentioned once in a war story.
+
+**A missed *stamp* and a missed *framework* are different failures.** The zero-hit guard and the difference-listing below both catch a missed stamp. Neither can catch a framework that is only ever named outside the operands, because it never enters the mention set to begin with.
+
+**Use every directory the project actually writes prose into** — typically the project file plus `docs/`, `memory/`, `.claude/`, and `templates/` where it exists. Absent operands are not an error, so name them explicitly rather than relying on a default:
+
+⚠️ **A single-operand run is a finding, not a result.** If the list reduces to one file, say so in the report — a self-reconciliation always agrees.
+
+- **`{0,60}`, not `{0,24}`** — ``Adopted from `agent-ready-projects` `templates/review-changes.md` (v1.18.0`` puts **33** characters between name and version. At `{0,24}` that stamp was invisible for a whole adoption while two others in the same repo were found.
+
+- **Matcher 2** exists because matcher 1 needs two dot-separated numeric groups, which no separator width reaches on a hash.
+
+- **The two separator classes differ, and that is why these are two matchers rather than one alternation.** Matcher 1 allows letters between the name and the version, because a provenance line puts a filename there. Matcher 2 must *exclude* them, or a 7-character hex run matches inside an ordinary word. One pattern cannot hold both rules. Combining them as `(a|b)` also works on every implementation tried here — GNU grep 3.12 and busybox — so combine them if you prefer; the reason for two is the classes, not the tool.
+
+- **Matcher 3 sees the pin a human actually writes**, where a parenthetical or filename sits between the name and the hash — the form matcher 2 excludes by design, so a repo carrying only that read as *unstamped*. Letters are allowed between the **name** and the **connector**, never between the connector and the hash: the hex-inside-a-word risk is about what precedes the *hash*. ⚠️ **Two properties carry it, and each was ablated.** Remove `\b` and `sprev d89ec62` / `href d89ec62` match. Widen the trailing gap to the leading one's width and `commitment`, `reviewed` and `referenced` all match. *(Deleting the trailing gap outright does NOT reintroduce them — a first draft of this bullet said it did, and the ablation it named returns zero.)*
+
+- ⚠️ **A pin with a DIGIT between the name and the connector escapes all three matchers**, because the leading gap is `[^0-9]`: `agent-ready-projects (2026-09-14) commit 0d67131` and `agent-ready-projects #134 commit 0d67131` are invisible. A dated or issue-numbered provenance line is an ordinary shape, so treat this as a known hole rather than a rare one.
+
+- ⚠️ **`\b`, not `(^|[^A-Za-z])`.** The group form is correct under GNU grep 3.12 and **ugrep 7.8.4 refuses it**: `exceeds complexity limits`, non-zero, no output — which inside `2>/dev/null` is indistinguishable from "no pins found". **Measured identical on GNU grep 3.12, ugrep 7.8.4 and busybox 1.37** (6/6 positives, 8/8 negatives on each). ⚠️ **That is three engines, not a portability guarantee**: `\b` is a GNU/PCRE extension and not POSIX ERE, so a libc ERE that reads it as a literal `b` returns a silent zero here. No BSD grep was available to settle it. If `grep --version` shows something else, seed a known pin and confirm the matcher finds it before trusting a clean run.
+
+- **The connector list is the weak part, and it is short on purpose** — only shapes actually seen. A pin written *«fixed at»* or *«as of»* is invisible to all three. Do not read a clean matcher run as a clean result; that is what the reconciliation is for.
+
+No matcher here is exhaustive — a branch name, a date or a `main` pin is a pin none of them can see — which is why the reconciliation below is not optional.
+
+That guard only fires on **zero** hits. Find two stamps of three and the step reports two real stamps and proceeds — the miss is invisible, and that framework is then triaged against the wrong baseline or not at all. It has happened twice: to a 33-character separator, and to a commit-hash pin.
+
+Five details in that block are load-bearing, and each was measured rather than reasoned:
+
+- **The unit is `(file, framework)`, not `file`.** A file-scoped difference cannot see the failure this section exists for. #72's own repro is one `CLAUDE.md` pinning two frameworks, one by hash and one by tag: with only the version matcher running, that file is "stamped" because the *other* framework matched, and the missing hash pin never appears in the difference. Measured on exactly that shape — file-scoped reported a clean reconciliation while a pin was invisible.
+
+- **The counts are printed by the command, not left to the reader.** With mistyped operands both files come out empty, `comm` prints nothing and exits 0 — indistinguishable from a clean reconciliation. That is this section's own failure one layer up: an instrument that cannot report its blind spot. The `printf` and the `[ -s ]` line are what make a zero denominator visible.
+
+- **`sort -u` on BOTH sides.** This is a set difference. With `sort` on the left and `sort -u` on the right, an operand pair that overlaps — a project file *inside* the template dir, or `CLAUDE.md .` — emits the file twice on the left and once on the right, and `comm -23` reports a correctly stamped file as unstamped. Measured. ⚠️ **Overlap gets MORE likely once the operand list is widened**, which is the fix above: `docs memory .claude templates` plus a project file that lives at the root is fine, but adding `.` or a parent of any other operand re-creates it. Keep the operands disjoint, and `sort -u` both sides regardless.
+
+- **`LC_ALL=C` on both sorts *and on `comm`*.** `comm` compares bytes in the implementation measured here, but GNU `comm` collates by locale when the locale is "hard" — in which case C-sorted input under a UTF-8 locale is the "not in sorted order, wrong difference" failure this bullet is about, *caused by the recipe*. Putting `LC_ALL=C` on all three costs nothing and removes the question. (Measured on uutils coreutils 0.8.0; GNU `comm` not available here to test.)
+
+- **`|| :` on each grep.** A grep that matches nothing exits 1. Under `set -eo pipefail` that kills the block *after* the redirect has already truncated the stamped list, so a later `comm` reports every mention as a miss.
+
+**Report both counts and every file in the difference.** Each one gets a disposition out loud: *a stamp the matcher missed* (read the line, name the shape, use it) or *a mention that is not a pin*. A difference nobody looked at is the same failure one layer up.
+
+Then check the templates directory too, if the project ships one. A scaffolding template that stamps a framework version is the file releases habitually miss: nobody edits it during a normal release, so it never appears in a current-version grep, and a new adopter inherits a stamp that misdescribes the files they just got. A template with **no** stamp at all is the stronger version of the same defect — the drift check it tells the adopter to run has nothing to read, and passes.
+
+### Step 1
+
+Prefer a local clone if one exists (`~/repos/<framework>/CHANGELOG.md`) — it is authoritative and free. Fall back to the published URL. If the clone is behind its own remote, say so: you would otherwise triage against a stale upstream.
+
+### Step 2
+
+Not "does this apply?" — which invites a yes/no and loses the reasoning. Every release gets exactly one of:
+
+**"Already in force" is the outcome people forget, and it produces real corrections.** A user-global skill updated outside this repo is current here without anything in this repo changing — and the project file may still describe it as project-local, which has quietly been false since whenever the scope changed. Check the actual installed artifact (`diff` it against the framework's tracked copy), not the project file's description of it.
+
+### Step 3
+
+Framework changes often land in paths that are gitignored in adopter repos: `.claude/skills/`, `memory/`, `docs/work-items/`, local settings. A drift check driven only by `git status` reports these as unchanged because they are invisible, not because they are current.
+
+List the gitignored paths the framework touches and inspect each by eye. Say in the report when a behaviour changed only in an unshipped file — an adopter reading the diff cannot otherwise see it.
+
+⚠️ **A re-mapped project-local skill needs a CONTENT check; a version stamp cannot answer for it.** A user-global skill is covered — the installer compares bytes. A project-local one is a copy the adopter owns, and a *re-mapped* copy will never match the template again, so eyeballing a 577-line diff is not a method and the pin says nothing about the file. ⚠️ **Diff the installed file against the framework's REFERENCE INSTALL, not against its template — then the answer is an exact zero, not a minimum.**
+
+This framework installs user-global skills with a plain `cp` from `.claude/skills/<name>/SKILL.md`. **There is no install-time transform.** The `SAVE AS` comment in `templates/<name>.md` becomes real frontmatter *between* the template and the reference install — a maintainer-side edit, not something the installer does. So an install is **byte-identical to one tracked file at exactly one tag**:
+
+Measured. Comparing against the template is what produces a constant residue that no tag ever clears, and it is why the naive read of "differs" cannot separate *behind by four releases* from *current*. Compare the right file and there is nothing to separate.
+
+⚠️ **Only fall back to the minimise-sweep below if your framework's installer genuinely transforms at install time** — check before assuming it does; ours does not, and an adopter's report that it did was accepted here without checking and shipped as guidance in v1.32.0.
+
+**Diff the installed file against EVERY tag and read which one MINIMISES.** ⚠️ **Every sentence in this fallback is scoped to such a framework**; in one whose installer copies verbatim, the section above applies and this one does not. *There*, an install is not byte-identical to any tracked copy, because the installer rewrites the header, so a single diff against latest returns *differs* both for "behind by four releases" and for "current, plus the installer's transformation", and the naive reading produces a false *not adopted* on a repo that is fully up to date. That is the reading that makes an adopter re-copy a skill they re-mapped. The **monotone fall to a floor** is the signal and the floor is the installer's constant.
+
+**Grep for the marker strings the release note names.** A defensive fix looks like nothing: the framework shipped one where broken and fixed were semantically identical in isolation — no error, no empty output, no non-zero status, the check simply examined a constant and printed what a clean run prints. If no markers are named, ask, and record `not verified` (#94).
+
+⚠️ **A marker is not evidence that the thing runs. If the release changes a fenced executable block, extract it and `bash -n` BOTH the version you are leaving and the version you are taking, before adopting either** (#135). Marker presence says the text arrived; it says nothing about whether the block parses, and a block that dies on a syntax error prints nothing — indistinguishable from a clean run, which is the failure the block was probably added to prevent.
+
+Measured by an adopter across every tag from v1.31.0 to v1.36.1 — NINE, counting the v1.34.x point releases: the block they were being asked to adopt failed `bash -n` at v1.31.0 and v1.36.1 and parsed at v1.37.0. ⚠️ **This rung is the only arm that does not depend on the framework** — an upstream lint rule reaches the copies upstream ships, never a project-local or re-mapped one in your tree.
+
+### Step 4
+
+This is not ceremony. Prose describing a check is routinely wrong in ways that survive several readings by its own author — including, on at least one occasion, prose describing how a check can be gamed that named the one route that does not work. Reading it against the code is a weaker instrument than running it.
+
+### Step 5
+
+State the count adopted, declined, not-applicable, and already-in-force. **A run where everything is "adopt" is suspicious** — it usually means the triage collapsed into "take it all" without asking what this project actually needs.
+
+### Step 6
+
+Report before editing anything normative. Adoption touches the project file, templates, and decision records — surfaces a human may reasonably need to disagree with, and where a wrong edit propagates silently to every future session.
+
+**Do not bump the stamp until the changes it describes have actually landed.** A stamp that runs ahead of its content is worse than a stale one: it silences the very check that would have caught the gap.
+
+### After the engineer approves
+
+- Run the project's pre-commit review if it has one — this skill's own output has been found holed by one.
+
+- Record the declines somewhere durable. A finding that lives only in a gitignored file is invisible to adopters and to sibling projects; an issue is the copy others can see.

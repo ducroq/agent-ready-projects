@@ -3,8 +3,8 @@
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and every raise is
 # recorded below, oldest first — notes accumulate and are never replaced.
-# BUDGET 194306
-# SPILL 122601
+# BUDGET 174616
+# SPILL 169190
 # RAISED 2026-09-06 from 247526 to 247969: #133: the #118 remedy string shipped unconditional and can turn a resolved reference into an AMBIGUOUS finding; the caveat that scopes it is +443 b on templates/audit-context.md, seeded as T39/T40/N39 (reason restored 2026-09-06 — write_baseline used to overwrite each note with the next)
 # RAISED 2026-09-06 from 247969 to 248237: #140: UNRESOLVED had two causes printing one reason. +268 b on templates/audit-context.md, seeded as T41/T41b/N40 (reason restored 2026-09-06)
 # RAISED 2026-09-06 from 248237 to 248864: #149 (BLOCKER): review-changes could report a clean result on wholly unreviewed content — the root-commit fallback excluded the root, so a one-commit repo diffed to nothing and Step 1's terminator said 'nothing to review'. +627 b (measured; a draft of this line said +466, and the edit I called a trim was 77 b LARGER than what it replaced — third fabricated byte count in this session, same class as the defects being fixed) buys three runtime lines that name the excluded content and the companion command, plus a terminator clause the fallback cannot satisfy. THIRD RAISE TODAY: three correctness fixes to adopter-facing prose in one session, none paid by a shrink — if that keeps happening the budget is mis-calibrated, not the fixes. Seeded at tests/fixtures/baseline-fallback/
@@ -71,8 +71,10 @@
 # RAISED 2026-09-25 from 193283 to 194174: review round 1 on the skill thinning restored instructions the cut had dropped (+891 bytes); net change of the thinning is still about -37k
 # ratcheted down 2026-09-25
 # RAISED 2026-09-25 from 194170 to 194306: curate arc section records a closed arc in the session file (+136 bytes), the durable half of #201's arcs.md without a new file; approved by the maintainer 2026-09-25
+# ratcheted down 2026-09-25 from 194306 to 174398, while docs/rationale/ grew 122601 -> 169116 (+46515): part of this payment MOVED (#131, #157)
+# RAISED 2026-09-25 from 174398 to 174616: step-4 review restored instructions the thinning dropped or blurred (+218 bytes): the row-end marker trap, matcher 1's letter allowance, release Step 0's order, audit-context's row scope; no prose left to trim without cutting instructions; branch is still about -20k net
 templates/adr.md	2115
-templates/audit-context.md	22591
+templates/audit-context.md	17053
 templates/checklists/architect-checklist.md	1263
 templates/checklists/implement-checklist.md	1329
 templates/checklists/qa-checklist.md	1836
@@ -85,7 +87,7 @@ templates/hypothesis-log.md	3570
 templates/memory-index.md	3396
 templates/project-file.md	6485
 templates/README.md	12042
-templates/release.md	21379
+templates/release.md	15500
 templates/review-agent.md	5720
 templates/review-changes.md	27326
 templates/review-profile.md	5870
@@ -102,5 +104,5 @@ templates/test-fixtures/memory/verified-fail.md	166
 templates/test-fixtures/memory/verified-manual.md	155
 templates/test-fixtures/memory/verified-pass.md	135
 templates/test-verify-memory.md	6000
-templates/update-drift.md	23747
+templates/update-drift.md	15474
 templates/work-item.md	3860
