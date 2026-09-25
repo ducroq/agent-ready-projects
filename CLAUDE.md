@@ -86,6 +86,7 @@ agent-ready-projects/
 ├── scripts/install-global-skills.sh
 │                              <- Install + verify user-global skills; scan an estate for inert
 │                                 copies. Refuses a tree that is not at a release tag (#33)
+├── scripts/verify-runner.sh    <- curate Step 0's claim checker; tests/fixtures/verify-runner/ tests it
 ├── .github/workflows/checks.yml
 │                              <- CI (#115): lint + every fixture, push and PR, no path filters.
 │                                 Its own header carries what it does NOT check

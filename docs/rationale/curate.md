@@ -180,3 +180,9 @@ each rung that a maintainer might plausibly "simplify"; the reasoning lives here
 - **Strip one leading `@`, and only as a fallback.** `lstrip` is a character set, so it also ate
   the `@` of a scoped npm path and printed `types/node/index.d.ts` — text the document never
   contained.
+
+## Why curate ships its verify runner as a script
+
+Moved out of the skill body on 2026-09-25, when the runner moved to `scripts/verify-runner.sh` to cut the skill by about 10k characters per run. The original paragraph:
+
+**Use this runner. Do not write one on the spot.** Every hand-written implementation observed so far reported *nothing wrong having checked nothing* — a silent, self-certifying pass, reached by six independent routes: a command containing `exit` ends the loop mid-iteration; an `ssh` (or any other stdin-reading command) swallows the rest of the command list; prose that merely *mentions* the syntax is executed as shell; `[^>]*` extraction truncates at the first `>`, mangling every command with a redirect; a `\|`-escaped command from a table cell runs with its pipes as literal `echo` arguments, so its fallback branch is dead code; and a command that succeeds in silence is indistinguishable from one that never ran. Each of the six is sufficient on its own. Save the block to a scratch file, **run it from the repo root**, and give it **absolute paths** — including the project file (`CLAUDE.md`, `AGENTS.md` or whatever your tool's naming map calls it): `bash /tmp/verify-runner.sh /repo/memory/*.md /repo/docs/hypothesis-log.md /repo/CLAUDE.md`. The cwd matters because the runner executes each command with `bash -c` and does not tell it which file it came from, so a probe resolving a relative path depends on where you stood. A probe in a file you never pass to the runner is worse than no probe: it reads as a checked claim and is never checked.

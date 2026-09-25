@@ -23,6 +23,14 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 **Bump provisional** — classify it from the diff at release, per `templates/release.md` Step 2.
 
+### `templates/curate.md` Step 0 — the verify runner ships as `scripts/verify-runner.sh`
+
+**Adopter action:** `/curate` now runs the claim checker from this framework's clone,
+`$CLONE/scripts/verify-runner.sh`, the same way `audit-context` Step 4 already runs `refcheck.py`.
+Keep a clone, or copy the script. The skill body lost its 150-line inline copy, about 10k
+characters paid on every `/curate` run. The script is byte-identical to the block it replaces.
+`tests/fixtures/verify-runner/` now tests the file and fails if an inline copy comes back.
+
 ### Skill templates say what to diff an install against, where the reader looks (#187)
 
 Comparing an installed skill with `templates/<name>.md` leaves a residue that no tag clears (18 of 23 changed lines

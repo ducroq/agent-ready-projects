@@ -10,14 +10,16 @@
 # must refuse to execute; the ablations at the end remove one guard at a time
 # and require its own specific defect to appear.
 #
-# The runner under test is EXTRACTED FROM THE TEMPLATE rather than copied here.
-# The shipped text is the only source, so this harness cannot drift from what
-# adopters actually run — the drift trap that cost this repo lint rule 6.
+# The runner under test is scripts/verify-runner.sh, the file adopters run.
+# It moved out of templates/curate.md on 2026-09-25; the check below fails if
+# an inline copy comes back, because two copies drift (the trap behind lint rule 6).
 set -u
 cd "$(dirname "$0")"
 ROOT="$(cd ../../.. && pwd)"
 TEMPLATE="$ROOT/templates/curate.md"
+SCRIPT="$ROOT/scripts/verify-runner.sh"
 [ -f "$TEMPLATE" ] || { echo "cannot find $TEMPLATE" >&2; exit 2; }
+[ -f "$SCRIPT" ] || { echo "cannot find $SCRIPT" >&2; exit 2; }
 
 # Deliberately LONG, and that is the point (#80). The MALFORMED row prints
 # `substr(rest, 1, 60)` of the annotation body, so any assertion that greps that
@@ -33,39 +35,16 @@ trap 'rm -rf "$WORK"' EXIT
 CANARY="$WORK/canary"
 mkdir -p "$CANARY"
 
-# ---- extract the runner from the shipped template ---------------------------
-# The block is a four-backtick fence (its own body contains three-backtick
-# lines) carrying the sentinel below. Exactly one must exist: two would mean a
-# reader cannot tell which one is canonical, none means the fixture is testing
-# a runner that is no longer shipped.
-extract_runner() {
-  awk '
-    /^[ \t]*````/ {
-      if (inblk) { if (keep) { printf "%s", buf; found++ } ; inblk = 0 }
-      else { inblk = 1; buf = ""; keep = 0; match($0, /^[ \t]*/); ind = RLENGTH }
-      next
-    }
-    inblk {
-      l = $0
-      for (i = 0; i < ind; i++) sub(/^[ \t]/, "", l)
-      buf = buf l "\n"
-      if (index($0, "verify runner (canonical)")) keep = 1
-    }
-    END {
-      if (found != 1) {
-        printf "expected exactly 1 canonical runner block, found %d\n", found > "/dev/stderr"
-        exit 3
-      }
-    }
-  ' "$1"
-}
-
+# ---- the runner under test ------------------------------------------------
 RUNNER="$WORK/runner.sh"
-if ! extract_runner "$TEMPLATE" > "$RUNNER"; then
-  echo "  FAIL  could not extract the canonical runner from templates/curate.md" >&2
-  exit 1
-fi
-[ -s "$RUNNER" ] || { echo "  FAIL  extracted runner is empty" >&2; exit 1; }
+cp "$SCRIPT" "$RUNNER"
+[ -s "$RUNNER" ] || { echo "  FAIL  scripts/verify-runner.sh is empty" >&2; exit 1; }
+for f in "$TEMPLATE" "$ROOT/.claude/skills/curate/SKILL.md"; do
+  if grep -q 'verify runner (canonical)' "$f"; then
+    echo "  FAIL  $f carries an inline copy of the runner again; call scripts/verify-runner.sh" >&2; exit 1
+  fi
+  grep -q 'scripts/verify-runner.sh' "$f" || { echo "  FAIL  $f no longer points at scripts/verify-runner.sh" >&2; exit 1; }
+done
 
 # ---- the seeded memory tree -------------------------------------------------
 # Three files, and the order they are passed in matters: a-unclosed.md leads
