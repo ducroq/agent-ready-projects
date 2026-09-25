@@ -155,6 +155,13 @@ matcher 3 (`commit <sha>`, added for this issue in v1.43.0) finds was reported a
 `agent-ready-[a-z]+(-[a-z][a-z]+)*`. Segments of two or more letters are required so that a `-v1.2.0` suffix stays
 out of the name. Matcher 3 now feeds the stamped list. An unpinned mention is still reported (checked as a control).
 
+### reference-integrity `SPEC.md`: which marker to use when forced, and what a marker costs (#177 points 1–2)
+
+Two paragraphs after the quoted-path known cost. First, prefer naming the form without the filename, which is the
+only rewrite that ends the regress; otherwise use `<!-- placeholder -->` and say "quoted, not referenced" beside it.
+Second, a marker on a known checker bug's symptom removes that bug's detector, so record the replacement detector
+beside it. Point 3 (report a wrong marker at every rung, not rung 1 only) is a checker change and stays open.
+
 ## v1.45.1 (2026-09-14)
 
 **PATCH.** No existing consumer has to act, and there is no new artifact — both changes are
