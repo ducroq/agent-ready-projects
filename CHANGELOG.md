@@ -146,6 +146,15 @@ A timed-out row now gives the limit it hit, and a separate line counts the timeo
 against the summary: the runner's counters always agree with each other, so only the reader can see a capture that
 lost rows (77 of 109 once, under tmpfs pressure). Fixture M1b.
 
+### `update-drift` Step 0 reconciliation: hyphenated framework names, and matcher 3 counted (#134)
+
+Two gaps in the block that reconciles mentioned frameworks against found stamps, both reproduced on one project
+file. **A hyphenated name was cut at its first hyphen**, so `agent-ready-foo-bar` merged into `agent-ready-foo` and
+one framework disappeared from the count. And **the stamped list ran only matchers 1 and 2**, so a pin that only
+matcher 3 (`commit <sha>`, added for this issue in v1.43.0) finds was reported as unstamped. Names now match
+`agent-ready-[a-z]+(-[a-z][a-z]+)*`. Segments of two or more letters are required so that a `-v1.2.0` suffix stays
+out of the name. Matcher 3 now feeds the stamped list. An unpinned mention is still reported (checked as a control).
+
 ## v1.45.1 (2026-09-14)
 
 **PATCH.** No existing consumer has to act, and there is no new artifact — both changes are
