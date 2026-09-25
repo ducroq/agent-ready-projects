@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Sensitivity harness for the canonical verify runner shipped in
-# templates/curate.md, Step 0 sub-step 3 (issue #34).
+# Sensitivity harness for the canonical verify runner, scripts/verify-runner.sh,
+# which curate Step 0 sub-step 3 calls (issue #34).
 #
 # The runner's failure mode is silence: it reports nothing wrong having checked
 # nothing, which is byte-for-byte what a clean pass looks like. A run that finds
@@ -40,7 +40,7 @@ RUNNER="$WORK/runner.sh"
 cp "$SCRIPT" "$RUNNER"
 [ -s "$RUNNER" ] || { echo "  FAIL  scripts/verify-runner.sh is empty" >&2; exit 1; }
 for f in "$TEMPLATE" "$ROOT/.claude/skills/curate/SKILL.md"; do
-  if grep -q 'verify runner (canonical)' "$f"; then
+  if grep -qE 'verify runner \(canonical\)|ZERO COMMANDS EXTRACTED|function maskspans' "$f"; then
     echo "  FAIL  $f carries an inline copy of the runner again; call scripts/verify-runner.sh" >&2; exit 1
   fi
   grep -q 'scripts/verify-runner.sh' "$f" || { echo "  FAIL  $f no longer points at scripts/verify-runner.sh" >&2; exit 1; }

@@ -3,7 +3,7 @@
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and every raise is
 # recorded below, oldest first — notes accumulate and are never replaced.
-# BUDGET 231786
+# BUDGET 231766
 # SPILL 62239
 # RAISED 2026-09-06 from 247526 to 247969: #133: the #118 remedy string shipped unconditional and can turn a resolved reference into an AMBIGUOUS finding; the caveat that scopes it is +443 b on templates/audit-context.md, seeded as T39/T40/N39 (reason restored 2026-09-06 — write_baseline used to overwrite each note with the next)
 # RAISED 2026-09-06 from 247969 to 248237: #140: UNRESOLVED had two causes printing one reason. +268 b on templates/audit-context.md, seeded as T41/T41b/N40 (reason restored 2026-09-06)
@@ -65,6 +65,7 @@
 # RAISED 2026-09-25 from 242269 to 242599: #134: update-drift Step 0 names allow hyphen segments (x7) and matcher 3 feeds the stamped list (+330 b). Locked BEFORE its review round (stop hook requires a push); fixes will adjust it.
 # RAISED 2026-09-25 from 242599 to 242858: #134 review: stamp credited to the LAST name before it via a portable awk (review found the first-name credit masked a real miss). Round 2, locked after the fix.
 # ratcheted down 2026-09-25 from 242858 to 231786, while docs/rationale/ grew 60656 -> 62239 (+1583): part of this payment MOVED (#131, #157)
+# ratcheted down 2026-09-25
 templates/adr.md	2115
 templates/audit-context.md	22591
 templates/checklists/architect-checklist.md	1263
@@ -73,7 +74,7 @@ templates/checklists/qa-checklist.md	1836
 templates/checklists/README.md	1097
 templates/checklists/test-checklist.md	1234
 templates/coordination.md	3909
-templates/curate.md	45822
+templates/curate.md	45802
 templates/gotcha-log.md	8858
 templates/hypothesis-log.md	3570
 templates/memory-index.md	3396

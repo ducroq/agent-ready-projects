@@ -31,12 +31,11 @@ Causes 1 and 2 are the issue as filed; 3 and 4 arrived on it later; 5 was found
 by measuring this repo's own annotations; 6 came in from
 agent-ready-papers and a sibling estate, which shipped `ops/run_verifies.sh` for it.
 
-## The runner is extracted, not copied
+## The runner is the shipped file
 
-`run.sh` pulls the runner out of `templates/curate.md` at run time — the
-four-backtick block carrying the sentinel `verify runner (canonical)` — and
-fails if there is not exactly one. Nothing here is a copy, so this harness
-cannot drift from the text adopters actually run. That drift is what cost this
+`run.sh` tests `scripts/verify-runner.sh`, the file adopters run. It fails if
+`templates/curate.md` or its reference install regains an inline copy, or stops
+pointing at the script, so this harness cannot drift from what adopters run. That drift is what cost this
 repo lint rule 6; a fixture testing a stale copy of a procedure is worse than no
 fixture, because it reports green about something nobody runs.
 

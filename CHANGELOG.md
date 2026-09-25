@@ -27,7 +27,7 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 **Adopter action:** `/curate` now runs the claim checker from this framework's clone,
 `$CLONE/scripts/verify-runner.sh`, the same way `audit-context` Step 4 already runs `refcheck.py`.
-Keep a clone, or copy the script. The skill body lost its 150-line inline copy, about 10k
+Keep a clone, or let the skill fetch the script from GitHub (its Step 0 has the line); `adopt.md` STEP 6 says so too. The example now names `docs/hypothesis-log.md`, which the old one passed. The skill body lost its 150-line inline copy, about 10k
 characters paid on every `/curate` run. The script is byte-identical to the block it replaces.
 `tests/fixtures/verify-runner/` now tests the file and fails if an inline copy comes back.
 
