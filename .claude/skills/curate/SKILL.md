@@ -251,7 +251,7 @@ Scan the gotcha log's headers and its Promoted table for entries that have recur
 
 **Read the Mechanized table too, if the log has one** — same extractor, `Mechanized` for `Promoted`. Report rows still `proposed` after several sessions; increment Occurrences on a `live` row whose shape recurred.
 
-**Read constraint rows for truth, not only for counts** (#183). A row stating current behaviour of a tool, schema or codebase goes false when that behaviour changes; a pattern row states no fact and cannot. Re-check each constraint row not read since what it describes last changed, stamp it `checked YYYY-MM-DD`, and report a false one. One adopter found 1 of 4 false, five months after an ADR inverted it.
+**Read constraint rows for truth, not only for counts** (#183). A row stating current behaviour of a tool, schema or codebase goes false when that behaviour changes; a pattern row states no fact and cannot. Re-check each constraint row not read since what it describes last changed, note `checked YYYY-MM-DD` in its Promoted-to cell, and report a false one. One adopter found 1 of 4 false, five months after an ADR inverted it.
 
 The Promoted table is the running total. When it conflicts with the entries, reconcile to the entries and say so. Date each recurrence in the cell. A promoted pattern that recurs means the promotion did not take — say so in the report.
 
@@ -262,7 +262,7 @@ Read the memory index (`MEMORY.md` for Claude Code, or the project file for othe
 - **Active work items** — for each active work-item file in `docs/work-items/`, update its Current Status section (the savepoint): mark completed items, update "Last action" and "Next action," note blockers. If a work item completed this session, fill its Outcome section and update the pointer to `[done]` — in the memory index's Current State section, or the project file's "Active work" section where the tool has no auto-memory. If a new multi-session initiative started, create the work-item file from `templates/work-item.md` and add a pointer
 - **Key File Paths** — add any important files discovered during work
 - **Active Decisions** — add any architectural choices made, with ADR pointers if created
-- Remove or correct anything that is now stale. A rewrite of the index gets sub-step 8's survival check (#114)
+- Remove or correct anything that is now stale. A rewrite of the index gets Step 0 sub-step 6's survival check (#114)
 
 **Don't accrete session narrative onto the project file footer.** Session-level "what happened today" belongs in `memory/project_session_YYYY_MM_DD.md`, with a one-line pointer added to `MEMORY.md`.
 

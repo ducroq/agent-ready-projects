@@ -193,7 +193,9 @@ Runs at **every tier and every magnitude**, before any lens, on every changed ma
       # Known blind spots note below. Each bought a worse class, ONE of them
       # SILENCING a whole file, against a defect with zero instances in a
       # 5,168-file estate (#150).
-      bare = $(0); sub(/^ ? ? ?/, "", bare)
+      # A substr loop, not `sub(/^ ? ? ?/, ...)`: mawk 1.3.4 strips ONE space
+      # with that regex, so a fence indented 2-3 spaces was never recognised.
+      bare = $(0); for (k = 0; k < 3 && substr(bare, 1, 1) == " "; k++) bare = substr(bare, 2)
       if (bare ~ /^```/ || bare ~ /^~~~/) {
         c = substr(bare, 1, 1); n = 0
         while (substr(bare, n + 1, 1) == c) n++

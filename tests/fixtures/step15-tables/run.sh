@@ -120,6 +120,11 @@ printf -- '---\n\nkanban-plugin: a | b\n---\n\nprose\n' > n10_kanban_fm.md
 printf -- '---\n\nNote: the table below is lossy\n\n| a | b |\n|---|---|\n| 1 | 2 | 3 |\n\n---\n\n| c | d |\n|---|---|\n| 4 | 5 | 6 |\n' > b14_prose_key.md
 printf -- '---\n- tag\nexample: |\n  ```\n  code\n---\n\n| a | b |\n|---|---|\n| 1 | 2 | 3 |\n' > b15_fm_fence.md
 
+# n14 — a fence indented TWO spaces is a fence, so the lossy table inside it is
+# not examined. The strip used to be `sub(/^ ? ? ?/, ...)`, which mawk 1.3.4
+# reads as ONE space: under Ubuntu's default awk this file reported.
+printf -- '- item:\n\n  ```\n  | a | b |\n  |---|---|\n  | 1 | 2 | 3 |\n  ```\n' > n14_indent2_fence.md
+
 # AWKF is indirection with a purpose: it lets an ablation re-run the REAL
 # assertions against a mutated program instead of re-implementing them. A6's
 # first two drafts both scored their mutant with a private copy of the
@@ -175,6 +180,7 @@ want_quiet n4_glob_no_bold.md   "a **-glob with no bold on the line is not an em
 want_quiet n5_bold_and_code.md  "ordinary bold beside an ordinary code span — the shape this repo ships everywhere" 
 want_exact b14_prose_key.md "b14_prose_key.md:13: row has 3 cells, table defines 2 — the excess is dropped when rendered" "BLIND SPOT (#163): line 7 is lost with no diagnostic — pinned, not endorsed"
 want_exact b15_fm_fence.md "b15_fm_fence.md: unclosed \` code fence" "BLIND SPOT (#163): the lossy row is lost and the wrong construct is named — pinned, not endorsed"
+want_quiet n14_indent2_fence.md    "a fence indented two spaces is a fence, under every awk (mawk read the old strip as one space)"
 want_quiet n13_dbl_quote.md       "a double-backtick span quoting the shape is code, not bold (#159)"
 want_hit   t12_dbl_emphasis.md    "double-backtick **-globs inside one bolded phrase still report (#159)"
 want_hit   t11_indent_fence_fp.md "a 4-space-indented fence IS scanned as markdown — the DOCUMENTED false positive, pinned so a widening has to argue with a test (#150)"
