@@ -3,7 +3,7 @@
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and every raise is
 # recorded below, oldest first — notes accumulate and are never replaced.
-# BUDGET 175325
+# BUDGET 177167
 # SPILL 169190
 # RAISED 2026-09-06 from 247526 to 247969: #133: the #118 remedy string shipped unconditional and can turn a resolved reference into an AMBIGUOUS finding; the caveat that scopes it is +443 b on templates/audit-context.md, seeded as T39/T40/N39 (reason restored 2026-09-06 — write_baseline used to overwrite each note with the next)
 # RAISED 2026-09-06 from 247969 to 248237: #140: UNRESOLVED had two causes printing one reason. +268 b on templates/audit-context.md, seeded as T41/T41b/N40 (reason restored 2026-09-06)
@@ -75,6 +75,8 @@
 # RAISED 2026-09-25 from 174398 to 174616: step-4 review restored instructions the thinning dropped or blurred (+218 bytes): the row-end marker trap, matcher 1's letter allowance, release Step 0's order, audit-context's row scope; no prose left to trim without cutting instructions; branch is still about -20k net
 # RAISED 2026-09-25 from 174616 to 175338: v1.46.1 adopter bloat measures: project-file lead-with-the-point rule (+220), curate archive pass and 15k flag (+502). Locked BEFORE its review round (stop hook requires a push); fixes will adjust it.
 # ratcheted down 2026-09-25
+# RAISED 2026-09-25 from 175325 to 176991: Seven small fixes (#156 #148 #137 #147 #192 #143 #182), ~240 b each, in update-drift, curate, release, gotcha-log. Locked before review (stop hook requires a push).
+# RAISED 2026-09-25 from 176991 to 177167: #147 stamp-only diff command and #148 no-issue arm, required by the Sonnet review round
 templates/README.md	12042
 templates/RUNBOOK.md	2795
 templates/adr.md	2115
@@ -85,12 +87,12 @@ templates/checklists/implement-checklist.md	1329
 templates/checklists/qa-checklist.md	1836
 templates/checklists/test-checklist.md	1234
 templates/coordination.md	3909
-templates/curate.md	25370
-templates/gotcha-log.md	8858
+templates/curate.md	25754
+templates/gotcha-log.md	9113
 templates/hypothesis-log.md	3570
 templates/memory-index.md	3396
 templates/project-file.md	6695
-templates/release.md	15500
+templates/release.md	15898
 templates/review-agent.md	5720
 templates/review-changes.md	27326
 templates/review-profile.md	5870
@@ -106,5 +108,5 @@ templates/test-fixtures/memory/verified-fail.md	166
 templates/test-fixtures/memory/verified-manual.md	155
 templates/test-fixtures/memory/verified-pass.md	135
 templates/test-verify-memory.md	6000
-templates/update-drift.md	15474
+templates/update-drift.md	16279
 templates/work-item.md	3860

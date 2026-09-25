@@ -10,6 +10,8 @@ Check whether this project is behind the framework it pins, and decide — per r
 
 A project may pin **more than one** framework, and the stamps move independently. Find them all before comparing anything, or every later drift check reports against the wrong baseline.
 
+**A project file in a subdirectory with its own stamp is a separate adopter**: report it and run this skill there too. Its gap often looks worse than it is (one arm: 38 releases behind, 5 adoptions).
+
 Read the project file (`CLAUDE.md`, `AGENTS.md`, or the tool's equivalent) and search for stamps **without keying on one format**. At least six shapes are in the wild:
 
 ```
@@ -91,20 +93,27 @@ Then check the templates directory too, if the project ships one: releases habit
 
 For each stamp, read that framework's changelog and list every version between the pinned one (exclusive) and the latest (inclusive). Name the count.
 
+**Ignore a diff confined to a template's `framework:` stamp line**: every release bumps it. `0` here means stamp-only (the second `grep` drops only the `---`/`+++` headers, not an added `- bullet`):
+
+```bash
+git diff vOLD..vNEW -- templates/<file>.md | grep -E '^[-+]' | grep -Ev '^(\+\+\+|---) ' | grep -vc 'framework:'
+```
+
 Prefer a local clone if one exists (`~/repos/<framework>/CHANGELOG.md`), else the published URL. If the clone is behind its own remote, say so.
 
 If the project is current, say so and stop. "Reviewed and declined" from a previous session counts as current — check the changelog or memory for a recorded decline before reporting drift on something already decided.
 
-## Step 2 — Triage each release into one of four outcomes, plus one for a framework whose pin never resolved
+## Step 2 — Triage each release into one of five outcomes, plus one for a framework whose pin never resolved
 
 Every release gets exactly one of:
 
 | Outcome | Means | What it must carry |
 |---------|-------|--------------------|
 | **Adopt** | Lands as a concrete change here | Which file(s), and what the change is |
-| **Decline** | Applies, but this project shouldn't take it | **The reason.** This is the load-bearing one |
+| **Decline** | Applies, but this project shouldn't take it | **The reason.** This is the load-bearing one. Cite the upstream issue where one exists, not a version: a version-pinned note goes stale on their cadence, unnoticed. With no issue, the version is the only handle |
 | **Not applicable** | No counterpart surface in this project | Which surface is missing |
 | **Already in force** | The behaviour is present but undocumented here | What to correct in the docs |
+| **Superseded** | A later release in this same gap changed it again | Which release. Triage that one instead |
 | **Unresolvable pin** | The stamp is not a version, and Step 0 could not resolve it to one | What was found, and where — this outcome applies to the *framework*, not to one release, and it means the release list below it could not be built |
 
 **"Already in force" is the outcome people forget** — e.g. a user-global skill updated outside this repo, which the project file may still describe as project-local. Check the actual installed artifact (`diff` it against the framework's tracked copy), not the project file's description of it.

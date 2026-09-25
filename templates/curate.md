@@ -50,6 +50,8 @@ find memory docs/work-items -type f -name '*.md' ! -path '*/archive/*' -print0 2
 
 **Above roughly 300k characters, do not read the corpus.** Work from metadata and the verify runner, and do not improvise a dead-reference check. Curate **the index and the newest topic file only**, and say in the report which files you did not open. **And propose an archive pass**: resolved gotchas, closed hypotheses, old session files and done work items move into an `archive/` folder beside them (`memory/archive/`, `docs/work-items/archive/`), which the measurement above excludes. Propose it; do not move anything in this step.
 
+A subdirectory with its own project file and stamp is a separate adopter: say so, and curate it there, not from here.
+
 Check for context rot from *previous* sessions. **Read metadata, not documents**: headers, probe output, `stat`. Fetch a body only when you are going to act on it.
 
 1. **RETIRED — dead references, stale-memory mtime, and ground-truth drift.** Retired in v1.45.0 (dead references are covered by `audit-context` Step 4); do not re-add without a catch.
@@ -217,6 +219,8 @@ Check for context rot from *previous* sessions. **Read metadata, not documents**
    - **Stale (no movement, no trigger)**: Count open entries. If more than ~10, flag as memory-cluttering — promote to ADRs or mark `dormant` / closed.
 
 6. **Auto-loaded size budget — the whole set, not the project file alone.** Sum **every file your tool loads without being asked** (for Claude Code, the project file *and* the user-level memory index), and compare the total against the budget. Claude Code warns at 40k chars; the soft target is under 35k. **List the set before measuring**, and name any file not counted. Budget the index in characters, not lines.
+
+   **List instruction-loaded files on their own line**: files the project file tells the agent to read every session (a large memory index, say), with their sizes, without claiming they are always read. For one adopter that was bigger than everything auto-loaded.
 
    **Flag a project file over ~15k characters on its own**, even when the set is under budget: a template-sized one is ~6k, and past 15k it is carrying narrative (one adopter's reached 35k).
 
