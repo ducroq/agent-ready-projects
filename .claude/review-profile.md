@@ -19,7 +19,7 @@ about, found by asking what the cap had actually saved.
 
 **What the two one-lens runs bought**: 3 blockers on v1.44.0 and 4 on v1.45.0, each at roughly a fifth of a
 battery's cost, on changes that had already passed lint, both fixture suites and the author's own read. One
-of them had silently zeroed a check. **Measured spend went from ~840k tokens per release to ~107k.**
+of them had silently zeroed a check. **The ledger's figure went from ~840k to ~107k** — per release against per run, and neither is spend: see Run budget.
 
 ⚠️ **What it gives up, stated because the ledger says so plainly**: on a four-lens round, *two* lenses each
 found a blocker no other lens found. One lens will miss that class, and the two runs above cannot show
@@ -104,7 +104,9 @@ Check it in this direction: read each entry below, then find its tier above.
 
 ## Run budget
 
-**One round per release, ≤250,000 tokens total. Record each run in `memory/review-ledger.tsv`.**
+**One round per release. Record each run in `memory/review-ledger.tsv`, with its `spend`.**
+
+⚠️ **The ledger's `tokens` column is final context, not spend** (#222). Every figure in this section was measured in it, including the old ≤250,000-token budget, which no round met in spend. Measured: the 15 reviewers on 2026-09-14 before the round cap (v1.42.0; v1.43.0 has none recorded) spent 9.8M input-token equivalents, ~655k each; the 11 after it (v1.44–45) 5.2M, ~476k each; the 14 on 2026-09-25, after the skills were thinned (v1.46.0–46.1), 2.2M, ~157k each (`memory/hypothesis-log.md` H-020). Read `spend` from the subagent transcript: one usage per `message.id` (a turn spans several lines), cache write ×1.25, cache read ×0.1, output ×5.
 
 ⚠️ **A ROUND, not a run** — `templates/review-changes.md` Step 5 defines a round as one pass of the
 lens set, however many lenses it holds. The first draft of this section said "one lens-run ≤120k"
@@ -112,15 +114,14 @@ and immediately contradicted the HIGH row three sections above it, which mandate
 lens alongside the adversarial one whenever a guarantee surface is touched: two runs, ~220k, over
 a budget written in the same file. **The budget and the tier table have to use the same unit.**
 
-⚠️ **The reason is measured and it is not the one you would guess: run cost varies little with
-scope.** Over the **41 cold runs in the ledger carrying a token count** (`narrow-fork` excluded — the
+⚠️ **Final context varies little with scope; spend does not.** In spend, the 40 reviewers on 2026-09-14 and 2026-09-25 ranged from 66k to 1.07M. What follows is in final-context tokens. Over the **48 cold runs to 2026-09-14 carrying a token count** (`narrow-fork` excluded — the
 config is retired — and the one killed run's 0 with it), the range is **40k–162k, mean 107k**; and
 within 2026-09-14 alone the narrowest run, one small prose diff, cost 86k against a broadest of 148k.
 The spread is real but it does not track how narrow the subject was, because the cost is the
-reviewer's own exploration and not the diff. **Only cutting the number of runs reliably cuts spend.**
+reviewer's own exploration and not the diff. **Cutting runs cuts spend, and so does cutting what each reviewer reads**: thinning the skills a reviewer reads cut spend per reviewer from ~476k to ~157k at a similar run count (H-020).
 ⚠️ **Not a controlled comparison**: nothing here holds the target constant while varying scope, so
 this is an observed range, not a demonstration that scope is irrelevant. Re-derive before quoting:
-`awk -F'\t' '$(1)~/^2026-/ && $(6)~/^[0-9]+$/ && $(6)>0 && $(2)!="narrow-fork" {print $(6), $(5)}' memory/review-ledger.tsv | sort -n`.
+`awk -F'\t' '$(1)~/^2026-/ && $(1)<="2026-09-14" && $(6)~/^[0-9]+$/ && $(6)>0 && $(2)!="narrow-fork" {print $(6), $(5)}' memory/review-ledger.tsv | sort -n`.
 
 Three consequences, all of them things this repo did in the week before the budget existed:
 

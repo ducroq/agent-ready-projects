@@ -22,6 +22,17 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.48.2 (candidate, unreleased)
+
+**PATCH.** Documentation only (v1.10.1 precedent). `docs/rationale/review-changes.md`'s review-cost figures were a
+reviewer's **final context size**, not its spend (#222): the maintainer ledger recorded the total the agent tool
+reports, which is the last turn. The rationale now says so and gives spend per release measured from transcripts
+(~655k → ~476k → ~157k input-token equivalents per reviewer, across the round cap and the skill thinning). The savings
+point the same way in spend; the magnitudes did not carry over. No template changes; adopter-facing size: 0 bytes in `templates/`.
+
+**Consumers.** No action required. If you budget reviews from this rationale's numbers, measure spend from your own
+transcripts instead.
+
 ## v1.48.1 (2026-09-25)
 
 **PATCH.** Changes to existing artifacts and documentation only; nothing new to adopt, so the third row of
