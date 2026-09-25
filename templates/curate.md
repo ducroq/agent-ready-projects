@@ -44,7 +44,7 @@ Before tending memory, go back to what this session was asked to do. The detour 
 # a few thousand files and `tail -1` then reports one batch's total (measured:
 # 6000 files reported 105,600 of 600,000), and `wc -m` counts characters, which
 # is what the threshold below is in. Both failures were silent and both read LOW.
-find memory docs/work-items -type f -name '*.md' -not -path '*/archive/*' -print0 2>/dev/null \
+find memory docs/work-items -type f -name '*.md' ! -path '*/archive/*' -print0 2>/dev/null \
   | xargs -0 cat | wc -m
 ```
 
