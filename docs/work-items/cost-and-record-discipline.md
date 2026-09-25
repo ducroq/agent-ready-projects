@@ -16,13 +16,11 @@ Goal: make the framework cheaper to run without cutting review of the shipped su
 
 **Savepoint — 2026-09-25.**
 
-- **Last action**: PR #202 merged to master: candidate v1.45.2, **not yet tagged**. It closed #138 #152 #155 #157 #186 #187 #194 #196 #197 #198 #199 #200. A token-reduction push followed:
-  - **Step 1 done**: retired and archived memory files and finished work items. The curate read surface went from 658k to ~310k chars.
-  - **In progress**: thinning the largest records. This file was cut from ~71k chars on 2026-09-25, with its history moved to the archive file above.
+- **Last action**: v1.46.0 released (tagged and pushed 2026-09-25; global skills refreshed). It carries #202's fixes and token-reduction steps 1–3: the curate read surface went from 658k to 160k chars, curate's skill body from 56.9k to about 25k, review-changes' from 43.5k to about 27k, and the verify runner moved to `scripts/verify-runner.sh`. #201's arc idea is folded into curate as H-031.
 - **Next action**:
-  1. **Step 2**: move `curate`'s inline verify runner into a shipped script file.
-  2. **Step 3**: thin the skill bodies (`curate` ~56k, `review-changes` ~44k) and move the rationale to `docs/rationale/`.
-  3. Tag v1.45.2 per `templates/release.md` (classify the bump from the diff; #199 added `--ext`, so probably MINOR).
+  1. Review H-022 (due): the size budget was raised three times on 2026-09-25, each with a recorded reason.
+  2. Measure whether the cuts hold: total spend per release (H-020), and H-031 over the next 10 curate runs.
+  3. Next thinning candidates: `audit-context`, `update-drift` and `release` bodies (21–24k each), and `CLAUDE.md` (26k, loaded every session).
 - **Blockers**: none.
 
 **Before each cut**, check it still holds:
