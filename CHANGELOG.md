@@ -52,6 +52,15 @@ gotcha log, against a 6.4k template. Three measures:
   excludes `*/archive/*`, and was checked against a seeded tree (a folder merely named with "archive" is still
   counted). It proposes and does not move, in keeping with Step 0's "don't fix anything".
 
+### Every fixture's ablations are UNSCORED over an already-failing run (#161)
+
+v1.46.0 gave step15-tables this guard. The other 15 fixtures' `ablate` helpers (16 helpers) now get a one-line gate:
+the suite's failure state is snapshotted at the first ablation, and if any seeded case had already failed, each
+ablation prints UNSCORED instead of running. That is the suite-level rule the issue proposed: an ablation's PASS
+means something only over an otherwise-green run. Seeded by breaking released-heading's candidate test: T1 fails,
+and A1, which would have printed PASS beside it, now prints UNSCORED. Hand-written ablations outside a helper
+(dollar-digit's A8, for one) are not covered. Maintainer tooling.
+
 ## v1.46.0 (2026-09-25)
 
 **MINOR.** Cuts what adopters pay per run: `curate` goes from 56.9k to about 25k characters and

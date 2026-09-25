@@ -67,10 +67,12 @@ echo "ablations"
 mutate() { MUT="$WORK/mut.sh"
   if ! sed "$2" "$RULE" > "$MUT" || [ ! -s "$MUT" ]; then printf '  FAIL  %s — the mutation did not run\n' "$1"; FAIL=1; return 1; fi
   if cmp -s "$MUT" "$RULE"; then printf '  FAIL  %s — the mutation did not land\n' "$1"; FAIL=1; return 1; fi; }
-ablate() { mutate "$1" "$2" || return; run "$3" "$MUT"
+ablate() { [ -n "${ABL_PRE+x}" ] || ABL_PRE=$FAIL; if [ "$ABL_PRE" -ne 0 ]; then printf '  UNSCORED  ablation %s — a seeded case already failed in this run, so it cannot fail (#161)\n' "$1"; return 0; fi
+  mutate "$1" "$2" || return; run "$3" "$MUT"
   if [ "$RC" -eq 0 ] && grep -q 'bytes against' "$ERR"; then printf '  PASS  %s\n' "$1"
   else printf '  FAIL  %s — rc=%s; the guard is not what caught it\n' "$1" "$RC"; FAIL=1; fi; }
-ablate_clean() { mutate "$1" "$2" || return; run "$3" "$MUT"
+ablate_clean() { [ -n "${ABL_PRE+x}" ] || ABL_PRE=$FAIL; if [ "$ABL_PRE" -ne 0 ]; then printf '  UNSCORED  ablation %s — a seeded case already failed in this run, so it cannot fail (#161)\n' "$1"; return 0; fi
+  mutate "$1" "$2" || return; run "$3" "$MUT"
   if [ "$RC" -eq 1 ]; then printf '  PASS  %s\n' "$1"
   else printf '  FAIL  %s — rc=%s; removing the guard changed nothing\n' "$1" "$RC"; FAIL=1; fi; }
 ablate       A2-no-number-check 's/elif \[ "\$((10#\$said))" -ne "\$grow" \]; then/elif false; then/' "$WORK/t2"

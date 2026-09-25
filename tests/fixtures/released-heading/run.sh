@@ -47,6 +47,7 @@ else printf '  FAIL  S1 — no tags gave rc=%s, not 3\n' "$RC"; FAIL=1; fi
 
 # Ablations — each mutant must stop catching exactly its case.
 ablate() {  # ablate <label> <from> <to> <case-dir> <needle that must vanish> <control that must stay>
+  [ -n "${ABL_PRE+x}" ] || ABL_PRE=$FAIL; if [ "$ABL_PRE" -ne 0 ]; then printf '  UNSCORED  ablation %s — a seeded case already failed in this run, so it cannot fail (#161)\n' "$1"; return 0; fi
   local m="$WORK/mut.sh"
   python3 -c 'import sys; s=open(sys.argv[1]).read(); open(sys.argv[2],"w").write(s.replace(sys.argv[3], sys.argv[4], 1))' "$RULE" "$m" "$2" "$3"
   if cmp -s "$m" "$RULE"; then printf '  FAIL  %s — the mutation changed nothing\n' "$1"; FAIL=1; return; fi

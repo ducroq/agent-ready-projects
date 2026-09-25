@@ -324,6 +324,7 @@ CONTROL_NEEDLE='bare `$7`'
 seed_control() { printf '%s\n' '    control probe $7 — every mutant must still report this' >> "$1/templates/demo.md"; }
 
 ablate() {  # ablate <id> <what it defends> <sed-expr> <mutator> <want: HIT|CLEAN> <needle>
+  [ -n "${ABL_PRE+x}" ] || ABL_PRE=$FAIL; if [ "$ABL_PRE" -ne 0 ]; then printf '  UNSCORED  ablation %s — a seeded case already failed in this run, so it cannot fail (#161)\n' "$1"; return 0; fi
   local id="$1" what="$2" expr="$3" mut="$4" want="$5" needle="$6"
   local m="$WORK/$id.sh"
   sed "$expr" "$CHECK" > "$m"

@@ -96,6 +96,7 @@ bash "$CHK" /nonexistent-for-this-test >/dev/null 2>&1; rc2=$?
 # would also "stop catching", and that is a vacuous kill — and it must still
 # report the t5 control, or a checker that runs and reports NOTHING passes too.
 ablate() {  # ablate <label> <from> <to> <needle that must vanish>
+  [ -n "${ABL_PRE+x}" ] || ABL_PRE=$FAIL; if [ "$ABL_PRE" -ne 0 ]; then printf '  UNSCORED  ablation %s — a seeded case already failed in this run, so it cannot fail (#161)\n' "$1"; return 0; fi
   local m="$W/mut.sh" out
   python3 -c 'import sys; s=open(sys.argv[1]).read(); open(sys.argv[2],"w").write(s.replace(sys.argv[3], sys.argv[4], 1))' "$CHK" "$m" "$2" "$3"
   if cmp -s "$m" "$CHK"; then printf '  FAIL  %s — the mutation changed nothing\n' "$1"; FAIL=1; return; fi

@@ -209,6 +209,7 @@ else printf '  FAIL  S6-baseline-without-a-budget-refuses — expected exit 2, g
 echo
 echo "ablations — each mutant must be lethal to its own row:"
 ablate() { # ablate <label> <old> <new> <case-dir-setup> <must-appear|!absent>
+  [ -n "${ABL_PRE+x}" ] || ABL_PRE=$FAIL; if [ "$ABL_PRE" -ne 0 ]; then printf '  UNSCORED  ablation %s — a seeded case already failed in this run, so it cannot fail (#161)\n' "$1"; return 0; fi
   local lbl="$1" old="$2" new="$3" setup="$4" pat="$5"
   local m="$WORK/mut-$lbl.sh"
   python3 - "$CHECK" "$m" "$old" "$new" <<'MPY' || { printf '  FAIL  ABLATION %-34s could not apply\n' "$lbl"; FAIL=1; return; }

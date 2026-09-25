@@ -221,6 +221,7 @@ done
 # asserted exactly, so a mutation that stops mattering shows up as a FAIL here
 # rather than as a guard nobody notices is inert.
 ablate() { # $1 label, $2 sed program, $3... kill set
+  [ -n "${ABL_PRE+x}" ] || ABL_PRE=$FAIL; if [ "$ABL_PRE" -ne 0 ]; then printf '  UNSCORED  ablation %s — a seeded case already failed in this run, so it cannot fail (#161)\n' "$1"; return 0; fi
   local label="$1" prog="$2"; shift 2
   local mut="$W/mut.sh" body="$W/mutbody.sh"
   sed "$prog" "$BODY" > "$body"

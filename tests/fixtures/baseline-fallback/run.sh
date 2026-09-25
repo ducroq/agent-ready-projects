@@ -196,6 +196,7 @@ say "$(printf '%s' "$err" | grep -qF 'HEAD IS CONTAINED IN' && echo 0 || echo 1)
 
 # --- ablations. `!pattern` = must STOP appearing; otherwise must APPEAR. -----
 ablate() { # $1 label, $2 old, $3 new, $4 [!]pattern, $5 repo=one, $6 mode
+  [ -n "${ABL_PRE+x}" ] || ABL_PRE=$FAIL; if [ "$ABL_PRE" -ne 0 ]; then printf '  UNSCORED  ablation %s — a seeded case already failed in this run, so it cannot fail (#161)\n' "$1"; return 0; fi
   local pat="$4" neg=0 o repo="${5:-one}" mode="${6:-set -uo pipefail}"
   case "$pat" in !*) neg=1; pat="${pat#!}" ;; esac
   python3 - "$WORK/block.sh" "$WORK/mut.sh" "$2" "$3" <<'PY' || { printf '  FAIL  ablation %s could not be applied — its site has moved\n' "$1"; FAIL=1; return; }

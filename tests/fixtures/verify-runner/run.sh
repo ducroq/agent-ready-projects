@@ -533,6 +533,7 @@ ctl_check() {  # ctl_check <id> <spec> <output>; 0 = every control still reporte
 }
 
 ablate() {  # ablate <id> <what it defends> <sed-expr> <consequence> [ctl:<controls>]
+  [ -n "${ABL_PRE+x}" ] || ABL_PRE=$FAIL; if [ "$ABL_PRE" -ne 0 ]; then printf '  UNSCORED  ablation %s — a seeded case already failed in this run, so it cannot fail (#161)\n' "$1"; return 0; fi
   local id="$1" what="$2" expr="$3" want="$4" ctl="${5:-}"
   local mut="$WORK/$id.sh"
   sed "$expr" "$RUNNER" > "$mut"

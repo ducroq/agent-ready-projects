@@ -189,6 +189,7 @@ fi
 # ── Ablations: every T above must be killable, or it is asserting nothing ──────
 # Kill sets are MEASURED by running each mutant, not predicted.
 ablate() {  # label, old, new, comma-separated cases that must flip to clean
+  [ -n "${ABL_PRE+x}" ] || ABL_PRE=$FAIL; if [ "$ABL_PRE" -ne 0 ]; then printf '  UNSCORED  ablation %s — a seeded case already failed in this run, so it cannot fail (#161)\n' "$1"; return 0; fi
   local label="$1" old="$2" new="$3" want="$4" got=""
   local mut="$WORK/mutant.sh"
   OLD="$old" NEW="$new" python3 -c '
