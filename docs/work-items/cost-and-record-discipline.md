@@ -17,10 +17,15 @@ Goal: make the framework cheaper to run without cutting review of the shipped su
 **Savepoint — 2026-09-25.**
 
 - **Last action**: v1.46.0 released (tagged and pushed 2026-09-25; global skills refreshed). It carries #202's fixes and token-reduction steps 1–3: the curate read surface went from 658k to 160k chars, curate's skill body from 56.9k to about 25k, review-changes' from 43.5k to about 27k, and the verify runner moved to `scripts/verify-runner.sh`. #201's arc idea is folded into curate as H-031.
-- **Next action**:
-  1. Decide H-022 (confirmed by its own test on 2026-09-25): recommended fix is a release check that fails until the CHANGELOG states net adopter-facing growth.
-  2. Measure whether the cuts hold: total spend per release (H-020), and H-031 over the next 10 curate runs.
-  3. Done 2026-09-25 (#205, candidate v1.46.1): `audit-context` 22.4k → 16.8k, `update-drift` 23.6k → 15.3k, `release` 21.2k → 15.2k. Next: `CLAUDE.md` (26k, loaded every session).
+- **Next action** (handoff 2026-09-25; a session elsewhere can pick this up):
+  1. **Branch `thin-claude-md`, pushed, not merged.** It cuts `CLAUDE.md` from 26k to 14.5k characters. An adversarial review was still running when the session ended: re-run one adversarial pass on `git diff master...thin-claude-md -- CLAUDE.md` (did any routing row or Hard Constraint get weaker?), fix what it finds, then open a PR and merge.
+  2. **Adopter bloat measures, approved by the maintainer for v1.46.1.** Projects using the framework grow the same way this repo did: agent-ready-papers has a 35k project file, 404k of memory and a 96k gotcha log, against a 6.4k template. Add:
+     - a "lead with the point, no narrative" rule to `templates/project-file.md`'s Hard Constraints;
+     - a flag in curate Step 0 sub-step 6 for a project file over ~15k characters;
+     - a routine archive in curate Step 0: above ~300k, propose moving resolved gotchas, closed hypotheses, old session files and done work items into `archive/` folders, and make the Step 0 measurement exclude `*/archive/*`.
+     Edit template and reference install together. Rule 19 will require the release block to state the growth.
+  3. **Release v1.46.1**: steps 4 (#205) and 5, rule 19 (#206), and item 2 above.
+  4. Measure H-020 (spend per release) and H-031 (curate's arc section, 10 runs).
 - **Blockers**: none.
 
 **Before each cut**, check it still holds:
@@ -43,6 +48,7 @@ Also still to do (detail in the history file):
 - **Rating-floor check (#168)**: a claim whose verification log says PARTIAL or NEEDS WORK must not be rated ESTABLISHED.
 - **Unfiled**: Step 1.5 cannot see gitignored `memory/`. MEDIUM is unreachable in `.claude/review-profile.md`. `tests/fixtures/block-parses/` has no ablations.
 - **Maintainer's call**: how big should the record be? Keep and mechanize, or prune hard.
+- **Two budgets, two units (moved verbatim from CLAUDE.md's header, 2026-09-25)**: ⚠️ **No size is recorded here** — a size claim about CLAUDE.md goes stale on the next edit to CLAUDE.md. Re-derive: `{ wc -m CLAUDE.md; wc -m "$HOME/.claude/projects/<slug>/memory/MEMORY.md"; }`. **Two budgets, and they are measured in different units:** `templates/audit-context.md` Step 1 flags *this file* over 35,000 / 40,000 in **bytes**; the cap that bit here is 40,000 on the **auto-loaded set**, in characters, which this file alone was always under. `wc -c` reads ~2% high against `wc -m`. Two instruments for one number, and that is **not settled** — file it, do not resolve it in passing.
 
 ## Outcome
 
