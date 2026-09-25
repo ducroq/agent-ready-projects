@@ -43,7 +43,7 @@ grep -rnEi "agent-ready-[a-z]+(-[a-z][a-z]+)*[^0-9]{0,40}\b(commit|rev|sha|ref|p
 
 **A single-operand run is a finding, not a result** — say so in the report; a self-reconciliation always agrees.
 
-If you adapt the matchers, keep matcher 1's `{0,60}` gap (``Adopted from `agent-ready-projects` `templates/review-changes.md` (v1.18.0`` puts **33** characters between name and version), matcher 2's exclusion of letters before the hash (else a hex run matches inside a word), and matcher 3's `\b` and narrow trailing gap (else `href d89ec62` or `commitment` match). Keep `\b`, not `(^|[^A-Za-z])` — ugrep 7.8.4 refuses the group form with no output, which inside `2>/dev/null` reads as "no pins found".
+If you adapt the matchers, keep matcher 1's allowance for letters before the version (a filename sits there) and its `{0,60}` gap (``Adopted from `agent-ready-projects` `templates/review-changes.md` (v1.18.0`` puts **33** characters between name and version), matcher 2's exclusion of letters before the hash (else a hex run matches inside a word), and matcher 3's `\b` and narrow trailing gap (else `href d89ec62` or `commitment` match). Keep `\b`, not `(^|[^A-Za-z])` — ugrep 7.8.4 refuses the group form with no output, which inside `2>/dev/null` reads as "no pins found".
 
 Known holes: **a DIGIT between the name and the connector** escapes all three (`agent-ready-projects (2026-09-14) commit 0d67131`, `agent-ready-projects #134 commit 0d67131`) — an ordinary shape, not a rare one; so does a pin written *«fixed at»* or *«as of»*, a branch name, a date or a `main` pin. **`\b` is not POSIX ERE**: it measured identical on GNU grep 3.12, ugrep 7.8.4 and busybox 1.37, which is not a portability guarantee — an engine reading it as a literal `b` returns a silent zero. If `grep --version` shows something else, seed a known pin and confirm the matcher finds it before trusting a clean run.
 
@@ -74,7 +74,7 @@ printf 'mentioned pairs: %s  stamped pairs: %s\n' "$(wc -l < "$M")" "$(wc -l < "
 LC_ALL=C comm -23 "$M" "$S"
 ```
 
-Do not simplify the block: the `(file, framework)` unit (a file pinning two frameworks reads as stamped when only one pin matched), the printed counts (with mistyped operands `comm` prints nothing at exit 0), `sort -u` and `LC_ALL=C` on both sides and on `comm`, and `|| :` on each grep each prevent a false clean. **Keep the operands disjoint** — overlap, such as adding `.` or a parent of another operand, makes `comm -23` report a stamped file as unstamped.
+Do not simplify the block: the `(file, framework)` unit (a file pinning two frameworks reads as stamped when only one pin matched), the printed counts (with mistyped operands `comm` prints nothing at exit 0), `sort -u` and `LC_ALL=C` on both sides and on `comm`, and `|| :` on each grep each prevent a wrong difference. **Keep the operands disjoint** — overlap, such as adding `.` or a parent of another operand, makes `comm -23` report a stamped file as unstamped.
 
 **Report both counts and every file in the difference.** Each one gets a disposition out loud: *a stamp the matcher missed* (read the line, name the shape, use it) or *a mention that is not a pin*.
 

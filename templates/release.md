@@ -33,7 +33,7 @@ First read the project file (`CLAUDE.md`, `AGENTS.md`, or equivalent) for releas
 
 ## Step 0 — Substitute the version placeholder
 
-Commands below use a literal `X.Y.Z`; substitute the version (agreed in Step 2) before running any. Unsubstituted, `git rev-parse "vX.Y.Z"` and a grep for `X\.Y\.Z` **succeed quietly**. If any command emits the literal `X.Y.Z`, stop and start over.
+Commands below use a literal `X.Y.Z`; run Step 1 first, agree the version in Step 2, then substitute it before running any. Unsubstituted, `git rev-parse "vX.Y.Z"` and a grep for `X\.Y\.Z` **succeed quietly**. If any command emits the literal `X.Y.Z`, stop and start over.
 
 ## Step 1 — Establish what changed
 
@@ -180,7 +180,7 @@ Follow the *content* shape of recent entries but not their structural defects. W
 
 ## Step 5 — Sync version references
 
-Update the Step 3, check 5 hits **that are meant to track the current version** — not historical citations, dated snapshots, or dependency pins. Typically: the project file's version line, README or docs badges, manifest version fields, and **any template or scaffolding file that stamps the framework version** (releases habitually miss these).
+Update the hits from Step 3, check 5, **that are meant to track the current version** — not historical citations, dated snapshots, or dependency pins. Typically: the project file's version line, README or docs badges, manifest version fields, and **any template or scaffolding file that stamps the framework version** (releases habitually miss these).
 
 Then re-run the **current-version** grep and confirm the only hits are files you meant to update. Do not try to drive the version-agnostic greps to zero — in a real repo they never get there.
 

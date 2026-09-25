@@ -7,7 +7,7 @@ both, one of them is wrong.
 
 ### If there are genuinely no tags — git rev-parse --is-shallow-repository says false and git …
 
-- Skip the diff commands, review the full history (`git log --oneline`), and propose `v0.1.0` or `v1.0.0` per the project's own convention.
+- Skip the diff commands, review the full history (`git log --oneline`), and propose `v0.1.0` or `v1.0.0` per the project's own convention. *(Restored to the skill body on 2026-09-25; the skill is the authority.)*
 
 ###    Do not use a substring grep.…
 
