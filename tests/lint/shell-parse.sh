@@ -23,13 +23,16 @@ cd "$root" || exit 2
 
 found=0; bad=0
 # -print0: a path with a space or newline is legal and must not be word-split.
+# `-type l` too: a symlinked script is parsed through its link, not skipped.
 while IFS= read -r -d '' f; do
+  [ -d "$f" ] && continue   # a link to a directory named *.sh is not a script
   found=$((found + 1))
+  [ -e "$f" ] || { bad=$((bad + 1)); printf '%s: dangling symlink — there is no script to parse\n' "$f"; continue; }
   if ! err=$(bash -n "$f" 2>&1); then
     bad=$((bad + 1))
     printf '%s: does not parse — %s\n' "$f" "$(printf '%s' "$err" | head -1)"
   fi
-done < <(find tests scripts -name '.git' -prune -o -type f \( -name '*.sh' -o -name '*.bash' \) -print0 2>/dev/null)
+done < <(find tests scripts -name '.git' -prune -o \( -type f -o -type l \) \( -name '*.sh' -o -name '*.bash' \) -print0 2>/dev/null)
 
 echo "      $found shell file(s) found under tests/ and scripts/, $((found - bad)) parsed" >&2
 # An empty population is not a clean one: a moved tree reads exactly like a clean run.

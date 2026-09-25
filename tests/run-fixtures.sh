@@ -33,8 +33,8 @@ NOT_A_GATE=" review-bench "
 # A floor, not a target: suites are only ever added, so this rises and never falls
 # without a deliberate edit. Lower it only when a suite is deleted on purpose, and
 # say why in the same commit.
-MIN_GATES=22   # 18 -> 22: the floor had fallen behind the 20 gating suites; shell-parse/
-               # and template-stamp/ (rules 20, 21) make 22. PREVIOUSLY 16 -> 18: save-as-header/ and opt-comment/
+MIN_GATES=24   # 18 -> 24: the floor had fallen behind the 20 gating suites; shell-parse/,
+               # template-stamp/, scope-surfaces/ and rating-floor/ (rules 20-23) make 24. PREVIOUSLY 16 -> 18: save-as-header/ and opt-comment/
                # added (lint rules 16 and 17, the first two Mechanized rows to go live).
                # PREVIOUSLY 15 -> 16: tests/fixtures/autoload-ratchet/ added (lint rule 15).
                # PREVIOUSLY 14 -> 15: tests/fixtures/step15-corpus/ added (lint rule 14). Left at 14,

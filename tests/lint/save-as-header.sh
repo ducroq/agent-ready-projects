@@ -30,8 +30,8 @@
 # in `docs/GUIDE.md`, and `templates/README.md` and `docs/GUIDE.md` each carry a
 # further hand-maintained list of the same scope fact. Seeded and measured: flipping
 # the scope in both of those files scores 0 disagreements here. So three of the five
-# surfaces the gotcha row names are still unbound — a rule for them needs its own
-# seeded cases and is not this one.
+# surfaces the gotcha row names were unbound here. Rule 22 (scope-surfaces.sh)
+# now binds their prefixed install paths (#195).
 set -u
 
 root="${1:-}"

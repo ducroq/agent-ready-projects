@@ -36,16 +36,13 @@ Goal: make the framework cheaper to run without cutting review of the shipped su
 ## Open items
 
 Issues still open on this work item's thread:
-- **#195**: rule 16 binds the template header only, and three surfaces still carry hand-maintained copies of the same scope fact.
-- **#160**: rule 11 does not cover `tests/**/*.sh`. Attach the `set -u# <orphan>` class, which `bash -n` passes.
-- **#192**: ship H-015 to `templates/`, which means naming the adopter-installed file that changed before writing `Closes #N`.
+- **#160**: rule 20 now parses `tests/**/*.sh`; open for welded comments on builtins other than `set`, and a backtick pair in double quotes, which `bash -n` passes.
 - **#191**: AACR-Bench as external evidence. Parked.
 
 Also still to do (detail in the history file):
 - **Measure v1.44.0's re-tiering plus round cap** on total spend per release. Does it reduce spend or only move it? The cap removes the ledger's recall instrument (H-020).
 - **Record shape (#178/#179/#180)**: the retirement destination is decided (an archive file beside each source log). This repo's own gotcha log needs a `[RESOLVED]` marking pass before it can be split.
 - **Stale-number check**: the predicate is equality, not presence. Consider reusing `<!-- verify: -->` probes rather than writing a new lint rule.
-- **Rating-floor check (#168)**: a claim whose verification log says PARTIAL or NEEDS WORK must not be rated ESTABLISHED.
 - **Unfiled**: Step 1.5 cannot see gitignored `memory/`. MEDIUM is unreachable in `.claude/review-profile.md`. `tests/fixtures/block-parses/` has no ablations.
 - **Maintainer's call**: how big should the record be? Keep and mechanize, or prune hard.
 - **Two budgets, two units (moved verbatim from CLAUDE.md's header, 2026-09-25)**: ⚠️ **No size is recorded here** — a size claim about CLAUDE.md goes stale on the next edit to CLAUDE.md. Re-derive: `{ wc -m CLAUDE.md; wc -m "$HOME/.claude/projects/<slug>/memory/MEMORY.md"; }`. **Two budgets, and they are measured in different units:** `templates/audit-context.md` Step 1 flags *this file* over 35,000 / 40,000 in **bytes**; the cap that bit here is 40,000 on the **auto-loaded set**, in characters, which this file alone was always under. `wc -c` reads ~2% high against `wc -m`. Two instruments for one number, and that is **not settled** — file it, do not resolve it in passing.

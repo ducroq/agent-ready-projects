@@ -51,6 +51,18 @@ a sentence or a table row in an existing skill or template.
 - **Lint rule 21 (#171, maintainer infrastructure).** The scaffolding templates' `framework:` stamps must match a
   dated top `CHANGELOG.md` block, else the highest reachable tag, and that tag's own templates must carry its version.
   The v1.41.0 slip (stamps bumped after the tag) fails the first check before tagging and the third after.
+- **`scripts/install-global-skills.sh --check <root>` (#145).** The estate scan also lists each project-local copy of a
+  project-local skill (`release`, `test-verify-memory`) with its `agent-ready-projects vX.Y.Z` stamp, as `INFO`:
+  never compared, never an issue, exit code unchanged. Those copies are the ones that load, and one drifted 20
+  releases because nothing in the estate mentioned it.
+- **Lint rule 20** now parses symlinked scripts too, skips a link to a directory and reports a dangling link as
+  dangling (review findings).
+- **Lint rule 22 (#195, maintainer infrastructure).** Every `~/` or `<repo>/.claude/skills/<name>/` install path in
+  `docs/GUIDE.md`, `templates/README.md` and `adopt.md` must agree with `GLOBAL_SKILLS` / `LOCAL_ONLY` in the
+  installer, and every shipped skill must be named. Scope words with no path are not read.
+- **Lint rule 23 (#168, maintainer infrastructure).** In `docs/vv/verification-log.md`, a source whose step table
+  records PARTIAL, NEEDS WORK or FAIL may not be rated VERIFIED, and no claim ID it names may be ESTABLISHED in the
+  claim registry. Run on the pre-fix files it reports the Gloaguen block and S2-1, S2-3, S2-4.
 - **`release` Step 1 (#192, H-015).** Before writing `Closes #N` for an issue filed against a skill, name the
   adopter-installed file that changed. It is a question to look, not a gate.
 - **`curate` Step 0 sub-step 6 (#143).** Files the project file tells the agent to read every session are listed on
