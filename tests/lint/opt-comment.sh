@@ -92,13 +92,17 @@ welded_builtin() {
       if (segno == 1) return 0
       return (substr(line, cstart, i - cstart) ~ /^set([ \t]+[-+]?[A-Za-z]+)+$/)
     }
-    { line = $0; n = length(line); q = ""; segno = 0; newseg = 1; cmd = ""; cstart = 0; wstart = 1
+    { line = $0; n = length(line); q = ""; segno = 0; newseg = 1; cmd = ""; cstart = 0; wstart = 1; inw = 0
       for (i = 1; i <= n; i++) {
         c = substr(line, i, 1)
         if (q != "") { if (c == q) q = ""; else if (c == "\\" && q == "\"") i++; continue }
         if (c == "\\") { i++; wstart = 0; continue }
         if (c == "\"" || c == "\047") { q = c; wstart = 0; continue }
         if (c == " " || c == "\t") { wstart = 1; continue }
+        # `(` after `=` or `$` opens an array or a substitution INSIDE the word,
+        # so its `)` is no boundary: `arr=(a b)# x` welds the # (review finding).
+        if (c == "(" && (substr(line, i - 1, 1) == "=" || substr(line, i - 1, 1) == "$")) { inw++; wstart = 0; continue }
+        if (c == ")" && inw > 0) { inw--; wstart = 0; continue }
         if (c == ";" || c == "&" || c == "|" || c == "(" || c == ")" || c == "{" || c == "}") {
           newseg = 1; wstart = 1; continue }
         if (c == "#") {

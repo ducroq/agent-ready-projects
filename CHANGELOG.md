@@ -86,7 +86,7 @@ a sentence or a table row in an existing skill or template.
   counts characters, `audit-context` bytes (higher by the non-ASCII share, 0.4-1.9% measured here), so one file can pass one and fail the other at 35k.
 - **Lint rule 17 widened (#160, maintainer infrastructure).** A `#` welded to a word after `shopt`, `export`,
   `readonly`, `declare`, `local`, `typeset`, `trap`, `cd`, `umask` or a non-line-initial `set` is reported; `bash -n`
-  passes all of them. Quote-aware, and quiet on `=#`, `$#`, `${#` and a `#` inside a word. Fixture T11, N4, T12, A5.
+  passes all of them, including `arr=(a b)# x`. Quote-aware, and quiet on `=#`, `$#`, `${#` and a `#` inside a word. Fixture T11, N4, T12, A5.
 - **`release` Step 1 (#192, H-015).** Before writing `Closes #N` for an issue filed against a skill, name the
   adopter-installed file that changed. It is a question to look, not a gate.
 - **`curate` Step 0 sub-step 6 (#143).** Files the project file tells the agent to read every session are listed on

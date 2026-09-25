@@ -90,10 +90,12 @@ mkdir -p "$WORK/t11"
   printf '%s\n' 'local n=3# count'
   printf '%s\n' 'declare -r Y=2# ro'
   printf '%s\n' 'cd "$d"# note'
+  printf '%s\n' 'local -a arr=(a b)# x'
+  printf '%s\n' 'export W=$(pwd)# here'
 } > "$WORK/t11/bad.sh"
 want_fail "T11 a # welded to a word after another builtin is reported" "$WORK/t11" "welded to a word"
 run "$WORK/t11"; n11=$(grep -c 'welded to a word' "$OUT")
-[ "$n11" -eq 9 ] && printf '  PASS  T11 all nine seeded lines report\n' || { printf '  FAIL  T11 reported %s of 9\n' "$n11"; FAIL=1; }
+[ "$n11" -eq 11 ] && printf '  PASS  T11 all eleven seeded lines report\n' || { printf '  FAIL  T11 reported %s of 11\n' "$n11"; FAIL=1; }
 
 # N4 — the legal lines the widening must NOT flag: a value starting with #, a #
 # inside a word, $#, ${#, a quoted #, a spaced comment, the N2 set-lines, a
@@ -112,6 +114,8 @@ set -x; echo "issue#123"
 set -- "$@" "#tag"
 echo hi# not a builtin
 readonly Z="a# b"
+(cd /tmp)# a subshell closes on ), so this IS a comment
+local s=${v##*/}
 EOF
 printf '```vim\nset statusline=%%#WarningMsg#\n```\n' > "$WORK/n4/notes.md"
 want_clean "N4 legal # in values, quotes and non-builtins is silent" "$WORK/n4"
