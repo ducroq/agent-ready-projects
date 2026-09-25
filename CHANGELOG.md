@@ -19,9 +19,23 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.45.2 (candidate, unreleased)
+## v1.46.0 (2026-09-25)
 
-**Bump provisional** — classify it from the diff at release, per `templates/release.md` Step 2.
+**MINOR.** Cuts what adopters pay per run: `curate` goes from 56.9k to about 25k characters and
+`review-changes` from 43.5k to about 27k, and curate's verify runner now ships as
+`scripts/verify-runner.sh`. Curate also gains a first section, adapted from @jwasys's #201, that
+closes the session's arc before curating. Also ships twelve adopter-reported fixes (#202). No
+existing consumer has to act, and there is a new artifact (the script) and a new behaviour (the
+arc section), so rule 2 fires. Precedent: v1.40.0, when audit-context began running `refcheck.py`
+from a clone, was MINOR.
+
+**Consumers.** New adopters get the thinner skills; nothing else to do. Existing adopters: an
+installed curate keeps working unchanged. To upgrade it, keep a clone of this framework, or let
+the skill fetch the script (its Step 0 sub-step 3 has the line). An adapted copy of curate needs
+two edits: replace the inline four-backtick runner block with the call to
+`scripts/verify-runner.sh`, and add the `## Before Step 0 — Close the session's arc` section. A
+current copy contains both of those strings. Global installs: refresh with
+`scripts/install-global-skills.sh` once `v1.46.0` is tagged.
 
 ### `templates/curate.md` — a new first section: close the session's arc
 
