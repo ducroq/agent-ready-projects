@@ -36,7 +36,7 @@ Goal: make the framework cheaper to run without cutting review of the shipped su
 ## Open items
 
 Issues still open on this work item's thread:
-- **#160**: rule 20 now parses `tests/**/*.sh`; open for welded comments on builtins other than `set`, and a backtick pair in double quotes, which `bash -n` passes.
+- **#160**: rule 20 parses `tests/**/*.sh` and rule 17 covers welded comments on the other builtins. Open only for a backtick pair in double quotes, which parses as a command substitution.
 - **#191**: AACR-Bench as external evidence. Parked.
 
 Also still to do (detail in the history file):

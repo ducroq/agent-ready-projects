@@ -76,6 +76,50 @@ want_fail "T9 a marker on a line with no defect is reported STALE" "$WORK/t9" "S
 mkdir -p "$WORK/t10"; printf '# Doc\n\n```bash\nset -eo pipefail# guard   # lint-skip: opt-comment\n```\n' > "$WORK/t10/doc.md"
 want_fail "T10 a marker in markdown does not suppress a real defect" "$WORK/t10" "NEVER APPLIED"
 
+# T11 — #160's other builtins. Every line below passes `bash -n`, and each
+# welds a `#` to a word so the "comment" is passed on as arguments.
+mkdir -p "$WORK/t11"
+# Written with printf, not a heredoc: a bare seed line IS the defect to this rule.
+{
+  printf '%s\n' 'shopt -s nullglob# glob safely'
+  printf '%s\n' 'export LC_ALL=C# stable sort'
+  printf '%s\n' 'trap '\''rm -f x'\'' EXIT# cleanup'
+  printf '%s\n' 'readonly X=1# constant'
+  printf '%s\n' 'cd /tmp# go there'
+  printf '%s\n' 'if true; then set -u# strict; fi'
+  printf '%s\n' 'local n=3# count'
+  printf '%s\n' 'declare -r Y=2# ro'
+  printf '%s\n' 'cd "$d"# note'
+} > "$WORK/t11/bad.sh"
+want_fail "T11 a # welded to a word after another builtin is reported" "$WORK/t11" "welded to a word"
+run "$WORK/t11"; n11=$(grep -c 'welded to a word' "$OUT")
+[ "$n11" -eq 9 ] && printf '  PASS  T11 all nine seeded lines report\n' || { printf '  FAIL  T11 reported %s of 9\n' "$n11"; FAIL=1; }
+
+# N4 — the legal lines the widening must NOT flag: a value starting with #, a #
+# inside a word, $#, ${#, a quoted #, a spaced comment, the N2 set-lines, a
+# non-builtin, and vim's `set statusline=%#W#` in a fenced block.
+mkdir -p "$WORK/n4"
+cat > "$WORK/n4/ok.sh" <<'EOF'
+export COLOR=#fff
+export X=a#b
+local n=$#
+echo "${#arr[@]}"
+cd dir#1
+trap 'echo "#done" ' EXIT
+export PS1='\u# '
+shopt -s nullglob  # spaced comment
+set -x; echo "issue#123"
+set -- "$@" "#tag"
+echo hi# not a builtin
+readonly Z="a# b"
+EOF
+printf '```vim\nset statusline=%%#WarningMsg#\n```\n' > "$WORK/n4/notes.md"
+want_clean "N4 legal # in values, quotes and non-builtins is silent" "$WORK/n4"
+
+# T12 — a declared marker on a welded BUILTIN line is honoured and is not stale.
+mkdir -p "$WORK/t12"; printf 'cd /tmp# demo   # lint-skip: opt-comment\n' > "$WORK/t12/seed.sh"
+want_clean "T12 a marker on a welded builtin line is honoured, not stale" "$WORK/t12"
+
 # T4 — an empty population is not a clean one.
 mkdir -p "$WORK/t4"
 want_rc "T4 no files at all exits 2, never 0" "$WORK/t4" 2
@@ -91,7 +135,7 @@ old, new = os.environ["OLD"], os.environ["NEW"]
 if old not in s: sys.exit("ABLATION ANCHOR MISSING: %r" % old)
 pathlib.Path(sys.argv[2]).write_text(s.replace(old, new, 1))
 ' "$RULE" "$mut" || { printf '  FAIL  ablation %s could not be applied\n' "$label"; FAIL=1; return; }
-  for c in t1 t2 t3 t9 t10; do [ -d "$WORK/$c" ] || continue; run "$WORK/$c" "$mut"; [ "$RC" -eq 0 ] && got="$got,$c"; done
+  for c in t1 t2 t3 t9 t10 t11; do [ -d "$WORK/$c" ] || continue; run "$WORK/$c" "$mut"; [ "$RC" -eq 0 ] && got="$got,$c"; done
   got="${got#,}"
   if [ "$got" = "$want" ]; then printf '  PASS  ablation %s stops catching exactly [%s]\n' "$label" "$want"
   else printf '  FAIL  ablation %s should stop catching [%s], stopped [%s]\n' "$label" "$want" "$got"; FAIL=1; fi
@@ -113,6 +157,8 @@ ablate "A3 no unused-suppression detection" 'done < <(stale_scan "$f")' 'done < 
 # A4 — honour the marker everywhere while policing only shell, which is the state
 # the interlock blocker describes. T10 flips: the markdown marker suppresses again.
 ablate "A4 honour the marker where it is not policed" 'if policed "$f"; then' 'if true; then' "t10"
+# A5 drops the second predicate (#160): only T11 flips.
+ablate "A5 no welded-builtin predicate" 'done < <(welded_builtin "$f")' 'done < <(: )' "t11"
 # A2 restores the SECOND draft — "any non-space before a `#` on a set line" — the
 # loosening that looks more general and flagged five legal lines. It must break N2,
 # the legal-content control, which is not in the ablation set above.
