@@ -61,6 +61,10 @@ seed "$WORK/t6" scripts/install-global-skills.sh 'GLOBAL_SKILLS="curate audit-co
 seed "$WORK/t6" scripts/install-global-skills.sh 'LOCAL_ONLY="release test-verify-memory"' 'LOCAL_ONLY="release test-verify-memory review-changes"'
 want_fail "T6 the installer changes a skill's scope and the surfaces lag" "$WORK/t6" "review-changes is LOCAL_ONLY"
 
+# T7 — no trailing slash is still an install path (review finding).
+build "$WORK/t7"; printf '\nInstall curate at `<repo>/.claude/skills/curate` for project use.\n' >> "$WORK/t7/adopt.md"
+want_fail "T7 a path with no trailing slash is read" "$WORK/t7" "curate is in GLOBAL_SKILLS"
+
 build "$WORK/e1"; rm "$WORK/e1/adopt.md"
 want_rc "E1 a missing surface exits 2, never 0" "$WORK/e1" 2
 
@@ -74,7 +78,7 @@ old, new = os.environ["OLD"], os.environ["NEW"]
 if s.count(old) != 1: sys.exit("site occurs %d times, not once" % s.count(old))
 pathlib.Path(sys.argv[2]).write_text(s.replace(old, new))
 ' "$RULE" "$mut" || { printf '  FAIL  ablation %s could not be applied\n' "$label"; FAIL=1; return; }
-  for c in t1 t2 t3 t4 t5 t6; do
+  for c in t1 t2 t3 t4 t5 t6 t7; do
     run "$WORK/$c" "$mut"
     [ "$RC" -eq 0 ] && got="$got,$c"
   done
@@ -82,7 +86,7 @@ pathlib.Path(sys.argv[2]).write_text(s.replace(old, new))
   if [ "$got" = "$want" ]; then printf '  PASS  ablation %s stops catching exactly [%s]\n' "$label" "$want"
   else printf '  FAIL  ablation %s should stop catching [%s], stopped [%s]\n' "$label" "$want" "$got"; FAIL=1; fi
 }
-ablate "A1 any prefix is fine for a global"  '[ "$prefix" = "~" ] ||' 'true ||' "t1,t2"
+ablate "A1 any prefix is fine for a global"  '[ "$prefix" = "~" ] ||' 'true ||' "t1,t2,t7"
 ablate "A2 any prefix is fine for a local"   '[ "$prefix" = "<repo>" ] ||' 'true ||' "t3,t6"
 ablate "A3 unknown names pass"               'echo "$f:$ln: \`$path\` names a skill the installer lists in neither GLOBAL_SKILLS nor LOCAL_ONLY"; bad=$((bad + 1))' ':' "t4"
 ablate "A4 no floor"                         '    echo "rule 22: $s is shipped but no surface names its install path — its scope is not bound here"; bad=$((bad + 1)) ;;' '    : ;;' "t5"

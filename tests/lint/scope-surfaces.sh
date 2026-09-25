@@ -10,10 +10,10 @@
 # #184 started in GUIDE.md. Seeded against rule 16 alone, flipping the scope on
 # those surfaces scored 0 disagreements.
 #
-# What it reads: every PREFIXED install path, `~/.claude/skills/<name>/` or
-# `<repo>/.claude/skills/<name>/`. A global skill must not appear under `<repo>/`,
-# a project-local one must not appear under `~/`, and a name the installer lists
-# in neither is reported. Every shipped skill must appear at least once across
+# What it reads: every PREFIXED install path, `~/.claude/skills/<name>` or
+# `<repo>/.claude/skills/<name>`, with or without the trailing slash. A global
+# skill must not appear under `<repo>/`, a project-local one must not appear
+# under `~/`, and a name the installer lists in neither is reported. Every shipped skill must appear at least once across
 # the three files, or the rule has lost its subject for it.
 #
 # ⚠️ WHAT IT CANNOT SEE. Scope WORDS are not read: "install project-locally"
@@ -57,7 +57,7 @@ while IFS=: read -r f ln path; do
   else
     echo "$f:$ln: \`$path\` names a skill the installer lists in neither GLOBAL_SKILLS nor LOCAL_ONLY"; bad=$((bad + 1))
   fi
-done < <(grep -noE '(~|<repo>)/\.claude/skills/[a-z0-9-]+/' $SURFACES)
+done < <(grep -noE '(~|<repo>)/\.claude/skills/[a-z0-9-]+/?' $SURFACES)
 
 for s in $GLOBALS $LOCALS; do
   case "$seen" in *" $s "*) ;; *)
