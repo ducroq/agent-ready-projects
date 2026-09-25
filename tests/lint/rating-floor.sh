@@ -10,7 +10,7 @@
 # steps that mattered, and the figures turned out superseded.
 #
 # The rule, per "## Source" block of the log:
-#   - a step whose Result cell reads PARTIAL, NEEDS WORK or FAIL means the
+#   - a step whose Result cell BEGINS PARTIAL, NEEDS WORK or FAIL means the
 #     block's **Status:** may not begin with VERIFIED, and
 #   - no claim ID (S<n>-<n>) named anywhere in that block may be rated
 #     ESTABLISHED in docs/vv/claims/claim_registry.md.
@@ -37,15 +37,20 @@ trap 'rm -rf "$WORK"' EXIT
 awk '
   function flush() {
     if (name != "") printf "%s\t%d\t%s\t%s\n", name, weak, status, ids
-    name = ""; weak = 0; status = ""; ids = " "
+    name = ""; weak = 0; status = ""; ids = " "; instep = 0
   }
   { sub(/\r$/, "") }
   /^## / { flush(); if ($0 ~ /^## Source/) name = substr($0, 4); next }
   name == "" { next }
-  # A step row: | <digit> | check | result | notes |
-  /^\|[ \t]*[0-9]+[ \t]*\|/ {
+  # Step rows only: the table whose header row starts `| Step |`, until the first
+  # non-table line. A digit-led row in any other table is not a step.
+  /^\|[ \t]*Step[ \t]*\|/ { instep = 1; next }
+  instep && !/^\|/ { instep = 0 }
+  # The Result cell is weak when it BEGINS with the word, after emphasis:
+  # "PASS (was PARTIAL)" and "NOT FAILED" are not weak steps.
+  instep && /^\|[ \t]*[0-9]+[ \t]*\|/ {
     n = split($0, c, "|")
-    if (n >= 5) { r = toupper(c[4]); if (r ~ /PARTIAL|NEEDS WORK|FAIL/) weak++ }
+    if (n >= 5) { r = toupper(c[4]); gsub(/[* \t]/, "", r); if (r ~ /^(PARTIAL|NEEDSWORK|FAIL)/) weak++ }
   }
   /^\*\*Status:\*\*/ { status = $0; sub(/^\*\*Status:\*\*[ \t]*/, "", status) }
   { s = $0
@@ -62,8 +67,7 @@ nb=$(grep -c . "$WORK/blocks")
 bad=0
 while IFS=$'\t' read -r name weak status ids; do
   [ "$weak" -gt 0 ] || continue
-  st=$(printf '%s' "$status" | tr -d '*')
-  st=${st#"${st%%[![:space:]]*}"}
+  st=$(printf '%s' "$status" | tr -d '*' | sed 's/^[^A-Za-z]*//')   # emphasis and a leading glyph
   case "$st" in VERIFIED*)
     echo "$LOG: $name has $weak step(s) PARTIAL / NEEDS WORK / FAIL but its Status is VERIFIED — the rating is the floor of its steps (#168)"
     bad=$((bad + 1)) ;;

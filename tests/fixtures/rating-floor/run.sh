@@ -69,12 +69,28 @@ want_clean "N2 weak steps with a weak rating are quiet" "$WORK/n2"
 tree "$WORK/n3" "**PASS (closed 2026-09-12)**" PASS VERIFIED ESTABLISHED
 want_clean "N3 a closed PASS is a PASS" "$WORK/n3"
 
+# N4 — a closed caveat is not a weak step (review finding).
+tree "$WORK/n4" "PASS (was PARTIAL)" "NOT FAILED" VERIFIED ESTABLISHED
+want_clean "N4 PASS (was PARTIAL) and NOT FAILED are not weak" "$WORK/n4"
+
+# N5 — a digit-led row in another table inside the block is not a step.
+tree "$WORK/n5" PASS PASS VERIFIED ESTABLISHED
+python3 - "$WORK/n5/docs/vv/verification-log.md" <<'PY'
+import sys, pathlib
+p = pathlib.Path(sys.argv[1]); s = p.read_text()
+p.write_text(s.replace("**Status:** VERIFIED\n\n## Source 2", "**Status:** VERIFIED\n\n### Ranking\n\n| Rank | Tool | Result | Note |\n|---|---|---|---|\n| 1 | x | FAIL | unrelated |\n\n## Source 2", 1))
+PY
+want_clean "N5 a digit-led row outside the Step table is not a step" "$WORK/n5"
+
 tree "$WORK/t1" "NEEDS WORK" PARTIAL VERIFIED ESTABLISHED
 want_fail "T1 the #168 shape: Status VERIFIED over weak steps" "$WORK/t1" "has 2 step(s) PARTIAL / NEEDS WORK / FAIL but its Status is VERIFIED"
 
 # T2 — the log honest, the registry not: the join must fire on its own.
 tree "$WORK/t2" "NEEDS WORK" PARTIAL "PARTIALLY VERIFIED" ESTABLISHED
 want_fail "T2 a claim from a weak block is ESTABLISHED" "$WORK/t2" "S2-3 is ESTABLISHED"
+
+tree "$WORK/t4" PASS PARTIAL "⚠️ VERIFIED" PROVISIONAL
+want_fail "T4 a leading glyph does not hide a VERIFIED status (review finding)" "$WORK/t4" "but its Status is VERIFIED"
 
 tree "$WORK/t3" PASS "**FAIL**" "**VERIFIED**" PROVISIONAL
 want_fail "T3 one FAIL, bolded status" "$WORK/t3" "has 1 step(s)"
@@ -92,7 +108,7 @@ old, new = os.environ["OLD"], os.environ["NEW"]
 if s.count(old) != 1: sys.exit("site occurs %d times, not once" % s.count(old))
 pathlib.Path(sys.argv[2]).write_text(s.replace(old, new))
 ' "$RULE" "$mut" || { printf '  FAIL  ablation %s could not be applied\n' "$label"; FAIL=1; return; }
-  for c in t1 t2 t3; do
+  for c in t1 t2 t3 t4; do
     run "$WORK/$c" "$mut"
     [ "$RC" -eq 0 ] && got="$got,$c"
   done
@@ -100,8 +116,8 @@ pathlib.Path(sys.argv[2]).write_text(s.replace(old, new))
   if [ "$got" = "$want" ]; then printf '  PASS  ablation %s stops catching exactly [%s]\n' "$label" "$want"
   else printf '  FAIL  ablation %s should stop catching [%s], stopped [%s]\n' "$label" "$want" "$got"; FAIL=1; fi
 }
-ablate "A1 no step is ever weak"          'if (r ~ /PARTIAL|NEEDS WORK|FAIL/) weak++' 'if (0) weak++' "t1,t2,t3"
-ablate "A2 the status is never compared"  '  case "$st" in VERIFIED*)' '  case "$st" in NEVER*)' "t3"
+ablate "A1 no step is ever weak"          'if (r ~ /^(PARTIAL|NEEDSWORK|FAIL)/) weak++' 'if (0) weak++' "t1,t2,t3,t4"
+ablate "A2 the status is never compared"  '  case "$st" in VERIFIED*)' '  case "$st" in NEVER*)' "t3,t4"
 ablate "A3 the registry is never joined"  '    if grep -qE "^\|[[:space:]]*$id[[:space:]]*\|.*\|[[:space:]]*ESTABLISHED" "$REG"; then' '    if false; then' "t2"
 
 echo
