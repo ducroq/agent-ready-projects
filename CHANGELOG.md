@@ -63,6 +63,10 @@ a sentence or a table row in an existing skill or template.
 - **Lint rule 23 (#168, maintainer infrastructure).** In `docs/vv/verification-log.md`, a source whose step table
   records PARTIAL, NEEDS WORK or FAIL may not be rated VERIFIED, and no claim ID it names may be ESTABLISHED in the
   claim registry. Run on the pre-fix files it reports the Gloaguen block and S2-1, S2-3, S2-4.
+- **`review-changes` Step 1.5 (#163).** The frontmatter comment no longer claims its residual cost is false
+  positives only. Key-shaped prose (`Note: ...`) after a leading `---` silently loses every line up to the next
+  `---`, and unrecognised frontmatter holding a fence loses the rest of the file. Both are named as blind spots and
+  pinned in the fixture (`b14`, `b15`); no fix ships, since three are already recorded as refuted.
 - **`release` Step 1 (#192, H-015).** Before writing `Closes #N` for an issue filed against a skill, name the
   adopter-installed file that changed. It is a question to look, not a gate.
 - **`curate` Step 0 sub-step 6 (#143).** Files the project file tells the agent to read every session are listed on

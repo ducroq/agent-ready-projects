@@ -174,8 +174,12 @@ Runs at **every tier and every magnitude**, before any lens, on every changed ma
     # YAML frontmatter, skipped whole (#52). ⚠️ Line 1 only ARMS the skip and the
     # first non-blank line decides: a leading `---` is also a thematic break, and
     # opening on it alone SILENCED whole well-formed files (#151). Blank lines and
-    # YAML comments are scanned past, not decisive. Residual cost is a false
-    # positive, not lost detection. Do not widen without reading the rationale.
+    # YAML comments are scanned past, not decisive. ⚠️ The residual cost is NOT
+    # only false positives (#163): prose shaped like a key (`Note: ...`) after a
+    # leading `---` arms the skip and SILENTLY loses every line up to the next
+    # `---`, and unrecognised frontmatter holding an indented fence reports an
+    # unclosed fence and loses the rest of the file. Do not widen without reading
+    # the rationale.
     # `\047` is an apostrophe as OCTAL and has to be: a literal one closes the
     # single-quoted shell string this program lives inside (#105, lint rule 11).
     NR == 1 && $(0) ~ /^---[ \t]*$/ { fmpend = 1; next }
@@ -264,7 +268,7 @@ Fix every hit before running the lenses:
 - *Two backticked tokens abutting the bold marker inside one bold span*: separate them, or take one out of the bold run.
 - *Unclosed YAML frontmatter*: no check ran on any line of that file. Close the delimiter and **run Step 1.5 again**.
 
-Treat a row hit as real until you have looked at it. Known false positives: a setext heading, a spaced `- - -`, frontmatter not at line 1, a table inside a fenced block indented four or more spaces, and unrecognised frontmatter whose closing `---` reads as a delimiter row. Do not "fix" those. **Known blind spots:** tables in blockquotes or with no delimiter row, the one-token emphasis form; a lone-CR file can go **entirely silent**. Before widening any of these trades, read <https://github.com/ducroq/agent-ready-projects/blob/master/docs/rationale/review-changes.md> <!-- lint-skip: maintainer-path — a URL, not a repo-relative path: it resolves for a reader with no such directory. -->.
+Treat a row hit as real until you have looked at it. Known false positives: a setext heading, a spaced `- - -`, frontmatter not at line 1, a table inside a fenced block indented four or more spaces, and unrecognised frontmatter whose closing `---` reads as a delimiter row. Do not "fix" those. **Known blind spots:** tables in blockquotes or with no delimiter row, the one-token emphasis form; a lone-CR file can go **entirely silent**, and so can every line above the next `---` when a leading `---` is followed by key-shaped prose such as `Note: ...` (#163). Before widening any of these trades, read <https://github.com/ducroq/agent-ready-projects/blob/master/docs/rationale/review-changes.md> <!-- lint-skip: maintainer-path — a URL, not a repo-relative path: it resolves for a reader with no such directory. -->.
 
 A clean run and an empty file list both print nothing, so **report the count alongside the result:**
 
