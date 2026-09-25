@@ -3,6 +3,7 @@
 <!-- SAVE AS: ~/.claude/skills/curate/SKILL.md (Claude Code, USER-GLOBAL — see docs/GUIDE.md
      "Where a skill lives"; do not copy this file verbatim, its frontmatter is
      inside this comment. Prefer .claude/skills/curate/SKILL.md from this repo.)
+     Diff an install against THAT file, never this one: the header differs by construction (#187).
      For other tools, run this as an end-of-session prompt manually.
 
      This is a skill (/curate) that automates the end-of-session
@@ -177,7 +178,7 @@ Check for context rot from *previous* sessions. This catches what the session-fo
    case "${VERIFY_TIMEOUT:-30}" in *[!0-9]*|'') echo "VERIFY_TIMEOUT must be whole seconds" >&2; exit 2 ;; esac
    TMPD=$(mktemp -d); trap 'rm -rf "$TMPD"' EXIT
    TO=""; command -v timeout >/dev/null 2>&1 && TO="timeout ${VERIFY_TIMEOUT:-30}"
-   pass=0 fail=0 err=0 manual=0 cannot=0 bad=0 seen=0 n=0
+   pass=0 fail=0 err=0 manual=0 cannot=0 bad=0 seen=0 n=0 tmo=0
 
    while IFS=$'\034' read -r kind file cmd; do
      if [ "$kind" != C ]; then
@@ -207,7 +208,7 @@ Check for context rot from *previous* sessions. This catches what the session-fo
        FAIL*)                                               # cannot be told from evidence, so
          [ "$rc" -ne 0 ] || note="  ! output begins FAIL yet it exited 0 — if that is a verdict, rewrite it" ;;
      esac
-     if   [ -n "$TO" ] && [ "$rc" -eq 124 ]; then d=ERROR; err=$((err + 1)); head1="(timed out)"
+     if   [ -n "$TO" ] && [ "$rc" -eq 124 ]; then d=ERROR; err=$((err + 1)); tmo=$((tmo + 1)); head1="(timed out at ${VERIFY_TIMEOUT:-30}s — the runner's limit, not the claim's)"
      elif [ "$rc" -eq 127 ];  then d=ERROR; err=$((err + 1)); [ -n "$head1" ] || head1="(command not found)"
      elif [ -z "$head1" ];    then d=ERROR; err=$((err + 1)); head1="(no output — it proved nothing)"
      elif [ "$rc" -eq 0 ];    then d=PASS;  pass=$((pass + 1))
@@ -220,13 +221,14 @@ Check for context rot from *previous* sessions. This catches what the session-fo
    annotations=$(grep -ahoiE '<!--[[:space:]]*verify:' "$@" | wc -l)
    printf 'ran %d of %d annotations — %d pass, %d fail, %d error, %d cannot-verify; %d manual, %d malformed\n' \
      "$n" "$annotations" "$pass" "$fail" "$err" "$cannot" "$manual" "$bad"
+   [ "$tmo" -eq 0 ] || echo "$tmo error(s) timed out — raise VERIFY_TIMEOUT before reading them as findings"
    [ "$seen" -gt 0 ] || { [ "$bad" -eq 0 ] && echo 'ZERO COMMANDS EXTRACTED — a defect in the runner or the annotations, never a pass.' \
                                            || echo 'NO USABLE ANNOTATIONS — every one found was malformed.'; exit 2; }
    [ $((pass + fail + err)) -gt 0 ] || { echo 'NOTHING PRODUCED A VERDICT — every annotation was manual or unreachable.'; exit 2; }
    [ $((fail + err + bad)) -eq 0 ] || exit 1
    ````
 
-   **Zero commands extracted is a defect, never a pass** — and so is a count the reader cannot account for. The runner's last line reconciles commands run against `<!--`-shaped annotations in the same files; account for the difference item by item. Documentation of the syntax — code spans, fenced examples — is the expected explanation; an annotation the extractor could not see is a bug in the annotation or in the runner. It is the same trap as reading memory-file dates with `git log` where `memory/` is gitignored — the recommended setup, and this framework's own: `git log` returns **empty with exit 0** for every file, so the check reports nothing stale having examined nothing. The step reports nothing wrong *precisely when* it has examined nothing. The exit status says which case you are in: **2** means the run itself cannot be trusted — no files given, an operand that is not a readable file, nothing extracted, or nothing that produced a verdict because every annotation was manual or unreachable — **1** means a claim failed, errored or was malformed, and **0** means everything reachable checked out. Do not report a run you did not read the exit status of.
+   **Zero commands extracted is a defect, never a pass** — and so is a count the reader cannot account for. The `ran N of M` line reconciles commands run against `<!--`-shaped annotations in the same files; account for the difference item by item. Documentation of the syntax — code spans, fenced examples — is the expected explanation; an annotation the extractor could not see is a bug in the annotation or in the runner. It is the same trap as reading memory-file dates with `git log` where `memory/` is gitignored — the recommended setup, and this framework's own: `git log` returns **empty with exit 0** for every file, so the check reports nothing stale having examined nothing. The step reports nothing wrong *precisely when* it has examined nothing. The exit status says which case you are in: **2** means the run itself cannot be trusted — no files given, an operand that is not a readable file, nothing extracted, or nothing that produced a verdict because every annotation was manual or unreachable — **1** means a claim failed, errored or was malformed, and **0** means everything reachable checked out. Do not report a run you did not read the exit status of. **Count the rows you received against that line too**: only the reader can see a capture that lost rows — 77 of 109, once, under tmpfs pressure (#152).
 
    **Dispositions** — first match wins, and the order matters because one command can satisfy several:
 
@@ -235,7 +237,7 @@ Check for context rot from *previous* sessions. This catches what the session-fo
    | Command begins `manual` (then a space, a colon, or nothing) | **MANUAL CHECK NEEDED** | Nothing is run. Surface the noted reason to the engineer. `manual-check.sh` is a command, not a note. |
    | The annotation cannot be read as one command | **MALFORMED** | Five shapes: no closing `-->` on the line; a second `<!-- verify:` before the first one closes; an opener that sits inside a code span while its `-->` sits outside it, so markdown and the author disagree about whether it is documentation; an empty command; and — reported against the file rather than a line — a fence that opens and never closes, which silently swallows every annotation after it. Loud rather than skipped: a dropped annotation is a claim nobody checked. |
    | First non-blank line of **stdout** begins `CANNOT VERIFY` | **CANNOT VERIFY** | The check could not reach what it needed — a powered-off machine, an absent credential. Neither a pass nor a failure, and must not be reported as either. **The prefix wins regardless of exit status**, so a guard is free to exit 2. A colon and a reason are conventional and strongly preferred. stderr is captured separately and deliberately: an `ssh` guard's `Warning: Permanently added …` would otherwise arrive first and mask the prefix. |
-   | Timed out | **ERROR** | Default 30s, `VERIFY_TIMEOUT` to change it, and only where `timeout` is on `PATH` — without it a hanging command hangs the step. |
+   | Timed out | **ERROR** | Default 30s, `VERIFY_TIMEOUT` to change it, and only where `timeout` is on `PATH` — without it a hanging command hangs the step. Often too low: an adopter's green estate read 37 errors at 30s, 1 at 90s (#152). |
    | Exit 127 | **ERROR** | Command not found; the verify command itself is stale. |
    | No output on stdout | **ERROR** | A command that prints nothing has proved nothing, *whatever its exit status*. Fix the command — see the writing rules — rather than relaxing the rule. Note this outranks the two rows below: `exit 3` in silence is ERROR, not FAIL. |
    | Exit 0 | **PASS** | |
@@ -252,6 +254,7 @@ Check for context rot from *previous* sessions. This catches what the session-fo
    - **Avoid `--`, and never let `-->` appear.** The hard rule is narrow: an HTML comment ends at the first `-->`, so a command containing that sequence truncates the comment and spills the remainder onto the page. Bare `--` is conforming HTML and renders fine — but it breaks two things that matter here. XML and XHTML pipelines reject it outright, and, the failure actually observed, a naive extraction regex over comment bodies stops early and returns **zero** commands, so the step examines nothing and completes cleanly. Long flags are the commonest construct in shell, so this is near-certain rather than an edge case: `--user`, `--no-pager`, `--json`, `--quiet`. In order of preference: **check the artifact instead of asking the tool** (`test -L ~/.config/systemd/user/UNIT` rather than `systemctl --user is-enabled`); **set an environment variable instead of passing a flag** (`SYSTEMD_PAGER=cat systemctl list-timers`); **use the short flag**.
    - **One line, opened and closed on that line.** The extractor requires the `-->` on the same line as the `<!-- verify:`, because a multi-line annotation is indistinguishable from an unterminated one, and both are reported MALFORMED rather than skipped. If a command is too long for a line, that is a signal to put it in a script the annotation calls.
    - **No unescaped `|` if the claim lives in a table cell — and no escaped `\|` if it does not.** GFM splits a row into cells before it parses inline content, so the idiomatic `&& echo PASS || echo FAIL` adds two cells; GFM then discards everything past the table's width, taking the rest of the row with it. Escape as `\|` inside a table, or keep verified claims out of tables. **Outside a table the escape is not neutral**, which is why the runner un-escapes only table rows: in an ordinary bullet, `\|` is the escape *shell and awk* use for a literal pipe, and rewriting it silently changes the command. One adopter's `awk -F'|' '/^\| P[0-9]+ \|/…'` row-count check — correct, and passing — became `/^| P[0-9]+ |/`, an alternation with an empty operand, and reported FAIL on a healthy claim.
+   - **A probe needing a literal `|` builds it: `b=$(printf '\174')`, then `"^$b 2026-08-25 $b"`.** It means the same in or out of a table, and a row restructured into a bullet otherwise turns `\|` into BRE alternation — one probe then matched every line and could never fail (#186). ⚠️ BRE or `-F` only: under `-E` it is alternation again.
    - **Guard anything host-dependent** so an unreachable target yields CANNOT VERIFY rather than a false PASS or a misleading FAIL. Without a guard, a machine that is merely powered off reports FAIL every run, and the noise trains the reader to ignore the step. Write the guard as an explicit `if`, not as `guard && check || echo ...`:
 
      ```
@@ -278,7 +281,6 @@ Check for context rot from *previous* sessions. This catches what the session-fo
      # that forbids it. The success line is now gated on a COUNT of what was
      # actually compared, not on the absence of a difference.
      stampcheck() {
-       want="audit-context curate update-drift"
        R=$(git rev-parse --show-toplevel 2>/dev/null) ||
          { echo "CANNOT VERIFY: not in a git repo"; return 2; }
        [ -n "${FRAMEWORK:-}" ] && [ -d "$FRAMEWORK/.git" ] ||
@@ -294,28 +296,40 @@ Check for context rot from *previous* sessions. This catches what the session-fo
              "$R/CLAUDE.md" 2>/dev/null | head -1 |
            grep -oE "v?[0-9]+\.[0-9]+\.[0-9]+$" | sed "s/^v*/v/")
        [ -n "$P" ] || { echo "CANNOT VERIFY: no framework stamp in CLAUDE.md"; return 2; }
+       # ⚠️ DERIVE the list at the stamped tag, never restate it: a hardcoded
+       # one missed review-changes for four releases (#200). `${P}`, not `$P`,
+       # before a colon — zsh reads `$P:s` as a modifier.
+       git -C "$FRAMEWORK" rev-parse -q --verify "${P}^{commit}" >/dev/null ||
+         { echo "CANNOT VERIFY: $P is not in the framework clone — fetch tags"; return 2; }
+       t=$(git -C "$FRAMEWORK" show "${P}:scripts/install-global-skills.sh" 2>/dev/null) ||
+         { echo "CANNOT VERIFY: no installer at $P (it predates v1.15.0, or moved)"; return 2; }
+       want=$(printf '%s\n' "$t" | sed -n 's/^GLOBAL_SKILLS="\([^"]*\)".*/\1/p')
+       k=$(echo $want | wc -w | tr -d ' ')
+       c=$(printf '%s\n' "$t" | grep -o 'GLOBAL_SKILLS+\{0,1\}=' | wc -l | tr -d ' ')
+       [ "$k" -gt 0 ] && [ "$c" = 1 ] ||
+         { echo "CANNOT VERIFY: $P's installer sets GLOBAL_SKILLS $c times, not once"; return 2; }
        n=0; d=0
-       for s in $want; do
+       for s in $(echo $want); do   # $(…) splits in zsh too; a bare $want does not
          i="$HOME/.claude/skills/$s/SKILL.md"
          [ -f "$i" ] || { echo "CANNOT VERIFY: $s is not installed"; continue; }
          # ⚠️ SPLIT the pipeline. Piped, a `git show` that fails — the normal
          # state right after an upstream release, stamp bumped and clone not
          # fetched — is swallowed and `diff` supplies the verdict, so the
-         # re-armed probe accuses three clean installs of drifting.
-         t=$(git -C "$FRAMEWORK" show "$P:.claude/skills/$s/SKILL.md" 2>/dev/null) ||
-           { echo "CANNOT VERIFY: $P is not in the framework clone — fetch tags"; return 2; }
+         # re-armed probe accuses every clean install of drifting.
+         t=$(git -C "$FRAMEWORK" show "${P}:.claude/skills/$s/SKILL.md" 2>/dev/null) ||
+           { echo "CANNOT VERIFY: $s is not in $P"; continue; }
          printf '%s\n' "$t" | diff -q - "$i" >/dev/null ||
            { echo "DRIFT: $s differs from $P"; d=1; }
          n=$((n + 1))
        done
        [ "$d" = 0 ] || return 1
-       [ "$n" = 3 ] || { echo "CANNOT VERIFY: compared $n of 3 skills"; return 2; }
-       echo "3 global skills byte-identical to $P"
+       [ "$n" = "$k" ] || { echo "CANNOT VERIFY: compared $n of $k skills"; return 2; }
+       echo "$k global skills byte-identical to $P: $want"
      }
      stampcheck; echo "  exit=$?"
      ```
 
-     Every branch was executed, not read: clean, a seeded drift (exit 1), no stamp, skill absent, and outside a repo. The `2>/dev/null` matters — without it git's own `fatal:` prints beside CANNOT VERIFY and reads as the failure.
+     Every branch was executed, not read: clean, a seeded drift (exit 1), no stamp, skill absent, outside a repo, `FRAMEWORK` unset, an unfetched tag, a stamp older than the installer, a list assigned twice, a skill absent at the tag — under bash, dash and zsh. The `2>/dev/null` matters — without it git's own `fatal:` prints beside CANNOT VERIFY and reads as the failure.
 
      ⚠️ **Compare against the REFERENCE INSTALL (`.claude/skills/<name>/SKILL.md`), never `templates/<name>.md`** — the template's `SAVE AS` comment is frontmatter in the install, a structural residue no tag clears, so every run reads as drift. **Preconditions, not universal**: a framework clone at `$FRAMEWORK`, skills installed globally.
    - **Assume nothing about the working directory.** The runner may be invoked from anywhere, and a relative command silently changes meaning when it is — `git ls-remote origin` checked a remote from the project root and, run one directory over, reported ERROR for a healthy claim. Address the target absolutely: `git -C /path/to/repo …`, absolute paths for files.

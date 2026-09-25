@@ -97,6 +97,23 @@ beside a FAIL on the same case is not evidence, it is an artefact. And **an abla
 only meaningful over an otherwise-green suite**, so a run with any failure should not be
 read for ablation results at all.
 
+⚠️ **An ablation that never lands reads exactly like one that does not kill.** The mutation
+is written, something stops it applying, and the check runs unmutated and passes. Four
+instances so far, three of them from adopters applying this page: a heredoc with an
+unescaped apostrophe died and left the file untouched; a `sed` whose pattern held its own
+delimiter crashed and left an empty mutant; mutants written where the check could not
+resolve its inputs were refused, and the silence read as "does not kill". Three guards,
+each cheap:
+
+- **Prove the mutant applied.** Require it to differ from the original (`cmp`, or a hash),
+  and fail loudly when it does not. Better still, replace a string that must occur exactly
+  once and refuse when it does not, so a mutation site that has moved is caught too.
+- **Prove the mutant ran.** Require its coverage line, or the control above. A crashed
+  mutant also "stops catching".
+- **Anchor the needle that extracts what you test, and print how many matches it found.**
+  A loose needle once matched a recipe's own code block as well, so two programs were
+  concatenated and tested as one. That still parsed, so it would have shipped.
+
 ## What these instruments cannot do
 
 This is the part most write-ups omit, and it decides how much your numbers are worth.

@@ -141,6 +141,29 @@ repo's own profile, not an adopter-facing surface, and nothing executes it. **No
 skipping the pass on `templates/` or `.claude/skills/`, where the gate has measurably earned its
 cost every time it has run.**
 
+## Reviewer model
+
+**Lenses run on Sonnet by default; the session keeps its own model.** Adopted 2026-09-24 on cost.
+Pass the model per lens where the tool allows it (the Agent tool's `model`).
+
+**What the evidence says, and what it cannot say.** `review-bench`, one adversarial lens, 3 runs
+per cell, 2026-09-24:
+
+| | seeded (6) | seeded-silent (1) | clean — findings, all unmatched |
+|---|---|---|---|
+| Sonnet | 6/6, 6/6, 6/6 | 1/1 ×3 | 8, 7, 6 |
+| Opus | 6/6, 6/6, 6/6 | 1/1 ×3 | 11, 12, 10 |
+
+~53k–61k tokens a run either way; Opus reported ~1.6× as many unmatched findings. ⚠️ **Recall is
+at the ceiling for both, so the bench cannot tell them apart. It is saturated, not a tie.** The
+unmatched findings are mostly real flaws in the corpus that no seed covers, so they are not false
+positives in any useful sense. Live, same day: a Sonnet lens found #199's `--ext` empty-alternative
+bug, and Opus lenses found #200's zsh and `set -e` defects. That is n=1 each, on different diffs.
+
+**Re-open** when a defect ships that a stronger reviewer plausibly would have caught, or once the
+bench has seeds that separate the two models. Unmeasured, and the obvious next split to test: keep
+the strongest model for shell and procedure changes, where both of today's introduced defects were.
+
 ## Test baseline
 
 ```bash

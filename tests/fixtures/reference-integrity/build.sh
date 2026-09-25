@@ -30,6 +30,28 @@ touch src/utils/redaction.py src/utils/time_utils.py src/models/temporal.py \
 # this fixture has been bitten three times by one case resolving on another's file.
 mkdir -p cfg
 touch cfg/live_vitest.mts cfg/live_eslint.mjs cfg/live_jest.cjs cfg/live_tsnode.cts
+# #199 — a documents repo's extensions, one REAL file each, for #175's reason.
+DOCEXT="pdf docx doc xlsx xls eml msg ics tex bib cls sty odt ods jpg jpeg"
+mkdir -p records; for e in $DOCEXT; do touch "records/live_$e.$e"; done
+# #199 — T62/N53 per extension, T63 a link, T65/N54 the cost section. ⚠️ run.sh
+# keeps its own copy of DOCEXT: edit both, or an extension goes unasserted.
+{ echo '# T62 / N53 — documents-repo references (#199)'; echo
+  for e in $DOCEXT; do echo "Filed: \`records/missing_$e.$e\` and \`records/live_$e.$e\`."; done
+  echo; echo 'T63 — a link to a record is now checked: [the invoice](records/missing_linked.pdf).'
+  echo; echo 'T65 — never extracted, so counted: `assets/art/missing_poster.xcf`.'
+  echo 'N54 — an identifier is not path-shaped, so not counted: `self.xcfdata`.'
+} > docs/RECORDS.md
+# #155 — one case per spelling of negated existence, and T66, the control a
+# careless widening inverts: a POSITIVE probe on a missing file stays a finding.
+{ echo '# N57-N61 / T66 — negated existence (#155)'; echo
+  echo '`docs/gone-b.md` <!-- verify: [ ! -f docs/gone-b.md ] -->'
+  echo '`docs/gone-c.md` <!-- verify: test ! -f docs/gone-c.md -->'
+  echo '`docs/gone-d.md` <!-- verify: [ ! -e docs/gone-d.md ] -->'
+  echo '`docs/gone-e.md` <!-- verify: ! [ -f docs/gone-e.md ] -->'
+  echo '`docs/gone-f.md` <!-- verify: ! test -e "docs/gone-f.md" -->'
+  echo '`docs/wanted.md` <!-- verify: [ -f docs/wanted.md ] -->'
+  echo 'Quoting the idiom: `[ ! -f docs/quoted-target.md ]` skips it, but `docs/quoted-target.md` is a real reference.'
+} > docs/NEGATED.md
 # #54/#55/#56 material. `backlog.md` exists in THREE places on purpose: next to
 # the doc that references it bare (docs/guides/), in templates/, and under
 # packages/ — so a bare basename collides at rung 2 unless the doc-relative rung
@@ -422,7 +444,7 @@ T25 — a link URL the whitelist declines is REPORTED, never dropped. Before thi
 the label gave it accidental coverage and masking removed that silently: an
 extension outside the whitelist on a file that does not exist appears in neither
 the findings nor the extensions-in-tree trailer, which only names extensions the
-tree actually holds. [`the report`](out/nonexistent_report.pdf).
+tree actually holds. [`the report`](out/nonexistent_report.xcf).
 EOF
 
 cat > templates/TEMPLATE_CLAUDE.md <<'EOF'

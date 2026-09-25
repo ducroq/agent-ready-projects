@@ -40,11 +40,11 @@ for o in $OPERANDS; do [ -e "$o" ] || echo "operand absent, not searched: $o"; d
 # Three unlabelled empty regions are also indistinguishable from each other, so a
 # matcher that never ran reads exactly like a matcher that found nothing.
 echo "--- 1. version-shaped pins"
-grep -rnE "agent-ready-[a-z]+[^0-9]{0,60}v?[0-9]+\.[0-9]+[0-9.]*" $OPERANDS 2>/dev/null || :
+grep -rnE "agent-ready-[a-z]+(-[a-z][a-z]+)*[^0-9]{0,60}v?[0-9]+\.[0-9]+[0-9.]*" $OPERANDS 2>/dev/null || :
 echo "--- 2. commit-hash pins"
-grep -rnE "agent-ready-[a-z]+[^A-Za-z0-9]{0,24}[0-9a-f]{7,40}" $OPERANDS 2>/dev/null || :
+grep -rnE "agent-ready-[a-z]+(-[a-z][a-z]+)*[^A-Za-z0-9]{0,24}[0-9a-f]{7,40}" $OPERANDS 2>/dev/null || :
 echo "--- 3. prose commit pins — a connector word carries the hash (#134)"
-grep -rnEi "agent-ready-[a-z]+[^0-9]{0,40}\b(commit|rev|sha|ref|pinned to)[^A-Za-z0-9]{1,4}[0-9a-f]{7,40}" $OPERANDS 2>/dev/null || :
+grep -rnEi "agent-ready-[a-z]+(-[a-z][a-z]+)*[^0-9]{0,40}\b(commit|rev|sha|ref|pinned to)[^A-Za-z0-9]{1,4}[0-9a-f]{7,40}" $OPERANDS 2>/dev/null || :
 ```
 
 ⚠️ **A single-operand run is a finding, not a result.** If the list reduces to one file, say so in the report — a self-reconciliation always agrees.
@@ -71,12 +71,17 @@ So state the denominator:
 ```bash
 M=$(mktemp); S=$(mktemp); trap 'rm -f "$M" "$S"' EXIT
 # every (file, framework) PAIR that is mentioned...
-grep -rnoE "agent-ready-[a-z]+" $OPERANDS 2>/dev/null |
+grep -rnoE "agent-ready-[a-z]+(-[a-z][a-z]+)*" $OPERANDS 2>/dev/null |
   sed -E 's/:[0-9]+:/:/' | LC_ALL=C sort -u > "$M" || :
 # ...against every pair a stamp was actually found for
-{ grep -roE "agent-ready-[a-z]+[^0-9]{0,60}v?[0-9]+\.[0-9]+[0-9.]*" $OPERANDS 2>/dev/null || :
-  grep -roE "agent-ready-[a-z]+[^A-Za-z0-9]{0,24}[0-9a-f]{7,40}"     $OPERANDS 2>/dev/null || :
-} | sed -E 's/^(.*):(agent-ready-[a-z]+).*/\1:\2/' | LC_ALL=C sort -u > "$S"
+{ grep -roE "agent-ready-[a-z]+(-[a-z][a-z]+)*[^0-9]{0,60}v?[0-9]+\.[0-9]+[0-9.]*" $OPERANDS 2>/dev/null || :
+  grep -roE "agent-ready-[a-z]+(-[a-z][a-z]+)*[^A-Za-z0-9]{0,24}[0-9a-f]{7,40}"     $OPERANDS 2>/dev/null || :
+  # Matcher 3 too, or a pin only it finds reads as UNSTAMPED here (#134).
+  grep -roEi "agent-ready-[a-z]+(-[a-z][a-z]+)*[^0-9]{0,40}\b(commit|rev|sha|ref|pinned to)[^A-Za-z0-9]{1,4}[0-9a-f]{7,40}" $OPERANDS 2>/dev/null || :
+} | awk '{ i = index($(0), ":agent-ready-"); f = substr($(0), 1, i - 1); r = substr($(0), i + 1)
+       # A stamp belongs to the LAST name before it, not the first (#134).
+       while (match(r, /agent-ready-[a-z]+(-[a-z][a-z]+)*/)) { n = substr(r, RSTART, RLENGTH); r = substr(r, RSTART + RLENGTH) }
+       print f ":" n }' | LC_ALL=C sort -u > "$S"
 printf 'mentioned pairs: %s  stamped pairs: %s\n' "$(wc -l < "$M")" "$(wc -l < "$S")"
 [ -s "$M" ] || echo 'EMPTY — the mention grep matched nothing. Check the operands before reading this as clean.'
 LC_ALL=C comm -23 "$M" "$S"

@@ -19,6 +19,153 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.45.2 (candidate, unreleased)
+
+**Bump provisional** — classify it from the diff at release, per `templates/release.md` Step 2.
+
+### Skill templates say what to diff an install against, where the reader looks (#187)
+
+Comparing an installed skill with `templates/<name>.md` leaves a residue that no tag clears (18 of 23 changed lines
+at v1.42.0 were the header turning into frontmatter), so it always reads as drift. Three independent readers took that
+wrong turn in one day, one of them a cold review lens. The five skill templates with a reference install now say, in
+the header beside the install instruction: diff against `.claude/skills/<name>/SKILL.md`, never this file. The rule
+dates from #99 and v1.35.0; what is new is where it is stated. Header comment only; the installed body is unchanged.
+
+### `templates/curate.md` Step 0.5 — a probe needing a literal `|` builds it with `printf '\174'` (#186)
+
+The escape rule for `|` depends on whether the claim sits in a table. Moving a row into a bullet silently turned one
+adopter's escaped `\|` into GNU BRE alternation, and the probe matched every line and could never fail. The new
+writing rule gets the character out of the line. Measured caveat: this works in BRE and with `-F`, but under
+`grep -E` the built `|` is alternation again.
+
+### `templates/curate.md` Step 0.5 — `stampcheck` checked 3 global skills, not 4 (#200)
+
+The probe hardcoded `want="audit-context curate update-drift"` and a denominator of `3`. v1.40.0 made
+`review-changes` the fourth global skill, so **a drifted `review-changes` install passed clean** —
+reproduced against the shipped probe: `3 global skills byte-identical to v1.45.1`, exit 0.
+
+**The list is now derived, not restated**: read from `GLOBAL_SKILLS` in
+`scripts/install-global-skills.sh` *at the stamped tag*, and the count is taken from it. An older
+stamp is checked against the skills that were global at that version. New CANNOT VERIFY outcomes:
+no installer at that tag, and an installer that assigns `GLOBAL_SKILLS` more than once — so a list
+extended by `+=`, `export`, or a second assignment on the same line refuses rather than passing on
+its first half. ⚠️ Not every shape: a loop reading a second variable (`for s in $GLOBAL_SKILLS
+$EXTRA`) still passes on the first. The probe also ran clean under zsh with its default options:
+`"$P:s…"` was a zsh modifier, and a bare `$want` does not word-split there.
+**Adopters who copied the probe**: replace the whole function. `want=` now needs `$P`, so
+swapping that one line in place breaks it.
+
+### `scripts/install-global-skills.sh` — the release guard refused installs under Git Bash (#198)
+
+The work-tree-root arm string-compared `git rev-parse --show-toplevel` to `pwd -P`. Git Bash prints
+one directory as `C:/x` from the first and `/c/x` from the second, so a clean tree sitting on its
+release tag was refused and `--force` became the only way through. The arm now asks git directly —
+inside a work tree, with an empty `--show-prefix` — and compares no path strings. Seeded as
+`N16-toplevel-spelled-differently` in `tests/fixtures/installer-release-guard/`, which fails
+against the old guard; P7 (a checkout nested in another repo) still refuses, and fails when the
+prefix arm is ablated. ⚠️ Not run on Windows: the seed simulates the mismatch with a git shim.
+
+### `refcheck.py` (audit-context Step 4) — a documents repo lost most of its references silently (#199)
+
+The extension whitelist was calibrated on code repos. An extension outside it never reaches a rung,
+so it is neither reported nor counted: one adopter keeping correspondence, invoices and LaTeX had
+25 references invisible against 15 visible, and a `.tex` file cited three times as evidence did not
+exist. Three changes:
+
+- **Sixteen document extensions join the whitelist**: `pdf docx doc xlsx xls eml msg ics tex bib
+  cls sty odt ods jpg jpeg`, the set the adopter measured (16 findings, 0 false positives, on their
+  repo). ⚠️ Not measured on a code repo: `msg` and `doc` could collide with identifiers such as
+  `err.msg`. That would show up as a visible false finding; `IDENTIFIER_EXT` is the remedy once a
+  collision is measured, per its own comment.
+- **`--ext a,b` widens it per run.** It rebuilds every regex compiled from the list and then checks
+  that the new extension reaches the extractor. Setting the list alone would have left the run
+  reading like a working one, which is what the adopter's wrapper hit. A malformed value exits 64;
+  an already-listed one is a no-op (it once appended an empty alternative that made every `name.` a
+  phantom finding, caught in review and seeded as N56).
+- **`REFERENCES NOT EXTRACTED` counts the cost**, printed before the findings: backticked spans
+  in the audited documents that end in an unlisted extension and are path-shaped (a `/`, or an
+  extension present in the tree). This repo's own `docs/GUIDE.md` shows two `.mdc` references that
+  had never been checked.
+
+The exit contract is unchanged: an unextracted reference is counted, not ruled on. Seeded as T62
+and N53 (one pair per extension), T63-T65, N54, N55 and N56. Each change was ablated and turned exactly
+its own case red. T25's "outside the whitelist" link moved from `.pdf` to `.xcf`.
+
+### Lint rule 18 — a release tag whose CHANGELOG.md block is still a candidate (#197)
+
+`v1.45.1` was tagged with its block still reading `(candidate, unreleased)`. `tests/lint/released-heading.sh`
+checks that every `v[0-9]*` tag (prereleases excluded) has a `## <tag>` block and that the block is not a
+candidate. It skips where no tag exists, which includes CI. Maintainer tooling; nothing an adopter installs.
+
+### Lint rule 11's fixture gains ablations (#196)
+
+`tests/fixtures/block-parses/` had none, and the lint catalog claimed two. It now has three: the parse disabled,
+block files named by ordinal alone, and the not-executable marker honoured anywhere in a block. Each mutant must
+still report an unclosed-fence control. Maintainer tooling.
+
+### Lint rule 8's spill warning no longer says adopters read `docs/rationale/` (#194)
+
+Rule 13 exists because adopters never get that directory. The warning still reports a shrink that moved bytes
+rather than removing them; it no longer tells the author that the move bought adopters nothing. Maintainer tooling.
+
+### `refcheck.py` recognises every spelling of "this file must not exist" (#155)
+
+Only `! test -f x` was skipped as asserted-absent. `[ ! -f x ]`, `test ! -f x`, `[ ! -e x ]` and `! [ -f x ]`, the
+same assertion spelled differently, were reported as broken references on every audit. The pattern now matches the
+assertion rather than one spelling. Seeded N57–N61, one per form, all failing against the previous checker, and
+T66, the control the issue asked for: a positive probe on a missing file stays a finding. A widening that skips any
+`-f` turns T66 red. The `find`-plus-empty idiom is not covered, as the issue suggested splitting it out. Review found the wider pattern also matched an
+example *quoted* in a code span, which excused a real broken reference to the same path on that line. A span
+holding the negation operator is now masked first. Seeded T67.
+
+### Lint rule 8: `--update` records a moved-bytes payment instead of erasing it (#157)
+
+`--update` is what the rule tells you to run on a shrink, and it rewrote the spill line with no trace when part of
+the shrink had only moved into `docs/rationale/`. It now writes the transfer into the permanent baseline note and
+prints it, which is the guard `--raise-budget` already had. Seeded P7 (the transfer is recorded) and N6 (a genuine
+shrink's note claims none). P7 fails against the previous script. Maintainer tooling.
+
+### `docs/seeded-defects-and-ablations.md` — an ablation that never lands (#138)
+
+A mutation that fails to apply leaves the check unmutated, and its PASS looks exactly like a real one. Four
+instances, three from adopters applying this page. The page now names the class and three guards: prove the mutant
+applied, prove it ran, and anchor the extraction needle and print its match count.
+
+### step15-tables: ablations over an already-failing program are UNSCORED, not PASS (#161, this fixture)
+
+The unmutated program is now scored with the same rule every ablation uses. If it already gets a case wrong,
+every ablation reports UNSCORED and the suite fails. Reproduced with the BOM strip broken: the old fixture printed
+`PASS ablation A2` beside n9's FAIL in the same log, and the new one marks all ablations UNSCORED. ⚠️ Only this
+fixture's helper. Other fixtures with their own `ablate()` still have the class, so #161 stays open.
+
+### `curate` verify runner: a timeout is named as the runner's limit, and counted (#152)
+
+At the default 30s one adopter's green estate read 37 errors, and at 90s it read 1, because its probes ran `pytest`.
+A timed-out row now gives the limit it hit, and a separate line counts the timeouts and says to raise
+`VERIFY_TIMEOUT`. The summary line's format is unchanged. The step also tells the reader to count the rows received
+against the summary: the runner's counters always agree with each other, so only the reader can see a capture that
+lost rows (77 of 109 once, under tmpfs pressure). Fixture M1b.
+
+### `update-drift` Step 0 reconciliation: hyphenated framework names, and matcher 3 counted (#134)
+
+Two gaps in the block that reconciles mentioned frameworks against found stamps, both reproduced on one project
+file. **A hyphenated name was cut at its first hyphen**, so `agent-ready-foo-bar` merged into `agent-ready-foo` and
+one framework disappeared from the count. And **the stamped list ran only matchers 1 and 2**, so a pin that only
+matcher 3 (`commit <sha>`, added for this issue in v1.43.0) finds was reported as unstamped. Names now match
+`agent-ready-[a-z]+(-[a-z][a-z]+)*`. Segments of two or more letters are required so that a `-v1.2.0` suffix stays
+out of the name. Matcher 3 now feeds the stamped list. An unpinned mention is still reported (checked as a control). Review found the stamped list credited a stamp to the
+*first* name in the match. In `agent-ready-foo agent-ready-bar commit d89ec62` that made the unpinned `foo` read as
+stamped and flagged the pinned `bar`. The stamp now goes to the last name before it. ⚠️ Residuals, both measured: a
+suffix shaped like a name segment (`agent-ready-projects-style`) adds a noise row but masks nothing, and a name and
+version split across two lines is still invisible to every matcher.
+
+### reference-integrity `SPEC.md`: which marker to use when forced, and what a marker costs (#177 points 1–2)
+
+Two paragraphs after the quoted-path known cost. First, prefer naming the form without the filename, which is the
+only rewrite that ends the regress; otherwise use `<!-- placeholder -->` and say "quoted, not referenced" beside it.
+Second, a marker on a known checker bug's symptom removes that bug's detector, so record the replacement detector
+beside it. Point 3 (report a wrong marker at every rung, not rung 1 only) is a checker change and stays open.
+
 ## v1.45.1 (2026-09-14)
 
 **PATCH.** No existing consumer has to act, and there is no new artifact — both changes are

@@ -42,6 +42,10 @@ echo "still broken'
 printf -- '---\nname: y\ndescription: d\n---\n' > .claude/skills/x/SKILL.md
 blk .claude/skills/x/SKILL.md 'if [ -z "$x ]; then :; fi'
 
+# T5 — an unclosed fence: reported by the extractor, not by `bash -n`, so it is
+# the CONTROL every ablation's mutant must still report (#196).
+printf '```bash\necho never closed\n' > templates/t5.md
+
 # --- N = must stay silent --------------------------------------------------
 # N1 — an ordinary correct block.
 blk templates/n1.md 'set -e
@@ -66,7 +70,7 @@ git init -q . 2>/dev/null; git config user.email f@x; git config user.name f; gi
 
 OUT="$(bash "$CHK" . 2>&1)"; RC=$?
 
-for t in t1 t2 t3; do
+for t in t1 t2 t3 t5; do
   if grep -q "templates/$t.md" <<<"$OUT"; then printf '  PASS  %s reported\n' "$t"
   else printf '  FAIL  %s does not parse and was NOT reported\n' "$t"; FAIL=1; fi
 done
@@ -80,12 +84,38 @@ done
 # from a checker that scanned nothing reads as clean.
 if grep -qE 'block-parses: [0-9]+ fenced bash block\(s\) parsed' <<<"$OUT"; then
   n=$(grep -oE 'block-parses: [0-9]+' <<<"$OUT" | grep -oE '[0-9]+')
-  if [ "$n" -eq 8 ]; then printf '  PASS  coverage line counts all 8 seeded blocks\n'
-  else printf '  FAIL  coverage line counts %s blocks, 8 were seeded — blocks are being dropped\n' "$n"; FAIL=1; fi
+  if [ "$n" -eq 9 ]; then printf '  PASS  coverage line counts all 9 seeded blocks\n'
+  else printf '  FAIL  coverage line counts %s blocks, 9 were seeded — blocks are being dropped\n' "$n"; FAIL=1; fi
 else printf '  FAIL  no coverage line — a checker that scanned nothing reads as clean\n'; FAIL=1; fi
 [ "$RC" -eq 1 ] && printf '  PASS  exits 1 when a block does not parse\n' || { printf '  FAIL  exited %s with 4 broken blocks seeded\n' "$RC"; FAIL=1; }
 bash "$CHK" /nonexistent-for-this-test >/dev/null 2>&1; rc2=$?
 [ "$rc2" -eq 2 ] && printf '  PASS  a bad root exits 2, not 0\n' || { printf '  FAIL  a bad root exited %s — a checker that cannot run must not read as clean\n' "$rc2"; FAIL=1; }
+
+# Ablations (#196) — each disables one mechanism and must stop catching exactly
+# its case. The mutant must still print its coverage line: a mutant that crashed
+# would also "stop catching", and that is a vacuous kill — and it must still
+# report the t5 control, or a checker that runs and reports NOTHING passes too.
+ablate() {  # ablate <label> <from> <to> <needle that must vanish>
+  local m="$W/mut.sh" out
+  python3 -c 'import sys; s=open(sys.argv[1]).read(); open(sys.argv[2],"w").write(s.replace(sys.argv[3], sys.argv[4], 1))' "$CHK" "$m" "$2" "$3"
+  if cmp -s "$m" "$CHK"; then printf '  FAIL  %s — the mutation changed nothing\n' "$1"; FAIL=1; return; fi
+  out="$(bash "$m" . 2>&1)"
+  if ! grep -qE 'block-parses: [0-9]+ fenced bash block' <<<"$out"; then printf '  FAIL  %s — the mutant did not run\n' "$1"; FAIL=1
+  elif ! grep -qF 'templates/t5.md' <<<"$out"; then printf '  FAIL  %s — the mutant lost the t5 control, so its silence proves nothing\n' "$1"; FAIL=1
+  elif grep -qF -- "$4" <<<"$out"; then printf '  FAIL  %s — the mutant still reports %s\n' "$1" "$4"; FAIL=1
+  else printf '  PASS  %s stops reporting %s\n' "$1" "$4"; fi
+}
+ablate "A1 no parse"                'if ! err=$(bash -n "$blk" 2>&1)' 'if ! err=$(true)'             "templates/t1.md"
+# A2 — the collision. Which way it fails depends on file order: here the last
+# broken first-block (the reference install) overwrites every file's first
+# block, so a CLEAN file is reported. Asserted as the N case going red.
+m="$W/mut.sh"
+python3 -c 'import sys; s=open(sys.argv[1]).read(); open(sys.argv[2],"w").write(s.replace(sys.argv[3], sys.argv[4], 1))' "$CHK" "$m" 'OUT "/" FN "-" n ".sh"' 'OUT "/" n ".sh"'
+out="$(bash "$m" . 2>&1)"
+if ! cmp -s "$m" "$CHK" && grep -qE 'block-parses: [0-9]+ fenced' <<<"$out" && grep -qF 'templates/n4.md' <<<"$out"; then
+  printf '  PASS  A2 block files named by ordinal alone makes clean n4 report\n'
+else printf '  FAIL  A2 the ordinal-only mutant did not change what n4 reports\n'; FAIL=1; fi
+ablate "A3 marker honoured anywhere" 'head -1 "$blk" | grep -qF -- "$MARKER"' 'grep -qF -- "$MARKER" "$blk"' "templates/t3.md"
 
 echo
 [ "$FAIL" -eq 0 ] && echo "All seeded cases behaved correctly." || echo "SENSITIVITY REGRESSION — do not ship."

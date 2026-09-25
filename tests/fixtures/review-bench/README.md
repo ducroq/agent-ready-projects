@@ -67,3 +67,7 @@ narrow-fork
 6. **Precision has been suspiciously perfect.** Across five reviews on 2026-08-27,
    ~38 findings and **zero** rejected. A reviewer optimising for precision is a
    reviewer with poor recall; the `clean/` variant is what tests that directly.
+7. **Saturated for model comparison (2026-09-24).** Sonnet and Opus, one adversarial lens, 3 runs
+   each: 6/6 and 1/1 on every run. A bench every config aces measures nothing between configs;
+   harder or subtler seeds are needed before it can rank reviewers. Numbers in
+   `.claude/review-profile.md` § Reviewer model.

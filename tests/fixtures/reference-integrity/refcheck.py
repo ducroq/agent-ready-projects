@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Reference implementation of audit-context Step 4 (reference integrity).
 
-    python3 refcheck.py [--legacy] <repo-root> <doc> [<doc> ...]
+    python3 refcheck.py [--legacy] [--sibling-root DIR] [--ext a,b] <repo-root> <doc> [<doc> ...]
 
 This exists so that a change to Step 4 can be *tested* rather than asserted.
 Run run.sh in this directory to exercise it against a fixture that seeds the
@@ -33,7 +33,8 @@ Output sections: FINDINGS (broken or ambiguous — the defects), RESOLVED BELOW
 RUNG 1 (enumerated, not defects), SKIPPED as asserted-absent, PATH SHAPES NOT
 EXTRACTED (shapes outside the population, each labelled — #122), UNCONFIRMED
 (what this run could not decide), extensions in the tree the extractor misses,
-and — only when it applies — DOCUMENTS NOT READ.
+and — only when they apply — DOCUMENTS NOT READ and REFERENCES NOT EXTRACTED
+(backticked references in an unlisted extension, counted — #199).
 The RUNG 4 COVERAGE line always prints; only its explanatory body is conditional
 on there being no neighbour (#97). On the default path a VERDICT line closes the report and
 names the exit status, so the two cannot drift apart unnoticed; `--legacy` is a
@@ -77,13 +78,16 @@ EXT = (
     '|xml|html|css|js|ts|tsx|jsx|mjs|mts|cjs|cts|rs|go|java|rb|php|c|h|cpp|hpp|cs|kt|swift|r'
     '|lock|env|example|service|timer|socket|gitignore|dockerfile|tf|ipynb|proto'
     '|vue|svelte|rst|log|tag|svg|png|qmd'
+    # #199 — a DOCUMENTS repo's references. Measured on one adopter keeping
+    # correspondence, invoices, bookkeeping and LaTeX: 25 references invisible
+    # against 15 visible, the heaviest finding of the run inside the blind spot.
+    '|pdf|docx|doc|xlsx|xls|eml|msg|ics|tex|bib|cls|sty|odt|ods|jpg|jpeg'
 )
 # `<` and `>` are in the class so that `docs/work-items/<slug>.md` is EXTRACTED.
 # Leaving them out looked like the skip working — the path simply never
 # reached the checker, so it could be neither reported nor counted, which is
-# the silent-skip failure this file exists to prevent (#45).
-PATH_RE = re.compile(r'`([A-Za-z0-9_.<][A-Za-z0-9_./*<>-]*\.(?:' + EXT + r'))`')
-URLPATH_RE = re.compile(r'^[A-Za-z0-9_.<][A-Za-z0-9_./*<>-]*\.(?:' + EXT + r')$')
+# the silent-skip failure this file exists to prevent (#45). PATH_RE and
+# URLPATH_RE are compiled from EXT by `_set_ext` below, with the shape table.
 
 # Some EXT entries are FILENAME-shaped, not extension-shaped, and the rule
 # matches the tail of any dotted token — so `env` captures `process.env`, a
@@ -237,15 +241,29 @@ SPAN_RE = re.compile(r'`[^`]*`')
 # the two omission axes from overlapping — `.cursor/rules/*.mdc` is dropped
 # because `mdc` is not whitelisted, which is the EXTENSIONS line's business, and
 # reporting it here would label a whitelist miss as a shape miss.
-TAIL = r'\.(?:' + EXT + r')$'
-UNEXTRACTED_SHAPES = (
-    ('brace group',         re.compile(r'^[^\s`]*\{[^\s`]*\}[^\s`]*' + TAIL)),
-    ('bracket placeholder', re.compile(r'^[^\s`]*\[[^\s`]+\][^\s`]*' + TAIL)),
-    ('root-absolute',       re.compile(r'^/[^\s`]*' + TAIL)),
-    ('home-relative',       re.compile(r'^~/[^\s`]*' + TAIL)),
-    ('Windows path',        re.compile(r'^[A-Za-z]:\\[^\s`]*' + TAIL)),
-    ('UNC path',            re.compile(r'^\\\\[^\s`]+' + TAIL)),
+SHAPE_HEADS = (
+    ('brace group',         r'^[^\s`]*\{[^\s`]*\}[^\s`]*'),
+    ('bracket placeholder', r'^[^\s`]*\[[^\s`]+\][^\s`]*'),
+    ('root-absolute',       r'^/[^\s`]*'),
+    ('home-relative',       r'^~/[^\s`]*'),
+    ('Windows path',        r'^[A-Za-z]:\\[^\s`]*'),
+    ('UNC path',            r'^\\\\[^\s`]+'),
 )
+
+
+def _set_ext(ext):
+    """Rebuild EVERY regex compiled from EXT. They are built from it, so
+    assigning EXT alone changes nothing and the run reads exactly like a working
+    one — the failure an adopter's wrapper hit patching EXT from outside (#199)."""
+    global EXT, PATH_RE, URLPATH_RE, TAIL, UNEXTRACTED_SHAPES
+    EXT = ext
+    PATH_RE = re.compile(r'`([A-Za-z0-9_.<][A-Za-z0-9_./*<>-]*\.(?:' + EXT + r'))`')
+    URLPATH_RE = re.compile(r'^[A-Za-z0-9_.<][A-Za-z0-9_./*<>-]*\.(?:' + EXT + r')$')
+    TAIL = r'\.(?:' + EXT + r')$'
+    UNEXTRACTED_SHAPES = tuple((lbl, re.compile(h + TAIL)) for lbl, h in SHAPE_HEADS)
+
+
+_set_ext(EXT)
 
 
 def _unextracted_shapes(raw_line):
@@ -367,7 +385,12 @@ def _mask_spans(line):
     return SPAN_RE.sub(lambda m: ' ' * len(m.group(0)), line)
 # A `<...>` segment announces itself; `docs/work-items/<slug>.md` needs no marker.
 ANGLE_SEG_RE = re.compile(r'<[^<>/]+>')
-NEGATED_RE = re.compile(r'!\s*test\s+-f\s+`?([A-Za-z0-9_./-]+)`?')
+# #155 — the ASSERTION, not one spelling: `! test -f x`, `! [ -f x ]`,
+# `test ! -f x`, `[ ! -f x ]`, and `-e` for each. A plain `[ -f x ]` has no `!`
+# and must stay a reference (T66). The `find`-plus-empty idiom is not covered.
+NEG_OP_RE = re.compile(r'!\s*(?:test|\[)|(?:test|\[)\s+!')
+NEGATED_RE = re.compile(
+    r'(?:!\s*(?:test|\[)\s+-[fe]|(?:test|\[)\s+!\s+-[fe])\s+[`"\']?([A-Za-z0-9_./-]+)')
 
 
 def _tree(root):
@@ -650,7 +673,14 @@ def check(root, sources, sibling_roots=None):
                 covered |= {c[2] for c in _candidates(m.group(1))}
             for m in DELETED_RE.finditer(raw_line):
                 covered |= {c[2] for c in _candidates(m.group(1))}
-            for m in NEGATED_RE.finditer(line):
+            # A span QUOTING the whole test (`[ ! -f x ]` as an example) is a
+            # mention, not an assertion, so it is masked; a span holding only the
+            # path, as in `! test -f \`x\``, is not. Unmasked, a quoted example
+            # silently excused a real broken `x` on the same line (#155 review).
+            neg_line = SPAN_RE.sub(
+                lambda m: ' ' * len(m.group(0)) if NEG_OP_RE.search(m.group(0)) else m.group(0),
+                line)
+            for m in NEGATED_RE.finditer(neg_line):
                 covered.add(m.group(1))
 
             # #45 — paths that were never meant to resolve. Two markers: an
@@ -1108,8 +1138,26 @@ def check(root, sources, sibling_roots=None):
     tree_ext = {p.suffix.lstrip('.').lower() for p in _tree(root) if p.suffix}
     known = set(EXT.split('|'))
     unknown = sorted(e for e in tree_ext - known if e and len(e) <= 12)
+    # #199 — what the whitelist COST, not only what it missed. The trailer named
+    # extensions, which cannot tell "you have some .png assets" from "half your
+    # references were never checked". Counted: backticked spans in the audited
+    # documents ending in an unextracted extension that is either present in the
+    # tree or on a span with a `/` — path-shaped, so `obj.attr` is not counted.
+    cost = {}
+    for src in sources:
+        text = _read(root, src)
+        for m in SPAN_RE.finditer(text or ''):
+            frag = m.group(0).strip('`')
+            if '.' not in frag or re.search(r'\s', frag) or '://' in frag:
+                continue
+            ext = frag.rsplit('.', 1)[-1].lower()
+            if (ext in known or not ext.isalnum() or ext.isdigit()
+                    or len(ext) > 12):
+                continue
+            if '/' in frag or ext in tree_ext:
+                cost[ext] = cost.get(ext, 0) + 1
     return (findings, resolved_weak, skipped, placeheld, unknown, missing,
-            len(siblings), unchecked, undecided_markers, dropped_shapes)
+            len(siblings), unchecked, undecided_markers, dropped_shapes, cost)
 
 
 def _usage(msg):
@@ -1141,6 +1189,30 @@ def main():
             sys.exit(_usage('--sibling-root needs a directory'))
         sibling_roots = (sibling_roots or []) + [argv[i + 1]]
         del argv[i:i + 2]
+    # #199 — widen the whitelist without forking. An adopter patched EXT from a
+    # wrapper and hit two exit-status defects in the seam, both gone with it.
+    extra = []
+    while '--ext' in argv:
+        i = argv.index('--ext')
+        if i + 1 >= len(argv):
+            sys.exit(_usage('--ext needs a comma-separated list, e.g. --ext tf,mdc'))
+        for e in argv[i + 1].split(','):
+            e = e.strip().lstrip('.').lower()
+            if not re.fullmatch(r'[a-z0-9]{1,12}', e):
+                sys.exit(_usage('--ext: not an extension: %r' % e))
+            extra.append(e)
+        del argv[i:i + 2]
+    # Only NEW names: an already-listed one appended as `EXT + '|'` left an
+    # empty alternative, and every `name.` token became a phantom finding.
+    new = [e for e in dict.fromkeys(extra) if e not in EXT.split('|')]
+    if new:
+        _set_ext(EXT + '|' + '|'.join(new))
+    # Prove it took: a widened list the regexes never saw reads exactly like
+    # a working run, which is the failure this flag exists to remove. And
+    # prove the blast radius: a bare trailing dot must still match nothing.
+    for e in extra:
+        if not PATH_RE.fullmatch('`a/b.%s`' % e) or PATH_RE.fullmatch('`a/b.`'):
+            sys.exit(_usage('--ext %s did not reach the extractor cleanly' % e))
     # #96: an UNRECOGNISED `--` argument used to be consumed as <repo-root>, the
     # real root became a source document, and the run returned `DEFECTS (exit 1)`
     # — exit 1 being the status #93 gave the meaning "a rung ruled on something".
@@ -1152,7 +1224,7 @@ def main():
             sys.exit(_usage('unrecognised option: %s' % a))
     if len(argv) < 2:
         sys.exit(_usage(
-            'usage: refcheck.py [--legacy] [--sibling-root DIR] <repo-root> <doc> [<doc> ...]\n'
+            'usage: refcheck.py [--legacy] [--sibling-root DIR] [--ext a,b] <repo-root> <doc> [<doc> ...]\n'
             '  e.g. refcheck.py . CLAUDE.md memory/MEMORY.md'))
     root, sources = argv[0], argv[1:]
 
@@ -1167,7 +1239,7 @@ def main():
         return 0
 
     (findings, weak, skipped, placeheld, unknown, missing, n_siblings, unchecked,
-     undecided_markers, dropped_shapes) = check(root, sources, sibling_roots)
+     undecided_markers, dropped_shapes, cost) = check(root, sources, sibling_roots)
 
     # State rung 4's coverage as a fact rather than inferring a verdict per
     # reference. We cannot tell which unresolved paths a sibling would have
@@ -1193,6 +1265,15 @@ def main():
         for m in missing:
             print(f"  {m}")
         print(f"  total: {len(missing)}\n")
+
+    if cost:
+        # Before the findings, not after: a count here says the verdict below
+        # was reached over fewer references than the documents hold (#199).
+        print("== REFERENCES NOT EXTRACTED (extension outside the whitelist) ==")
+        for e in sorted(cost, key=lambda k: (-cost[k], k)):
+            print(f"  .{e:12s} {cost[e]}")
+        print(f"  total: {sum(cost.values())} — none of these was checked. "
+              f"Widen with --ext {','.join(sorted(cost))}\n")
 
     confirmed_findings = [f for f in findings if f[2] != UNCONFIRMED]
     print("== FINDINGS (broken or ambiguous) ==")

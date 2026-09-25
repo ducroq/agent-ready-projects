@@ -34,6 +34,21 @@ nothing. Growing such a section past its prescribed size is the same defect as d
 
 ## Current Status
 
+**SAVEPOINT — 2026-09-24, cloud session (no `memory/` here, so no `/curate`; run it locally).**
+
+- **Open PR**: [ducroq/agent-ready-projects#202](https://github.com/ducroq/agent-ready-projects/pull/202), branch
+  `claude/fervent-brahmagupta-t17yf0`. Fixes #200 #198 #199 #197 #196 #194 #186 #187 #155 #157 #138, candidate
+  block `v1.45.2` (bump provisional; #199 adds `--ext`, so probably MINOR). No `Closes` lines yet.
+- **Closed with evidence, already shipped**: #190 #188 #185 #176 #175 #166 #165 #164 #153 #135 #122.
+- **Triage, still open**: PARTLY #178 #177 #150 #145 #126; NOT #180 #162 #155→fixed #154 #123 #113 #76.
+  #136, #134 and #128 have follow-ups in their threads, so they were deliberately left open.
+- **Later on the same PR (2026-09-25)**: #152 fixed (Closes); #134 hyphen names + stamp attribution and #177 points
+  1–2 landed **without** Closes — #134 keeps its multi-line-stamp residual, #177 its point 3 (all-rung marker check);
+  #161 fixed for step15-tables only.
+- **Reviewer model**: Sonnet lenses by default (`.claude/review-profile.md`); review-bench is saturated.
+- **For the gotcha log, locally**: an ablation whose `sed` crashed "passed" (empty mutant); a `grep` with no file
+  read its loop's stdin; the 250k/release review budget was far exceeded this session (~1.5M before Sonnet).
+
 **SAVEPOINT — end of session 2026-09-14. v1.45.1 released, pushed, globals refreshed, estate migrated.**
 
 **What shipped**: `templates/review-changes.md` −5,760 bytes (−11%) of maintainer provenance, moved

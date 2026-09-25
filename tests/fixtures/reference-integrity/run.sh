@@ -10,7 +10,7 @@ WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 bash build.sh "$WORK" >/dev/null
 
-DOCS="CLAUDE.md docs/ADVERSARIAL.md docs/MONOREPO.md docs/EXOTIC.md docs/PLACEHOLDERS.md docs/RUNG4.md docs/guides/LINKS.md templates/TEMPLATE_CLAUDE.md memory/MEMORY.md memory/gotcha-log.md docs/REMEDY.md"
+DOCS="CLAUDE.md docs/RECORDS.md docs/NEGATED.md docs/ADVERSARIAL.md docs/MONOREPO.md docs/EXOTIC.md docs/PLACEHOLDERS.md docs/RUNG4.md docs/guides/LINKS.md templates/TEMPLATE_CLAUDE.md memory/MEMORY.md memory/gotcha-log.md docs/REMEDY.md"
 # --sibling-root pins the search to the fixture. Without it the search
 # reaches the system temp dir and adopts stray repos, including fixtures
 # left behind by an interrupted run of this harness.
@@ -163,7 +163,19 @@ declare -a CASES=(
   # masking ever widens past the brackets. Measured alongside the other four,
   # which do each fail against the pre-fix oracle.
   "T24 a broken path outside the brackets is still extracted|src/utils/outside_the_brackets.py"
+  # #199 — a link to a record was DECLINED before .pdf joined the whitelist
+  # (T25's old seed); it must now be checked, and reported when broken.
+  "T63 a broken link to a .pdf is now a finding|records/missing_linked.pdf"
+  # #155 — the control: a POSITIVE existence probe must not read as negated.
+  "T66 a positive probe on a missing file is still a finding|docs/wanted.md"
+  # #155 review — a QUOTED negation is a mention; it must not excuse the path.
+  "T67 a negation quoted in a code span does not excuse the same path|docs/quoted-target.md"
 )
+# #199 — one case per documents-repo extension, for #175's reason: EXT is an
+# alternation, and a misspelt alternative hides behind its neighbours.
+for e in pdf docx doc xlsx xls eml msg ics tex bib cls sty odt ods jpg jpeg; do
+  CASES+=("T62 fabricated .$e is caught|records/missing_$e.$e")
+done
 # Must NOT appear in findings.
 declare -a NEG=(
   "N2 hostname is not a path|www.example.com/rss.xml"
@@ -257,6 +269,14 @@ declare -a NEG=(
   "N27 a **Deleted** markdown link stays suppressed|dlink_gone.md"
   "N28 a placeholder on a markdown link covers it|futuredoc.md"
 )
+NEG+=("N57 [ ! -f x ] is asserted-absent|docs/gone-b.md"
+      "N58 test ! -f x is asserted-absent|docs/gone-c.md"
+      "N59 [ ! -e x ] is asserted-absent|docs/gone-d.md"
+      "N60 ! [ -f x ] is asserted-absent|docs/gone-e.md"
+      "N61 ! test -e \"x\" is asserted-absent|docs/gone-f.md")
+for e in pdf docx doc xlsx xls eml msg ics tex bib cls sty odt ods jpg jpeg; do
+  NEG+=("N53 a resolving .$e stays silent|records/live_$e.$e")
+done
 
 FAIL=0
 
@@ -336,9 +356,38 @@ else printf '  PASS  N28b no phantom COVERS NO PATH on a covered link\n'; fi
 # its own section rather than against FINDINGS, and the REASON is the needle:
 # the path alone would also match a run that reported it for the wrong cause.
 if printf '%s' "$OUT" | sed -n '/== LINK URLs NOT CHECKED/,/^  total:/p' \
-     | grep -qF 'extension outside the whitelist: .pdf'; then
+     | grep -qF 'extension outside the whitelist: .xcf'; then
   printf '  PASS  T25 a declined link URL is reported with its reason\n'
 else printf '  FAIL  T25 — a link URL outside the whitelist was dropped silently\n'; FAIL=1; fi
+
+# #199 — the whitelist's COST is stated before the verdict, as a count, and an
+# identifier-shaped span is not in it. Asserted inside the section, so a match
+# elsewhere in the report cannot pass it.
+COST="$(printf '%s' "$OUT" | sed -n '/== REFERENCES NOT EXTRACTED/,/^  total:/p')"
+if grep -qE '^  \.xcf +1$' <<<"$COST" && grep -qE 'Widen with --ext ([a-z0-9]+,)*xcf(,|$)' <<<"$COST"; then
+  printf '  PASS  T65 an unextracted reference is counted, with the flag that widens it\n'
+else printf '  FAIL  T65 — the REFERENCES NOT EXTRACTED section does not count .xcf once\n'; FAIL=1; fi
+if grep -qF 'xcfdata' <<<"$COST"; then
+  printf '  FAIL  N54 — an identifier (self.xcfdata) was counted as a reference\n'; FAIL=1
+else printf '  PASS  N54 an identifier-shaped span is not counted\n'; fi
+# --ext widens EVERY derived regex, not only EXT: the widened run must REPORT
+# the reference the default run only counted. A flag that set EXT alone would
+# print the same report as the default run — the wrapper failure #199 names.
+EXTOUT="$(python3 refcheck.py --ext xcf --sibling-root "$WORK" "$WORK/repo" $DOCS || true)"
+if printf '%s' "$EXTOUT" | sed -n '/== FINDINGS/,/^  total:/p' | grep -qF 'assets/art/missing_poster.xcf' \
+   && ! printf '%s' "$FINDINGS" | grep -qF 'assets/art/missing_poster.xcf'; then
+  printf '  PASS  T64 --ext turns a counted reference into a checked one\n'
+else printf '  FAIL  T64 — --ext xcf did not make assets/art/missing_poster.xcf a finding\n'; FAIL=1; fi
+# N56 — an --ext naming only already-listed extensions appended an EMPTY
+# alternative, and every `name.` token became a phantom (Sonnet review, #199).
+printf 'A bare trailing dot is not a path: `weird.` and `readme.`\n' > "$WORK/repo/docs/DOTS.md"
+DOTS="$(python3 refcheck.py --ext pdf,PDF,tf "$WORK/repo" docs/DOTS.md 2>&1 || true)"
+if printf '%s' "$DOTS" | grep -qE 'weird\.|readme\.'; then
+  printf '  FAIL  N56 — --ext with already-listed names made a bare trailing dot a path\n'; FAIL=1
+else printf '  PASS  N56 --ext with already-listed names changes nothing\n'; fi
+rc=0; python3 refcheck.py --ext 'x y' "$WORK/repo" CLAUDE.md >/dev/null 2>&1 || rc=$?
+if [ "$rc" = 64 ]; then printf '  PASS  N55 a malformed --ext is a usage error (64), not a verdict\n'
+else printf '  FAIL  N55 — a malformed --ext exited %s, not 64\n' "$rc"; FAIL=1; fi
 
 # T26/T27 — the two shapes the second review round found dropped or misdiagnosed.
 # Needles are the REASONS, per T19's lesson: the path alone would also be

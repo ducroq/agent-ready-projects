@@ -3,7 +3,7 @@
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and every raise is
 # recorded below, oldest first — notes accumulate and are never replaced.
-# BUDGET 239704
+# BUDGET 242858
 # SPILL 60656
 # RAISED 2026-09-06 from 247526 to 247969: #133: the #118 remedy string shipped unconditional and can turn a resolved reference into an AMBIGUOUS finding; the caveat that scopes it is +443 b on templates/audit-context.md, seeded as T39/T40/N39 (reason restored 2026-09-06 — write_baseline used to overwrite each note with the next)
 # RAISED 2026-09-06 from 247969 to 248237: #140: UNRESOLVED had two causes printing one reason. +268 b on templates/audit-context.md, seeded as T41/T41b/N40 (reason restored 2026-09-06)
@@ -55,25 +55,34 @@
 # RAISED 2026-09-14 from 245456 to 245464: +8 b. NOT a content decision: the baseline was locked with --update while this change was still in flux, BEFORE rule 13 required a lint-skip comment on the new URL, so the ratchet was measuring an unfinished tree. Four successive trims paid 265 of the 273 and the last 8 are being raised rather than shaved, because shaving single bytes is ritual. ⚠️ THE LESSON: do not --update a ratchet mid-change. Lock it once the change is done, or every later hunk in the same change has to be paid for against a ceiling the change itself set.
 # ratcheted down 2026-09-14
 # RAISED 2026-09-14 from 238988 to 239704: +716 b: restorations the review round REQUIRED -- the xargs hang mechanism and its BSD hedge, 'checks markdown, not tiers' (the sentence that stops the next editor deleting Step 1's ls-files as a duplicate), the frontmatter blind spot CHANGELOG asserts is listed in the skill, the prettier version scope on the one-token form, and 'this framework's ledger' where a trim had widened the scope by deletion. ⚠️ SECOND INSTANCE IN ONE SESSION of --update before the change was finished: I ratcheted down after the trim and BEFORE the review round, so every fix the round demanded had to be paid against a ceiling my own unfinished change had set. Net for the change is still -5760 on templates/review-changes.md.
+# RAISED 2026-09-24 from 239704 to 240441: #200: stampcheck derives the global-skill list from the installer at the stamped tag — +737 bytes, all of it check logic
+# RAISED 2026-09-24 from 240441 to 240777: #200 review round: zsh-safe ${P}: and explicit split, and refusing a GLOBAL_SKILLS list set across two lines instead of passing on its first half — +336 b. ⚠️ The first +737 was locked before the round, the lesson this file already records twice.
+# ratcheted down 2026-09-24
+# RAISED 2026-09-24 from 240776 to 240992: #199: audit-context Step 4 names the REFERENCES NOT EXTRACTED count and --ext (+216 b). Locked BEFORE its review round, because the session stop hook requires a push; review fixes will adjust it.
+# RAISED 2026-09-24 from 240992 to 241834: #186 (+347, curate Step 0.5 writing rule for a literal |) and #187 (+99 x5, one header line per skill template naming what to diff an install against). Locked after a NOT REFUTED review.
+# RAISED 2026-09-24 from 241834 to 242270: #152: verify runner names and counts timeouts, disposition row and row-count sentence (+436 b). Locked BEFORE its review round because the session stop hook requires a push; review fixes will adjust it.
+# ratcheted down 2026-09-24
+# RAISED 2026-09-25 from 242269 to 242599: #134: update-drift Step 0 names allow hyphen segments (x7) and matcher 3 feeds the stamped list (+330 b). Locked BEFORE its review round (stop hook requires a push); fixes will adjust it.
+# RAISED 2026-09-25 from 242599 to 242858: #134 review: stamp credited to the LAST name before it via a portable awk (review found the first-name credit masked a real miss). Round 2, locked after the fix.
+templates/README.md	12042
+templates/RUNBOOK.md	2795
 templates/adr.md	2115
-templates/audit-context.md	22276
+templates/audit-context.md	22591
+templates/checklists/README.md	1097
 templates/checklists/architect-checklist.md	1263
 templates/checklists/implement-checklist.md	1329
 templates/checklists/qa-checklist.md	1836
-templates/checklists/README.md	1097
 templates/checklists/test-checklist.md	1234
 templates/coordination.md	3909
-templates/curate.md	54941
+templates/curate.md	56894
 templates/gotcha-log.md	8858
 templates/hypothesis-log.md	3570
 templates/memory-index.md	3396
 templates/project-file.md	6485
-templates/README.md	12042
-templates/release.md	21280
+templates/release.md	21379
 templates/review-agent.md	5720
-templates/review-changes.md	43756
+templates/review-changes.md	43855
 templates/review-profile.md	5870
-templates/RUNBOOK.md	2795
 templates/test-fixtures/memory/decision-no-verify.md	185
 templates/test-fixtures/memory/observation-no-verify.md	185
 templates/test-fixtures/memory/pattern-no-verify.md	216
@@ -86,5 +95,5 @@ templates/test-fixtures/memory/verified-fail.md	166
 templates/test-fixtures/memory/verified-manual.md	155
 templates/test-fixtures/memory/verified-pass.md	135
 templates/test-verify-memory.md	6000
-templates/update-drift.md	23059
+templates/update-drift.md	23747
 templates/work-item.md	3860

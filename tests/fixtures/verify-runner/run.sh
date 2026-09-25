@@ -384,7 +384,9 @@ micro_expect() {  # micro_expect <id> <what> <runner> <file> <timeout> <needle>
   esac
 }
 printf 'A slow claim. <!-- verify: sleep 4; echo M1-late -->\n' > "$WORK/m1.md"
-micro_expect M1 "a hanging command is capped" "$RUNNER" "$WORK/m1.md" 1 "(timed out)"
+micro_expect M1 "a hanging command is capped" "$RUNNER" "$WORK/m1.md" 1 "(timed out at"
+# #152 — a timeout is the instrument's limit, not the claim: counted on its own line.
+micro_expect M1b "a timeout is counted apart from other errors" "$RUNNER" "$WORK/m1.md" 1 "1 error(s) timed out"
 sed 's|command -v timeout|command -v not-a-real-timeout|' "$RUNNER" > "$WORK/m1a.sh"
 micro_expect M1a "without the cap it runs to completion instead" "$WORK/m1a.sh" "$WORK/m1.md" 1 "M1-late"
 
