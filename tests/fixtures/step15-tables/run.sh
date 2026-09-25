@@ -68,6 +68,12 @@ printf 'A **bolded phrase** with a plain `src/lib.py` token.\n'             > n5
 # a count-based rule only because of the bold-nesting test — which is what A5
 # reverts. 15 lines of this exact shape were reported before that test existed.
 printf '| **HIGH** | `templates/**`, `tests/**`, `scripts/**` | Full battery |\n' > n6_tier_row.md
+# #159 — a double-backtick span QUOTING the corruptible shape is one code span,
+# so nothing in it is bold. The single-backtick mask read its inner tokens as two
+# risky spans and reported CHANGELOG.md. t12 is the seeded true positive for the
+# same change: risky tokens in double-backtick spans inside real bold still fire.
+printf 'added a glob to the bullet — `` **… under `.claude/skills/**` or `.claude/agents/**`** `` — and their hook\n' > n13_dbl_quote.md
+printf 'See **the ``src/**`` and ``docs/**`` trees** for detail.\n' > t12_dbl_emphasis.md
 
 # --- #150 / #151, all four reported by adopters and all four reproduced here
 # before being fixed. Each seeds a class this repo holds ZERO instances of, so a
@@ -159,6 +165,8 @@ want_hit   t6_emphasis.md       "two backticked **-globs inside one bolded phras
 want_quiet n6_tier_row.md       "a risk-tier row: bold in one CELL, a **-glob in another — no adjacency, and 28 such lines exist in this repo"
 want_quiet n4_glob_no_bold.md   "a **-glob with no bold on the line is not an emphasis risk"
 want_quiet n5_bold_and_code.md  "ordinary bold beside an ordinary code span — the shape this repo ships everywhere" 
+want_quiet n13_dbl_quote.md       "a double-backtick span quoting the shape is code, not bold (#159)"
+want_hit   t12_dbl_emphasis.md    "double-backtick **-globs inside one bolded phrase still report (#159)"
 want_hit   t11_indent_fence_fp.md "a 4-space-indented fence IS scanned as markdown — the DOCUMENTED false positive, pinned so a widening has to argue with a test (#150)"
 want_quiet n11_fm_comment.md    "frontmatter opening with a YAML comment is still frontmatter (#151)"
 want_quiet n12_fm_quoted.md     "a quoted YAML key is still a key (#151)"
@@ -173,7 +181,7 @@ want_exact t10_hr_table.md "t10_hr_table.md:7: row has 3 cells, table defines 2 
 # are UNSCORED, never PASS — a broken guard used to certify its own ablation.
 score() {
   local got=""
-  for f in t1_lf_lossy.md t2_crlf_lossy.md t3_fm_then_table.md t4_empty_excess.md t5_header_mismatch.md t6_emphasis.md t7_unclosed_fm.md t8_fm_loses_all.md t9_fm_control.md t10_hr_table.md t11_indent_fence_fp.md n1_crlf_clean.md n2_frontmatter.md n3_fenced.md n4_glob_no_bold.md n5_bold_and_code.md n6_tier_row.md n9_bom_fm.md n10_kanban_fm.md n11_fm_comment.md n12_fm_quoted.md; do
+  for f in t1_lf_lossy.md t2_crlf_lossy.md t3_fm_then_table.md t4_empty_excess.md t5_header_mismatch.md t6_emphasis.md t7_unclosed_fm.md t8_fm_loses_all.md t9_fm_control.md t10_hr_table.md t11_indent_fence_fp.md t12_dbl_emphasis.md n1_crlf_clean.md n2_frontmatter.md n3_fenced.md n4_glob_no_bold.md n5_bold_and_code.md n6_tier_row.md n9_bom_fm.md n10_kanban_fm.md n11_fm_comment.md n12_fm_quoted.md n13_dbl_quote.md; do
     o="$(awk -v F="$f" -f "$1" "$f")"
     case "$f" in
       t*) [ -z "$o" ] && got="$got,$f" ;;
@@ -219,12 +227,15 @@ ablate "A2 never enter frontmatter"   'NR == 1 && $(0) ~ /^---[ \t]*$/' 'NR == 0
 # something, and `want_hit` only tests for non-empty output. A mutation that does
 # not change what the assertion measures kills nothing and reads as a pass.
 ablate "A3 silence the header report" 'if (cells(prev) != base)' 'if (0)' "t5_header_mismatch.md"
-ablate "A4 silence the emphasis check" 'if (nrisk > 1 && index($(0), "`"))' 'if (0)' "t6_emphasis.md"
+ablate "A4 silence the emphasis check" 'if (nrisk > 1 && index($(0), "`"))' 'if (0)' "t6_emphasis.md,t12_dbl_emphasis.md"
 # A5 widens the emphasis rule to "any bold line with any code span" — the broad
 # form that was rejected. It must break the negatives, which is WHY it was rejected.
 # A5 reverts the >1 tightening to the >0 form that was actually written first.
 # It must break n6 — the risk-tier row — which is why the tightening exists.
 ablate "A5 emphasis rule ignores bold nesting" 'if (inb && substr(masked, i, 1) == "\001") nrisk++' 'if (substr(masked, i, 1) == "\001") nrisk++' "n6_tier_row.md"
+# A12 reverts #159: a span is one backtick again, so the quote reports and the
+# double-backtick true positive goes silent.
+ablate "A12 code spans are single-backtick only" 'while (match(rest, /`+/)) {' 'while (match(rest, /`/)) {' "t12_dbl_emphasis.md,n13_dbl_quote.md"
 
 # A6 — the ONLY ablation that tests a MESSAGE rather than a firing. ablate() above
 # compares empty against non-empty, so it cannot see a finding whose TEXT is wrong,

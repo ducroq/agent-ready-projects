@@ -40,6 +40,10 @@ a sentence or a table row in an existing skill or template.
   dropped before the search, so exit 2 cannot come from one.
 - **`update-drift` Step 0 known holes (#134).** A stamp split across lines escapes every matcher; only the
   reconciliation finds it.
+- **`review-changes` Step 1.5 (#159).** The emphasis mask now pairs backtick runs by length, as CommonMark does,
+  so a double-backtick span quoting the corruptible shape is one code span and no longer reports. Risky tokens in
+  double-backtick spans inside real bold still do (fixture `t12`, ablation `A12`). Rule 14 ships no exemptions now;
+  its fixture tests the mechanism on a seeded row.
 - **`release` Step 1 (#192, H-015).** Before writing `Closes #N` for an issue filed against a skill, name the
   adopter-installed file that changed. It is a question to look, not a gate.
 - **`curate` Step 0 sub-step 6 (#143).** Files the project file tells the agent to read every session are listed on

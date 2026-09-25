@@ -91,11 +91,9 @@ exemptions() {
     [ -f "$STEP15_EXEMPTIONS" ] && cat "$STEP15_EXEMPTIONS"
     return
   fi
-  # #159: prose that QUOTES the corrupt shape inside a double-backtick span. The
-  # checker reads `` `` `` as two single-backtick spans, so the passage
-  # DESCRIBING the defect reports as the defect. A documented false-positive
-  # class of the shipped check, not a defect in this file.
-  printf 'CHANGELOG.md\tAn adopter porting the magnitude gate\ttwo backticked tokens abutting\t#159 — prose quoting the shape inside a double-backtick span\n'
+  # Empty since #159 fixed the double-backtick mask. Add a row as
+  # Row format is above.
+  :
 }
 
 # ── Population ────────────────────────────────────────────────────────────────
