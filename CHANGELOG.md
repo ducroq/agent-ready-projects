@@ -45,6 +45,9 @@ a sentence or a table row in an existing skill or template.
   so a double-backtick span quoting the corruptible shape is one code span and no longer reports. Risky tokens in
   double-backtick spans inside real bold still do (fixture `t12`, ablation `A12`). Rule 14 ships no exemptions now;
   its fixture tests the mechanism on a seeded row.
+- **Lint rule 20 (#160, maintainer infrastructure).** `bash -n` over every shell file under `tests/` and `scripts/`,
+  where two of #160's four quoting breaks landed and rule 11 never looked. Seeded fixture `tests/fixtures/shell-parse/`.
+  It parses only: a backtick pair in double quotes parses as a command substitution and is not caught.
 - **`release` Step 1 (#192, H-015).** Before writing `Closes #N` for an issue filed against a skill, name the
   adopter-installed file that changed. It is a question to look, not a gate.
 - **`curate` Step 0 sub-step 6 (#143).** Files the project file tells the agent to read every session are listed on
