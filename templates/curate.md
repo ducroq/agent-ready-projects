@@ -218,7 +218,7 @@ Check for context rot from *previous* sessions. **Read metadata, not documents**
    - **`Revisit trigger:` fired**: If its evidence threshold is now met, flag as **TRIGGERED**. Surface only; do not resolve.
    - **Stale (no movement, no trigger)**: Count open entries. If more than ~10, flag as memory-cluttering — promote to ADRs or mark `dormant` / closed.
 
-6. **Auto-loaded size budget — the whole set, not the project file alone.** Sum **every file your tool loads without being asked** (for Claude Code, the project file *and* the user-level memory index), and compare the total against the budget. Claude Code warns at 40k chars; the soft target is under 35k. **List the set before measuring**, and name any file not counted. Budget the index in characters, not lines.
+6. **Auto-loaded size budget — the whole set, not the project file alone.** Sum **every file your tool loads without being asked** (for Claude Code, the project file *and* the user-level memory index), and compare the total against the budget. Claude Code warns at 40k chars; the soft target is under 35k. **List the set before measuring**, and name any file not counted. Budget the index in characters, not lines, and **name the unit with every number you report** (#179): this step counts characters (`wc -m`), `audit-context` Step 1 counts bytes (`wc -c`), which read ~2% higher, so a set under 35k here can be over it there.
 
    **List instruction-loaded files on their own line**: files the project file tells the agent to read every session (a large memory index, say), with their sizes, without claiming they are always read. For one adopter that was bigger than everything auto-loaded.
 

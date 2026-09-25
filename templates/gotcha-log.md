@@ -70,6 +70,16 @@
      acting on (2-5% of entries in every log measured) — that is a page,
      and a page belongs in a topic file or an ADR.
 
+     WHAT TO CUT (#179): precision is a claim specific enough to check;
+     verbosity is restatement, emphasis and narration of your own reasoning.
+     Cut emphasis markup, self-narration, and any sentence restating the one
+     before it. Keep the wrong value and the right one, the mechanism, file
+     and function names, how it was caught, and the rule as if/then. One
+     statement per fact. One adopter entry went 1,902 -> 841 chars this way
+     with every checkable claim intact. Do not abbreviate words to save
+     characters: a tokenizer can split an abbreviation into more tokens
+     than the word.
+
      This said "keep it to 2-3 lines" until v1.43.0. That rule was
      unenforceable — a markdown line has no length limit, so every log
      passed it while running 3-6x the size it intended.
