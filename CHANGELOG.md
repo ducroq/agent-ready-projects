@@ -76,6 +76,14 @@ a sentence or a table row in an existing skill or template.
 - **`review-changes` Step 1.5: a fence indented 1-3 spaces is recognised under mawk.** The strip was
   `sub(/^ ? ? ?/, ...)`, which mawk 1.3.4 (Ubuntu's default awk) reads as one space, so a 2-space-indented fence
   was scanned as markdown. Now a `substr` loop; fixture `n14`. Found by review of #163's pins.
+- **`templates/gotcha-log.md` Retire phase (#178).** A retirement destination: once a grep mostly returns resolved
+  entries, move those resolved and dated before the current month to `gotcha-log-archive.md` beside the log.
+  Select on the `[RESOLVED` prefix, never move `[OPEN]`/`[PARKED]`, keep the tables, and check that no heading or
+  body line is lost.
+- **`templates/gotcha-log.md` entry guidance (#179).** What to cut from a long entry (emphasis, self-narration,
+  restatement) and what to keep (wrong and right values, mechanism, names, detection, the if/then rule).
+- **`curate` Step 0 sub-step 6 and `audit-context` Step 1 (#179).** Both name the unit with every number: `curate`
+  counts characters, `audit-context` bytes (higher by the non-ASCII share, 0.4-1.9% measured here), so one file can pass one and fail the other at 35k.
 - **`release` Step 1 (#192, H-015).** Before writing `Closes #N` for an issue filed against a skill, name the
   adopter-installed file that changed. It is a question to look, not a gate.
 - **`curate` Step 0 sub-step 6 (#143).** Files the project file tells the agent to read every session are listed on

@@ -26,6 +26,25 @@
 
      When the root cause is fixed, mark it resolved here (don't delete).
 
+     ARCHIVE WHEN IT GROWS; STILL DON'T DELETE (#178). A resolved marker keeps
+     an entry out of curation's way, but a grep for a mechanism still reads
+     it. One adopter's log reached 178k chars, 58% of entries resolved. Once
+     most of what a grep returns is resolved, MOVE entries that are resolved
+     AND dated before the current month to gotcha-log-archive.md beside this
+     file:
+     - Select on the `[RESOLVED` PREFIX. One adopter wrote `[RESOLVED — why]`,
+       and matching the exact string kept 7 finished entries. Read the kept
+       side, not only the count.
+     - Never move `[OPEN]` or `[PARKED]` entries, however old.
+     - The Promoted and Mechanized tables stay here.
+     - End an entry at the next `##` OR `###` heading, or the entry above a
+       mid-file `## Promoted` takes the table with it.
+     - Move, never summarise: afterwards every heading is in exactly one of
+       the two files and no body line is missing from both. Seed the check by
+       deleting one archived line and confirming it reports.
+     - Point each file at the other, and point the project file's
+       stuck-or-debugging row at both.
+
      GIVE THIS FILE A HISTORY -- tracked, or `git init` in an ignored dir
      with no remote. What you ask of it later is about CHANGE, which a
      working tree cannot answer. Why, and the trap in the obvious remedy:
@@ -50,6 +69,16 @@
      better. ABOVE ~3,000 CHARACTERS is the signal worth
      acting on (2-5% of entries in every log measured) — that is a page,
      and a page belongs in a topic file or an ADR.
+
+     WHAT TO CUT (#179): precision is a claim specific enough to check;
+     verbosity is restatement, emphasis and narration of your own reasoning.
+     Cut emphasis markup, self-narration, and any sentence restating the one
+     before it. Keep the wrong value and the right one, the mechanism, file
+     and function names, how it was caught, and the rule as if/then. One
+     statement per fact. One adopter entry went 1,902 -> 841 chars this way
+     with every checkable claim intact. Do not abbreviate words to save
+     characters: a tokenizer can split an abbreviation into more tokens
+     than the word.
 
      This said "keep it to 2-3 lines" until v1.43.0. That rule was
      unenforceable — a markdown line has no length limit, so every log
