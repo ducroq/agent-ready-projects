@@ -22,6 +22,8 @@ git log <last-tag>..HEAD --oneline      # commits since
 git diff <last-tag>..HEAD --stat        # files touched
 ```
 
+A diff confined to the `framework:` stamp line Step 5 bumps is not an adopter-facing change, so do not describe it as one. **Before writing `Closes #N` for an issue filed against a skill, name the adopter-installed file that changed because of it.** `git diff <last-tag>..HEAD -- <that file> | grep -c '<the concept>'` returning 0 means the fix did not ship. It is a question to look, not a gate.
+
 Why each part of the selector is there:
 
 | Part | Without it |

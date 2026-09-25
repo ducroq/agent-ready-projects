@@ -7,7 +7,10 @@
      - New entries start here (Capture phase)
      - At end-of-session, review for patterns (Surface phase)
      - When an entry recurs 2-3 times, promote it to the relevant topic file
-       as an "if X, then Y" pattern (Promote phase)
+       as an "if X, then Y" pattern (Promote phase). Word it without the
+       first instance's domain, or it will not fire in the next one: "a result
+       correct in its own terms is read as covering the claim it is used for",
+       not "tests green != prod verified". Check for an existing row first.
      - When a gotcha's root cause is fixed, mark it [RESOLVED] IN THE HEADING
        (Retire phase) — `### Title (2026-08-12) [RESOLVED]`. Curation reads
        headings and the Promoted table, not bodies, so a status written in a
