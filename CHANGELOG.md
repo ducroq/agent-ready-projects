@@ -55,7 +55,11 @@ a sentence or a table row in an existing skill or template.
   project-local skill (`release`, `test-verify-memory`) with its `agent-ready-projects vX.Y.Z` stamp, as `INFO`:
   never compared, never an issue, exit code unchanged. Those copies are the ones that load, and one drifted 20
   releases because nothing in the estate mentioned it.
-- **Lint rule 20** now parses symlinked scripts too (review finding).
+- **Lint rule 20** now parses symlinked scripts too, skips a link to a directory and reports a dangling link as
+  dangling (review findings).
+- **Lint rule 22 (#195, maintainer infrastructure).** Every `~/` or `<repo>/.claude/skills/<name>/` install path in
+  `docs/GUIDE.md`, `templates/README.md` and `adopt.md` must agree with `GLOBAL_SKILLS` / `LOCAL_ONLY` in the
+  installer, and every shipped skill must be named. Scope words with no path are not read.
 - **`release` Step 1 (#192, H-015).** Before writing `Closes #N` for an issue filed against a skill, name the
   adopter-installed file that changed. It is a question to look, not a gate.
 - **`curate` Step 0 sub-step 6 (#143).** Files the project file tells the agent to read every session are listed on

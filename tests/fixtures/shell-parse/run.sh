@@ -53,6 +53,16 @@ ln -s ../real_bad.sh "$WORK/t5/tests/link.sh"
 printf 'true\n' > "$WORK/t5/tests/ok.sh"   # so skipping the link leaves a CLEAN run, not an empty one
 want_fail "T5 a symlinked broken script is reported" "$WORK/t5" "tests/link.sh: does not parse"
 
+# N2 — a link to a DIRECTORY named *.sh is not a script (review finding).
+mkdir -p "$WORK/n2/tests" "$WORK/n2/realdir"; printf 'true\n' > "$WORK/n2/tests/ok.sh"
+ln -s ../realdir "$WORK/n2/tests/dirlink.sh"
+want_clean "N2 a symlink to a directory is skipped" "$WORK/n2"
+
+# T6 — a dangling link is reported as dangling, not as a parse failure.
+mkdir -p "$WORK/t6/tests"; printf 'true\n' > "$WORK/t6/tests/ok.sh"
+ln -s /nonexistent/target.sh "$WORK/t6/tests/dangling.sh"
+want_fail "T6 a dangling symlink is reported as dangling" "$WORK/t6" "tests/dangling.sh: dangling symlink"
+
 # T4 — an empty population is not a clean one.
 mkdir -p "$WORK/t4/tests"
 want_rc "T4 no shell files exits 2, never 0" "$WORK/t4" 2
@@ -67,7 +77,7 @@ old, new = os.environ["OLD"], os.environ["NEW"]
 if s.count(old) != 1: sys.exit("site occurs %d times, not once" % s.count(old))
 pathlib.Path(sys.argv[2]).write_text(s.replace(old, new))
 ' "$RULE" "$mut" || { printf '  FAIL  ablation %s could not be applied\n' "$label"; FAIL=1; return; }
-  for c in t1 t2 t3 t4 t5; do
+  for c in t1 t2 t3 t4 t5 t6; do
     run "$WORK/$c" "$mut"
     [ "$RC" -eq 0 ] && got="$got,$c"
   done
@@ -76,7 +86,8 @@ pathlib.Path(sys.argv[2]).write_text(s.replace(old, new))
   else printf '  FAIL  ablation %s should stop catching [%s], stopped [%s]\n' "$label" "$want" "$got"; FAIL=1; fi
 }
 ablate "A1 never parse"             'if ! err=$(bash -n "$f" 2>&1); then' 'if ! err=$(true); then' "t1,t2,t3,t5"
-ablate "A3 skip symlinks"            '\( -type f -o -type l \)' '-type f' "t5"
+ablate "A3 skip symlinks"            '\( -type f -o -type l \)' '-type f' "t5,t6"
+ablate "A4 dangling links pass"       'bad=$((bad + 1)); printf' ': ; printf' "t6"
 ablate "A2 an empty tree is clean"  '[ "$found" -gt 0 ] || {' '[ "$found" -ge 0 ] || {' "t4"
 
 echo

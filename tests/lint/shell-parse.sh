@@ -25,7 +25,9 @@ found=0; bad=0
 # -print0: a path with a space or newline is legal and must not be word-split.
 # `-type l` too: a symlinked script is parsed through its link, not skipped.
 while IFS= read -r -d '' f; do
+  [ -d "$f" ] && continue   # a link to a directory named *.sh is not a script
   found=$((found + 1))
+  [ -e "$f" ] || { bad=$((bad + 1)); printf '%s: dangling symlink — there is no script to parse\n' "$f"; continue; }
   if ! err=$(bash -n "$f" 2>&1); then
     bad=$((bad + 1))
     printf '%s: does not parse — %s\n' "$f" "$(printf '%s' "$err" | head -1)"
