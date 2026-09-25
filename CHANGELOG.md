@@ -29,6 +29,11 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 - **`audit-context` Step 4 scope (#117).** Names its three documents as the whole scope: a changelog, session log or
   ADR narrates, and running the checker on this framework's `CHANGELOG.md` reported 86 findings, mostly quotations.
   A gotcha-log archive is not passed either. The gotcha log stays the one narrative document in scope.
+- **First cross-step fixture (#113, maintainer infrastructure).** `tests/fixtures/drift-handoff/` extracts
+  `update-drift` Step 0's matcher block (which defines `m()`) and its reconciliation block (which calls it) and runs
+  them in one shell against a failing grep engine: the consumer must report `MATCHER FAILED`, and run without its
+  producer it must not read as clean. Ablation A1 restores the pre-review consumer, which the #211 review found
+  broken while each block was correct alone, and T1 catches it.
 
 ## v1.48.0 (2026-09-25)
 
