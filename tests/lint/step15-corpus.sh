@@ -91,8 +91,7 @@ exemptions() {
     [ -f "$STEP15_EXEMPTIONS" ] && cat "$STEP15_EXEMPTIONS"
     return
   fi
-  # Empty since #159 fixed the double-backtick mask. Add a row as
-  # Row format is above.
+  # Empty since #159 fixed the double-backtick mask. Row format is above.
   :
 }
 

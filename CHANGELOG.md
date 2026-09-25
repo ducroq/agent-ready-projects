@@ -48,6 +48,9 @@ a sentence or a table row in an existing skill or template.
 - **Lint rule 20 (#160, maintainer infrastructure).** `bash -n` over every shell file under `tests/` and `scripts/`,
   where two of #160's four quoting breaks landed and rule 11 never looked. Seeded fixture `tests/fixtures/shell-parse/`.
   It parses only: a backtick pair in double quotes parses as a command substitution and is not caught.
+- **Lint rule 21 (#171, maintainer infrastructure).** The scaffolding templates' `framework:` stamps must match a
+  dated top `CHANGELOG.md` block, else the highest reachable tag, and that tag's own templates must carry its version.
+  The v1.41.0 slip (stamps bumped after the tag) fails the first check before tagging and the third after.
 - **`release` Step 1 (#192, H-015).** Before writing `Closes #N` for an issue filed against a skill, name the
   adopter-installed file that changed. It is a question to look, not a gate.
 - **`curate` Step 0 sub-step 6 (#143).** Files the project file tells the agent to read every session are listed on

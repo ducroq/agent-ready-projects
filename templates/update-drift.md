@@ -40,6 +40,7 @@ What varies is the **separator** — emphasis before or after the colon, a paren
 **Choose the operands first, and do NOT default to `<project file> <template dir>`** — with no `templates/`, the project file reconciles **against itself** and reports clean. **Use every directory the project writes prose into** — typically the project file plus `docs/`, `memory/`, `.claude/`, and `templates/` where it exists; a framework named only outside the operands is invisible to every check below. Absent operands are not an error, so name them explicitly:
 
 ```bash
+[ -z "${ZSH_VERSION:-}" ] || setopt shwordsplit   # else zsh passes $OPERANDS as ONE path
 OPERANDS=""
 for o in "<project file>" docs memory .claude templates; do   # SAY which are absent
   if [ -e "$o" ]; then OPERANDS="$OPERANDS $o"; else echo "operand absent, not searched: $o"; fi
