@@ -76,6 +76,7 @@ chmod 644 "$WORK/t8/templates/alpha.md" 2>/dev/null
 
 # ── Ablations ─────────────────────────────────────────────────────────────────
 ablate() {
+  [ -n "${ABL_PRE+x}" ] || ABL_PRE=$FAIL; if [ "$ABL_PRE" -ne 0 ]; then printf '  UNSCORED  ablation %s — a seeded case already failed in this run, so it cannot fail (#161)\n' "$1"; return 0; fi
   local label="$1" old="$2" new="$3" want="$4" got="" mut="$WORK/mutant.sh"
   OLD="$old" NEW="$new" python3 -c '
 import os, sys, pathlib

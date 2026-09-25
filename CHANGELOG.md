@@ -38,6 +38,52 @@ blocks and step numbers are unchanged; narratives and issue histories moved to `
 Two instructions changed: audit-context's Unconfirmed bucket now points at Step 9, where it lives
 (it said Step 8); release again says which version to propose for a first release.
 
+### `templates/project-file.md` and `templates/curate.md` — adopter bloat measures
+
+Adopter repos grow the way this one did. agent-ready-papers carries a 35k project file, 404k of memory and a 96k
+gotcha log, against a 6.4k template. Three measures:
+
+- **`project-file.md` Hard Constraints** starts with a real rule instead of a placeholder: lead with the point, no
+  narrative. That file is loaded every session, and narrative is what grows it.
+- **`curate` Step 0 sub-step 6** flags a project file over about 15k characters on its own, even when the auto-loaded
+  set is under budget.
+- **`curate` Step 0, above about 300k**, also proposes an archive pass: resolved gotchas, closed hypotheses, old
+  session files and done work items move into an `archive/` folder beside them. The read-surface measurement now
+  excludes `*/archive/*`, and was checked against a seeded tree (a folder merely named with "archive" is still
+  counted). It proposes and does not move, in keeping with Step 0's "don't fix anything".
+
+### Every fixture's ablations are UNSCORED over an already-failing run (#161)
+
+v1.46.0 gave step15-tables this guard. The other 15 fixtures' `ablate` helpers (16 helpers) now get a one-line gate:
+the suite's failure state is snapshotted at the first ablation, and if any seeded case had already failed, each
+ablation prints UNSCORED instead of running. That is the suite-level rule the issue proposed: an ablation's PASS
+means something only over an otherwise-green run. Seeded by breaking released-heading's candidate test: T1 fails,
+and A1, which would have printed PASS beside it, now prints UNSCORED. Hand-written ablations outside a helper
+(dollar-digit's A8, for one) are not covered. Maintainer tooling.
+
+### `refcheck.py`: references that resolve inside a gitignored directory are listed (#154)
+
+A generated build tree (`.next/`) answers lookups on the author's disk and not in CI: a false resolution, or a false
+COLLISION when it holds a second copy. Git cannot tell that apart from project state kept out of git on purpose
+(`memory/`), and a fix keyed on "ignored" was reverted on 2026-09-14 after it turned 27 findings into 87. So this
+lists instead of ruling. A new section groups every rung-1, 1b and 2 resolution (and every collision candidate) that
+landed inside a gitignored directory under the shortest ignored ancestor. The reader decides which is build output.
+There are no new findings and the exit code is unchanged. `git check-ignore` skips tracked files, so a tracked
+`dist/` is not listed, and outside a git work tree the section says it did not check. Seeded T68 and N62–N64; N62
+fails when the tracked-file exemption is ablated. Rung 4 (sibling repos) is not covered. Review found that one
+landed path outside the work tree made `check-ignore` fail the whole batch, which blanked the section under a false
+"not a git work tree". It also found that a run with nothing resolving skipped the git check entirely. Repo-ness is
+now decided once, up front, and out-of-tree paths are left out. Seeded N65.
+
+### `refcheck.py` no longer crashes on an unreadable directory beside the audited repo
+
+Without `--sibling-root`, the checker looks for neighbouring repos in the audited repo's parent and grandparent
+directories. One unreadable directory there (common in `/tmp` on a shared or CI host) raised a `PermissionError`
+traceback before any document was read. An unreadable directory now counts as "not a repo". This was found because
+CI, which does not run as root, failed a new #154 case three times while it passed as root. Reproduced as an
+unprivileged user: the previous checker crashes and the new one reports CLEAN. Seeded N66, which skips when run as
+root.
+
 ## v1.46.0 (2026-09-25)
 
 **MINOR.** Cuts what adopters pay per run: `curate` goes from 56.9k to about 25k characters and

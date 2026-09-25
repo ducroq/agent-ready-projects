@@ -127,6 +127,7 @@ pathlib.Path(dst).write_text(s.replace(old, new))
 MPY
 }
 ablate() { # ablate <label> <old> <new> <must-appear | !must-not> <control>
+  [ -n "${ABL_PRE+x}" ] || ABL_PRE=$FAIL; if [ "$ABL_PRE" -ne 0 ]; then printf '  UNSCORED  ablation %s — a seeded case already failed in this run, so it cannot fail (#161)\n' "$1"; return 0; fi
   local why out lethal=0
   why="$(mutate "$2" "$3" 2>&1)" || {
     printf '  FAIL  ABLATION %-26s could not apply (%s)\n' "$1" "$why"; FAIL=1; return; }

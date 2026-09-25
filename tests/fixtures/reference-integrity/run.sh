@@ -378,6 +378,58 @@ if printf '%s' "$EXTOUT" | sed -n '/== FINDINGS/,/^  total:/p' | grep -qF 'asset
    && ! printf '%s' "$FINDINGS" | grep -qF 'assets/art/missing_poster.xcf'; then
   printf '  PASS  T64 --ext turns a counted reference into a checked one\n'
 else printf '  FAIL  T64 — --ext xcf did not make assets/art/missing_poster.xcf a finding\n'; FAIL=1; fi
+# #154 — resolutions inside a GITIGNORED directory are listed, never ruled.
+# T68: a build tree answering a lookup is listed under its ignored directory.
+# N62: a TRACKED file inside an ignored directory is not (check-ignore skips the
+# index) — the control a blanket-ignore rule gets wrong. N63: no finding either
+# way, so the exit is unchanged. N64: outside git the section says so.
+IG="$WORK/ig154"; mkdir -p "$IG/.next/types" "$IG/dist" "$IG/src"
+( cd "$IG" && git init -q . && git config user.email f@x && git config user.name f
+  printf '.next/\ndist/\n' > .gitignore; touch .next/types/routes.d.ts dist/app.js src/ok.ts
+  git add .gitignore src && git add -f dist/app.js && git commit -qm x
+  printf '`.next/types/routes.d.ts` and `dist/app.js` and `src/ok.ts`\n' > D.md )
+IGO="$(python3 refcheck.py --sibling-root "$IG" "$IG" D.md 2>&1)"; igrc=$?
+IGS="$(printf '%s' "$IGO" | sed -n '/RESOLVED INSIDE A GITIGNORED/,/total:/p')"
+if grep -qE '^  \.next/ +1 reference' <<<"$IGS"; then printf '  PASS  T68 a build tree answering a lookup is listed under its ignored directory\n'
+else printf '  FAIL  T68 — .next/ is not listed in the gitignored-directory section\n'; FAIL=1; fi
+if grep -qF 'dist/' <<<"$IGS"; then printf '  FAIL  N62 — a TRACKED file inside an ignored directory was listed\n'; FAIL=1
+else printf '  PASS  N62 a tracked file inside an ignored directory is not listed\n'; fi
+if [ "$igrc" -eq 0 ]; then printf '  PASS  N63 listing is not ruling: the run stays CLEAN (exit 0)\n'
+else printf '  FAIL  N63 — the listing changed the exit status to %s\n' "$igrc"; FAIL=1; fi
+# N65 (#154 review) — one landed path OUTSIDE the work tree must not collapse
+# the section: check-ignore exits 128 on it, which once blanked the whole batch.
+touch "$WORK/outside154.md"; printf '`../outside154.md` and `.next/types/routes.d.ts`\n' > "$IG/E.md"
+if python3 refcheck.py --sibling-root "$IG" "$IG" E.md 2>&1 | grep -qE '^  \.next/ +1 reference'; then
+  printf '  PASS  N65 a path outside the work tree does not blank the section\n'
+else printf '  FAIL  N65 — an out-of-tree path collapsed the gitignored-directory section\n'; FAIL=1; fi
+# N64 — outside git, and with NOTHING resolving: the section must still say so.
+NG="$WORK/ng154"; mkdir -p "$NG"; printf 'no references here\n' > "$NG/D.md"
+# GIT_CEILING_DIRECTORIES, or a repo anywhere above $WORK makes this a work tree:
+# CI failed N64 twice on exactly that (the checker was right; the case was not).
+NGO="$(GIT_CEILING_DIRECTORIES="$WORK" python3 refcheck.py --sibling-root "$NG" "$NG" D.md 2>&1)" || :
+if grep -qF 'GITIGNORED DIRECTORY: not checked (not a git work tree)' <<<"$NGO"; then
+  printf '  PASS  N64 outside git the section says it did not check\n'
+else printf '  FAIL  N64 — outside git the section is silent\n'; FAIL=1
+  # Say WHY, so a CI-only failure is diagnosable from the log alone.
+  printf '        git says: %s\n' "$(GIT_CEILING_DIRECTORIES="$WORK" git -C "$NG" rev-parse --show-toplevel 2>&1 | head -1)"
+  printf '%s\n' "$NGO" | grep -iE 'GITIGNORED|Traceback|Error|VERDICT' | sed 's/^/        | /' | head -8
+fi
+
+# N66 — an UNREADABLE directory among the default sibling roots must not crash
+# the audit. It did, with a PermissionError traceback, on every non-root CI run
+# (it is what N64 kept hitting). Root reads everything, so it cannot seed this:
+# skipped there rather than passed vacuously.
+if [ "$(id -u)" -eq 0 ]; then
+  printf '  SKIP  N66 an unreadable sibling directory does not crash the audit (root cannot seed it)\n'
+else
+  UR="$WORK/ur66"; mkdir -p "$UR/locked/x" "$UR/w/repo"; chmod 000 "$UR/locked"
+  printf 'none\n' > "$UR/w/repo/D.md"
+  if URO="$(python3 refcheck.py "$UR/w/repo" D.md 2>&1)" && ! grep -q Traceback <<<"$URO"; then
+    printf '  PASS  N66 an unreadable sibling directory does not crash the audit\n'
+  else printf '  FAIL  N66 — an unreadable sibling directory crashed the audit\n'; FAIL=1; fi
+  chmod 755 "$UR/locked"
+fi
+
 # N56 — an --ext naming only already-listed extensions appended an EMPTY
 # alternative, and every `name.` token became a phantom (Sonnet review, #199).
 printf 'A bare trailing dot is not a path: `weird.` and `readme.`\n' > "$WORK/repo/docs/DOTS.md"
@@ -1219,6 +1271,7 @@ fi
 # ablation certifies whatever the suite already did.
 ABL_DIR="$WORK/ablate"; mkdir -p "$ABL_DIR"
 ablate() {
+  [ -n "${ABL_PRE+x}" ] || ABL_PRE=$FAIL; if [ "$ABL_PRE" -ne 0 ]; then printf '  UNSCORED  ablation %s — a seeded case already failed in this run, so it cannot fail (#161)\n' "$1"; return 0; fi
   local label="$1" old="$2" new="$3" want="$4" got
   cp refcheck.py "$ABL_DIR/refcheck.py"
   if ! OLD="$old" NEW="$new" python3 - "$ABL_DIR/refcheck.py" <<'EOF'

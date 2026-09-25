@@ -77,6 +77,7 @@ bash "$CHECK" "$EMPTY" >/dev/null 2>&1; rc=$?
 
 # Ablations. Each reverts one guard; the kill set is MEASURED by running it.
 ablate() {
+  [ -n "${ABL_PRE+x}" ] || ABL_PRE=$FAIL; if [ "$ABL_PRE" -ne 0 ]; then printf '  UNSCORED  ablation %s — a seeded case already failed in this run, so it cannot fail (#161)\n' "$1"; return 0; fi
   local label="$1" old="$2" new="$3" want="$4" got o
   sed "s|$old|$new|" "$CHECK" > "$WORK/mut.sh" || { printf '  FAIL  ablation %s could not be applied\n' "$label"; FAIL=1; return; }
   cmp -s "$CHECK" "$WORK/mut.sh" && { printf '  FAIL  ablation %s changed NOTHING — its site has moved\n' "$label"; FAIL=1; return; }

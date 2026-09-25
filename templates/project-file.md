@@ -76,6 +76,7 @@ framework: agent-ready-projects v1.46.0   # a NUMBER, not a status — never wri
 
 <!-- The non-negotiables. Things that must always be true. -->
 
+- **Lead with the point; no narrative.** Each entry is a fact or a rule in a line or two. How it got that way goes in the changelog, not here: this file is loaded every session, and narrative is what grows it.
 - [ constraint 1 ]
 - [ constraint 2 ]
 
