@@ -414,6 +414,28 @@ elif ! printf '%s' "$out" | grep -q 'OK — global skills match the tracked sour
 $out"
 else pass "$id"; fi
 
+# #145 — a project-local copy of a LOCAL_ONLY skill is LISTED with its stamp, as
+# information: it must not be reported as inert (it is loaded), must not count as
+# an issue, and must not change --check's exit code. One stamped, one not.
+id=N17-local-only-copies-listed-as-info
+root="$WORK/$id"; mkdir -p "$root"; mkrepo "$root"; check_after_force "$root"
+mkdir -p "$root/estate/a/.claude/skills/release" "$root/estate/b/.claude/skills/release"
+printf -- '---\nname: release\n---\n<!-- from agent-ready-projects v1.20.0 -->\n' > "$root/estate/a/.claude/skills/release/SKILL.md"
+printf -- '---\nname: release\n---\nno stamp here\n' > "$root/estate/b/.claude/skills/release/SKILL.md"
+out=$(CLAUDE_SKILLS_DIR="$root/dest" bash "$root/scripts/install-global-skills.sh" --check "$root/estate" 2>&1); rc=$?
+if [ $rc -ne 0 ]; then bad "$id" "expected exit 0 — a listed local copy is information, not an issue — got $rc:
+$out"
+elif ! printf '%s' "$out" | grep -q '^INFO  project-local copy: .*/a/.claude/skills/release/SKILL.md (agent-ready-projects v1.20.0)$'; then
+  bad "$id" "the stamped local copy was not listed with its stamp:
+$out"
+elif ! printf '%s' "$out" | grep -q '^INFO  project-local copy: .*/b/.claude/skills/release/SKILL.md (no stamp)$'; then
+  bad "$id" "the unstamped local copy was not listed as such:
+$out"
+elif printf '%s' "$out" | grep -q 'inert local copy'; then
+  bad "$id" "a LOCAL_ONLY copy was reported inert, but it is the copy that loads:
+$out"
+else pass "$id"; fi
+
 # The verify loop's refresh hint is the guard's consumer, and it used to send the
 # reader into the refusal: "run without --check to refresh" is precisely what an
 # unreleased tree cannot do. Found by running the two together, not by reading.

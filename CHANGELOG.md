@@ -51,6 +51,11 @@ a sentence or a table row in an existing skill or template.
 - **Lint rule 21 (#171, maintainer infrastructure).** The scaffolding templates' `framework:` stamps must match a
   dated top `CHANGELOG.md` block, else the highest reachable tag, and that tag's own templates must carry its version.
   The v1.41.0 slip (stamps bumped after the tag) fails the first check before tagging and the third after.
+- **`scripts/install-global-skills.sh --check <root>` (#145).** The estate scan also lists each project-local copy of a
+  project-local skill (`release`, `test-verify-memory`) with its `agent-ready-projects vX.Y.Z` stamp, as `INFO`:
+  never compared, never an issue, exit code unchanged. Those copies are the ones that load, and one drifted 20
+  releases because nothing in the estate mentioned it.
+- **Lint rule 20** now parses symlinked scripts too (review finding).
 - **`release` Step 1 (#192, H-015).** Before writing `Closes #N` for an issue filed against a skill, name the
   adopter-installed file that changed. It is a question to look, not a gate.
 - **`curate` Step 0 sub-step 6 (#143).** Files the project file tells the agent to read every session are listed on

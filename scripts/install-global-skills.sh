@@ -369,6 +369,19 @@ if [ -n "$SCAN_ROOT" ]; then
       fail "inert local copy: $hit (shadowed by $DEST/$s)"
     done < <(LC_ALL=C find -L "$SCAN_ROOT" -path "*/.claude/skills/$s/SKILL.md" -not -path '*/_archive/*' -print0 2>>"$finderr")
   done
+  # #145 — a project-local copy of a LOCAL_ONLY skill IS loaded, so it is not inert,
+  # but nothing else in the estate ever mentions it: one drifted 20 releases
+  # unseen. LISTED with its stamp as information only; never compared, never an issue.
+  locals=0
+  for s in $LOCAL_ONLY; do
+    while IFS= read -r -d '' hit; do
+      repo=${hit%/.claude/skills/$s/SKILL.md}
+      [ "$(cd "$repo" 2>/dev/null && pwd -P)" = "$(pwd -P)" ] && continue   # this repo is the source
+      st=$(grep -m1 -oE 'agent-ready-projects v[0-9]+\.[0-9]+\.[0-9]+' "$hit" 2>/dev/null) || st="no stamp"
+      printf 'INFO  project-local copy: %s (%s)\n' "$hit" "$st"
+      locals=$((locals + 1))
+    done < <(LC_ALL=C find -L "$SCAN_ROOT" -path "*/.claude/skills/$s/SKILL.md" -not -path '*/_archive/*' -print0 2>>"$finderr")
+  done
   # A subtree find cannot read contributes zero hits and, with stderr discarded,
   # zero warnings — so an unscannable estate and a clean one printed the same
   # `scanned 0` and the same exit 0 (#36).
@@ -403,6 +416,7 @@ if [ -n "$SCAN_ROOT" ]; then
     [ "$unreadable" -gt 10 ] && fail "...and $((unreadable - 10)) further unreadable path(s), not listed"
   fi
   echo "  scanned $scanned candidate path(s), $unreadable unreadable, $benign skipped (loops/transient); _archive/ is excluded by design and is not checked"
+  echo "  $locals project-local copy(ies) of $LOCAL_ONLY listed above as INFO — not compared with anything"
 fi
 
 echo
