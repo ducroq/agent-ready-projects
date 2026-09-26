@@ -22,6 +22,15 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.49.1 (candidate, unreleased)
+
+**Bump provisional**: classify it from the diff at release, per `templates/release.md` Step 2.
+
+- **`audit-context` Step 2 (#228).** "Navigational → memory index" gains an exception: when the trigger's situation
+  can arise before anything has loaded the index, the routing pointer stays in the project file and the index copy
+  is the one dropped. Dropping the project-file copy stranded a trigger in this repo, where the index loads only
+  when the project file routes to it.
+
 ## v1.49.0 (2026-09-26)
 
 **MINOR.** Adds behaviour and no existing consumer has to act, so rule 2 of `templates/release.md` Step 2 fires, as it
