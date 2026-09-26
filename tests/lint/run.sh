@@ -472,7 +472,7 @@ else
 fi
 rm -f "$s15_out" "$s15_err"
 
-echo "[15/23] the auto-loaded set only ratchets down"
+echo "[15/23] the session-start set only ratchets down"
 # Rule 15 — rule 8's mechanism pointed at the surface nobody was charging.
 # `audit-context`'s 40,000 is where Claude Code WARNS, not a budget anyone chose,
 # and it declines to prescribe a character count for the index at all. So: no
