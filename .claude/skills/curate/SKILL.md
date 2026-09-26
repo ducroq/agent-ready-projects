@@ -39,7 +39,7 @@ A subdirectory with its own project file and stamp is a separate adopter: say so
 
 Check for context rot from *previous* sessions. **Read metadata, not documents**: headers, probe output, `stat`. Fetch a body only when you are going to act on it.
 
-1. **RETIRED — dead references, stale-memory mtime, and ground-truth drift.** Retired in v1.45.0 (dead references are covered by `audit-context` Step 4); do not re-add without a catch.
+1. **RETIRED in v1.45.0** (dead refs, stale mtime, ground-truth drift; dead refs are `audit-context` Step 4's). Re-add none without a catch.
 
 2. **Gotcha log headers**: Read the gotcha log's **headers plus its Promoted table**, not the log.
 
@@ -176,8 +176,8 @@ Check for context rot from *previous* sessions. **Read metadata, not documents**
      ```
 
      Read the surviving entries *together*. `adopterrepo#76` and a local `#76` are different trackers. Discard hex colours.
+   - The entity pass is retired (v1.45.0); re-add it only with a pair to point at.
    - For ids like `ADR-023` or `PROJ-45`, change the pattern (`[A-Za-z]+-[0-9]+`) and check what it matches.
-   - The pairwise entity pass was retired in v1.45.0; do not re-add it without a pair to point at.
    - **An entry that names and dates the claim it supersedes is a correction, not a contradiction.** A contradiction is two entries asserting without reference to each other.
    - **Report the pair verbatim; do not pick a winner from the text.** Probe whichever claim can be probed; otherwise surface both to the engineer.
    - If the index exceeds ~200 lines or the sub-step 6 budget, report that and run the identifier pass alone.
@@ -213,7 +213,7 @@ Read the gotcha log's **headers** (the sub-step 2 grep). For each existing entry
 
    Recurrence is a match on *mechanism*, which lives in the body: grep for a distinguishing term, and when a new entry feels familiar, read the matches.
 
-Then check: did anything go wrong or surprise you during this session? For each one, append a new entry:
+Then check: did anything go wrong or surprise you during this session? For each one, add a new entry above the Promoted heading, found as a line start (`^#+ Promoted`), else at the end. Entries quote that heading, and a substring match splits one (#233): `grep -cE '^#+ Promoted'` must not change.
 
 ```
 ### [Short description] (YYYY-MM-DD)

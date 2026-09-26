@@ -22,6 +22,17 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.49.2 (candidate, unreleased)
+
+**Bump provisional**: classify it from the diff at release, per `templates/release.md` Step 2.
+
+- **`curate` Step 1 says where a new gotcha goes (#233).** "Append a new entry" gave no position, and the template log
+  ends in its `## Mechanized` section. An insert that found `## Promoted` as a substring matched a quotation in an entry
+  body and split that entry in this repo's log; the Promoted-table read then returned 0 rows. New entries now go above
+  the Promoted heading, found as a line start (`^#+ Promoted`), and `grep -cE '^#+ Promoted'` must not change. A split
+  raises it; the header and `**Problem**` counts do not catch a split, since each still rises by one. Step 0's two
+  v1.45.0 retirement notes are shortened; both keep their "do not re-add" guard. Adopter-facing size: +131 bytes.
+
 ## v1.49.1 (2026-09-26)
 
 **PATCH.** A change to an existing artifact only; nothing new to adopt, so the third row of `templates/release.md`
