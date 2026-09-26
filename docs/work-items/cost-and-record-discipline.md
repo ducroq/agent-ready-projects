@@ -14,19 +14,13 @@ Goal: make the framework cheaper to run without cutting review of the shipped su
 
 ## Current Status
 
-**Savepoint — 2026-09-25.**
+**Savepoint — 2026-09-26.**
 
-- **Last action**: v1.46.0 released (tagged and pushed 2026-09-25; global skills refreshed). It carries #202's fixes and token-reduction steps 1–3: the curate read surface went from 658k to 160k chars, curate's skill body from 56.9k to about 25k, review-changes' from 43.5k to about 27k, and the verify runner moved to `scripts/verify-runner.sh`. #201's arc idea is folded into curate as H-031.
-- **Next action** (handoff 2026-09-25; a session elsewhere can pick this up):
-  1. **Branch `thin-claude-md`, pushed, not merged.** It cuts `CLAUDE.md` from 26k to 14.5k characters. Reviewed (one adversarial pass): its two lost instructions and one clarification are restored. Open a PR and merge.
-  2. **Adopter bloat measures, approved by the maintainer for v1.46.1.** Projects using the framework grow the same way this repo did: agent-ready-papers has a 35k project file, 404k of memory and a 96k gotcha log, against a 6.4k template. Add:
-     - a "lead with the point, no narrative" rule to `templates/project-file.md`'s Hard Constraints;
-     - a flag in curate Step 0 sub-step 6 for a project file over ~15k characters;
-     - a routine archive in curate Step 0: above ~300k, propose moving resolved gotchas, closed hypotheses, old session files and done work items into `archive/` folders, and make the Step 0 measurement exclude `*/archive/*`.
-     Edit template and reference install together. Rule 19 will require the release block to state the growth.
-  3. **Release v1.46.1**: steps 4 (#205) and 5, rule 19 (#206), and item 2 above.
-  4. Measure H-020 (spend per release) and H-031 (curate's arc section, 10 runs).
-- **Update 2026-09-25 (later)**: items 1–3 are done: #207 merged, #208 shipped the bloat measures, and releases v1.46.1 through v1.48.1 are tagged. Item 4 is still open.
+- **Last action**: v1.49.0 released (tagged and pushed 2026-09-26; global skills refreshed). It carries #222 (review cost was final context, not spend), #158 (Step 1.5 catches the one-token emphasis form) and an offsetting thin: the four global skills are 4,508 bytes smaller than at v1.48.1. The review ledger has a `spend` column and an append gate (#162).
+- **Next action**:
+  1. Run `/audit-context` in a fresh session: none since 2026-08-11, and two restructurings since (09-25 cuts, 09-26 moves into `docs/rationale/`).
+  2. Decide H-020: spend per reviewer is ~4× down (655k → 476k → 157k); whether the round cap ships more defects is unmeasured.
+  3. H-031 (curate's arc section, 10 runs) is still unmeasured.
 - **Blockers**: none.
 
 **Before each cut**, check it still holds:
