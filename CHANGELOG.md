@@ -22,9 +22,14 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.49.1 (candidate, unreleased)
+## v1.49.1 (2026-09-26)
 
-**Bump provisional**: classify it from the diff at release, per `templates/release.md` Step 2.
+**PATCH.** A change to an existing artifact only; nothing new to adopt, so the third row of `templates/release.md`
+Step 2 applies, per the v1.10.1 precedent. `audit-context` Step 2 stops recommending the memory index for a routing
+pointer whose trigger can fire before the index is read. Adopter-facing size: +209 bytes, the Step 2 exception.
+
+**Consumers.** No action required. An adapted `audit-context` takes the exception by its marker string
+`unless the trigger's situation can arise before anything has loaded the index`.
 
 - **`audit-context` Step 2 (#228).** "Navigational → memory index" gains an exception: when the trigger's situation
   can arise before anything has loaded the index, the routing pointer stays in the project file and the index copy
