@@ -28,8 +28,8 @@ Moved out of the magnitude gate 2026-09-05. The **rule** (never end a bolded phr
 - **Exactly one** later code span on the line masks the corruption; **two** reintroduce it in the
   other form. That asymmetry is why the framework shipped the broken shape for a day while every
   test of it passed.
-- Step 1.5's emphasis check (v1.31.0) reports two backticked `**`-abutting tokens inside one bold
-  span, which is this shape. ⚠️ The skill read *"Step 1.5 does not catch it"* until **v1.36.1** —
+- Step 1.5's emphasis check (v1.31.0) reported two backticked `**`-abutting tokens inside one bold
+  span, which is this shape; v1.48.2 added the one-token form (#158). ⚠️ The skill read *"Step 1.5 does not catch it"* until **v1.36.1** —
   left standing when the check that refuted it shipped in the same release. That sentence is one of
   the three superseded-beside-its-correction instances v1.36.1 exists to fix.
 
@@ -331,8 +331,20 @@ taken, which is what this file is for.
 - The **table** check reached a **39% false-positive rate** before it was anchored. That is why
   the emphasis check was written to report only the shape actually observed to break, rather
   than every shape that could in principle break.
-- Widening it to the one-token form costs **33 hits over a 5,168-file estate** — a precision
-  change, tracked as #158, not a correctness one.
+- **Widened to the one-token form in v1.48.2 (#158), on a measurement rather than an argument.**
+  Prettier 3.8.1 was run on each candidate shape. It corrupts a code span holding `**` anywhere
+  (`src/**`, `**x`, `a**b`) inside a bold run that closes on the line. Single spans with an even
+  count (`**x**`, `a**b**c`) sometimes survive, but `src/****` and two `**x**` spans in one run do
+  not, so the rule is "any `**`", not an odd count: an odd-count draft lost a case the old check
+  caught (fixture `t17`, ablation A16). The two-token count is per bold run (`t18`). Measured over
+  `find ~/repos -name '*.md' -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/_archive/*'`
+  (5,812 files, 62 git repos plus loose files): **25 hits against the old program's 1** (28 before
+  this change rewrote three of this repo's own lines out of the shape). Formatting each hit line on
+  its own, prettier 3.8.1 **corrupts 20** (escaped closing `**`, spaces eaten between spans, or `*`
+  escaped inside a span), restyles 3 only (`*x*` to `_x_`), and leaves 2 untouched. The naive `nrisk > 0` form was not
+  taken: it reports the cross-line continuation (`n15`, A14). Blind spots, both line-local: a run
+  that closes on the next line is missed, and a line that ends one bold run and opens another can
+  report falsely.
 - Weaker discriminators were measured and rejected: *"a risky token anywhere on a bold line"*
   reported **28 lines** in this repo, and *"two of them"* still reported **15** — every
   risk-tier row, where `**HIGH**` opens and closes inside one cell while the globs sit in the
@@ -510,7 +522,7 @@ The tier above is set by *path*. Depth is also set by *size* — but size is the
 - **Any non-frontmatter edit to a reference install** (`.claude/skills/**`) — HIGH because a defect there ships to every install derived from it; that is as true of a three-line body edit as of a frontmatter one.
 - **Frontmatter edits to those same files** — removing one `---` silently unregisters a skill.
 
-  *Both bullets used to end a bolded phrase with a `**`-suffixed glob, and prettier corrupts that shape. **The rule worth remembering is the shape** — never end a bolded phrase with such a glob; put the path in a parenthetical, as above. Step 1.5 reports the TWO-token form of it and is silent on the one-token form, so the check is a backstop and **the shape is the thing to remember** (#151).*
+  *Both bullets used to end a bolded phrase with a `**`-suffixed glob, and prettier corrupts that shape. **The rule worth remembering is the shape** — never end a bolded phrase with such a glob; put the path in a parenthetical, as above. Step 1.5 reports both forms since v1.48.2 (#158) but not a bold phrase that spans two lines, so **the shape is the thing to remember** (#151).*
 - **A new executable, or any new file in a HIGH path** — the tier for new content has not been decided yet.
 - **Any diff that removes or loosens a check** — a deleted guard, a weakened assertion, a broadened exclusion. Loosenings are characteristically a handful of lines, and this is the class the seeded-true-positives rule exists for.
 
@@ -538,11 +550,11 @@ The file list is the union of unstaged, staged, **everything committed on this b
 
 **The delimiter row defines the table, and only *excess* cells are reported.** GFM inserts empty cells when a row is short and discards them when a row is long, so a short row renders exactly as intended and is not a defect — a section-divider row like `| **PART ONE** |` inside a wide table is idiomatic, not corruption. A long row loses data.
 
-Hits come in five shapes: a row whose excess cells are discarded, a header that disagrees with its own delimiter row (which means GFM renders no table at all), an unbalanced code fence, two backticked tokens abutting `**` inside one bold span, and a frontmatter that opens and never closes. Fix each before running the lenses, **with the repair its shape calls for.** *Row and header*: escape as `\|`, or move the command out of the table — this includes pipes inside backticks, since GFM splits a row into cells *before* it parses inline content and its spec says so explicitly, so a `|` in an inline-code span breaks the row exactly like a bare one. *Fence*: close it. *Emphasis*: separate the two backticked tokens, or take one out of the bold run. ⚠️ *Frontmatter*: this one is a **denominator signal**, not a table defect — no check ran on any line of that file, so close the delimiter and **run Step 1.5 again**. Until you do, that file's real findings are unknown (#144, #150).
+Hits come in five shapes: a row whose excess cells are discarded, a header that disagrees with its own delimiter row (which means GFM renders no table at all), an unbalanced code fence, a code span holding `**` inside a bold span (one closing on the line, or two in one run), and a frontmatter that opens and never closes. Fix each before running the lenses, **with the repair its shape calls for.** *Row and header*: escape as `\|`, or move the command out of the table — this includes pipes inside backticks, since GFM splits a row into cells *before* it parses inline content and its spec says so explicitly, so a `|` in an inline-code span breaks the row exactly like a bare one. *Fence*: close it. *Emphasis*: take the code span out of the bold run. ⚠️ *Frontmatter*: this one is a **denominator signal**, not a table defect — no check ran on any line of that file, so close the delimiter and **run Step 1.5 again**. Until you do, that file's real findings are unknown (#144, #150).
 
 **Treat a hit as real until you have looked at it, not as proven** — this applies to the *row* shape, the only one with a documented false-positive class. A row hit says the row supplies more cells than the delimiter defines, which is a loss only when those cells carry content, and it says nothing about whether you are looking at a table at all: a setext heading, a spaced `- - -` break and frontmatter that does not begin at line 1 can each report (#52).
 
-**Known blind spots, so a clean result is not read as more than it is.** Tables inside blockquotes are not examined, nor is a table whose delimiter row is missing — this finds lossy rows in well-formed tables and is not a markdown validator. The emphasis guard is a **backstop, not coverage**: it needs two risky tokens in one bold run, and the one-token form goes unreported (#151, #158). Prose quoting the shape in a double-backtick span no longer reports (#159). A fenced block indented four or more spaces is scanned as markdown, so a table inside it can report — a *documented* false positive, not an unfixed one (#150) — and frontmatter is the same trade: one whose first deciding line is a block sequence, a `%YAML` directive or a spaced key is not recognised, and its closing `---` can report as a delimiter row. **Lone CR is the one that matters**: awk sees the file as a single record, and with anything above the first fence the file goes **entirely silent**, which is indistinguishable from a clean run.
+**Known blind spots, so a clean result is not read as more than it is.** Tables inside blockquotes are not examined, nor is a table whose delimiter row is missing — this finds lossy rows in well-formed tables and is not a markdown validator. The emphasis guard pairs bold runs line by line: a lone risky span in a bold phrase that closes on the NEXT line goes unreported, and a line that ends one cross-line bold and opens another can report falsely (#158). Prose quoting the shape in a double-backtick span no longer reports (#159). A fenced block indented four or more spaces is scanned as markdown, so a table inside it can report — a *documented* false positive, not an unfixed one (#150) — and frontmatter is the same trade: one whose first deciding line is a block sequence, a `%YAML` directive or a spaced key is not recognised, and its closing `---` can report as a delimiter row. **Lone CR is the one that matters**: awk sees the file as a single record, and with anything above the first fence the file goes **entirely silent**, which is indistinguishable from a clean run.
 
 ⚠️ **Three attempts to widen the fence rule each bought a worse class. The attempts, and what each cost, are in <https://github.com/ducroq/agent-ready-projects/blob/master/docs/rationale/review-changes.md> <!-- lint-skip: maintainer-path — a URL, not a repo-relative path: it resolves for a reader with no such directory. --> before touching any of these trades.**
 

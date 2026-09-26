@@ -24,14 +24,25 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 ## v1.48.2 (candidate, unreleased)
 
-**PATCH.** Documentation only (v1.10.1 precedent). `docs/rationale/review-changes.md`'s review-cost figures were a
-reviewer's **final context size**, not its spend (#222): the maintainer ledger recorded the total the agent tool
-reports, which is the last turn. The rationale now says so and gives spend per release measured from transcripts
-(~655k → ~476k → ~157k input-token equivalents per reviewer, across the round cap and the skill thinning). The savings
-point the same way in spend; the magnitudes did not carry over. No template changes; adopter-facing size: 0 bytes in `templates/`.
+**Bump undetermined; classify at release (`templates/release.md` Step 2).** One existing check reports a class it
+missed, and one rationale figure changed unit. Adopter-facing size: +125 bytes, the one-token emphasis branch and its fix instruction.
 
-**Consumers.** No action required. If you budget reviews from this rationale's numbers, measure spend from your own
-transcripts instead.
+**`review-changes` Step 1.5 now catches the one-token emphasis form (#158).** A code span holding `**` inside a bold
+run that closes on the same line reports, as `a code span holding ** in a bold span closed on this line`; the two-token
+report now counts per bold run. Measured, not argued: prettier 3.8.1 corrupts that shape, and over 5,812 markdown files
+the program went from 1 hit to 25, of which prettier 3.8.1 corrupts 20 when each line is formatted on its own. A span
+holding `**` anywhere is now risky, not only one with `**` at either end, so `a**b` counts. A bold phrase spanning two
+lines is the remaining blind spot, now named in Step 1.5's note in place of the one-token form.
+
+**`docs/rationale/review-changes.md`'s review-cost figures were a reviewer's final context size, not its spend (#222).**
+The maintainer ledger recorded the total the agent tool reports, which is the last turn. The rationale now says so and
+gives spend measured from transcripts (~655k → ~476k → ~157k input-token equivalents per reviewer, across the round cap
+and the skill thinning). The savings point the same way in spend; the magnitudes did not carry over.
+
+**Consumers.** `review-changes` changed: refresh a global install, or re-copy the Step 1.5 program into an adapted one
+(marker string: `holding ** in a bold span`). Expect new Step 1.5 hits on lines that a formatter at or below prettier 3.8.1
+would corrupt; fix them by moving the code span out of the bold. If you budget reviews from the rationale's numbers,
+measure spend from your own transcripts instead.
 
 ## v1.48.1 (2026-09-25)
 
@@ -1847,7 +1858,7 @@ The base rate held. `bash tests/lint/run.sh` was 9/9 and every fixture was green
 **Created by the fixes in this very entry:**
 
 1. **Label-masking broke all three span-scoped skips** (`refcheck.py`). `covered` is built by running `PATH_RE` over the inside of a `~~struck~~` or `**Deleted**:` span. Masking the link label removed the only backticked token from such a span, so `~~[`old.py`](src/old.py)~~ was removed` stopped being suppressed and **a deliberate retirement was reported as a break**. That is v1.15.0's line-scoped-skip defect running in the opposite direction. Measured against `HEAD`, both directions. A placeholder on a link was worse: the same run excused the path *and* reported `PLACEHOLDER MARKER COVERS NO PATH` for the marker excusing it — self-contradictory output. Fixed by one `_candidates()` extractor that the skip collectors, the placeholder arithmetic and the rung ladder all share, because they must agree on what a candidate *is*. Seeded as `N26`, `N27`, `N28`, `N28b`.
-2. **`**Deleted**:` never knew the link form at all** — `DELETED_RE` required a backtick immediately after the colon. Pre-existing, exposed by (1), fixed with it.
+2. `**Deleted**:` **never knew the link form at all** — `DELETED_RE` required a backtick immediately after the colon. Pre-existing, exposed by (1), fixed with it.
 3. **The loosening was bigger than its compensating check, and unmeasured.** Five broken-link shapes where the label had been the only coverage went from **5 findings to 1** — an anchor-only target, an external URL, a directory, and `out/report.pdf`. The `.pdf` is the sharp one: an extension outside the whitelist, on a file that does not exist, appears in neither the findings nor the `EXTENSIONS IN TREE NOT EXTRACTED` trailer, because that trailer only names extensions the tree actually holds. A silent skip arriving *through* the whitelist rather than around it — the class `#45` exists to prevent. A declined link URL is now listed under `LINK URLs NOT CHECKED` with its reason. Seeded as `T25`.
 4. **`ctl_check` passed vacuously on an empty spec.** `ablate`'s guard tests only the `ctl:` prefix, so a bare `ctl:` — one typo — yields an empty spec, iterates zero controls and returns success. Measured: `A22` with `ctl:` instead of `ctl:c00` **passed under full silencing**. Absence satisfying an assertion, inside the mechanism built to stop absence satisfying assertions.
 5. **A whole paragraph of `update-drift` guidance was deleted** by an index-slice edit and reported nowhere — the one telling adopters to check the templates directory, where a stamp releases habitually miss lives. The `+2,545` net figure hid it. Restored.
@@ -2410,7 +2421,7 @@ Two things follow. The boundary is **inside the 3 series**, not between 2 and 3.
 
 **The fix shipped is the shape, not the warning.** Both bullets now put the glob in a parenthetical rather than inside the bold, so the vulnerable construct is gone from this repo rather than annotated. Verified stable under prettier 2, 3.8.1 and 3.9.6.
 
-A second refinement from the same adopter closes the loop: the protection is **exactly one** later code span — *two* reintroduce the failure in the other form, with the spaces between them eaten. So "add a code span to protect it" is the natural reading and is wrong, which is why the durable answer is a shape rule: **never end a bolded phrase with a `**`-suffixed glob.** That survives in a reader's head; a version boundary inside the 3 series and a span-count do not.
+A second refinement from the same adopter closes the loop: the protection is **exactly one** later code span — *two* reintroduce the failure in the other form, with the spaces between them eaten. So "add a code span to protect it" is the natural reading and is wrong, which is why the durable answer is a shape rule: never end a bolded phrase with a `**`-suffixed glob. That survives in a reader's head; a version boundary inside the 3 series and a span-count do not.
 
 Worth recording why this one was hard to see. The previous bullet pair was protected only by a trailing `` `---` `` code span — punctuation that reads as deletable while tidying. A future editor removing it would have silently corrupted the line, with nothing anywhere explaining why it mattered.
 

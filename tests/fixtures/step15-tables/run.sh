@@ -74,6 +74,20 @@ printf '| **HIGH** | `templates/**`, `tests/**`, `scripts/**` | Full battery |\n
 # same change: risky tokens in double-backtick spans inside real bold still fire.
 printf 'added a glob to the bullet — `` **… under `.claude/skills/**` or `.claude/agents/**`** `` — and their hook\n' > n13_dbl_quote.md
 printf 'See **the ``src/**`` and ``docs/**`` trees** for detail.\n' > t12_dbl_emphasis.md
+# #158 — t15 is the ONE-token form prettier 2 and 3.8.1 corrupt: a lone **-glob in
+# a bold run that closes on the same line. n15 is the cross-line continuation the
+# one-token widening must not reintroduce: the `**` ending a bold opened on the
+# previous line reads as an OPENING here, so a `nrisk > 0` rule reported it.
+printf 'See **the `src/**` tree** for detail.\n' > t15_one_token.md
+printf 'the bold from the line above ends** and then `src/**` is plain\n' > n15_crossline.md
+# Risk is ANY `**` in the span, measured on prettier 3.8.1: `a**b` (t16) corrupts
+# though no `**` sits at either end, and two `**x**` spans (t17) corrupt though each
+# holds an even count — the regression an odd-count draft of this rule shipped.
+printf 'See **the `a**b` span** here.\n' > t16_mid_glob.md
+printf 'See **the `**x**` and `**y**` trees** here.\n' > t17_two_even.md
+# The two-token count is PER RUN: two bold runs holding one risky span each are two
+# one-token hits, not "two tokens inside one bold span" (t18 pins the message).
+printf '**x `a**`** and **y `b**`**\n' > t18_two_runs.md
 
 # --- #150 / #151, all four reported by adopters and all four reproduced here
 # before being fixed. Each seeds a class this repo holds ZERO instances of, so a
@@ -183,6 +197,11 @@ want_exact b15_fm_fence.md "b15_fm_fence.md: unclosed \` code fence" "BLIND SPOT
 want_quiet n14_indent2_fence.md    "a fence indented two spaces is a fence, under every awk (mawk read the old strip as one space)"
 want_quiet n13_dbl_quote.md       "a double-backtick span quoting the shape is code, not bold (#159)"
 want_hit   t12_dbl_emphasis.md    "double-backtick **-globs inside one bolded phrase still report (#159)"
+want_hit   t15_one_token.md       "ONE **-glob inside a bold run that closes on the line reports (#158)"
+want_quiet n15_crossline.md       "a lone **-glob after a cross-line bold close stays quiet (#158)"
+want_hit   t16_mid_glob.md        "a ** mid-span is risky (#158, prettier 3.8.1 corrupts it)"
+want_hit   t17_two_even.md        "two spans each holding an even count of ** still report (#158)"
+want_exact t18_two_runs.md "t18_two_runs.md:1: a code span holding ** in a bold span closed on this line" "two bold runs with one risky span each get the one-token message, not the two-token one"
 want_hit   t11_indent_fence_fp.md "a 4-space-indented fence IS scanned as markdown — the DOCUMENTED false positive, pinned so a widening has to argue with a test (#150)"
 want_quiet n11_fm_comment.md    "frontmatter opening with a YAML comment is still frontmatter (#151)"
 want_quiet n12_fm_quoted.md     "a quoted YAML key is still a key (#151)"
@@ -197,7 +216,7 @@ want_exact t10_hr_table.md "t10_hr_table.md:7: row has 3 cells, table defines 2 
 # are UNSCORED, never PASS — a broken guard used to certify its own ablation.
 score() {
   local got=""
-  for f in t1_lf_lossy.md t2_crlf_lossy.md t3_fm_then_table.md t4_empty_excess.md t5_header_mismatch.md t6_emphasis.md t7_unclosed_fm.md t8_fm_loses_all.md t9_fm_control.md t10_hr_table.md t11_indent_fence_fp.md t12_dbl_emphasis.md n1_crlf_clean.md n2_frontmatter.md n3_fenced.md n4_glob_no_bold.md n5_bold_and_code.md n6_tier_row.md n9_bom_fm.md n10_kanban_fm.md n11_fm_comment.md n12_fm_quoted.md n13_dbl_quote.md; do
+  for f in t1_lf_lossy.md t2_crlf_lossy.md t3_fm_then_table.md t4_empty_excess.md t5_header_mismatch.md t6_emphasis.md t7_unclosed_fm.md t8_fm_loses_all.md t9_fm_control.md t10_hr_table.md t11_indent_fence_fp.md t12_dbl_emphasis.md t15_one_token.md t16_mid_glob.md t17_two_even.md n1_crlf_clean.md n2_frontmatter.md n3_fenced.md n4_glob_no_bold.md n5_bold_and_code.md n6_tier_row.md n9_bom_fm.md n10_kanban_fm.md n11_fm_comment.md n12_fm_quoted.md n13_dbl_quote.md n15_crossline.md; do
     o="$(awk -v F="$f" -f "$1" "$f")"
     case "$f" in
       t*) [ -z "$o" ] && got="$got,$f" ;;
@@ -243,15 +262,21 @@ ablate "A2 never enter frontmatter"   'NR == 1 && $(0) ~ /^---[ \t]*$/' 'NR == 0
 # something, and `want_hit` only tests for non-empty output. A mutation that does
 # not change what the assertion measures kills nothing and reads as a pass.
 ablate "A3 silence the header report" 'if (cells(prev) != base)' 'if (0)' "t5_header_mismatch.md"
-ablate "A4 silence the emphasis check" 'if (nrisk > 1 && index($(0), "`"))' 'if (0)' "t6_emphasis.md,t12_dbl_emphasis.md"
+ablate "A4 silence the emphasis check" 'if (index($(0), "`")) {' 'if (0) {' "t6_emphasis.md,t12_dbl_emphasis.md,t15_one_token.md,t16_mid_glob.md,t17_two_even.md"
 # A5 widens the emphasis rule to "any bold line with any code span" — the broad
 # form that was rejected. It must break the negatives, which is WHY it was rejected.
 # A5 reverts the >1 tightening to the >0 form that was actually written first.
 # It must break n6 — the risk-tier row — which is why the tightening exists.
-ablate "A5 emphasis rule ignores bold nesting" 'if (inb && substr(masked, i, 1) == "\001") nrisk++' 'if (substr(masked, i, 1) == "\001") nrisk++' "n6_tier_row.md"
+ablate "A5 emphasis rule ignores bold nesting" 'if (inb && substr(masked, i, 1) == "\001" && ++run > nrisk) nrisk = run' 'if (substr(masked, i, 1) == "\001" && ++run > nrisk) nrisk = run' "n6_tier_row.md"
 # A12 reverts #159: a span is one backtick again, so the quote reports and the
 # double-backtick true positive goes silent.
 ablate "A12 code spans are single-backtick only" 'while (match(rest, /`+/)) {' 'while (match(rest, /`/)) {' "t12_dbl_emphasis.md,n13_dbl_quote.md"
+# #158. A13 drops the one-token branch; A14 is the naive widening the issue
+# measured (`nrisk > 0`), which reports the cross-line continuation.
+ablate "A13 drop the one-token branch" 'else if (nclosed > 0)' 'else if (0)' "t15_one_token.md,t16_mid_glob.md"
+ablate "A14 one-token rule ignores whether the run closes" 'else if (nclosed > 0)' 'else if (nrisk > 0)' "n15_crossline.md"
+ablate "A15 risk is a ** at either end" 'if (index(inner, "**")) mark = "\001"' 'if (inner ~ /\*\*$/ || inner ~ /^\*\*/) mark = "\001"' "t16_mid_glob.md"
+ablate "A16 risk is an odd count of **" 'if (index(inner, "**")) mark = "\001"' 't = inner; if (gsub(/\*\*/, "", t) % 2) mark = "\001"' "t17_two_even.md"
 
 # A6 — the ONLY ablation that tests a MESSAGE rather than a firing. ablate() above
 # compares empty against non-empty, so it cannot see a finding whose TEXT is wrong,

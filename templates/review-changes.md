@@ -204,12 +204,9 @@ Runs at **every tier and every magnitude**, before any lens, on every changed ma
         intbl = 0; prev = ""; next
       }
       if (fch != "") next
-      # Emphasis spans — correct in the diff, wrong when rendered (#50). NARROW by
-      # design: only TWO backticked tokens abutting `**` inside one open bold run.
-      # ⚠️ The one-token form was measured to corrupt under prettier 2 and 3.8.1
-      # (fixed in 3.9.6) and passes here in silence — a BACKSTOP, not coverage
-      # (#151, #158). Each code span is masked to one character so
-      # bold runs pair positionally; adjacency is the discriminator.
+      # Emphasis spans, wrong when rendered (#50, #158): TWO risky spans in one open
+      # bold run, or ONE in a run closed on the line (a run open at end of line may
+      # be a continuation). Spans are masked to one character; runs pair by position.
       # A span opens on a run of N backticks and closes on the next run of
       # exactly N, as in CommonMark, so a double-backtick span QUOTING this shape
       # is one span, not two risky tokens (#159). An unclosed run is literal.
@@ -223,22 +220,27 @@ Runs at **every tier and every magnitude**, before any lens, on every changed ma
           if (!cl) { masked = masked substr(rest, 1, s + n - 1); rest = after; continue }
           inner = substr(after, 1, cl - 1)
           if (inner ~ /^ .* $/) inner = substr(inner, 2, length(inner) - 2)
+          # Risky: any `**` in the span; prettier 3.8.1 corrupts `a**b` too (#158).
           mark = "\002"
-          if (inner ~ /\*\*$/ || inner ~ /^\*\*/) mark = "\001"
+          if (index(inner, "**")) mark = "\001"
           masked = masked substr(rest, 1, s - 1) mark
           rest = substr(after, cl + n)
         }
         masked = masked rest
-        inb = 0; nrisk = 0
+        inb = 0; nrisk = 0; run = 0; nclosed = 0
         for (i = 1; i <= length(masked); i++) {
-          if (substr(masked, i, 2) == "**") { inb = 1 - inb; i++; continue }
-          if (inb && substr(masked, i, 1) == "\001") nrisk++
+          if (substr(masked, i, 2) == "**") { if (inb) nclosed += run; run = 0; inb = 1 - inb; i++; continue }
+          if (inb && substr(masked, i, 1) == "\001" && ++run > nrisk) nrisk = run
         }
         # The backtick test stops a literal \001/\002 byte masquerading as a masked
         # span: without it a line with no backticks reported "two backticked
         # tokens", which is simply false.
-        if (nrisk > 1 && index($(0), "`"))
-          printf "%s:%d: two backticked tokens abutting ** inside one bold span — a formatter can join the runs and corrupt both\n", F, NR
+        if (index($(0), "`")) {
+          if (nrisk > 1)
+            printf "%s:%d: two backticked tokens abutting ** inside one bold span — a formatter can join the runs and corrupt both\n", F, NR
+          else if (nclosed > 0)
+            printf "%s:%d: a code span holding ** in a bold span closed on this line\n", F, NR
+        }
       }
       if (isdelim($(0)) && prev != "" && (index($(0), "|") || index(prev, "|"))) {
         base = cells($(0)); intbl = 1
@@ -267,10 +269,10 @@ Fix every hit before running the lenses:
 
 - *Row with excess cells*, or *header that disagrees with its delimiter row*: escape as `\|` (inside backticks too), or move the command out of the table.
 - *Unclosed code fence*: close it.
-- *Two backticked tokens abutting the bold marker inside one bold span*: separate them, or take one out of the bold run.
+- *Two backticked tokens abutting the bold marker inside one bold span*, or *a code span holding ** in a bold span*: take the code span out of the bold run.
 - *Unclosed YAML frontmatter*: no check ran on any line of that file. Close the delimiter and **run Step 1.5 again**.
 
-Treat a row hit as real until you have looked at it. Known false positives: a setext heading, a spaced `- - -`, frontmatter not at line 1, a table inside a fenced block indented four or more spaces, and unrecognised frontmatter whose closing `---` reads as a delimiter row. Do not "fix" those. **Known blind spots:** tables in blockquotes or with no delimiter row, the one-token emphasis form; a lone-CR file can go **entirely silent**, and so can every line above the next `---` when a leading `---` is followed by key-shaped prose such as `Note: ...` (#163). Before widening any of these trades, read <https://github.com/ducroq/agent-ready-projects/blob/master/docs/rationale/review-changes.md> <!-- lint-skip: maintainer-path — a URL, not a repo-relative path: it resolves for a reader with no such directory. -->.
+Treat a row hit as real until you have looked at it. Known false positives: a setext heading, a spaced `- - -`, frontmatter not at line 1, a table inside a fenced block indented four or more spaces, and unrecognised frontmatter whose closing `---` reads as a delimiter row. Do not "fix" those. **Known blind spots:** tables in blockquotes or with no delimiter row, a bold span crossing a line break; a lone-CR file can go **entirely silent**, and so can every line above the next `---` when a leading `---` is followed by key-shaped prose such as `Note: ...` (#163). Before widening any of these trades, read <https://github.com/ducroq/agent-ready-projects/blob/master/docs/rationale/review-changes.md> <!-- lint-skip: maintainer-path — a URL, not a repo-relative path: it resolves for a reader with no such directory. -->.
 
 A clean run and an empty file list both print nothing, so **report the count alongside the result:**
 

@@ -39,8 +39,8 @@ The two patterns moved are `docs/rationale/**` and `docs/**` — two of the six 
 carries. They sit on a line of their own because **a bolded phrase must never end in a
 `**`-suffixed glob** (the shape matrix in `CHANGELOG.md` — `grep -n 'single glob, no later code
 span' CHANGELOG.md`; no line number, the file grows from the top): that form breaks under prettier 2 and 3.8.1
-too, and Step 1.5 reports only the two-glob form, so the checker is a backstop and the rule above
-is the thing to follow.
+too. Step 1.5 reports it when the bold closes on the same line (v1.48.2, #158); a bold phrase
+spanning two lines still passes, so the rule above is the thing to follow.
 Measured over two full batteries that day: of ~18 findings, **8 were shipped behaviour** an adopter
 would hit and **9 were about the record** — our own numbers and prose describing our own past work
 (a release window off by one, an ablation described wrongly, a headline count that disagreed with
@@ -131,7 +131,7 @@ Three consequences, all of them things this repo did in the week before the budg
 - **A new gate costs a run to review and saves the next release nothing.** Lint rules 14 and 15
   cost ~255k in review on 2026-09-14 — more than two releases' worth — and neither reduces release
   spend. Build gates *between* releases, deliberately, not inside one.
-- **`tests/**` gets no lens attention.** Fifteen lint rules and sixteen fixture suites cover it for
+- `tests/**` **gets no lens attention.** Fifteen lint rules and sixteen fixture suites cover it for
   zero tokens. A lens there is paying 110k for what a gate already asserts.
 
 ⚠️ **This section was written WITHOUT a lens pass, deliberately, and that is a departure from the
