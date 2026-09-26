@@ -39,7 +39,7 @@ The two patterns moved are `docs/rationale/**` and `docs/**` — two of the six 
 carries. They sit on a line of their own because **a bolded phrase must never end in a
 `**`-suffixed glob** (the shape matrix in `CHANGELOG.md` — `grep -n 'single glob, no later code
 span' CHANGELOG.md`; no line number, the file grows from the top): that form breaks under prettier 2 and 3.8.1
-too. Step 1.5 reports it when the bold closes on the same line (v1.48.2, #158); a bold phrase
+too. Step 1.5 reports it when the bold closes on the same line (v1.49.0, #158); a bold phrase
 spanning two lines still passes, so the rule above is the thing to follow.
 Measured over two full batteries that day: of ~18 findings, **8 were shipped behaviour** an adopter
 would hit and **9 were about the record** — our own numbers and prose describing our own past work
