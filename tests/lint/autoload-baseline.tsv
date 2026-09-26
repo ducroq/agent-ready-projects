@@ -2,8 +2,8 @@
 # Lock a reduction in:  bash tests/lint/autoload-ratchet.sh . --update
 # Pay for growth deliberately:  ... --raise "why this must get bigger"
 # Every raise is recorded below, oldest first; notes accumulate, never replace.
-# BYTES 23461
-# LINES 89
+# BYTES 23414
+# LINES 88
 # seeded 2026-09-14
 # ratcheted down 2026-09-14
 # ratcheted down 2026-09-14
@@ -29,5 +29,6 @@
 # RAISED 2026-09-26 from 23328b/89l to 23503b/89l: audit-context 2026-09-26: +105 net over the session's start. Review restored the dead-end routing row in CLAUDE.md (MEMORY.md is read only on 'continue', so the trigger needs the auto-loaded file) and kept the new review-ledger routing row in MEMORY.md; the framework_pivot row cut stands
 # ratcheted down 2026-09-26
 # ratcheted down 2026-09-26
+# ratcheted down 2026-09-26
 CLAUDE.md	14896
-memory/MEMORY.md	8565
+memory/MEMORY.md	8518
