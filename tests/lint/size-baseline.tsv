@@ -3,7 +3,7 @@
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and every raise is
 # recorded below, oldest first — notes accumulate and are never replaced.
-# BUDGET 177855
+# BUDGET 178064
 # SPILL 179705
 # RAISED 2026-09-06 from 247526 to 247969: #133: the #118 remedy string shipped unconditional and can turn a resolved reference into an AMBIGUOUS finding; the caveat that scopes it is +443 b on templates/audit-context.md, seeded as T39/T40/N39 (reason restored 2026-09-06 — write_baseline used to overwrite each note with the next)
 # RAISED 2026-09-06 from 247969 to 248237: #140: UNRESOLVED had two causes printing one reason. +268 b on templates/audit-context.md, seeded as T41/T41b/N40 (reason restored 2026-09-06)
@@ -92,12 +92,15 @@
 # RAISED 2026-09-25 from 182318 to 182363: #117 review: attribute the 86 to its measurement
 # RAISED 2026-09-26 from 182363 to 182488: review-changes Step 1.5 one-token emphasis branch and its fix instruction (#158): 1 hit to 25 over 5,812 files, 20 corrupted by prettier 3.8.1
 # ratcheted down 2026-09-26 from 182488 to 177855, while docs/rationale/ grew 172179 -> 179705 (+7526): part of this payment MOVED (#131, #157)
+# RAISED 2026-09-26 from 177855 to 178064: #228 audit-context Step 2 routing-pointer exception
+templates/README.md	12042
+templates/RUNBOOK.md	2795
 templates/adr.md	2115
-templates/audit-context.md	17428
+templates/audit-context.md	17637
+templates/checklists/README.md	1097
 templates/checklists/architect-checklist.md	1263
 templates/checklists/implement-checklist.md	1329
 templates/checklists/qa-checklist.md	1836
-templates/checklists/README.md	1097
 templates/checklists/test-checklist.md	1234
 templates/coordination.md	3909
 templates/curate.md	25810
@@ -105,12 +108,10 @@ templates/gotcha-log.md	10884
 templates/hypothesis-log.md	3570
 templates/memory-index.md	3396
 templates/project-file.md	6695
-templates/README.md	12042
 templates/release.md	15898
 templates/review-agent.md	5720
 templates/review-changes.md	26365
 templates/review-profile.md	5870
-templates/RUNBOOK.md	2795
 templates/test-fixtures/memory/decision-no-verify.md	185
 templates/test-fixtures/memory/observation-no-verify.md	185
 templates/test-fixtures/memory/pattern-no-verify.md	216

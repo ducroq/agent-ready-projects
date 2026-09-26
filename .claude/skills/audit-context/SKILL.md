@@ -29,7 +29,7 @@ Check whether the same fact appears in multiple places across the layers:
 For each duplicate found, recommend which layer should be the single source of truth based on:
 
 - Is it needed every session? → project file
-- Is it navigational? → memory index
+- Is it navigational? → memory index, unless the trigger's situation can arise before anything has loaded the index: then the pointer stays in the project file, and the index copy is the one to drop (#228). Step 1 established what loads unasked.
 - Is it reference material loaded on demand? → topic file
 - Is it user-specific (preferences, positions, local machine quirks)? → tool auto-memory
 
