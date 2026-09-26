@@ -4,7 +4,7 @@ The source framework that teaches the layered memory method for AI coding agents
 
 - **Type**: Public methodology repo (guide + templates + skills)
 - **License**: MIT
-- **agent-ready-projects** (this repo): **v1.49.1 is the highest release (2026-09-26).** Next bump **undetermined** — classify it from the diff at release time, per `templates/release.md` Step 2. Record no predicted bump and no size for this file here; both go stale on the next edit.
+- **agent-ready-projects** (this repo): **v1.49.2 is the highest release (2026-09-26).** Next bump **undetermined** — classify it from the diff at release time, per `templates/release.md` Step 2. Record no predicted bump and no size for this file here; both go stale on the next edit.
 - **State and lessons**: `memory/MEMORY.md` Current State holds the session narrative and, as its first block, the lessons this repo keeps re-deriving. Per-release detail is in `CHANGELOG.md`.
 - **How to shrink this file**: delete duplication and name the authority. Never compress prose, and never re-inline reference material to make it handy.
 

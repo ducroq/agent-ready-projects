@@ -22,9 +22,14 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.49.2 (candidate, unreleased)
+## v1.49.2 (2026-09-26)
 
-**Bump provisional**: classify it from the diff at release, per `templates/release.md` Step 2.
+**PATCH.** A refinement of an existing step only; nothing new to adopt, so the third row of `templates/release.md`
+Step 2 applies, per the v1.10.1 precedent. `curate` Step 1 now says where a new gotcha entry goes and how to check
+the insert did not split another entry. Adopter-facing size: +131 bytes, that instruction.
+
+**Consumers.** No action required. An adapted `curate` takes the change by its marker string
+`grep -cE '^#+ Promoted'` must not change.
 
 - **`curate` Step 1 says where a new gotcha goes (#233).** "Append a new entry" gave no position, and the template log
   ends in its `## Mechanized` section. An insert that found `## Promoted` as a substring matched a quotation in an entry
