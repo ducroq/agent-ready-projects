@@ -15,8 +15,13 @@
 # Rule 8 already settled how this repo handles that: "A ratchet, not a budget: no
 # threshold invented". This is rule 8's mechanism pointed at the other surface.
 #
-# WHY THIS SURFACE. It is the only cost paid unconditionally — every session,
-# before anyone asks for anything. templates/ is paid per invocation and is
+# WHY THIS SURFACE. It is the session-start set: CLAUDE.md, which Claude Code
+# auto-loads, plus memory/MEMORY.md, which it does NOT (only the user-level
+# ~/.claude/projects/<slug>/memory/MEMORY.md is auto-loaded) but which a
+# resumed session is told to read first — CLAUDE.md's "continue" row.
+# Found 2026-09-26 by /audit-context Step 1. The old name "auto-loaded" survives
+# in this script's output strings because the fixture asserts on them.
+# templates/ is paid per invocation and is
 # already ratcheted; this was measured and unbudgeted, at 49,172 bytes against
 # the 40,000 alarm, and it GREW during the session that was cutting it.
 #

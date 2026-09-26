@@ -18,7 +18,7 @@ Goal: make the framework cheaper to run without cutting review of the shipped su
 
 - **Last action**: v1.49.0 released (tagged and pushed 2026-09-26; global skills refreshed). It carries #222 (review cost was final context, not spend), #158 (Step 1.5 catches the one-token emphasis form) and an offsetting thin: the four global skills are 4,508 bytes smaller than at v1.48.1. The review ledger has a `spend` column and an append gate (#162).
 - **Next action**:
-  1. Run `/audit-context` in a fresh session: none since 2026-08-11, and two restructurings since (09-25 cuts, 09-26 moves into `docs/rationale/`).
+  1. ~~Run `/audit-context`~~ — done 2026-09-26. Catches by step: **Step 1** rule 15's "auto-loaded set" was never the auto-loaded set (in-repo `MEMORY.md` is read, not loaded; the user-level index is loaded and uncounted) — relabelled as the session-start set. **Step 2** CLAUDE.md duplicated two MEMORY.md topic-file routes — pivot dropped (a Hard Constraint still routes it); dead-end kept, since MEMORY.md is read only on "continue" (review caught the drop). **Step 4** 10 gotcha-log residue findings plus #122 — qualified, marked, or struck as deleted (review caught `n9_bom_fm.md` struck while a fixture still creates it); verdict CLEAN, checker proven by a seeded break. **Step 5** ledger unrouted, work-item pointer off-form — fixed. Steps 3, 6, 7: nothing.
   2. Decide H-020: spend per reviewer is ~4× down (655k → 476k → 157k); whether the round cap ships more defects is unmeasured.
   3. H-031 (curate's arc section, 10 runs) is still unmeasured.
 - **Blockers**: none.

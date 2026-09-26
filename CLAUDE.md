@@ -21,7 +21,6 @@ The source framework that teaches the layered memory method for AI coding agents
 | Editing templates | `templates/README.md` for the tool-agnostic naming map. Changes ripple to every downstream consumer. |
 | Editing the guide | `docs/GUIDE.md` is the full reference; `README.md` is the on-ramp. When you change one, check whether the other needs the same change. |
 | Working with the verification rationale | `docs/verification-rationale.md`. Cite it rather than re-deriving. Its one external citation supports the premise only, not the principles. |
-| Considering reviving landscape / positioning docs | `memory/project_framework_pivot.md`. Don't re-promote without explicit user signal. |
 | Considering the dead-end log pattern | `memory/project_dead_end_pattern_rollout.md` — closed. Reopen only when a real session reaches for a seeded entry and acts on it. |
 | Cutting a release | Run `/release` if installed locally, per `templates/release.md`; it stops before tagging. Tag-and-push protocol is in the `CHANGELOG.md` header. |
 | Starting multi-session work (feature, migration, refactor, investigation) | Create `docs/work-items/<slug>.md` from `templates/work-item.md`. Add a one-line pointer in `memory/MEMORY.md` Current State: `- [Short description] → docs/work-items/slug.md [in progress]`. |
