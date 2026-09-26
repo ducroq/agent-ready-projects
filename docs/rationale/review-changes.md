@@ -350,6 +350,8 @@ whole evidence base, including the parts that argue against the change.
 plus two conditional ones — guarantee-preservation when the diff touches a declared guarantee
 surface, shell-correctness when it changes a shell file.
 
+⚠️ **Every token figure in this section, and the per-round ratio under the round cap below, is a reviewer's FINAL CONTEXT size, not its spend.** The ledger recorded the total the agent tool reports, which is the last turn's context. Summed over every turn (one value per API message; a transcript repeats it across lines) and weighted by price (cache write ×1.25, cache read ×0.1, output ×5), spend ran 3.1× and 4.6× higher on the two rows checked against their transcripts. Measured that way, the 15 reviewers on 2026-09-14 before the round cap (v1.42.0; v1.43.0 has none recorded) spent 9.8M input-token equivalents, ~655k each; the 11 after it (v1.44–45) 5.2M, ~476k each; the 14 on 2026-09-25, after the skills were thinned (v1.46.0–46.1), 2.2M, ~157k each. The savings below point the same way in spend; their magnitudes do not carry over, and the per-round ratio under the round cap has not been re-measured in spend.
+
 **The saving, and the two ways the headline figure is soft.** The pre-cut figure quoted as
 "~840k per release" is **not re-derivable from the ledger**: the only grouping that produces it
 averages `#172`+`#173`+`#174` (1,681,403 tokens, all three shipped in v1.42.0) over two releases,
