@@ -211,3 +211,22 @@ Report before editing anything normative. Adoption touches the project file, tem
 - Run the project's pre-commit review if it has one — this skill's own output has been found holed by one.
 
 - Record the declines somewhere durable. A finding that lives only in a gitignored file is invisible to adopters and to sibling projects; an issue is the copy others can see.
+
+## Moved out of Step 0 in v1.48.2
+
+The skill keeps the rule; the reasons it gave inline are here, verbatim.
+
+If you adapt the matchers, keep matcher 1's allowance for letters before the version (a filename sits there) and its `{0,60}` gap (``Adopted from `agent-ready-projects` `templates/review-changes.md` (v1.18.0`` puts **33** characters between name and version), matcher 2's exclusion of letters before the hash (else a hex run matches inside a word), and matcher 3's `\b` and narrow trailing gap (else `href d89ec62` or `commitment` match). Keep `\b`, not `(^|[^A-Za-z])`: ugrep 7.8.4 refuses the group form. Do not shrink the gaps to suit another engine either; call `command grep`. A matcher that hangs (ugrep 5.0 does on matcher 1) is that engine too.
+
+Known holes: **a DIGIT between the name and the connector** escapes all three (`agent-ready-projects (2026-09-14) commit 0d67131`, `agent-ready-projects #134 commit 0d67131`) — an ordinary shape, not a rare one; so does a pin written *«fixed at»* or *«as of»*, a branch name, a date or a `main` pin. **A stamp split across lines** (a multi-line provenance header) escapes every matcher, since grep reads one line at a time; only the reconciliation finds it. **`\b` is not POSIX ERE**: it measured identical on GNU grep 3.12, ugrep 7.8.4 and busybox 1.37, which is not a portability guarantee — an engine reading it as a literal `b` returns a silent zero. If `grep --version` shows something else, seed a known pin and confirm the matcher finds it before trusting a clean run.
+
+Do not simplify the block: the `(file, framework)` unit (a file pinning two frameworks reads as stamped when only one pin matched), the printed counts (with mistyped operands `comm` prints nothing at exit 0), `sort -u` and `LC_ALL=C` on both sides and on `comm`, and `m()` on each grep (a matcher that cannot run says so instead of shrinking the stamped side) each prevent a wrong difference. **Keep the operands disjoint** — overlap, such as adding `.` or a parent of another operand, makes `comm -23` report a stamped file as unstamped.
+
+```
+# ⚠️ `command grep` bypasses a shell function or alias that runs another engine,
+# and exit 2 is a FAILED matcher, not "no pins" (#211): ugrep 7.8.4 rejects
+# matchers 1 and 3 as too complex. Absent operands are already dropped, so exit 2
+# cannot be one. `|| rc=$?` keeps a no-match exit 1 from killing a `set -e` run.
+# LABEL each matcher: an unlabelled empty region reads the same whether the
+# matcher found nothing or never ran.
+```

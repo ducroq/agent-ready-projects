@@ -323,6 +323,20 @@ new sections are optional, so a profile that loses them still passes.
 negation writes a profile that is untracked. `git status` stays clean, the local session works,
 and every fresh clone and deploy target gets no profile and a refusal.
 
+### Step 1.5's program comments, moved out of the skill (v1.48.2)
+
+The awk program in Step 1.5 carried this reasoning inline, paid on every review. The program keeps a
+one-line rule and the issue numbers; the reasoning is here, verbatim.
+
+- `$(0)`, never `\$0` — skill arguments are substituted into the body, so a bare `\$0` arrives as an argument word and this program examines a constant while printing what a clean run prints (#77). BOM: a SUB with an OCTAL escape, never `substr(...) == "\xef..."` — `\x` is a gawk extension and the length is bytes in one awk, characters in another. ⚠️ Octal does not settle portability either: one-true-awk in a UTF-8 locale was measured BY AN ADOPTER, not here, not to strip it — costing a false positive, not silence (#151, #164).
+- CRLF: strip first, or isdelim() never matches and no table in the file is examined (#52).
+- YAML frontmatter, skipped whole (#52). ⚠️ Line 1 only ARMS the skip and the first non-blank line decides: a leading `---` is also a thematic break, and opening on it alone SILENCED whole well-formed files (#151). Blank lines and YAML comments are scanned past, not decisive. ⚠️ The residual cost is NOT only false positives (#163): prose shaped like a key (`Note: ...`) after a leading `---` arms the skip and SILENTLY loses every line up to the next `---`, and unrecognised frontmatter holding an indented fence reports an unclosed fence and loses the rest of the file. Do not widen without reading the rationale. `\047` is an apostrophe as OCTAL and has to be: a literal one closes the single-quoted shell string this program lives inside (#105, lint rule 11).
+- ⚠️ DO NOT WIDEN THE 3-SPACE STRIP — the three refuted attempts are under "The three refuted attempts" in this file. Each bought a worse class, ONE of them SILENCING a whole file, against a defect with zero instances in a 5,168-file estate (#150). A substr loop, not `sub(/^ ? ? ?/, ...)`: mawk 1.3.4 strips ONE space with that regex, so a fence indented 2-3 spaces was never recognised.
+- Emphasis spans, wrong when rendered (#50, #158): TWO risky spans in one open bold run, or ONE in a run closed on the line (a run open at end of line may be a continuation). Spans are masked to one character; runs pair by position. A span opens on a run of N backticks and closes on the next run of exactly N, as in CommonMark, so a double-backtick span QUOTING this shape is one span, not two risky tokens (#159). An unclosed run is literal.
+- Risky: any `**` in the span; prettier 3.8.1 corrupts `a**b` too (#158).
+- The backtick test stops a literal \001/\002 byte masquerading as a masked span: without it a line with no backticks reported "two backticked tokens", which is simply false.
+- Unclosed frontmatter leaves `infm` set, so `infm { next }` swallows the rest of the file and the check prints what a clean run prints (#103). ⚠️ It says NO CHECK RAN, not "no table": that `next` sits above the fence and emphasis blocks too, so all three are lost (#144).
+
 ### Why the emphasis guard is as narrow as it is (measurements moved out of the skill, v1.43.0)
 
 The skill body carried these figures until v1.43.0; they are evidence for a decision already

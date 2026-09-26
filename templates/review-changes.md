@@ -160,28 +160,11 @@ Runs at **every tier and every magnitude**, before any lens, on every changed ma
       t = s; gsub(/\\\|/, "", t); gsub(/[ \t]/, "", t)
       return (t ~ /-/ && t ~ /^[|:-]+$/)
     }
-    # `$(0)`, never `\$0` — skill arguments are substituted into the body, so a bare
-    # `\$0` arrives as an argument word and this program examines a constant while
-    # printing what a clean run prints (#77).
-    # BOM: a SUB with an OCTAL escape, never `substr(...) == "\xef..."` — `\x` is a
-    # gawk extension and the length is bytes in one awk, characters in another.
-    # ⚠️ Octal does not settle portability either: one-true-awk in a UTF-8 locale
-    # was measured BY AN ADOPTER, not here, not to strip it — costing a false
-    # positive, not silence (#151, #164).
+    # `$(0)`, never `\$0` (#77). BOM stripped by an octal sub, not `\x` (#151, #164).
     { if (NR == 1) sub(/^\357\273\277/, "")
-      sub(/\r$/, "") }              # CRLF: strip first, or isdelim() never matches
-                                     # and no table in the file is examined (#52).
-    # YAML frontmatter, skipped whole (#52). ⚠️ Line 1 only ARMS the skip and the
-    # first non-blank line decides: a leading `---` is also a thematic break, and
-    # opening on it alone SILENCED whole well-formed files (#151). Blank lines and
-    # YAML comments are scanned past, not decisive. ⚠️ The residual cost is NOT
-    # only false positives (#163): prose shaped like a key (`Note: ...`) after a
-    # leading `---` arms the skip and SILENTLY loses every line up to the next
-    # `---`, and unrecognised frontmatter holding an indented fence reports an
-    # unclosed fence and loses the rest of the file. Do not widen without reading
-    # the rationale.
-    # `\047` is an apostrophe as OCTAL and has to be: a literal one closes the
-    # single-quoted shell string this program lives inside (#105, lint rule 11).
+      sub(/\r$/, "") }              # CRLF first, or isdelim() never matches (#52)
+    # Frontmatter: line 1 arms the skip, the first non-blank line decides (#52, #151,
+    # #163). `\047` is an apostrophe; a literal one ends the shell string (#105).
     NR == 1 && $(0) ~ /^---[ \t]*$/ { fmpend = 1; next }
     fmpend && $(0) ~ /^([ \t]*|[ \t]*#.*)$/ { next }
     fmpend { fmpend = 0
@@ -189,12 +172,7 @@ Runs at **every tier and every magnitude**, before any lens, on every changed ma
     infm && $(0) ~ /^(---|\.\.\.)[ \t]*$/ { infm = 0; prev = ""; next }
     infm { next }
     {
-      # ⚠️ DO NOT WIDEN THE 3-SPACE STRIP — the three refuted attempts are in the
-      # Known blind spots note below. Each bought a worse class, ONE of them
-      # SILENCING a whole file, against a defect with zero instances in a
-      # 5,168-file estate (#150).
-      # A substr loop, not `sub(/^ ? ? ?/, ...)`: mawk 1.3.4 strips ONE space
-      # with that regex, so a fence indented 2-3 spaces was never recognised.
+      # Do not widen the 3-space strip (#150). A substr loop: mawk mis-strips a regex.
       bare = $(0); for (k = 0; k < 3 && substr(bare, 1, 1) == " "; k++) bare = substr(bare, 2)
       if (bare ~ /^```/ || bare ~ /^~~~/) {
         c = substr(bare, 1, 1); n = 0
@@ -204,12 +182,8 @@ Runs at **every tier and every magnitude**, before any lens, on every changed ma
         intbl = 0; prev = ""; next
       }
       if (fch != "") next
-      # Emphasis spans, wrong when rendered (#50, #158): TWO risky spans in one open
-      # bold run, or ONE in a run closed on the line (a run open at end of line may
-      # be a continuation). Spans are masked to one character; runs pair by position.
-      # A span opens on a run of N backticks and closes on the next run of
-      # exactly N, as in CommonMark, so a double-backtick span QUOTING this shape
-      # is one span, not two risky tokens (#159). An unclosed run is literal.
+      # Emphasis (#50, #158): TWO risky spans in one bold run, or ONE in a run closed
+      # on the line. Spans close on an equal backtick run, as in CommonMark (#159).
       { masked = ""; rest = $(0)
         while (match(rest, /`+/)) {
           s = RSTART; n = RLENGTH; after = substr(rest, s + n); t = after; off = 0; cl = 0
@@ -220,7 +194,7 @@ Runs at **every tier and every magnitude**, before any lens, on every changed ma
           if (!cl) { masked = masked substr(rest, 1, s + n - 1); rest = after; continue }
           inner = substr(after, 1, cl - 1)
           if (inner ~ /^ .* $/) inner = substr(inner, 2, length(inner) - 2)
-          # Risky: any `**` in the span; prettier 3.8.1 corrupts `a**b` too (#158).
+          # Risky: any `**` in the span (#158).
           mark = "\002"
           if (index(inner, "**")) mark = "\001"
           masked = masked substr(rest, 1, s - 1) mark
@@ -232,9 +206,7 @@ Runs at **every tier and every magnitude**, before any lens, on every changed ma
           if (substr(masked, i, 2) == "**") { if (inb) nclosed += run; run = 0; inb = 1 - inb; i++; continue }
           if (inb && substr(masked, i, 1) == "\001" && ++run > nrisk) nrisk = run
         }
-        # The backtick test stops a literal \001/\002 byte masquerading as a masked
-        # span: without it a line with no backticks reported "two backticked
-        # tokens", which is simply false.
+        # A line with no backtick has no span, whatever bytes it holds.
         if (index($(0), "`")) {
           if (nrisk > 1)
             printf "%s:%d: two backticked tokens abutting ** inside one bold span — a formatter can join the runs and corrupt both\n", F, NR
@@ -256,10 +228,7 @@ Runs at **every tier and every magnitude**, before any lens, on every changed ma
       prev = $(0)
     }
     END { if (fch != "") printf "%s: unclosed %s code fence\n", F, fch
-          # Unclosed frontmatter leaves `infm` set, so `infm { next }` swallows the
-          # rest of the file and the check prints what a clean run prints (#103).
-          # ⚠️ It says NO CHECK RAN, not "no table": that `next` sits above the
-          # fence and emphasis blocks too, so all three are lost (#144).
+          # Unclosed frontmatter swallowed the file: say no check ran (#103, #144).
           if (infm) printf "%s: unclosed YAML frontmatter — no check ran on any line of this file\n", F }
   ' "$f"
 done

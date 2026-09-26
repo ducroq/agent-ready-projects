@@ -25,7 +25,7 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 ## v1.48.2 (candidate, unreleased)
 
 **Bump undetermined; classify at release (`templates/release.md` Step 2).** One existing check reports a class it
-missed, and one rationale figure changed unit. Adopter-facing size: +125 bytes, the one-token emphasis branch and its fix instruction.
+missed, and one rationale figure changed unit. Adopter-facing size: net negative; see the offsetting thin below.
 
 **`review-changes` Step 1.5 now catches the one-token emphasis form (#158).** A code span holding `**` inside a bold
 run that closes on the same line reports, as `a code span holding ** in a bold span closed on this line`; the two-token
@@ -39,7 +39,15 @@ The maintainer ledger recorded the total the agent tool reports, which is the la
 gives spend measured from transcripts (~655k → ~476k → ~157k input-token equivalents per reviewer, across the round cap
 and the skill thinning). The savings point the same way in spend; the magnitudes did not carry over.
 
-**Consumers.** `review-changes` changed: refresh a global install, or re-copy the Step 1.5 program into an adapted one
+**Offsetting thin (requested by an adopter session).** v1.47.0→v1.48.1 grew the four global skills by 4,614 bytes with
+nothing cut. Reasoning that sat inline in code comments and prose, paid on every run, moved verbatim to
+`docs/rationale/` behind a link: `review-changes` Step 1.5's awk comments, `update-drift` Step 0's matcher-adaptation,
+known-holes and do-not-simplify reasoning, the comments in `curate` Step 0's stamp-check block, and one measurement in
+`audit-context` Step 4. Every instruction stays in the skill; only the reasons moved. The four skill bodies are 4,508
+bytes smaller than at v1.48.1, 106 bytes above v1.47.0 (`wc -c` on each `SKILL.md` against `git show <tag>:`). `curate`
+Step 6 now also reports the constraint-row count (#183).
+
+**Consumers.** `review-changes`, `update-drift`, `curate` and `audit-context` changed: refresh a global install, or re-copy the Step 1.5 program into an adapted one
 (marker string: `holding ** in a bold span`). Expect new Step 1.5 hits on lines that a formatter at or below prettier 3.8.1
 would corrupt; fix them by moving the code span out of the bold. If you budget reviews from the rationale's numbers,
 measure spend from your own transcripts instead.

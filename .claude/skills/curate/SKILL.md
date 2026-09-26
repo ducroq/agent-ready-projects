@@ -121,32 +121,19 @@ Check for context rot from *previous* sessions. **Read metadata, not documents**
    - **Never hardcode the version a probe corroborates — derive it from the stamp.** Then bumping the stamp re-arms the probe.
 
      ```bash
-     # Three outcomes: 0 verified, 1 drift, 2 could not decide. ⚠️ UNDECIDED IS
-     # NOT A PASS — an earlier draft of this block printed "CANNOT VERIFY: <skill>
-     # is not installed" and then "byte-identical", exit 0, because the skip left
-     # the counter alone. That is the false PASS with the evidence of its own
-     # failure printed beside it, forbidden eight lines above, inside the sub-step
-     # that forbids it. The success line is now gated on a COUNT of what was
-     # actually compared, not on the absence of a difference.
+     # 0 verified, 1 drift, 2 undecided — and undecided is NOT a pass: success is
+     # gated on a count of what was compared.
      stampcheck() {
        R=$(git rev-parse --show-toplevel 2>/dev/null) ||
          { echo "CANNOT VERIFY: not in a git repo"; return 2; }
        [ -n "${FRAMEWORK:-}" ] && [ -d "$FRAMEWORK/.git" ] ||
          { echo "CANNOT VERIFY: FRAMEWORK is unset or is not a git clone"; return 2; }
-       # ⚠️ Five of the six stamp shapes `update-drift` Step 0 documents, not one.
-       # A first draft keyed on `framework: <name> vX.Y.Z` alone and returned
-       # CANNOT VERIFY in THIS repo, whose own stamp is the `- **<name>** (this
-       # repo):` shape — a matcher keyed to one shape reporting an unstamped
-       # project is the exact failure that step warns about. The sixth shape,
-       # bare prose `Framework version X.Y.Z`, carries no repo name and stays
-       # undecidable on purpose.
+       # Five of the six stamp shapes in `update-drift` Step 0; bare prose is undecidable.
        P=$(grep -oE "agent-ready-projects[^0-9]{0,40}v?[0-9]+\.[0-9]+\.[0-9]+" \
              "$R/CLAUDE.md" 2>/dev/null | head -1 |
            grep -oE "v?[0-9]+\.[0-9]+\.[0-9]+$" | sed "s/^v*/v/")
        [ -n "$P" ] || { echo "CANNOT VERIFY: no framework stamp in CLAUDE.md"; return 2; }
-       # ⚠️ DERIVE the list at the stamped tag, never restate it: a hardcoded
-       # one missed review-changes for four releases (#200). `${P}`, not `$P`,
-       # before a colon — zsh reads `$P:s` as a modifier.
+       # Derive the list at the stamped tag, never restate it (#200). `${P}`, not `$P`, before a colon (zsh).
        git -C "$FRAMEWORK" rev-parse -q --verify "${P}^{commit}" >/dev/null ||
          { echo "CANNOT VERIFY: $P is not in the framework clone — fetch tags"; return 2; }
        t=$(git -C "$FRAMEWORK" show "${P}:scripts/install-global-skills.sh" 2>/dev/null) ||
@@ -160,10 +147,7 @@ Check for context rot from *previous* sessions. **Read metadata, not documents**
        for s in $(echo $want); do   # $(…) splits in zsh too; a bare $want does not
          i="$HOME/.claude/skills/$s/SKILL.md"
          [ -f "$i" ] || { echo "CANNOT VERIFY: $s is not installed"; continue; }
-         # ⚠️ SPLIT the pipeline. Piped, a `git show` that fails — the normal
-         # state right after an upstream release, stamp bumped and clone not
-         # fetched — is swallowed and `diff` supplies the verdict, so the
-         # re-armed probe accuses every clean install of drifting.
+         # Split, not piped: a failed `git show` must not become diff's verdict.
          t=$(git -C "$FRAMEWORK" show "${P}:.claude/skills/$s/SKILL.md" 2>/dev/null) ||
            { echo "CANNOT VERIFY: $s is not in $P"; continue; }
          printf '%s\n' "$t" | diff -q - "$i" >/dev/null ||
@@ -290,7 +274,7 @@ Fix what you can. Flag anything that needs engineer input.
 - **Freshness**: Gotcha log headers reconciled against the `**Problem**` count, and the Promoted table read
 - **Verification**: State claims checked — N passed, N failed, N unverified, N errored, N manual check needed, N cannot verify, N malformed. Report all seven, even zeros, plus **N commands run of M annotations**, the difference, and the exit status
 - **Index self-consistency**: N identifiers cited by more than one *entry*, and N contradicting pairs among them. Report both; say whether zero meant nothing to compare. Quote any pair verbatim
-- **Gotchas**: New entries added, entries resolved or promoted, and **N promoted patterns re-checked, N recurred**. Report both, even zeros. Name any pattern that recurred *after* promotion
+- **Gotchas**: New entries added, entries resolved or promoted, and **N promoted patterns re-checked, N recurred; N constraint rows, N re-checked, N false**. Report all, even zeros: zero constraint rows looks like a skipped step unless reported (#183). Name any pattern that recurred *after* promotion
 - **Memory index**: Updates made
 - **Doc sync**: Project file, runbook, backlog updates made or flagged
 - **Action needed**: anything needing an engineer decision
