@@ -16,7 +16,7 @@ Goal: make the framework cheaper to run without cutting review of the shipped su
 
 **Savepoint — 2026-09-26 (after /audit-context).**
 
-- **Last action**: v1.49.1 released (tagged and pushed 2026-09-26; global skills refreshed). It carries #228 (`audit-context` Step 2 keeps a routing pointer in the project file when its trigger can fire before the index is read). #167 and #180 were closed as not planned; no issues are open.
+- **Last action**: v1.49.2 released (tagged and pushed 2026-09-26; global skills refreshed). v1.49.1 carried #228 (`audit-context` Step 2 routing), v1.49.2 carries #233 (`curate` Step 1 places a new gotcha above the Promoted heading and checks for a split). No issues open.
 - **Next action**:
   1. ~~Run `/audit-context`~~ — done 2026-09-26. Catches by step: **Step 1** rule 15's "auto-loaded set" was never the auto-loaded set (in-repo `MEMORY.md` is read, not loaded; the user-level index is loaded and uncounted) — relabelled as the session-start set. **Step 2** CLAUDE.md duplicated two MEMORY.md topic-file routes — pivot dropped (a Hard Constraint still routes it); dead-end kept, since MEMORY.md is read only on "continue" (review caught the drop). **Step 4** 10 gotcha-log residue findings plus #122 — qualified, marked, or struck as deleted (review caught `n9_bom_fm.md` struck while a fixture still creates it); verdict CLEAN, checker proven by a seeded break. **Step 5** ledger unrouted, work-item pointer off-form — fixed. Steps 3, 6, 7: nothing. Step 2's rule itself is filed as #228.
   2. Decide H-020: spend per reviewer is ~4× down (655k → 476k → 157k); whether the round cap ships more defects is unmeasured.
