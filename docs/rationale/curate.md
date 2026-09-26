@@ -361,3 +361,31 @@ Check whether key docs reflect the current repo state. Code changes during a ses
 - **Index self-consistency**: N identifiers cited by more than one *entry*, and N contradicting pairs among them (from Step 0). Report both. Zero pairs out of zero clusters means the check found nothing to compare, which is not the same as an index that agrees with itself — say which one it was. ⚠️ **Do not report a disposition for the entity pass**; it was retired in v1.45.0, and inventing one — or re-running the pairwise read to have something to say — is what that retirement forbids. Quote any pair verbatim and leave it unresolved unless a probe settled it
 
 - **Gotchas**: New entries added, entries resolved or promoted, and **N promoted patterns re-checked, N recurred** (from Step 2). Report both numbers even when the second is zero — "checked, nothing recurred" and "never checked" are otherwise indistinguishable, which is the failure the Occurrences column exists to prevent. Name any pattern that recurred *after* promotion; that is the signal the promotion did not take
+
+## Moved out of Step 0's stamp-check block in v1.48.2
+
+The block keeps a one-line comment per guard; the reasoning is here, verbatim.
+
+```
+     # Three outcomes: 0 verified, 1 drift, 2 could not decide. ⚠️ UNDECIDED IS
+     # NOT A PASS — an earlier draft of this block printed "CANNOT VERIFY: <skill>
+     # is not installed" and then "byte-identical", exit 0, because the skip left
+     # the counter alone. That is the false PASS with the evidence of its own
+     # failure printed beside it, forbidden eight lines above, inside the sub-step
+     # that forbids it. The success line is now gated on a COUNT of what was
+     # actually compared, not on the absence of a difference.
+       # ⚠️ Five of the six stamp shapes `update-drift` Step 0 documents, not one.
+       # A first draft keyed on `framework: <name> vX.Y.Z` alone and returned
+       # CANNOT VERIFY in THIS repo, whose own stamp is the `- **<name>** (this
+       # repo):` shape — a matcher keyed to one shape reporting an unstamped
+       # project is the exact failure that step warns about. The sixth shape,
+       # bare prose `Framework version X.Y.Z`, carries no repo name and stays
+       # undecidable on purpose.
+       # ⚠️ DERIVE the list at the stamped tag, never restate it: a hardcoded
+       # one missed review-changes for four releases (#200). `${P}`, not `$P`,
+       # before a colon — zsh reads `$P:s` as a modifier.
+         # ⚠️ SPLIT the pipeline. Piped, a `git show` that fails — the normal
+         # state right after an upstream release, stamp bumped and clone not
+         # fetched — is swallowed and `diff` supplies the verdict, so the
+         # re-armed probe accuses every clean install of drifting.
+```

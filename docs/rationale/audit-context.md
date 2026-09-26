@@ -190,3 +190,7 @@ The most useful stamp is not a bare number but a short reconciliation record: wh
 Open with the **verdict** — *defects*, *clean*, or *coverage incomplete*, Step 4's three outcomes — on a line of its own, above everything else. A reader who takes only the first line must not be able to mistake an undecided run for a clean one.
 
 And one bucket that is not a severity, because it is not a defect: **Unconfirmed** — what this run could not decide, per Step 4's undecided references. They exist alongside defects and are not confined to a *coverage incomplete* run, so populate this bucket whenever there are any. Name the rung that could not run and why. These do not belong under *fix now*: telling someone to fix a reference that is merely unchecked is how a report stops being read. An empty *unconfirmed* bucket is worth stating too — it is the difference between "everything was checked" and "everything checkable was checked".
+
+## Moved out of Step 4 in v1.48.2
+
+The measurement behind "those three and no others" (#117): run on this framework's own `CHANGELOG.md` at v1.36.1, with 32 sibling repos reachable, the checker reported 86 findings, most of them quotations.
