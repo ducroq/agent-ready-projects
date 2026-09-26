@@ -362,7 +362,7 @@ Check whether key docs reflect the current repo state. Code changes during a ses
 
 - **Gotchas**: New entries added, entries resolved or promoted, and **N promoted patterns re-checked, N recurred** (from Step 2). Report both numbers even when the second is zero — "checked, nothing recurred" and "never checked" are otherwise indistinguishable, which is the failure the Occurrences column exists to prevent. Name any pattern that recurred *after* promotion; that is the signal the promotion did not take
 
-## Moved out of Step 0's stamp-check block in v1.48.2
+## Moved out of Step 0's stamp-check block in v1.49.0
 
 The block keeps a one-line comment per guard; the reasoning is here, verbatim.
 

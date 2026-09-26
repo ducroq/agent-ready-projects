@@ -22,10 +22,11 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.48.2 (candidate, unreleased)
+## v1.49.0 (2026-09-26)
 
-**Bump undetermined; classify at release (`templates/release.md` Step 2).** One existing check reports a class it
-missed, and one rationale figure changed unit. Adopter-facing size: net negative; see the offsetting thin below.
+**MINOR.** Adds behaviour and no existing consumer has to act, so rule 2 of `templates/release.md` Step 2 fires, as it
+did for v1.48.0: `review-changes` Step 1.5 reports a shape it missed, under a new message, and `curate` Step 6 reports
+constraint rows. One rationale figure changed unit. Adopter-facing size: net negative; see the offsetting thin below.
 
 **`review-changes` Step 1.5 now catches the one-token emphasis form (#158).** A code span holding `**` inside a bold
 run that closes on the same line reports, as `a code span holding ** in a bold span closed on this line`; the two-token

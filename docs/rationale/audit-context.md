@@ -191,6 +191,6 @@ Open with the **verdict** — *defects*, *clean*, or *coverage incomplete*, Step
 
 And one bucket that is not a severity, because it is not a defect: **Unconfirmed** — what this run could not decide, per Step 4's undecided references. They exist alongside defects and are not confined to a *coverage incomplete* run, so populate this bucket whenever there are any. Name the rung that could not run and why. These do not belong under *fix now*: telling someone to fix a reference that is merely unchecked is how a report stops being read. An empty *unconfirmed* bucket is worth stating too — it is the difference between "everything was checked" and "everything checkable was checked".
 
-## Moved out of Step 4 in v1.48.2
+## Moved out of Step 4 in v1.49.0
 
 The measurement behind "those three and no others" (#117): run on this framework's own `CHANGELOG.md` at v1.36.1, with 32 sibling repos reachable, the checker reported 86 findings, most of them quotations.

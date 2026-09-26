@@ -212,7 +212,7 @@ Report before editing anything normative. Adoption touches the project file, tem
 
 - Record the declines somewhere durable. A finding that lives only in a gitignored file is invisible to adopters and to sibling projects; an issue is the copy others can see.
 
-## Moved out of Step 0 in v1.48.2
+## Moved out of Step 0 in v1.49.0
 
 The skill keeps the rule; the reasons it gave inline are here, verbatim.
 

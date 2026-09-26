@@ -29,7 +29,7 @@ Moved out of the magnitude gate 2026-09-05. The **rule** (never end a bolded phr
   other form. That asymmetry is why the framework shipped the broken shape for a day while every
   test of it passed.
 - Step 1.5's emphasis check (v1.31.0) reported two backticked `**`-abutting tokens inside one bold
-  span, which is this shape; v1.48.2 added the one-token form (#158). ⚠️ The skill read *"Step 1.5 does not catch it"* until **v1.36.1** —
+  span, which is this shape; v1.49.0 added the one-token form (#158). ⚠️ The skill read *"Step 1.5 does not catch it"* until **v1.36.1** —
   left standing when the check that refuted it shipped in the same release. That sentence is one of
   the three superseded-beside-its-correction instances v1.36.1 exists to fix.
 
@@ -323,7 +323,7 @@ new sections are optional, so a profile that loses them still passes.
 negation writes a profile that is untracked. `git status` stays clean, the local session works,
 and every fresh clone and deploy target gets no profile and a refusal.
 
-### Step 1.5's program comments, moved out of the skill (v1.48.2)
+### Step 1.5's program comments, moved out of the skill (v1.49.0)
 
 The awk program in Step 1.5 carried this reasoning inline, paid on every review. The program keeps a
 one-line rule and the issue numbers; the reasoning is here, verbatim.
@@ -345,7 +345,7 @@ taken, which is what this file is for.
 - The **table** check reached a **39% false-positive rate** before it was anchored. That is why
   the emphasis check was written to report only the shape actually observed to break, rather
   than every shape that could in principle break.
-- **Widened to the one-token form in v1.48.2 (#158), on a measurement rather than an argument.**
+- **Widened to the one-token form in v1.49.0 (#158), on a measurement rather than an argument.**
   Prettier 3.8.1 was run on each candidate shape. It corrupts a code span holding `**` anywhere
   (`src/**`, `**x`, `a**b`) inside a bold run that closes on the line. Single spans with an even
   count (`**x**`, `a**b**c`) sometimes survive, but `src/****` and two `**x**` spans in one run do
@@ -536,7 +536,7 @@ The tier above is set by *path*. Depth is also set by *size* — but size is the
 - **Any non-frontmatter edit to a reference install** (`.claude/skills/**`) — HIGH because a defect there ships to every install derived from it; that is as true of a three-line body edit as of a frontmatter one.
 - **Frontmatter edits to those same files** — removing one `---` silently unregisters a skill.
 
-  *Both bullets used to end a bolded phrase with a `**`-suffixed glob, and prettier corrupts that shape. **The rule worth remembering is the shape** — never end a bolded phrase with such a glob; put the path in a parenthetical, as above. Step 1.5 reports both forms since v1.48.2 (#158) but not a bold phrase that spans two lines, so **the shape is the thing to remember** (#151).*
+  *Both bullets used to end a bolded phrase with a `**`-suffixed glob, and prettier corrupts that shape. **The rule worth remembering is the shape** — never end a bolded phrase with such a glob; put the path in a parenthetical, as above. Step 1.5 reports both forms since v1.49.0 (#158) but not a bold phrase that spans two lines, so **the shape is the thing to remember** (#151).*
 - **A new executable, or any new file in a HIGH path** — the tier for new content has not been decided yet.
 - **Any diff that removes or loosens a check** — a deleted guard, a weakened assertion, a broadened exclusion. Loosenings are characteristically a handful of lines, and this is the class the seeded-true-positives rule exists for.
 
