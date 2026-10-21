@@ -20,3 +20,6 @@
 Thumbs.db
 *.stackdump
 __pycache__/
+
+# Off-repo experiment data: absolute symlink to ~/lab/agent-ready-projects (never tracked)
+/lab
