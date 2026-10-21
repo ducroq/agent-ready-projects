@@ -47,8 +47,48 @@ def strip_heredocs(cmd):
     return ' ; '.join(out)
 
 
+def extract_subs(cmd):
+    """EXP-002: pull $( ), <( ), >( ) and backtick bodies out as separate commands.
+
+    Returns (outer, inners): outer has each body replaced by a placeholder word.
+    Nothing is extracted inside single quotes.
+    """
+    out, inners, i, q = [], [], 0, None
+    while i < len(cmd):
+        ch = cmd[i]
+        if q:
+            out.append(ch)
+            if ch == q:
+                q = None
+            i += 1
+            continue
+        if ch == "'":
+            q = ch; out.append(ch); i += 1
+            continue
+        if ch in '$<>' and cmd[i + 1:i + 2] == '(' and cmd[i + 2:i + 3] != '(':
+            depth, j, sq = 1, i + 2, False
+            while j < len(cmd) and depth:
+                c = cmd[j]
+                if c == "'":
+                    sq = not sq
+                elif not sq and c == '(':
+                    depth += 1
+                elif not sq and c == ')':
+                    depth -= 1
+                j += 1
+            inners.append(cmd[i + 2:j - 1]); out.append(' __SUB__ '); i = j
+            continue
+        if ch == '`':
+            j = cmd.find('`', i + 1)
+            if j > i:
+                inners.append(cmd[i + 1:j]); out.append(' __SUB__ '); i = j + 1
+                continue
+        out.append(ch); i += 1
+    return ''.join(out), inners
+
+
 def tokenize(cmd):
-    lex = shlex.shlex(strip_heredocs(cmd), posix=True, punctuation_chars=';&|<>()')
+    lex = shlex.shlex(cmd, posix=True, punctuation_chars=';&|<>()')
     lex.whitespace_split = True
     return list(lex)
 
@@ -125,18 +165,46 @@ def parse_find_args(args):
     return term, paths or ['.']
 
 
-def bash_events(cmd, cwd):
-    """Return (events, parse_ok). An event is (term or None, abs_path)."""
+SEARCH_CMDS = {'grep', 'egrep', 'fgrep', 'rg', 'find'}
+
+
+def is_candidate(cmd, depth=0):
+    """EXP-002: a call is a candidate when a search command is an unquoted shell word."""
+    outer, inners = extract_subs(strip_heredocs(cmd) if depth == 0 else cmd)
     try:
-        toks = tokenize(cmd)
+        toks = tokenize(outer)
+    except ValueError:
+        return SEARCH_WORD.search(outer) is not None  # cannot tell; count it
+    if any(os.path.basename(t) in SEARCH_CMDS for t in toks):
+        return True
+    for t_i, t in enumerate(toks):  # bash -c '<cmd>' carries its command as one word
+        if t == '-c' and t_i and os.path.basename(toks[t_i - 1]) in ('bash', 'sh', 'zsh') \
+                and t_i + 1 < len(toks) and is_candidate(toks[t_i + 1], depth + 1):
+            return True
+    return any(is_candidate(x, depth + 1) for x in inners)
+
+
+def bash_events(cmd, cwd, depth=0):
+    """Return (events, parse_ok). An event is (term or None, abs_path)."""
+    outer, inners = extract_subs(strip_heredocs(cmd) if depth == 0 else cmd)
+    try:
+        toks = tokenize(outer)
     except ValueError:
         return [], False
-    events, here = [], cwd
+    events, here, ok = [], cwd, True
+    for inner in inners:  # EXP-002: substitutions are searched from the call's directory
+        e, o = bash_events(inner, cwd, depth + 1)
+        events += e; ok = ok and o
     for seg, fed in segments(toks):
         seg = drop_redirects(seg)
-        while seg and (seg[0] in LEAD_SKIP or re.fullmatch(r'\w+=\S*', seg[0])):
-            seg = seg[1:]
+        seg = skip_lead(seg)
         if not seg:
+            continue
+        if os.path.basename(seg[0]) in ('bash', 'sh', 'zsh') and '-c' in seg:  # EXP-002
+            i = seg.index('-c')
+            if i + 1 < len(seg):
+                e, o = bash_events(seg[i + 1], here, depth + 1)
+                events += e; ok = ok and o
             continue
         if seg[0] == 'cd':  # backlog: skip a leading `cd <dir>`; CHOICE: it moves later segments
             here = os.path.normpath(os.path.join(here, seg[1])) if len(seg) > 1 else here
@@ -145,7 +213,7 @@ def bash_events(cmd, cwd):
             i = 1
             while i < len(seg) and seg[i].startswith('-'):
                 i += 2 if seg[i] in ('-I', '-n', '-P', '-d', '-L', '-a') else 1
-            seg, fed = seg[i:], True
+            seg, fed = skip_lead(seg[i:]), True
             if not seg:
                 continue
         base, args = os.path.basename(seg[0]), seg[1:]
@@ -171,7 +239,21 @@ def bash_events(cmd, cwd):
         elif base == 'find':
             term, paths = parse_find_args(args)
             events += [(term, os.path.normpath(os.path.join(here, p))) for p in paths]
-    return events, True
+    return events, ok
+
+
+def skip_lead(seg):
+    """Drop words that lead a segment without being its command (EXP-002 adds timeout, watch)."""
+    while seg:
+        if seg[0] in LEAD_SKIP or re.fullmatch(r'\w+=\S*', seg[0]):
+            seg = seg[1:]
+        elif seg[0] in ('timeout', 'watch'):
+            seg = seg[1:]
+            while seg and (seg[0].startswith('-') or re.fullmatch(r'[\d.]+[smhd]?', seg[0])):
+                seg = seg[2:] if seg[0] in ('-n', '-s', '-k', '--signal') else seg[1:]
+        else:
+            break
+    return seg
 
 
 _root_cache = {}
@@ -199,7 +281,8 @@ def repo_root(cwd):
 def norm_key(term, path, root):
     """Backlog: lowercased, quotes stripped, path relative to the repo root."""
     t = term.strip('\'"').lower()
-    p = path if path == '<stdin>' else os.path.relpath(path, root)
+    # EXP-002: resolve symlinks on both sides, or a symlinked cwd yields ../../ keys
+    p = path if path == '<stdin>' else os.path.relpath(os.path.realpath(path), os.path.realpath(root))
     return t, p
 
 
@@ -245,7 +328,7 @@ def events_from(calls, results):
         root = repo_root(cwd)
         if name == 'Bash':
             cmd = inp.get('command') or ''
-            if not SEARCH_WORD.search(strip_heredocs(cmd)):
+            if not is_candidate(cmd):
                 continue
             raw, ok = bash_events(cmd, cwd or '/')
             if not raw:

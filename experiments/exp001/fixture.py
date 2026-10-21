@@ -76,6 +76,12 @@ def build(fx):
     s['A6'].bash("python3 - <<'EOF'\n# grep foobar here\nEOF")
     # extra control: a leading `cd` moves the path of later segments (single event, no repeat)
     s['B1'].bash('cd src && grep zzcdterm .')
+    # EXP-002 controls: one single event per shape the first parser missed, plus a non-candidate
+    for cmd in ['echo $(grep -c zzsubterm .)', 'diff <(grep zzprocsub a.txt) b.txt',
+                'echo `grep zzbacktick .`', "bash -c 'grep zzbashc .'", 'timeout 30 grep zzto .',
+                'ls | xargs command grep zzxargs', 'for f in a b; do grep zzloop "$f"; done',
+                "sed -n '/grep/p' notes.txt"]:
+        s['B2'].bash(cmd)
     # 7: a subagent repeat of a main-session key
     s['B2'].bash('grep subterm .'); s['B3'].bash('grep b3only .')
     sub = Session('sid-B3', 8, B); sub.minute = 30; sub.bash('grep subterm .', sub=True)
@@ -98,7 +104,7 @@ EXPECT = dict(repeats=5, coverable_repeats=4, covered_repeats=1, uncoverable_rep
 
 
 def main():
-    fx = sys.argv[1]
+    fx = os.path.abspath(sys.argv[1])
     if os.listdir(fx) if os.path.isdir(fx) else False:
         sys.exit(f'{fx} is not empty')
     projects = build(fx)
@@ -120,6 +126,12 @@ def main():
     keys = {tuple(json.loads(l)['key']) for l in open(os.path.join(fx, 'raw.jsonl'))}
     if ('zzcdterm', 'src') not in keys:
         fails.append('cd control: no event keyed (zzcdterm, src)')
+    for k in [('zzsubterm', '.'), ('zzprocsub', 'a.txt'), ('zzbacktick', '.'), ('zzbashc', '.'),
+              ('zzto', '.'), ('zzxargs', '<stdin>'), ('zzloop', '$f')]:
+        if k not in keys:
+            fails.append(f'EXP-002 control: no event keyed {k}')
+    if c.get('bash_candidates_main') != 27:  # 20 frozen-case calls + 7 shapes; the sed call is not one
+        fails.append(f"bash_candidates_main: expected 27, got {c.get('bash_candidates_main')}")
     print('\n'.join(fails) or 'instrument check PASSED: every expected count holds')
     sys.exit(1 if fails else 0)
 
