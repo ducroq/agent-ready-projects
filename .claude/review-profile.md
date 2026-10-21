@@ -106,7 +106,9 @@ Check it in this direction: read each entry below, then find its tier above.
 
 **One round per release. Record each run in `memory/review-ledger.tsv`, with its `spend`.**
 
-⚠️ **The ledger's `tokens` column is final context, not spend** (#222). Every figure in this section was measured in it, including the old ≤250,000-token budget, which no round met in spend. Measured: the 15 reviewers on 2026-09-14 before the round cap (v1.42.0; v1.43.0 has none recorded) spent 9.8M input-token equivalents, ~655k each; the 11 after it (v1.44–45) 5.2M, ~476k each; the 14 on 2026-09-25, after the skills were thinned (v1.46.0–46.1), 2.2M, ~157k each (`memory/hypothesis-log.md` H-020). Read `spend` from the subagent transcript: one usage per `message.id` (a turn spans several lines), cache write ×1.25, cache read ×0.1, output ×5.
+**Cap sample (H-033)**: every fifth capped review in the ledger gets one extra round with a fresh lens. Classify what it finds as `missed` or `introduced`; that is the only measure of what the cap ships.
+
+⚠️ **The ledger's `tokens` column is final context, not spend** (#222). Every figure in this section was measured in it, including the old ≤250,000-token budget, which no round met in spend. Measured: the 15 reviewers on 2026-09-14 before the round cap (v1.42.0; v1.43.0 has none recorded) spent 9.8M input-token equivalents, ~655k each; the 11 after it (v1.44–45) 5.2M, ~476k each; the 14 on 2026-09-25, after the skills were thinned (v1.46.0–46.1), 2.2M, ~157k each (`memory/archive/hypotheses-closed.md` H-020). Read `spend` from the subagent transcript: one usage per `message.id` (a turn spans several lines), cache write ×1.25, cache read ×0.1, output ×5.
 
 ⚠️ **A ROUND, not a run** — `templates/review-changes.md` Step 5 defines a round as one pass of the
 lens set, however many lenses it holds. The first draft of this section said "one lens-run ≤120k"
