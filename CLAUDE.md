@@ -81,6 +81,7 @@ agent-ready-projects/
 │   └── fixtures/              <- Seeded-defect fixtures, one dir per check.
 │                                 reference-integrity/refcheck.py is what adopters run
 │                                 for audit-context Step 4, so a fix there ships to them
+├── experiments/               <- Pre-registered experiments; pins.tsv is the lock
 └── memory/                    <- Session memory (gitignored)
     ├── MEMORY.md              <- Index + current state
     └── project_*.md           <- Topic files

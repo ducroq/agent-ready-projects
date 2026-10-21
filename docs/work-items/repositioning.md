@@ -11,16 +11,17 @@ the maintainer's call.** Nothing here touches an adopter-facing surface yet.
 
 ## Current Status
 
-- [x] Mapped the repo onto the six harness-engineering disciplines (below)
-- [x] Web scan of the landscape, 2026-10-21 (below, with sources)
-- [x] First drafts: problem sentence, proof paragraph, demo outline
-- [x] EXP-001 drafted (`experiments/backlog.md`, H-032): does grep keep re-finding what memory could hold? Awaiting maintainer review of predictions, then pin
-- [x] Decisions taken 2026-10-21 (below): test first, sentence B, cite ETH
-- [x] EXP-002 (2026-10-21): 13.2% of searches repeat an earlier session; 29% of coverable repeats were already in memory. Branch 4 (phase 2 warranted), pending EXP-003 on or after 2026-11-18
-- [ ] EXP-004 (slim trial in R7) pre-registered; switch after EXP-003, then 20 sessions or 6 weeks
-- [ ] Next: build the demo repo from the outline, then write the post around it
-- [ ] Before sentence B goes public: a deeper search for any context checker that tests its own checks
-- [ ] Only after outside uptake: README/GUIDE edits, which are a CHANGELOG-noted release
+Savepoint 2026-10-21. Done: the six-discipline mapping, the landscape scan, the drafts, the
+decisions below, and EXP-001/EXP-002 (13.2% of searches repeat an earlier session; 29% of
+the checkable repeats were already in memory; `experiments/`).
+
+- [ ] **On or after 2026-11-18**: run `experiments/check_pins.sh`, then EXP-003 (same parser, new
+  transcripts). Same decision branch as EXP-002 confirms it.
+- [ ] **Then**: the EXP-004 switch, the slim setup in R7 (the mapping is in H-032), for 20 sessions or
+  6 weeks. The engineer logs one guard line per session there.
+- [ ] **If EXP-004 holds**: draft the slim front door, build the demo, write the post. First, a
+  deeper search for any context checker that tests its own checks (sentence B depends on it).
+- [ ] **Only after outside uptake**: README/GUIDE edits, which are a CHANGELOG-noted release.
 
 ## Where the repo sits
 
@@ -118,7 +119,7 @@ files any harness can read, instead of a single linter or a hosted store.
 ## Open Questions
 
 - `templates/project-file.md` has `## Architecture` and `## Key Paths`: the repository overviews
-  ETH found do not help. Mark them optional, or cut them? Either is a template change, so a release.
+  ETH found do not help, and grep can find. EXP-004 tests a project file without them; decide after it.
 - Where to post: the augmented-engineering site, dev.to, or Hacker News?
 
 ## Outcome
