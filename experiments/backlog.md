@@ -167,3 +167,69 @@ has not seen the data.
 population has at least 100 main sessions; otherwise wait and say so.
 **Agreement**: EXP-003 confirms EXP-002 when it lands in the same decision-rule branch. A
 different branch means EXP-002's result does not stand.
+
+## EXP-004: does the slim version hold up in one real repo?
+
+**Hypothesis**: a slim setup (one-page project file, gotcha log, a few self-checking claims, a
+five-minute end-of-session habit) serves a working repo no worse than the full system.
+**Decision it feeds**: whether to offer the slim version as the framework's front door.
+**Subject**: R7, the repo EXP-002 anonymized under that label, chosen by the maintainer 2026-10-21; its name is kept in the private hypothesis log.
+**Spend**: $0 metered.
+
+### What was seen before freezing
+
+EXP-002's figures for R7: 20 sessions, 2026-09-22 to 2026-10-19;
+M1 11.2%, M2 40.5%, M3 9.9%. Its memory surfaces: a 10,400-byte `CLAUDE.md`, a tracked
+`docs/hypothesis-log.md`, and user-level memory with no git history (so EXP-002's M2 for it
+rests on `CLAUDE.md` alone).
+
+### The switch
+
+- **When**: only after EXP-003's artifact is committed, and no earlier than 2026-11-18. The
+  switch commit in R7 is recorded in H-032 and starts the after-window.
+- **To**: a `CLAUDE.md` of at most 3,000 bytes with three sections (what this is; rules that are
+  not obvious from the code; "when you do X, read Y"), a tracked `docs/gotchas.md`
+  (problem → cause → fix, one entry per lesson), at least 3 claims carrying a verify probe, and
+  the end-of-session habit (what did we learn that search can't find; what came up twice; what
+  is stale).
+- **Old material is moved, not deleted**: the old `CLAUDE.md` to `docs/archive/`, the user-level
+  memory directory out of the auto-load path. Lessons the engineer wants kept go into
+  `docs/gotchas.md` at the switch. Nothing else from the old setup is loaded.
+
+### Windows and control
+
+- **Before**: EXP-002's window for R7 (to the EXP-001 cutoff).
+- **After**: from the switch commit until 20 main sessions in R7, or 6 weeks,
+  whichever comes first.
+- **Control**: every other repo that EXP-002 kept, with their EXP-003 window (cutoff to the EXP-003
+  run) as their before and the same calendar after-window as R7.
+
+### Instrument
+
+EXP-002's runner (`experiments/exp001/parse.py` at `b77b45e`), unchanged, run with the window
+bounds above. Coverage reads R7's tracked files (`CLAUDE.md`, `docs/gotchas.md`) at the
+last commit before each repeat's session, as in EXP-002.
+
+**Guard, logged by the engineer**: at the end of each after-window session in R7, one
+line in `docs/gotchas.md` § Slim trial: whether the agent missed something the old notes would have
+told it (yes/no, and what).
+
+### Metrics
+
+- **D1**: R7's M1 change (after − before) minus the median M1 change of the control repos.
+- **D2**: R7's M2 after, against its 40.5% before.
+- **G**: the number of "yes" lines in the guard log.
+
+### Decision rule
+
+Checked in order; the first branch that matches decides.
+
+1. **Fewer than 10 after-window sessions**: no decision; extend or redesign as a new section.
+2. **G at least 3**: slim fails. The old setup is restored from `docs/archive/`; record what it
+   missed.
+3. **D1 above +3 percentage points**: slim fails on search; restore as above.
+4. **Otherwise**: slim holds. Keep it in R7 and draft the slim front door for the
+   framework. D2 below 40.5% is reported as a sign the new pointers work; it does not decide.
+
+**Known limits**: one repo, one engineer, about 20 sessions. The test can show "clearly worse"
+or "no worse", not "slightly better". The engineer knows which setup is live, so G is not blind.
