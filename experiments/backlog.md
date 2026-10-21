@@ -112,3 +112,58 @@ Checked in order; the first branch that matches decides.
 
 Raw extracts: `lab/experiments/2026-10-21-grep-vs-memory/`. The repo gets one artifact,
 `artifacts/exp001-grep-vs-memory.json`, with aggregates only.
+
+## EXP-002: EXP-001 re-run with a parser that can read the commands
+
+**Hypothesis**: H-032, as for EXP-001.
+**Why**: EXP-001 stopped on decision rule 1 (unparsed 10.65%). Diagnosis, on the unparsed calls
+only: about 1,160 merely *mentioned* `grep` or `find` inside quoted text, so the candidate test
+over-counted; about 970 searched inside `$( )`, `<( )`, backticks or loops; about 100 ran behind
+`bash -c` or `timeout`; 48 failed to tokenize.
+**Spend**: $0 metered.
+
+### Not blind, and what was seen
+
+EXP-001's metrics were seen: M1 12.3%, M2 29.7%, M3 11.5%. While fixing the parser only the
+unparsed share was measured on real data: 67 of 19,080 candidates (0.35%). **No predictions are
+made.** The thresholds in the decision rule were set blind in EXP-001 and are kept unchanged.
+
+### What changes from EXP-001
+
+- **Candidate**: a Bash call whose unquoted shell words include `grep`, `egrep`, `fgrep`, `rg` or
+  `find` (or a path ending in one), in the command, in a `$( )`, `<( )`, `>( )` or backtick body,
+  or in the argument of `bash -c`. Quoted mentions are not candidates. **Unparsed** is a candidate
+  that yields no event, as before.
+- Substitution bodies are parsed as commands run from the call's directory.
+- `bash -c '<cmd>'` is parsed as `<cmd>`; `timeout` and `watch` with their arguments, and
+  `command` after `xargs`, are skipped like other leading words.
+- Paths and repo roots are resolved through symlinks before the relative path is taken.
+
+Everything else is EXP-001's, unchanged: population and cutoff (`2026-10-21T16:08:11+02:00`), key,
+repeat, cost, coverage, metrics and the decision rule, applied in the same order.
+
+### Instrument check
+
+EXP-001's 10 cases with their expected counts, plus single-event controls that must each yield
+their key: `$( )`, `<( )`, backticks, `bash -c`, `timeout`, `xargs command grep`, a `for` loop and
+a leading `cd`; and a quoted mention (`sed -n '/grep/p'`) that must not be a candidate (27
+candidates expected). Each new rule, when removed, must make the check fail. The symlink rule is
+shown by running the check through the `lab` symlink with the fixture's own path fix removed.
+
+**Known gap**: no case seeds a term that matches inside a longer word in memory; whole-token
+matching is implemented but not tested.
+
+### Runner and data
+
+`experiments/exp001/parse.py` at the pinning commit. Artifact:
+`artifacts/exp002-grep-vs-memory.json`. Raw extracts: `lab/experiments/2026-10-21-grep-vs-memory/`.
+
+## EXP-003: blind confirmation on new transcripts
+
+**Hypothesis**: H-032. **Decision it feeds**: whether EXP-002's result survives a parser that
+has not seen the data.
+**Method**: EXP-002's runner at EXP-002's pinning commit, unchanged, on transcripts with mtime
+**after** `2026-10-21T16:08:11+02:00`. Run on or after 2026-11-18, and only once the pooled
+population has at least 100 main sessions; otherwise wait and say so.
+**Agreement**: EXP-003 confirms EXP-002 when it lands in the same decision-rule branch. A
+different branch means EXP-002's result does not stand.

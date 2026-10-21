@@ -16,6 +16,7 @@ the maintainer's call.** Nothing here touches an adopter-facing surface yet.
 - [x] First drafts: problem sentence, proof paragraph, demo outline
 - [x] EXP-001 drafted (`experiments/backlog.md`, H-032): does grep keep re-finding what memory could hold? Awaiting maintainer review of predictions, then pin
 - [x] Decisions taken 2026-10-21 (below): test first, sentence B, cite ETH
+- [x] EXP-002 (2026-10-21): 13.2% of searches repeat an earlier session; 29% of coverable repeats were already in memory. Branch 4 (phase 2 warranted), pending EXP-003 on or after 2026-11-18
 - [ ] Next: build the demo repo from the outline, then write the post around it
 - [ ] Before sentence B goes public: a deeper search for any context checker that tests its own checks
 - [ ] Only after outside uptake: README/GUIDE edits, which are a CHANGELOG-noted release
