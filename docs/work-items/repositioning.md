@@ -15,6 +15,11 @@ Savepoint 2026-10-21. Done: the six-discipline mapping, the landscape scan, the 
 decisions below, and EXP-001/EXP-002 (13.2% of searches repeat an earlier session; 29% of
 the checkable repeats were already in memory; `experiments/`).
 
+- [ ] **Next session, after the pruning**: hand-check 20 covered repeats from EXP-002 (lab folder,
+  memory-maintenance searches excluded). For each: would the note alone have answered the search?
+  Yes / no (it needed locations or every use) / unclear. 72% of covered repeats had the term in the
+  always-loaded `CLAUDE.md`, so "covered" may mostly mean "named", not "answered". If yes is rare,
+  drop the "notes get ignored" claim from the pitch and say why here. Aggregates only.
 - [ ] **On or after 2026-11-18**: run `experiments/check_pins.sh`, then EXP-003 (same parser, new
   transcripts). Same decision branch as EXP-002 confirms it.
 - [ ] **Then**: the EXP-004 switch, the slim setup in R7 (the mapping is in H-032), for 20 sessions or
