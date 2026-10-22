@@ -11,9 +11,11 @@ the maintainer's call.** Nothing here touches an adopter-facing surface yet.
 
 ## Current Status
 
-Savepoint 2026-10-21. Done: the six-discipline mapping, the landscape scan, the drafts, the
-decisions below, and EXP-001/EXP-002 (13.2% of searches repeat an earlier session; 29% of
-the checkable repeats were already in memory; `experiments/`).
+Savepoint 2026-10-22. Done: the six-discipline mapping, the landscape scan, the drafts, the
+decisions below, EXP-001/EXP-002 (13.2% of searches repeat an earlier session; 29% of the
+checkable repeats were already in memory), and EXP-005/006, pinned (#252): five adopters' own
+slim-downs (R1, R2, R3, R5, R6) as subjects, with EXP-004's controls narrowed to the other 11.
+Switch commits are in H-032; R5's is still missing.
 
 - [ ] **Next session, after the pruning**: hand-check 20 covered repeats from EXP-002 (lab folder,
   memory-maintenance searches excluded). For each: would the note alone have answered the search?
@@ -22,30 +24,11 @@ the checkable repeats were already in memory; `experiments/`).
   drop the "notes get ignored" claim from the pitch and say why here. Aggregates only.
 - [ ] **On or after 2026-11-18**: run `experiments/check_pins.sh`, then EXP-003 (same parser, new
   transcripts). Same decision branch as EXP-002 confirms it.
-- [x] **Rescope EXP-004 (decided 2026-10-22; done as EXP-005, pinned).** Five adopters asked to slim the same day
-  (R1, R2, R3, R5, R6; mapping in H-032), each measuring process churn at or
-  above code churn. Each slimmed repo leaves EXP-004's controls. The maintainer chose to make them
-  subjects instead. Each was asked to record its switch commit and to archive its old material
-  rather than delete it. Switch commits are recorded in H-032.
-  Their overlapping asks (a load ceiling, checks over prose, a short project file) wait for its result.
-- [ ] **Open questions from the same feedback, outside EXP-004; decide later**:
-  a frozen/lite profile where not following every release is not drift (all five, in effect);
-  "never hand-maintain a number a script can derive" (R5); curate/audit-context on a trigger,
-  not every session (R5); a meta-vs-code touch ratio as a per-release weight metric
-  (R1); whether ADR-001 should still hold now that harness auto-memory has
-  matured (four of five wanted one index, three of them in auto-memory; R1's two have diverged).
-  The replies sent 2026-10-22 gave facts only and held all policy.
-  Two defects R6 found, both real whatever the profile decision:
-  - curate Step 0 sub-step 6 sums files only, so context injected by a SessionStart hook goes
-    uncounted and the check passes.
-  - audit-context Step 6's reconciled case only covers a *reviewed* decline. A wholesale freeze
-    ("later releases not reviewed") is unnamed, and may be reported as drift.
-  - curate Step 0 counts every non-archive `*.md` under `memory/` against the ~300k line, so moving
-    auto-memory in-repo per ADR-001 tipped R1 into metadata-only mode. ADR-001 and the routing line
-    pull against each other; a carve-out for pointer-indexed files may be wanted.
-  - A slimming pass drops operative clauses that every check passes: R2 lost ~30 with all tests and
-    probes green, and curate Step 0.6's `grep -F` misses paraphrase. A review agent given only the
-    old and new files caught them. If slimming is recommended, that review should be a required step.
+- [ ] **Open policy questions from the 2026-10-22 feedback; decide with EXP-005's result, not before**:
+  a frozen/lite profile where not following every release is not drift; "never hand-maintain a
+  number a script can derive"; curate/audit-context on a trigger, not every session; a
+  meta-vs-code touch ratio per release; whether ADR-001 still holds (four of five wanted one index,
+  three in auto-memory). Replies to adopters gave facts only. Defects found: #253 to #256.
 - [ ] **Then**: the EXP-004 switch, the slim setup in R7 (the mapping is in H-032), for 20 sessions or
   6 weeks. The engineer logs one guard line per session there.
 - [ ] **If EXP-004 holds**: draft the slim front door, build the demo, write the post. First, a
