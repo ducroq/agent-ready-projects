@@ -313,3 +313,52 @@ themselves, being the repos whose owners felt the weight, so a "holds" result ma
 to repos that did not complain. The five slim to different targets, so this tests slimming, not
 one spec. One engineer runs all of them. The guard only sees misses someone fixed by restoring
 text.
+
+## EXP-006: EXP-005 corrected after review
+
+**Why**: EXP-005 was pinned before review, because three subjects had already switched. An
+independent review then found two defects that bias it towards "holds", plus ambiguities that
+would let the result be chosen after the data. No after-window data had been read. This section
+replaces the named parts of EXP-005; everything not named here stands.
+
+### Replaced in EXP-005
+
+- **Session**: a main session with at least one parsed search event (the parser's unit). Every
+  session count in EXP-005 and here means this.
+- **Windows, matched on session count** (the parser's M1 grows with the number of sessions it
+  is given, because a repeat needs an earlier session in the same input):
+  - the after-window runs from the switch commit until 20 sessions, 6 weeks, or the first
+    restoring commit, whichever comes first;
+  - the before-window is the subject's last N sessions before EXP-002's cutoff, where N is the
+    after-window's session count.
+- **Controls**: for each subject, a control's after-window holds its sessions inside that
+  subject's after-window dates. Its before-window is its last sessions before the cutoff, the
+  same number as its after-window. A control with fewer than 5 sessions in the after-window is
+  left out. **If fewer than 3 controls remain, D1(i) is not computed**: the subject is judged on
+  the guard alone, and that is reported. A control "changes its setup" when its project file
+  changes by more than 20% in bytes inside the window, or it records a switch.
+- **Restoring commit**: a commit in the after-window that adds a run of at least 3 consecutive
+  non-blank lines that also appear consecutively in the pre-switch version of a file the switch
+  commit changed or moved. Reworded text and anything restored into memory that has no git
+  history are not seen (a known limit). Further slimming by the owner is not a restoration. "The
+  switch" is the single commit the repo recorded; changes before it count as before.
+- **Guard**: G(i) is the number of restoring commits. **A restoring commit that brings back more
+  than half the switch's removed lines fails the subject outright.** Because the window ends at
+  the first restoring commit, G(i) is 0 or 1. EXP-005's "G(i) at least 3" is replaced by "any
+  restoring commit".
+- **Decision rule, branches 4 and 5**: with branch 2 as it stands, "the median D1 is at most +3"
+  is implied by "at most one fails", so it is dropped. Branch 4 is now: **at most one fails**:
+  slim holds. Branch 5, mixed, is everything else short of a majority.
+- **D2**: dropped. The parser's coverage reads only `CLAUDE.md`, `AGENTS.md`, and a `memory/` with
+  its own git history, so material moved into `docs/` is invisible to it.
+
+### Running it
+
+The parser (`experiments/exp001/parse.py` at `b77b45e`) is unchanged.
+- **Staging**: for each run, build a directory of symlinks to the transcripts whose first
+  timestamp falls in the window, keeping their project subdirectories. Pass that directory as
+  `--projects` and a cutoff later than the window's end.
+- **Repos**: a session belongs to a repo by its calls' `cwd`, so stage every project directory,
+  not only the subject's.
+- **Labels**: the parser renumbers repos on each run. Map its labels back to EXP-002's through
+  the repo paths in the raw output, which stays off-repo.
