@@ -233,3 +233,132 @@ Checked in order; the first branch that matches decides.
 
 **Known limits**: one repo, one engineer, about 20 sessions. The test can show "clearly worse"
 or "no worse", not "slightly better". The engineer knows which setup is live, so G is not blind.
+
+## EXP-005: EXP-004 widened to five adopters that slimmed on their own
+
+**Why**: on 2026-10-22 five repos kept in EXP-002 (R1, R2, R3, R5, R6) independently asked to
+slim their setup, each reporting that process commits matched or outnumbered code commits. Every
+one of them would have been an EXP-004 control. The maintainer chose to make them subjects.
+**Hypothesis**: EXP-004's, tested on these five: a slimmer setup serves a working repo no worse
+than the full system.
+**Decision it feeds**: EXP-004's, plus whether the framework should offer a lighter profile.
+**Spend**: $0 metered.
+**Change to EXP-004**: its control set ("every other repo that EXP-002 kept") is read as EXP-002's
+kept repos minus R7 and these five. Nothing else in EXP-004 changes, and R7 stays its subject.
+
+### What was seen before freezing
+
+EXP-002's figures (window 2026-09-22 to the cutoff `2026-10-21T16:08:11+02:00`):
+
+| Repo | Sessions | M1 | M2 |
+|---|---|---|---|
+| R1 | 35 | 13.9% | 29.8% |
+| R2 | 32 | 13.3% | 22.7% |
+| R3 | 31 | 18.0% | 35.5% |
+| R5 | 21 | 11.6% | 31.0% |
+| R6 | 20 | 13.1% | 15.7% |
+
+Each session's own measurements of its repo's weight were also seen. Each was asked to record
+its switch commit and to move old material to an archive rather than delete it.
+
+### The switch
+
+Each repo slims **to its own plan**, not EXP-004's spec. Each owner decides on their own
+schedule, and no date is imposed. The switch commit is whatever that repo records; it is copied
+into H-032 and starts that repo's after-window. A repo that never switches within 8 weeks of
+this pin is dropped from the subjects. If it never switched, it rejoins EXP-004's controls.
+
+### Windows and control
+
+- **Before**: EXP-002's window for each subject.
+- **After**: from the subject's switch commit until 20 main sessions or 6 weeks, whichever comes
+  first. Sessions between the cutoff and the switch are not read.
+- **Control**: EXP-002's kept repos that are neither R7 nor a subject (R4, R8 to R17), each with
+  EXP-002's window as its before, and as its after the same calendar window as the subject it is
+  compared with. A control repo that changes its setup inside a window is dropped for that
+  comparison, and the drop is reported.
+
+### Instrument
+
+EXP-002's parser (`experiments/exp001/parse.py` at `b77b45e`), unchanged, with coverage as
+EXP-002 defined it. The after-window's lower bound is applied by passing only the transcripts
+of sessions that started after the switch commit; the parser itself is not edited.
+
+**Guard, read from git, so no one has to log it**: one miss is an after-window commit in a
+subject that moves material back out of its archive, or re-adds text the switch removed.
+Count each restoring commit once.
+
+### Metrics
+
+- **D1(i)**: subject i's M1 change (after − before) minus the median M1 change of the controls
+  over the same windows.
+- **G(i)**: the number of restoring commits in subject i's after-window.
+- **D2(i)**: subject i's M2 after, against its before. Reported only.
+
+### Decision rule
+
+Checked in order; the first branch that matches decides.
+
+1. Subjects with fewer than 10 after-window sessions are excluded. **If fewer than 3 subjects
+   remain**: no decision; redesign as a new section.
+2. A subject **fails** if G(i) is at least 3 or D1(i) is above +3 percentage points.
+3. **A majority of the remaining subjects fail**: slim fails; do not offer a lighter profile.
+4. **At most one fails, and the median D1 is at most +3 points**: slim holds; draft the lighter
+   profile and the slim front door, whatever EXP-004 shows.
+5. **Otherwise**: mixed. No profile decision; report which subjects failed and how. EXP-004's
+   result is read alongside.
+
+**Known limits**: not blind, since every owner knows the switch happened. The subjects selected
+themselves, being the repos whose owners felt the weight, so a "holds" result may not transfer
+to repos that did not complain. The five slim to different targets, so this tests slimming, not
+one spec. One engineer runs all of them. The guard only sees misses someone fixed by restoring
+text.
+
+## EXP-006: EXP-005 corrected after review
+
+**Why**: EXP-005 was pinned before review, because three subjects had already switched. An
+independent review then found two defects that bias it towards "holds", plus ambiguities that
+would let the result be chosen after the data. No after-window data had been read. This section
+replaces the named parts of EXP-005; everything not named here stands.
+
+### Replaced in EXP-005
+
+- **Session**: a main session with at least one parsed search event (the parser's unit). Every
+  session count in EXP-005 and here means this.
+- **Windows, matched on session count** (the parser's M1 grows with the number of sessions it
+  is given, because a repeat needs an earlier session in the same input):
+  - the after-window runs from the switch commit until 20 sessions, 6 weeks, or the first
+    restoring commit, whichever comes first;
+  - the before-window is the subject's last N sessions before EXP-002's cutoff, where N is the
+    after-window's session count.
+- **Controls**: for each subject, a control's after-window holds its sessions inside that
+  subject's after-window dates. Its before-window is its last sessions before the cutoff, the
+  same number as its after-window. A control with fewer than 5 sessions in the after-window is
+  left out. **If fewer than 3 controls remain, D1(i) is not computed**: the subject is judged on
+  the guard alone, and that is reported. A control "changes its setup" when its project file
+  changes by more than 20% in bytes inside the window, or it records a switch.
+- **Restoring commit**: a commit in the after-window that adds a run of at least 3 consecutive
+  non-blank lines that also appear consecutively in the pre-switch version of a file the switch
+  commit changed or moved. Reworded text and anything restored into memory that has no git
+  history are not seen (a known limit). Further slimming by the owner is not a restoration. "The
+  switch" is the single commit the repo recorded; changes before it count as before.
+- **Guard**: G(i) is the number of restoring commits. **A restoring commit that brings back more
+  than half the switch's removed lines fails the subject outright.** Because the window ends at
+  the first restoring commit, G(i) is 0 or 1. EXP-005's "G(i) at least 3" is replaced by "any
+  restoring commit".
+- **Decision rule, branches 4 and 5**: with branch 2 as it stands, "the median D1 is at most +3"
+  is implied by "at most one fails", so it is dropped. Branch 4 is now: **at most one fails**:
+  slim holds. Branch 5, mixed, is everything else short of a majority.
+- **D2**: dropped. The parser's coverage reads only `CLAUDE.md`, `AGENTS.md`, and a `memory/` with
+  its own git history, so material moved into `docs/` is invisible to it.
+
+### Running it
+
+The parser (`experiments/exp001/parse.py` at `b77b45e`) is unchanged.
+- **Staging**: for each run, build a directory of symlinks to the transcripts whose first
+  timestamp falls in the window, keeping their project subdirectories. Pass that directory as
+  `--projects` and a cutoff later than the window's end.
+- **Repos**: a session belongs to a repo by its calls' `cwd`, so stage every project directory,
+  not only the subject's.
+- **Labels**: the parser renumbers repos on each run. Map its labels back to EXP-002's through
+  the repo paths in the raw output, which stays off-repo.
