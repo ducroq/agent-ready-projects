@@ -40,6 +40,12 @@ the checkable repeats were already in memory; `experiments/`).
     uncounted and the check passes.
   - audit-context Step 6's reconciled case only covers a *reviewed* decline. A wholesale freeze
     ("later releases not reviewed") is unnamed, and may be reported as drift.
+  - curate Step 0 counts every non-archive `*.md` under `memory/` against the ~300k line, so moving
+    auto-memory in-repo per ADR-001 tipped R1 into metadata-only mode. ADR-001 and the routing line
+    pull against each other; a carve-out for pointer-indexed files may be wanted.
+  - A slimming pass drops operative clauses that every check passes: R2 lost ~30 with all tests and
+    probes green, and curate Step 0.6's `grep -F` misses paraphrase. A review agent given only the
+    old and new files caught them. If slimming is recommended, that review should be a required step.
 - [ ] **Then**: the EXP-004 switch, the slim setup in R7 (the mapping is in H-032), for 20 sessions or
   6 weeks. The engineer logs one guard line per session there.
 - [ ] **If EXP-004 holds**: draft the slim front door, build the demo, write the post. First, a
