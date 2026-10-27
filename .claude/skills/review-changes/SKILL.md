@@ -72,7 +72,7 @@ git -C "$(git rev-parse --show-toplevel)" -c core.quotePath=false \
 
 List the changed files with `git diff --stat "$BASE"...HEAD`, `git diff --stat`, `git diff --cached --stat`, `git diff --summary -M "$BASE"...HEAD` (renames, modes, binaries and submodules are invisible to `--stat`) and `git ls-files --others --exclude-standard` — an untracked file is a changed file and gets a tier.
 
-**Read `.claude/review-profile.md` now.** It holds this project's risk tiers, guarantee surfaces, test baseline and carve-outs, plus three optional, additive sections: **Project lenses** and **Project additions to the shipped lens prompts** (used in Step 2), and **Project procedure kept with the profile** (run it here). A profile without them (written before v1.43.0) is not an error.
+**Read `.claude/review-profile.md` now.** It holds this project's risk tiers, guarantee surfaces, test baseline and carve-outs, plus four optional, additive sections: **Project lenses**, **Project additions to the shipped lens prompts** and **Reviewer model** (used in Step 2), and **Project procedure kept with the profile** (run it here). A profile without them is not an error.
 
 **If `.claude/review-profile.md` does not exist, STOP and say so** — do not proceed on defaults or invent a table, since every path would fall through to LOW. Point the reader at `templates/review-profile.md` in the framework.
 
@@ -117,7 +117,7 @@ When the line count and your read of the change disagree, the line count is wron
 |---------------|-------|
 | **< 20** | One adversarial pass |
 | **20–200** | Path tier as above |
-| **> 200** | Full battery, whichever tier the paths fall in |
+| **> 200** | Full battery, whichever tier the paths fall in — **unless no file is MEDIUM, HIGH or Unclassified and no carve-out applies**: then one adversarial pass |
 
 Run the single pass in a **fresh context** (a subagent, or a pass that re-reads the diff from scratch), never in the context that wrote the change. If only LOW files changed and the gate does not escalate, run Step 1.5, one adversarial pass, then Step 3. Where gate and tier disagree, the gate wins.
 
@@ -246,7 +246,7 @@ If it is zero while Step 1 listed markdown files, the pipeline is broken, not th
 
 ## Step 2 — Execute review lenses
 
-For each lens, spawn a subagent with the prompt below; run lenses concurrently. Also run the profile's `Project lenses`, and append its `Project additions to the shipped lens prompts` to the matching prompts.
+For each lens, spawn a subagent with the prompt below; run lenses concurrently. Also run the profile's `Project lenses`, and append its `Project additions to the shipped lens prompts` to the matching prompts. Run each lens, the single pass included, on the model the profile's `Reviewer model` names for it, else its `default`, else the session's.
 
 **Every path with a guarantee must sit in the profile's HIGH row**, or the HIGH-only lens never fires on it. Check each guarantee entry's tier.
 

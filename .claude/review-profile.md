@@ -61,7 +61,7 @@ reviewed — one adversarial lens — and it is still the file the tier table it
 fall in". For this repo, the HIGH row above IS the battery** — one adversarial lens, plus the guarantee
 lens where a guarantee surface is touched. A >200-line diff does not reinstate three lenses; if it did, the
 profile and the gate would prescribe different depths for the same change and nothing would say which wins.
-**Magnitude still escalates a LOW or MEDIUM diff up to that set** — the gate's job, unchanged.
+**Magnitude still escalates a MEDIUM diff up to that set**; an all-LOW diff stays at one pass at any size (v1.50.0).
 
 `**` crosses directory levels; a leading `/` anchors to the repo root. **The most specific
 matching pattern wins** — `templates/checklists/foo.md` is MEDIUM, not HIGH, even though
