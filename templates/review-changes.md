@@ -146,7 +146,8 @@ Runs at **every tier and every magnitude**, before any lens, on every changed ma
 cd "$(git rev-parse --show-toplevel)"   # git prints root-relative paths; from a subdirectory nothing matches
 CHECK=~/repos/agent-ready-projects/scripts/md-structure-check.sh   # this framework's clone
 # No clone, or one older than the script: fetch it; never hand-write a checker.
-[ -f "$CHECK" ] || { t=$(mktemp) && curl -fsSL https://raw.githubusercontent.com/ducroq/agent-ready-projects/master/scripts/md-structure-check.sh -o "$t" && CHECK=$t; }
+# The tail check matters: an empty or cut-off 200 response would run, report nothing, and exit 0.
+[ -f "$CHECK" ] || { _mc=$(mktemp) && curl -m 10 -fsSL https://raw.githubusercontent.com/ducroq/agent-ready-projects/master/scripts/md-structure-check.sh -o "$_mc" && tail -n 1 "$_mc" | grep -q 'hits" -eq 0' && CHECK=$_mc; }
 { git -c core.quotePath=false diff --name-only
   git -c core.quotePath=false diff --cached --name-only
   git -c core.quotePath=false diff --name-only "$BASE"...HEAD 2>/dev/null
