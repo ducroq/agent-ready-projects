@@ -71,40 +71,14 @@ Run every check and report the results. **Do not continue past a failure** — s
 git status --porcelain
 git rev-parse --abbrev-ref HEAD
 
-# Tag free? Anchor to refs/tags — a bare `git rev-parse vX.Y.Z` also matches
-# a *branch* named vX.Y.Z and would block a legitimate release.
-# ⚠️ THE VERDICT IS THE EXIT STATUS, never the word. `cmd && echo STOP || echo free`
-# exits 0 on BOTH branches, so anything scoring it reads PASS while it prints STOP.
-# This file printed that shape until v1.43.0 — defensible while only a human read
-# it, and still the framework printing the idiom `curate` Step 0.3 forbids (#136).
-# Braced, never bare: a skill's ARGUMENTS are substituted into its BODY, so a
-# bare \$1 here ships as the first argument word (#77). Lint rule 9 catches it —
-# including in THIS comment, whose first draft warned about the token by writing
-# it, which is the same trap one level up.
-tagfree() {
-  # Empty or missing arg was a FALSE PASS: `tagfree` with no argument printed
-  # "tag  free, local and remote" and exited 0, having checked nothing, with a
-  # double space as the only tell. Reachable whenever $VERSION did not survive
-  # into this shell.
-  t=${1:-}
-  [ -n "$t" ] || { echo "CANNOT VERIFY: no tag given"; return 2; }
-  if git rev-parse --verify --quiet "refs/tags/$t" >/dev/null; then
-    echo "LOCAL TAG $t EXISTS — STOP"; return 1
-  fi
-  lsr=$(git ls-remote --tags origin "refs/tags/$t" 2>/dev/null) || {
-    echo "CANNOT VERIFY $t on the remote — ls-remote failed (offline? no origin?)"
-    return 2
-  }
-  if [ -n "$lsr" ]; then
-    echo "REMOTE TAG $t EXISTS — STOP"; return 1
-  fi
-  echo "tag $t free, local and remote"
-}
-# ⚠️ GUARDED. Under `set -e` a bare `tagfree vX.Y.Z` kills the shell on both the
-# 1 and the 2 branch, so the status line never prints and the remaining
-# preconditions are skipped — the 1-vs-2 distinction this rewrite exists to
-# create, invisible in exactly the regime the framework recommends running in.
-if tagfree vX.Y.Z; then rc=0; else rc=$?; fi
+# Tag free, locally and on the remote? scripts/tagfree.sh, from this framework's
+# clone. THE VERDICT IS THE EXIT STATUS, never the word, so call it guarded:
+# under `set -e` a bare call kills the shell before the status line prints.
+TF=~/repos/agent-ready-projects/scripts/tagfree.sh   # this framework's clone
+# No clone, or one older than the script: fetch it; never hand-write the check.
+# The tail check matters: an empty or cut-off 200 response would run and exit 0.
+[ -f "$TF" ] || { _tf=$(mktemp) && curl -m 10 -fsSL https://raw.githubusercontent.com/ducroq/agent-ready-projects/master/scripts/tagfree.sh -o "$_tf" && tail -n 1 "$_tf" | grep -q 'free, local and remote' && TF=$_tf; }
+if [ -f "$TF" ] && bash "$TF" vX.Y.Z; then rc=0; else rc=$?; [ -f "$TF" ] || { echo "CANNOT VERIFY: no tagfree.sh"; rc=2; }; fi
 echo "  exit=$rc   # 0 free, 1 taken, 2 COULD NOT BE DECIDED"
 # ⚠️ 2 IS NOT A PASS HERE. Elsewhere this framework treats CANNOT VERIFY as a
 # third outcome rather than a failure; for THIS precondition it means the remote
