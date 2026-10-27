@@ -3,7 +3,7 @@
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and every raise is
 # recorded below, oldest first — notes accumulate and are never replaced.
-# BUDGET 172247
+# BUDGET 171177
 # SPILL 180278
 # RAISED 2026-09-06 from 247526 to 247969: #133: the #118 remedy string shipped unconditional and can turn a resolved reference into an AMBIGUOUS finding; the caveat that scopes it is +443 b on templates/audit-context.md, seeded as T39/T40/N39 (reason restored 2026-09-06 — write_baseline used to overwrite each note with the next)
 # RAISED 2026-09-06 from 247969 to 248237: #140: UNRESOLVED had two causes printing one reason. +268 b on templates/audit-context.md, seeded as T41/T41b/N40 (reason restored 2026-09-06)
@@ -98,6 +98,7 @@
 # RAISED 2026-10-27 from 178195 to 178787: review-changes: all-LOW diffs stay at one pass at any size; optional Reviewer model in the profile (+592)
 # ratcheted down 2026-10-27 from 178787 to 174256, while docs/rationale/ grew 179705 -> 180156 (+451): part of this payment MOVED (#131, #157)
 # ratcheted down 2026-10-27 from 174256 to 172247, while docs/rationale/ grew 180156 -> 180278 (+122): part of this payment MOVED (#131, #157)
+# ratcheted down 2026-10-27 from 172247 to 171177: release Step 3's tagfree function moved to scripts/tagfree.sh
 templates/adr.md	2115
 templates/audit-context.md	17637
 templates/checklists/architect-checklist.md	1263
@@ -112,7 +113,7 @@ templates/hypothesis-log.md	3570
 templates/memory-index.md	3396
 templates/project-file.md	6695
 templates/README.md	12042
-templates/release.md	15898
+templates/release.md	14828
 templates/review-agent.md	5720
 templates/review-changes.md	22074
 templates/review-profile.md	6222
