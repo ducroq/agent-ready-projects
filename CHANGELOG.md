@@ -22,13 +22,14 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.50.0 (candidate, unreleased)
+## v1.50.0 (2026-10-27)
 
-**Bump provisional**: classify it from the diff at release, per `templates/release.md` Step 2.
+**MINOR.** `review-changes` no longer runs the full battery on a large diff that touches only LOW files, and the review profile gains an optional `Reviewer model` section. No existing consumer has to act, so rule 1 of `templates/release.md` Step 2 does not fire. Both are new behaviour, so this is MINOR, as v1.43.0 was when it added optional profile sections. Adopter-facing size: +592 bytes: the gate row and the Step 2 sentence (+240), and the new profile section (+352).
 
-**`review-changes`: a large docs-only diff no longer gets the full battery.** The magnitude gate sent every diff over 200 lines to the full battery, whichever tier its paths fell in. In one adopter that meant four lenses and ~230k subagent tokens spent on 278 lines of research notes. A diff whose files are all LOW now gets one adversarial pass at any size. A carve-out, or a single MEDIUM, HIGH or Unclassified file, removes the exemption.
+**Consumers.** No action required. A profile without `Reviewer model` works unchanged, and lenses run on the session's model, as before. An adapted `review-changes` takes the change by three marker strings. In the magnitude gate's `> 200` row: `unless no file is MEDIUM, HIGH or Unclassified and no carve-out applies`. In Step 2: `Reviewer model`. In Step 1: `four optional, additive sections`.
 
-**`templates/review-profile.md` gains an optional `Reviewer model` section**, and Step 2 runs each lens on the model it names. With no entry, lenses run on the session's model, as before. The framework's one comparison could not tell a mid-tier model from the strongest one apart, and the section says so.
+- **`review-changes` magnitude gate (`templates/review-changes.md`, `.claude/skills/review-changes/SKILL.md`).** Every diff over 200 lines got the full battery, whichever tier its paths fell in. In one adopter, 278 lines of research notes cost four lenses and ~230k subagent tokens. A diff with no MEDIUM, HIGH or Unclassified file now gets one adversarial pass at any size, unless a carve-out applies. ⚠️ **What it gives up:** the size rule was the only backstop for a profile that tiers normative files as LOW. Keep LOW for files where a defect costs a re-read.
+- **`Reviewer model` (`templates/review-profile.md`; read in `review-changes` Step 1 and Step 2).** This optional section sets a model per lens, keyed by lens name, with a `default` entry. Step 2 runs each lens, the single pass included, on the model named for that lens, else on `default`, else on the session's model. The framework's one comparison could not tell a mid-tier model from the strongest one apart, because both caught every seeded defect. The section says so.
 
 ## v1.49.2 (2026-09-26)
 
