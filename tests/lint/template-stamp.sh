@@ -5,6 +5,8 @@
 # this exact class in prose and not prevented it.
 #
 # Population: every templates/*.md line `framework: agent-ready-projects vX.Y.Z`.
+# Checks 1 and 2 also cover the `**Version X.Y.Z**` line of README.md and
+# docs/GUIDE.md when one exists (#246); check 3 does not.
 # Three checks, by which state the repo is in:
 #   1. Top CHANGELOG.md block DATED (a release commit): every stamp equals its
 #      version. Needs no tags, so it runs in CI. This is the commit a tag points
@@ -20,8 +22,8 @@
 # Exit 0 clean, 1 findings, 2 cannot run, 3 SKIPPED.
 #
 # ⚠️ What it cannot see: a tag older than the highest reachable one (v1.41.0 is
-# permanently wrong and no longer checked), a stamp in any other shape, and a
-# template that carries no stamp at all.
+# permanently wrong and no longer checked), a stamp in any other shape, a
+# template that carries no stamp at all, and a version line a tag shipped stale.
 set -u
 root="${1:?usage: template-stamp.sh <repo-root>}"
 cd "$root" || exit 2
@@ -61,6 +63,18 @@ if [ -n "$want" ]; then
   for f in $files; do
     s=$(stamp_of < "$f")
     [ "$s" = "$want" ] || { echo "$f: stamped $s, but the $ran says $want (templates/release.md Step 5)"; bad=1; }
+  done
+  # #246: the README and GUIDE version lines sat at 1.46.0 through five releases.
+  for b in README.md docs/GUIDE.md; do
+    [ -f "$b" ] || continue
+    # The header only: a fenced example further down must not be judged instead.
+    h=$(head -n 10 "$b")
+    s=$(printf '%s\n' "$h" | grep -m1 -oE '^\*\*Version [0-9]+\.[0-9]+\.[0-9]+\*\*' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+    if [ -z "$s" ]; then
+      printf '%s\n' "$h" | grep -qiE 'version' || continue
+      echo "$b: a version line in its first 10 lines is not in the '**Version X.Y.Z**' shape, so it was not checked (#246)"; bad=1; continue
+    fi
+    [ "v$s" = "$want" ] || { echo "$b: version line says $s, but the $ran says $want (#246)"; bad=1; }
   done
 fi
 

@@ -65,6 +65,30 @@ repo "$WORK/t4" '## v1.2.0 (2026-01-01)' v1.2.0; g "$WORK/t4" tag v1.2.0
 stamp "$WORK/t4" '## v1.2.1 (candidate, unreleased)' v1.4.0
 want_fail "T4 candidate block, stamps ahead of the tag" "$WORK/t4" "stamped v1.4.0"
 
+# B1 — #246: dated block and stamps agree, the README version line does not.
+repo "$WORK/b1" '## v1.2.0 (2026-01-01)' v1.2.0; g "$WORK/b1" tag v1.2.0
+printf '# X\n\n**Version 1.1.0** | [Changelog](CHANGELOG.md)\n' > "$WORK/b1/README.md"
+stamp "$WORK/b1" '## v1.3.0 (2026-02-01)' v1.3.0
+want_fail "B1 dated block, README version line not bumped" "$WORK/b1" "README.md: version line says 1.1.0"
+
+# B0 — the same with the line bumped: no false positive.
+repo "$WORK/b0" '## v1.2.0 (2026-01-01)' v1.2.0; g "$WORK/b0" tag v1.2.0
+printf '# X\n\n**Version 1.3.0** | [Changelog](CHANGELOG.md)\n' > "$WORK/b0/README.md"
+stamp "$WORK/b0" '## v1.3.0 (2026-02-01)' v1.3.0
+want_clean "B0 dated block, README version line bumped" "$WORK/b0"
+
+# G1 — the same for docs/GUIDE.md.
+repo "$WORK/g1" '## v1.2.0 (2026-01-01)' v1.2.0; g "$WORK/g1" tag v1.2.0
+mkdir -p "$WORK/g1/docs"; printf '# G\n\n**Version 1.1.0** | [Changelog](../CHANGELOG.md)\n' > "$WORK/g1/docs/GUIDE.md"
+stamp "$WORK/g1" '## v1.3.0 (2026-02-01)' v1.3.0
+want_fail "G1 dated block, GUIDE version line not bumped" "$WORK/g1" "docs/GUIDE.md: version line says 1.1.0"
+
+# U1 — a version line in another shape is a finding, not a silent skip.
+repo "$WORK/u1" '## v1.2.0 (2026-01-01)' v1.2.0; g "$WORK/u1" tag v1.2.0
+printf '# X\n\n**Version v1.1.0** | [Changelog](CHANGELOG.md)\n' > "$WORK/u1/README.md"
+stamp "$WORK/u1" '## v1.3.0 (2026-02-01)' v1.3.0
+want_fail "U1 version line in an unrecognised shape" "$WORK/u1" "not in the"
+
 # S1 — candidate block and no tags: nothing can be checked, and it says so.
 repo "$WORK/s1" '## v1.2.1 (candidate, unreleased)' v1.2.0
 want_rc "S1 candidate block with no tags exits 3 (SKIPPED), never 0" "$WORK/s1" 3
@@ -83,7 +107,7 @@ old, new = os.environ["OLD"], os.environ["NEW"]
 if s.count(old) != 1: sys.exit("site occurs %d times, not once" % s.count(old))
 pathlib.Path(sys.argv[2]).write_text(s.replace(old, new))
 ' "$RULE" "$mut" || { printf '  FAIL  ablation %s could not be applied\n' "$label"; FAIL=1; return; }
-  for c in t1 t2 t3 t4; do
+  for c in t1 t2 t3 t4 b1 g1 u1; do
     run "$WORK/$c" "$mut"
     [ "$RC" -eq 0 ] && got="$got,$c"
   done
@@ -94,6 +118,7 @@ pathlib.Path(sys.argv[2]).write_text(s.replace(old, new))
 ablate "A1 a dated block is treated as a candidate" '  *) want="$topv"; ran="dated block $topv" ;;' '  *) want="" ;;' "t1"
 ablate "A2 never read the tag's own templates"      's=$(git show "$tag:$f" 2>/dev/null | stamp_of) || continue' 's=$tag' "t2"
 ablate "A3 never compare with the highest tag"      '  want="$tag"; ran="highest reachable tag $tag"' '  ran="highest reachable tag $tag"' "t3,t4"
+ablate "A4 never read the version lines"          '    [ -f "$b" ] || continue' '    continue' "b1,g1,u1"
 
 echo
 [ "$FAIL" -eq 0 ] && { echo "All seeded cases behaved correctly."; exit 0; }
