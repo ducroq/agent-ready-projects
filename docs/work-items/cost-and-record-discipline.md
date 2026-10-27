@@ -20,7 +20,7 @@ Goal: make the framework cheaper to run without cutting review of the shipped su
 - **Next action** (savepoint 2026-10-27; the engineer asked for pruning):
   1. **Prune.** Run `/audit-context` (last run 2026-09-26), then retire, archive, mechanize and thin. Rank cuts by bytes × load frequency. Measured 2026-10-27, in bytes:
      - **Skill bodies, paid by adopters on every invocation**: `review-changes` 26.6k, `curate` 25.9k, `audit-context` 17.6k, `release` 15.9k, `update-drift` 15.7k.
-     - **The `curate` read surface here**: `memory/gotcha-log.md` 65k (56 entries), and `memory/hypothesis-log.md` 53k, with 20 open entries against a clutter line of ~10. H-023 is past its review date (2026-10-14).
+     - **The `curate` read surface here**: `memory/gotcha-log.md` 65k (56 entries), and `memory/hypothesis-log.md` 53k, with 19 open entries against a clutter line of ~10; H-023 archived as dormant 2026-10-27, and no other entry is past its review date.
      - **`CLAUDE.md`**: 14.7k chars, at curate's 15k flag.
      - **Moves that work**: archive resolved gotchas and dormant hypotheses, de-duplicate against an authority, and turn prose guards into lint rules (rule 21 now checks README/GUIDE version lines, #246). Tightening prose does not work.
   2. **Infra's estate cost practices, received 2026-10-27**: budget visibility, session discipline, model routing, spend estimation. They are input only. Decide what, if anything, becomes framework guidance. Candidates: the probe-first API cost estimate, and "don't trust a tool's own meter".

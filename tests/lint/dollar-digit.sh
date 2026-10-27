@@ -13,7 +13,7 @@
 #     $@        $@          no
 #     \$0       $0          no — escaped
 #
-# `templates/curate.md` and `templates/review-changes.md` embed awk programs in
+# `templates/curate.md` embeds awk programs (as review-changes Step 1.5 did through v1.50.0) in
 # which `$0` is the whole-line variable. Delivered, a bare `$0` becomes a
 # constant: review-changes' Step 1.5 then examines nothing and prints exactly
 # what a clean run prints, and curate's verify runner EXECUTES what it extracts,

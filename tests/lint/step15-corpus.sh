@@ -39,7 +39,7 @@ root="${1:-}"
 [ -n "$root" ] && [ -d "$root" ] || { echo "usage: step15-corpus.sh <repo-root>" >&2; exit 2; }
 cd "$root" || exit 2
 
-TPL="templates/review-changes.md"
+TPL="scripts/md-structure-check.sh"
 [ -f "$TPL" ] || { echo "rule 14: $TPL absent — nothing to extract" >&2; exit 2; }
 
 WORK="$(mktemp -d)" || exit 2
