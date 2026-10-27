@@ -22,6 +22,14 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.50.0 (candidate, unreleased)
+
+**Bump provisional**: classify it from the diff at release, per `templates/release.md` Step 2.
+
+**`review-changes`: a large docs-only diff no longer gets the full battery.** The magnitude gate sent every diff over 200 lines to the full battery, whichever tier its paths fell in. In one adopter that meant four lenses and ~230k subagent tokens spent on 278 lines of research notes. A diff whose files are all LOW now gets one adversarial pass at any size. A carve-out, or a single MEDIUM, HIGH or Unclassified file, removes the exemption.
+
+**`templates/review-profile.md` gains an optional `Reviewer model` section**, and Step 2 runs each lens on the model it names. With no entry, lenses run on the session's model, as before. The framework's one comparison could not tell a mid-tier model from the strongest one apart, and the section says so.
+
 ## v1.49.2 (2026-09-26)
 
 **PATCH.** A refinement of an existing step only; nothing new to adopt, so the third row of `templates/release.md`

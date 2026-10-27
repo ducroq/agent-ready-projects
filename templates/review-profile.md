@@ -102,6 +102,16 @@ than forking it into a project lens.
 
 - **adversarial**: *what to attack here that the generic prompt would not know to*
 
+## Reviewer model
+
+Optional: a model per lens, keyed by lens name, where your tool allows it.
+
+- **default**: *e.g. a mid-tier model*
+- **shell-correctness**: *e.g. your strongest model*
+
+⚠️ The framework's one comparison could not separate the two models: both caught every seeded
+defect. Cheaper is a cost choice, not evidence of equal quality.
+
 ## Project procedure kept with the profile
 
 Some of a project's half is **procedure, not data** — a local extractor, an extra parse check.
