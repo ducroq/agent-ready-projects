@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Extract review-changes Step 1.5's awk program from the template.
 
-Usage: extract-step15.py <templates/review-changes.md> <out.awk>
+Usage: extract-step15.py <scripts/md-structure-check.sh> <out.awk>
+
+The program lived in templates/review-changes.md Step 1.5 through v1.50.0 and
+moved, byte-identical, to the script; the anchors did not change.
 
 THE AUTHORITY for this extraction. Two callers need the shipped program — the
 seeded fixture (tests/fixtures/step15-tables/run.sh) and the corpus rule

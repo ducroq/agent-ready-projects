@@ -556,6 +556,8 @@ If no files changed, report "nothing to review" and stop — but only after `$BA
 
 ### Step 1.5
 
+The program moved out of the skill into `scripts/md-structure-check.sh` on 2026-10-27, byte-identical; the skill now pipes its file list to the script. The record held about a dozen issues against the embedded copy (#77 and #105 among them, both caused by its living in a skill body) and no catch from a live review, while lint rule 14 running the same program caught two real defects. Its false positives and blind spots are in the script's header.
+
 Runs at **every tier and every magnitude**, before any lens, on every changed markdown file — the single-adversarial-pass gate above trims lenses, not this. It is deterministic, so it costs nothing to run and does not need a model to evaluate, which is the reason it is a step rather than a lens.
 
 The lenses below all read *content*: does this path exist, is this flag right, what would a future session do wrong. None of them asks whether the file is still **valid markdown** after the edit. That gap matters disproportionately here, because the memory layer is predominantly wide tables — inventories, index files, machine lists — where a row is one very long line. A `|` added inside a cell (a regex like `'recordfail|initrdfail'`, an `||` in a shell fragment, an alternation in a note) pushes cells past the end of the table, and **GFM drops the excess silently**. It reads fine as prose in the diff and is wrong only when rendered, so a human reviewer and an adversarial lens both pass it.

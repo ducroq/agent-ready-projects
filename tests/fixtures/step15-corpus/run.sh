@@ -31,7 +31,7 @@ SEEDED="$WORK/seeded-exemptions"
 printf 'CHANGELOG.md\tSee **the `src/**`\ttwo backticked tokens abutting\tfixture seed\n' > "$SEEDED"
 
 # build <dir> [--no-exempt-line] [--no-md]
-# A minimal repo carrying only what rule 14 reads: the template it extracts from,
+# A minimal repo carrying only what rule 14 reads: the script it extracts from,
 # the extractor, a gitignored memory/, and clean markdown.
 build() {
   local d="$1"; shift
@@ -39,15 +39,15 @@ build() {
   for a in "$@"; do
     case $a in (--no-exempt-line) want_exempt=0 ;; (--no-md) want_md=0 ;; esac
   done
-  mkdir -p "$d/templates" "$d/tests/lint" "$d/memory"
-  cp "$ROOT/templates/review-changes.md" "$d/templates/review-changes.md"
+  mkdir -p "$d/scripts" "$d/tests/lint" "$d/memory"
+  cp "$ROOT/scripts/md-structure-check.sh" "$d/scripts/md-structure-check.sh"
   cp "$ROOT/tests/lint/extract-step15.py" "$d/tests/lint/extract-step15.py"
   printf '/memory/\n' > "$d/.gitignore"
   if [ "$want_md" -eq 1 ]; then
     printf '# Doc\n\n| a | b |\n|---|---|\n| 1 | 2 |\n' > "$d/doc.md"
     printf '# Memory\n\n| a | b |\n|---|---|\n| 1 | 2 |\n' > "$d/memory/MEMORY.md"
   else
-    rm -f "$d/templates/review-changes.md"   # no template => extraction cannot run
+    rm -f "$d/scripts/md-structure-check.sh"   # no script => extraction cannot run
   fi
   if [ "$want_exempt" -eq 1 ]; then
     { echo "# Changelog"; echo; printf '%s\n' "$EXEMPT_LINE"; } > "$d/CHANGELOG.md"
@@ -141,7 +141,7 @@ want_fail "T4 an exemption matching nothing is reported STALE" "$WORK/t4" "STALE
 
 # T5 — a broken instrument must not read as clean. Mangle the extraction anchor.
 build "$WORK/t5"
-python3 - "$WORK/t5/templates/review-changes.md" <<'PY'
+python3 - "$WORK/t5/scripts/md-structure-check.sh" <<'PY'
 import sys, pathlib
 p = pathlib.Path(sys.argv[1]); s = p.read_text()
 p.write_text(s.replace('  awk -v F="$f" \'', '  awk -v ZZZ="$f" \'', 1))
@@ -150,7 +150,7 @@ want_rc "T5 extraction failure exits 2, never 0" "$WORK/t5" 2
 
 # T6 — an empty population is not a clean one.
 build "$WORK/t6" --no-md
-want_rc "T6 absent template exits 2, never 0" "$WORK/t6" 2
+want_rc "T6 absent script exits 2, never 0" "$WORK/t6" 2
 
 # T7 — the CARDINALITY bound. The same substring on two lines, both producing the
 # exempted shape: one exemption covering two findings is covering something nobody

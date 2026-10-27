@@ -127,100 +127,21 @@ If no files changed, report "nothing to review" and stop — unless the block pr
 
 ## Step 1.5 — Structural pre-check
 
-Runs at **every tier and every magnitude**, before any lens, on every changed markdown file. It catches markdown that reads fine in the diff but renders wrong — chiefly a `|` in a table cell, whose excess cells GFM drops silently.
+Runs at **every tier and every magnitude**, before any lens, on every changed markdown file. It catches markdown that reads fine in the diff but renders wrong — chiefly a `|` in a table cell, whose excess cells GFM drops silently. **Run the checker; do not re-derive it:**
 
 ```bash
   : "${BASE:?run the Step 1 baseline block in THIS shell invocation — a fresh shell does not inherit it}"
+cd "$(git rev-parse --show-toplevel)"   # git prints root-relative paths; from a subdirectory nothing matches
+CHECK=~/repos/agent-ready-projects/scripts/md-structure-check.sh   # this framework's clone
+# No clone, or one older than the script: fetch it; never hand-write a checker.
+[ -f "$CHECK" ] || { t=$(mktemp) && curl -fsSL https://raw.githubusercontent.com/ducroq/agent-ready-projects/master/scripts/md-structure-check.sh -o "$t" && CHECK=$t; }
 { git -c core.quotePath=false diff --name-only
   git -c core.quotePath=false diff --cached --name-only
   git -c core.quotePath=false diff --name-only "$BASE"...HEAD 2>/dev/null
-  git -c core.quotePath=false ls-files --others --exclude-standard; } |
-  sort -u | grep '\.md$' | while IFS= read -r f; do
-  [ -f "$f" ] || continue
-  awk -v F="$f" '
-    function cells(s,   t, n) {
-      t = s; gsub(/\\\|/, "", t)
-      sub(/^[ \t]+/, "", t); sub(/[ \t]+$/, "", t)
-      sub(/^\|/, "", t); sub(/\|$/, "", t)
-      n = gsub(/\|/, "|", t); return n + 1
-    }
-    function isdelim(s,   t) {
-      t = s; gsub(/\\\|/, "", t); gsub(/[ \t]/, "", t)
-      return (t ~ /-/ && t ~ /^[|:-]+$/)
-    }
-    # `$(0)`, never `\$0` (#77). BOM stripped by an octal sub, not `\x` (#151, #164).
-    { if (NR == 1) sub(/^\357\273\277/, "")
-      sub(/\r$/, "") }              # CRLF first, or isdelim() never matches (#52)
-    # Frontmatter: line 1 arms the skip, the first non-blank line decides (#52, #151,
-    # #163). `\047` is an apostrophe; a literal one ends the shell string (#105).
-    NR == 1 && $(0) ~ /^---[ \t]*$/ { fmpend = 1; next }
-    fmpend && $(0) ~ /^([ \t]*|[ \t]*#.*)$/ { next }
-    fmpend { fmpend = 0
-             if ($(0) ~ /^["\047]?[A-Za-z_][A-Za-z0-9_.-]*["\047]?[ \t]*:/) { infm = 1; next } }
-    infm && $(0) ~ /^(---|\.\.\.)[ \t]*$/ { infm = 0; prev = ""; next }
-    infm { next }
-    {
-      # Do not widen the 3-space strip (#150). A substr loop: mawk mis-strips a regex.
-      bare = $(0); for (k = 0; k < 3 && substr(bare, 1, 1) == " "; k++) bare = substr(bare, 2)
-      if (bare ~ /^```/ || bare ~ /^~~~/) {
-        c = substr(bare, 1, 1); n = 0
-        while (substr(bare, n + 1, 1) == c) n++
-        if (fch == "") { if (n >= 3) { fch = c; flen = n } }
-        else if (c == fch && n >= flen) fch = ""
-        intbl = 0; prev = ""; next
-      }
-      if (fch != "") next
-      # Emphasis (#50, #158): TWO risky spans in one bold run, or ONE in a run closed
-      # on the line. Spans close on an equal backtick run, as in CommonMark (#159).
-      { masked = ""; rest = $(0)
-        while (match(rest, /`+/)) {
-          s = RSTART; n = RLENGTH; after = substr(rest, s + n); t = after; off = 0; cl = 0
-          while (match(t, /`+/)) {
-            if (RLENGTH == n) { cl = off + RSTART; break }
-            off += RSTART + RLENGTH - 1; t = substr(t, RSTART + RLENGTH)
-          }
-          if (!cl) { masked = masked substr(rest, 1, s + n - 1); rest = after; continue }
-          inner = substr(after, 1, cl - 1)
-          if (inner ~ /^ .* $/) inner = substr(inner, 2, length(inner) - 2)
-          # Risky: any `**` in the span (#158).
-          mark = "\002"
-          if (index(inner, "**")) mark = "\001"
-          masked = masked substr(rest, 1, s - 1) mark
-          rest = substr(after, cl + n)
-        }
-        masked = masked rest
-        inb = 0; nrisk = 0; run = 0; nclosed = 0
-        for (i = 1; i <= length(masked); i++) {
-          if (substr(masked, i, 2) == "**") { if (inb) nclosed += run; run = 0; inb = 1 - inb; i++; continue }
-          if (inb && substr(masked, i, 1) == "\001" && ++run > nrisk) nrisk = run
-        }
-        # A line with no backtick has no span, whatever bytes it holds.
-        if (index($(0), "`")) {
-          if (nrisk > 1)
-            printf "%s:%d: two backticked tokens abutting ** inside one bold span — a formatter can join the runs and corrupt both\n", F, NR
-          else if (nclosed > 0)
-            printf "%s:%d: a code span holding ** in a bold span closed on this line\n", F, NR
-        }
-      }
-      if (isdelim($(0)) && prev != "" && (index($(0), "|") || index(prev, "|"))) {
-        base = cells($(0)); intbl = 1
-        if (cells(prev) != base)
-          printf "%s:%d: header has %d cells, delimiter row defines %d — not a valid table\n", F, NR-1, cells(prev), base
-        prev = $(0); next
-      }
-      if (intbl) {
-        if ($(0) ~ /^[ \t]*$/) intbl = 0
-        else if (index($(0), "|") && cells($(0)) > base)
-          printf "%s:%d: row has %d cells, table defines %d — the excess is dropped when rendered\n", F, NR, cells($(0)), base
-      }
-      prev = $(0)
-    }
-    END { if (fch != "") printf "%s: unclosed %s code fence\n", F, fch
-          # Unclosed frontmatter swallowed the file: say no check ran (#103, #144).
-          if (infm) printf "%s: unclosed YAML frontmatter — no check ran on any line of this file\n", F }
-  ' "$f"
-done
+  git -c core.quotePath=false ls-files --others --exclude-standard; } | bash "$CHECK"
 ```
+
+It prints one line per finding on stdout and the number of markdown files it examined on **stderr — do not discard it**. Exit 1 means findings; any other non-zero exit (2, 126, 127) means no check ran. **A clean run and an empty file list both print no findings**, so report the count with the result. If it is zero while Step 1 listed markdown files, the pipeline is broken, not the changes clean.
 
 Fix every hit before running the lenses:
 
@@ -229,20 +150,7 @@ Fix every hit before running the lenses:
 - *Two backticked tokens abutting the bold marker inside one bold span*, or *a code span holding ** in a bold span*: take the code span out of the bold run.
 - *Unclosed YAML frontmatter*: no check ran on any line of that file. Close the delimiter and **run Step 1.5 again**.
 
-Treat a row hit as real until you have looked at it. Known false positives: a setext heading, a spaced `- - -`, frontmatter not at line 1, a table inside a fenced block indented four or more spaces, and unrecognised frontmatter whose closing `---` reads as a delimiter row. Do not "fix" those. **Known blind spots:** tables in blockquotes or with no delimiter row, a bold span crossing a line break; a lone-CR file can go **entirely silent**, and so can every line above the next `---` when a leading `---` is followed by key-shaped prose such as `Note: ...` (#163). Before widening any of these trades, read <https://github.com/ducroq/agent-ready-projects/blob/master/docs/rationale/review-changes.md> <!-- lint-skip: maintainer-path — a URL, not a repo-relative path: it resolves for a reader with no such directory. -->.
-
-A clean run and an empty file list both print nothing, so **report the count alongside the result:**
-
-```bash
-  : "${BASE:?run the Step 1 baseline block in THIS shell invocation — a fresh shell does not inherit it}"
-{ git -c core.quotePath=false diff --name-only
-  git -c core.quotePath=false diff --cached --name-only
-  git -c core.quotePath=false diff --name-only "$BASE"...HEAD 2>/dev/null
-  git -c core.quotePath=false ls-files --others --exclude-standard; } |
-  sort -u | grep -c '\.md$'
-```
-
-If it is zero while Step 1 listed markdown files, the pipeline is broken, not the changes clean.
+Treat a row hit as real until you have looked at it. **The script's header lists its known false positives and blind spots; read it before "fixing" a hit that looks wrong.**
 
 ## Step 2 — Execute review lenses
 

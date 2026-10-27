@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Sensitivity fixture for review-changes Step 1.5's table/fence checker (#52).
 #
-# The program is EXTRACTED from templates/review-changes.md rather than copied,
+# The program is EXTRACTED from scripts/md-structure-check.sh rather than copied,
 # so it cannot drift from the shipped surface — same technique as the
 # verify-runner fixture. A copy would pass while the template rotted.
 #
@@ -21,7 +21,7 @@
 # this fixture. The corpus was the stronger instrument (#50, #52, #103, #144).
 set -u
 cd "$(dirname "$0")/../../.." || exit 2
-TPL="templates/review-changes.md"
+TPL="scripts/md-structure-check.sh"
 WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
 FAIL=0
 
