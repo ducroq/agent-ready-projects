@@ -364,7 +364,7 @@ Check whether key docs reflect the current repo state. Code changes during a ses
 
 ## Moved out of Step 0's stamp-check block in v1.49.0
 
-The block keeps a one-line comment per guard; the reasoning is here, verbatim.
+The block keeps a one-line comment per guard; the reasoning is here, verbatim. Since 2026-10-27 the block itself is `scripts/stampcheck.sh`, logic unchanged; the skill keeps the rule and a call to it.
 
 ```
      # Three outcomes: 0 verified, 1 drift, 2 could not decide. ⚠️ UNDECIDED IS

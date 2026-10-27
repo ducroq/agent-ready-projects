@@ -133,50 +133,7 @@ Check for context rot from *previous* sessions. **Read metadata, not documents**
      ```
 
      The second is a false PASS: exit status decides, not the word printed. Print the value you checked.
-   - **Never hardcode the version a probe corroborates — derive it from the stamp.** Then bumping the stamp re-arms the probe.
-
-     ```bash
-     # 0 verified, 1 drift, 2 undecided — and undecided is NOT a pass: success is
-     # gated on a count of what was compared.
-     stampcheck() {
-       R=$(git rev-parse --show-toplevel 2>/dev/null) ||
-         { echo "CANNOT VERIFY: not in a git repo"; return 2; }
-       [ -n "${FRAMEWORK:-}" ] && [ -d "$FRAMEWORK/.git" ] ||
-         { echo "CANNOT VERIFY: FRAMEWORK is unset or is not a git clone"; return 2; }
-       # Five of the six stamp shapes in `update-drift` Step 0; bare prose is undecidable.
-       P=$(grep -oE "agent-ready-projects[^0-9]{0,40}v?[0-9]+\.[0-9]+\.[0-9]+" \
-             "$R/CLAUDE.md" 2>/dev/null | head -1 |
-           grep -oE "v?[0-9]+\.[0-9]+\.[0-9]+$" | sed "s/^v*/v/")
-       [ -n "$P" ] || { echo "CANNOT VERIFY: no framework stamp in CLAUDE.md"; return 2; }
-       # Derive the list at the stamped tag, never restate it (#200). `${P}`, not `$P`, before a colon (zsh).
-       git -C "$FRAMEWORK" rev-parse -q --verify "${P}^{commit}" >/dev/null ||
-         { echo "CANNOT VERIFY: $P is not in the framework clone — fetch tags"; return 2; }
-       t=$(git -C "$FRAMEWORK" show "${P}:scripts/install-global-skills.sh" 2>/dev/null) ||
-         { echo "CANNOT VERIFY: no installer at $P (it predates v1.15.0, or moved)"; return 2; }
-       want=$(printf '%s\n' "$t" | sed -n 's/^GLOBAL_SKILLS="\([^"]*\)".*/\1/p')
-       k=$(echo $want | wc -w | tr -d ' ')
-       c=$(printf '%s\n' "$t" | grep -o 'GLOBAL_SKILLS+\{0,1\}=' | wc -l | tr -d ' ')
-       [ "$k" -gt 0 ] && [ "$c" = 1 ] ||
-         { echo "CANNOT VERIFY: $P's installer sets GLOBAL_SKILLS $c times, not once"; return 2; }
-       n=0; d=0
-       for s in $(echo $want); do   # $(…) splits in zsh too; a bare $want does not
-         i="$HOME/.claude/skills/$s/SKILL.md"
-         [ -f "$i" ] || { echo "CANNOT VERIFY: $s is not installed"; continue; }
-         # Split, not piped: a failed `git show` must not become diff's verdict.
-         t=$(git -C "$FRAMEWORK" show "${P}:.claude/skills/$s/SKILL.md" 2>/dev/null) ||
-           { echo "CANNOT VERIFY: $s is not in $P"; continue; }
-         printf '%s\n' "$t" | diff -q - "$i" >/dev/null ||
-           { echo "DRIFT: $s differs from $P"; d=1; }
-         n=$((n + 1))
-       done
-       [ "$d" = 0 ] || return 1
-       [ "$n" = "$k" ] || { echo "CANNOT VERIFY: compared $n of $k skills"; return 2; }
-       echo "$k global skills byte-identical to $P: $want"
-     }
-     stampcheck; echo "  exit=$?"
-     ```
-
-     **Compare against the REFERENCE INSTALL (`.claude/skills/<name>/SKILL.md`), never `templates/<name>.md`**, whose header differs by construction. **Preconditions**: a framework clone at `$FRAMEWORK`, skills installed globally.
+   - **Never hardcode the version a probe corroborates — derive it from the stamp.** Then bumping the stamp re-arms the probe. For this framework's global skills, `scripts/stampcheck.sh` in its clone does this: it reads the stamp, derives the skill list at that tag, and compares each install with the tag's **reference install** (`.claude/skills/<name>/SKILL.md`, never `templates/<name>.md`, whose header differs by construction). Exit 0 verified, 1 drift, 2 undecided. Annotate the stamp with a probe that runs it from the repo, with your clone's path for `F`: `F=~/repos/agent-ready-projects; if [ -f "$F/scripts/stampcheck.sh" ]; then FRAMEWORK=$F bash "$F/scripts/stampcheck.sh"; else echo "CANNOT VERIFY: no stampcheck.sh in $F"; fi`. **Preconditions**: a framework clone with tags fetched, skills installed globally.
    - **Assume nothing about the working directory.** Use `git -C /path/to/repo …` and absolute paths.
 
 
