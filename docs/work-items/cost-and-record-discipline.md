@@ -17,10 +17,15 @@ Goal: make the framework cheaper to run without cutting review of the shipped su
 **Savepoint — 2026-10-27 (after v1.50.0).**
 
 - **Last action**: v1.50.0 released 2026-10-27 (tagged, pushed, globals refreshed): `review-changes` keeps an all-LOW diff at one pass at any size, and the profile gains an optional `Reviewer model` (#258), after infra reported ~230k tokens on a 278-line docs diff. Before that, v1.49.2 released (tagged and pushed 2026-09-26; global skills refreshed). v1.49.1 carried #228 (`audit-context` Step 2 routing), v1.49.2 carries #233 (`curate` Step 1 places a new gotcha above the Promoted heading and checks for a split). No issues open.
-- **Next action**:
-  1. ~~Run `/audit-context`~~ — done 2026-09-26. Catches by step: **Step 1** rule 15's "auto-loaded set" was never the auto-loaded set (in-repo `MEMORY.md` is read, not loaded; the user-level index is loaded and uncounted) — relabelled as the session-start set. **Step 2** CLAUDE.md duplicated two MEMORY.md topic-file routes — pivot dropped (a Hard Constraint still routes it); dead-end kept, since MEMORY.md is read only on "continue" (review caught the drop). **Step 4** 10 gotcha-log residue findings plus #122 — qualified, marked, or struck as deleted (review caught `n9_bom_fm.md` struck while a fixture still creates it); verdict CLEAN, checker proven by a seeded break. **Step 5** ledger unrouted, work-item pointer off-form — fixed. Steps 3, 6, 7: nothing. Step 2's rule itself is filed as #228.
-  2. ~~Decide H-020~~ — done 2026-10-21: cost side settled; the defect side is sampled by H-033 (every fifth capped review gets one extra round).
-  3. H-031 (curate's arc section): 3 of 10 runs, 0 catches, trigger fired; kept to run 10, contributor to be asked (engineer, 2026-10-21).
+- **Next action** (savepoint 2026-10-27; the engineer asked for pruning):
+  1. **Prune.** Run `/audit-context` (last run 2026-09-26), then retire, archive, mechanize and thin. Rank cuts by bytes × load frequency. Measured 2026-10-27, in bytes:
+     - **Skill bodies, paid by adopters on every invocation**: `review-changes` 26.6k, `curate` 25.9k, `audit-context` 17.6k, `release` 15.9k, `update-drift` 15.7k.
+     - **The `curate` read surface here**: `memory/gotcha-log.md` 65k (56 entries), and `memory/hypothesis-log.md` 53k, with 20 open entries against a clutter line of ~10. H-023 is past its review date (2026-10-14).
+     - **`CLAUDE.md`**: 14.7k chars, at curate's 15k flag.
+     - **Moves that work**: archive resolved gotchas and dormant hypotheses, de-duplicate against an authority, and turn prose guards into lint rules (rule 21 now checks README/GUIDE version lines, #246). Tightening prose does not work.
+  2. **Infra's estate cost practices, received 2026-10-27**: budget visibility, session discipline, model routing, spend estimation. They are input only. Decide what, if anything, becomes framework guidance. Candidates: the probe-first API cost estimate, and "don't trust a tool's own meter".
+  3. **The engineer's idea (2026-10-27): steno and a glossary for internal memory** (`memory/` only, never adopter-facing). It cuts against `CLAUDE.md`'s "never compress prose" and #256 (trims drop operative clauses), so trial it on one file before adopting it. Measure tokens (`wc -c` is not tokens) and whether a cold session still acts on every clause.
+  4. **H-031** (curate's arc section): 4 of 10 runs, 0 catches. The trigger has fired; it is kept to run 10, with the contributor to be asked (engineer, 2026-10-21).
 - **Blockers**: none.
 
 **Before each cut**, check it still holds:

@@ -22,6 +22,12 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.50.1 (candidate, unreleased)
+
+**Bump provisional**: classify it from the diff at release, per `templates/release.md` Step 2.
+
+- **`README.md` and `docs/GUIDE.md` version lines read 1.50.0 (#246).** Both had said 1.46.0 since v1.46.0, so v1.47.0 through v1.50.0 all shipped with the old number. Lint rule 21 (`tests/lint/template-stamp.sh`) now checks both lines the way it checks template stamps. Seeded case B1 in `tests/fixtures/template-stamp/` and ablation A4 prove it catches a stale line.
+
 ## v1.50.0 (2026-10-27)
 
 **MINOR.** `review-changes` no longer runs the full battery on a large diff that touches only LOW files, and the review profile gains an optional `Reviewer model` section. No existing consumer has to act, so rule 1 of `templates/release.md` Step 2 does not fire. Both are new behaviour, so this is MINOR, as v1.43.0 was when it added optional profile sections. Adopter-facing size: +592 bytes: the gate row and the Step 2 sentence (+240), and the new profile section (+352).
