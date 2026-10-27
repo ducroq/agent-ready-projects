@@ -14,9 +14,9 @@ Goal: make the framework cheaper to run without cutting review of the shipped su
 
 ## Current Status
 
-**Savepoint — 2026-09-26 (after /audit-context).**
+**Savepoint — 2026-10-27 (after v1.50.0).**
 
-- **Last action**: v1.49.2 released (tagged and pushed 2026-09-26; global skills refreshed). v1.49.1 carried #228 (`audit-context` Step 2 routing), v1.49.2 carries #233 (`curate` Step 1 places a new gotcha above the Promoted heading and checks for a split). No issues open.
+- **Last action**: v1.50.0 released 2026-10-27 (tagged, pushed, globals refreshed): `review-changes` keeps an all-LOW diff at one pass at any size, and the profile gains an optional `Reviewer model` (#258), after infra reported ~230k tokens on a 278-line docs diff. Before that, v1.49.2 released (tagged and pushed 2026-09-26; global skills refreshed). v1.49.1 carried #228 (`audit-context` Step 2 routing), v1.49.2 carries #233 (`curate` Step 1 places a new gotcha above the Promoted heading and checks for a split). No issues open.
 - **Next action**:
   1. ~~Run `/audit-context`~~ — done 2026-09-26. Catches by step: **Step 1** rule 15's "auto-loaded set" was never the auto-loaded set (in-repo `MEMORY.md` is read, not loaded; the user-level index is loaded and uncounted) — relabelled as the session-start set. **Step 2** CLAUDE.md duplicated two MEMORY.md topic-file routes — pivot dropped (a Hard Constraint still routes it); dead-end kept, since MEMORY.md is read only on "continue" (review caught the drop). **Step 4** 10 gotcha-log residue findings plus #122 — qualified, marked, or struck as deleted (review caught `n9_bom_fm.md` struck while a fixture still creates it); verdict CLEAN, checker proven by a seeded break. **Step 5** ledger unrouted, work-item pointer off-form — fixed. Steps 3, 6, 7: nothing. Step 2's rule itself is filed as #228.
   2. ~~Decide H-020~~ — done 2026-10-21: cost side settled; the defect side is sampled by H-033 (every fifth capped review gets one extra round).
