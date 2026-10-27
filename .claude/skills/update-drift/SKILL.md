@@ -25,29 +25,21 @@ Framework version X.Y.Z (prose)
 
 What varies is the **separator** — emphasis before or after the colon, a parenthetical, the word `framework`, or no colon — not the number. A matcher keyed to one shape reports an **unstamped project** when the stamp is merely written differently, so use a wide separator class, and a **second** matcher for a pin that is not a version.
 
-**Choose the operands first, and do NOT default to `<project file> <template dir>`** — with no `templates/`, the project file reconciles **against itself** and reports clean. **Use every directory the project writes prose into** — typically the project file plus `docs/`, `memory/`, `.claude/`, and `templates/` where it exists; a framework named only outside the operands is invisible to every check below. Absent operands are not an error, so name them explicitly:
+**Choose the operands first, and do NOT default to `<project file> <template dir>`** — with no `templates/`, the project file reconciles **against itself** and reports clean. **Use every directory the project writes prose into** — typically the project file plus `docs/`, `memory/`, `.claude/`, and `templates/` where it exists; a framework named only outside the operands is invisible to every check below. Run the scanner from the repo root, naming the project file and then the operands:
 
 ```bash
-[ -z "${ZSH_VERSION:-}" ] || setopt shwordsplit   # else zsh passes $OPERANDS as ONE path
-OPERANDS=""
-for o in "<project file>" docs memory .claude templates; do   # SAY which are absent
-  if [ -e "$o" ]; then OPERANDS="$OPERANDS $o"; else echo "operand absent, not searched: $o"; fi
-done
-: "${OPERANDS:?no operand exists, so nothing can be searched}"
-# `command grep` skips an alias to another engine; exit 2 is a FAILED matcher (#211).
-# LABEL each matcher: an empty region otherwise reads the same as "never ran".
-m() { rc=0; command grep "$@" || rc=$?; [ "$rc" -le 1 ] || echo "MATCHER FAILED (exit $rc): this is not 'no pins'" >&2; }
-echo "--- 1. version-shaped pins"
-m -rnE "agent-ready-[a-z]+(-[a-z][a-z]+)*[^0-9]{0,60}v?[0-9]+\.[0-9]+[0-9.]*" $OPERANDS
-echo "--- 2. commit-hash pins"
-m -rnE "agent-ready-[a-z]+(-[a-z][a-z]+)*[^A-Za-z0-9]{0,24}[0-9a-f]{7,40}" $OPERANDS
-echo "--- 3. prose commit pins — a connector word carries the hash (#134)"
-m -rnEi "agent-ready-[a-z]+(-[a-z][a-z]+)*[^0-9]{0,40}\b(commit|rev|sha|ref|pinned to)[^A-Za-z0-9]{1,4}[0-9a-f]{7,40}" $OPERANDS
+PS=~/repos/agent-ready-projects/scripts/pin-scan.sh   # this framework's clone
+# No clone, or one older than the script: fetch it; never hand-write the matchers.
+# The tail check matters: an empty or cut-off 200 response would run, print nothing, and exit 0.
+[ -f "$PS" ] || { _ps=$(mktemp) && curl -m 10 -fsSL https://raw.githubusercontent.com/ducroq/agent-ready-projects/master/scripts/pin-scan.sh -o "$_ps" && tail -n 1 "$_ps" | grep -q 'pin-scan: a matcher failed' && PS=$_ps; }
+bash "$PS" "<project file>" docs memory .claude templates || echo "pin-scan exit $?"   # so `set -e` does not close the shell
 ```
 
-**A single-operand run is a finding, not a result** — say so in the report; a self-reconciliation always agrees.
+It names each absent operand rather than failing, prints three labelled matcher regions — version pins, commit-hash pins, prose commit pins — and then the reconciliation below. **`pin-scan exit 2`** means nothing could be searched or a matcher failed (`MATCHER FAILED` on stderr); then no count it printed is a finding. **`pin-scan exit 127`** means no scanner ran.
 
-If you adapt the matchers, every gap, character class and the `\b` is load-bearing; read <https://github.com/ducroq/agent-ready-projects/blob/master/docs/rationale/update-drift.md> <!-- lint-skip: maintainer-path — a URL, not a repo-relative path. --> first. Keep `\b`, not a `(^|[^A-Za-z])` group; call `command grep` rather than reshaping them, and treat an engine that hangs as the wrong engine.
+**A single-operand run is a finding, not a result** — the scanner prints `SINGLE OPERAND`; say so in the report; a self-reconciliation always agrees.
+
+Do not adapt the matchers: every gap, character class and the `\b` is load-bearing; the reasons are in <https://github.com/ducroq/agent-ready-projects/blob/master/docs/rationale/update-drift.md> <!-- lint-skip: maintainer-path — a URL, not a repo-relative path. -->. Treat an engine that hangs as the wrong engine.
 
 Known holes: a **digit between the name and the connector** (`agent-ready-projects #134 commit 0d67131`), a pin written *«fixed at»* or *«as of»*, a branch, date or `main` pin, and **a stamp split across lines** escape every matcher; only the reconciliation finds them. `\b` is not POSIX ERE (measured on GNU grep 3.12, ugrep 7.8.4, busybox 1.37 only): on any other grep, seed a known pin and confirm it is found before trusting a clean run.
 
@@ -57,29 +49,7 @@ No matcher here is exhaustive, so do not read a clean matcher run as a clean res
 
 ### Reconcile: a partial find reads exactly like a complete one
 
-That guard fires only on **zero** hits; find two stamps of three and the miss is invisible. So state the denominator:
-
-```bash
-# Uses m() from the block above: run both in one shell.
-M=$(mktemp); S=$(mktemp); trap 'rm -f "$M" "$S"' EXIT
-# every (file, framework) PAIR that is mentioned...
-m -rnoE "agent-ready-[a-z]+(-[a-z][a-z]+)*" $OPERANDS |
-  sed -E 's/:[0-9]+:/:/' | LC_ALL=C sort -u > "$M" || :
-# ...against every pair a stamp was actually found for
-{ m -roE "agent-ready-[a-z]+(-[a-z][a-z]+)*[^0-9]{0,60}v?[0-9]+\.[0-9]+[0-9.]*" $OPERANDS
-  m -roE "agent-ready-[a-z]+(-[a-z][a-z]+)*[^A-Za-z0-9]{0,24}[0-9a-f]{7,40}" $OPERANDS
-  # Matcher 3 too, or a pin only it finds reads as UNSTAMPED here (#134).
-  m -roEi "agent-ready-[a-z]+(-[a-z][a-z]+)*[^0-9]{0,40}\b(commit|rev|sha|ref|pinned to)[^A-Za-z0-9]{1,4}[0-9a-f]{7,40}" $OPERANDS
-} | awk '{ i = index($(0), ":agent-ready-"); f = substr($(0), 1, i - 1); r = substr($(0), i + 1)
-       # A stamp belongs to the LAST name before it, not the first (#134).
-       while (match(r, /agent-ready-[a-z]+(-[a-z][a-z]+)*/)) { n = substr(r, RSTART, RLENGTH); r = substr(r, RSTART + RLENGTH) }
-       print f ":" n }' | LC_ALL=C sort -u > "$S"
-printf 'mentioned pairs: %s  stamped pairs: %s\n' "$(wc -l < "$M")" "$(wc -l < "$S")"
-[ -s "$M" ] || echo 'EMPTY — the mention grep matched nothing. Check the operands before reading this as clean.'
-LC_ALL=C comm -23 "$M" "$S"
-```
-
-Do not simplify the block: keep the `(file, framework)` unit, the printed counts, `sort -u` and `LC_ALL=C` on both sides and on `comm`, and `m()` on each grep. **Keep the operands disjoint** — overlap, such as adding `.` or a parent of another operand, makes `comm -23` report a stamped file as unstamped.
+That guard fires only on **zero** hits; find two stamps of three and the miss is invisible. So the scanner's last section states the denominator: the counts of mentioned and stamped `(file, framework)` pairs, then every mentioned pair with no stamp. **Keep the operands disjoint** — overlap, such as adding `.` or a parent of another operand, makes the reconciliation report a stamped file as unstamped.
 
 **Report both counts and every file in the difference.** Each one gets a disposition out loud: *a stamp the matcher missed* (read the line, name the shape, use it) or *a mention that is not a pin*.
 

@@ -144,7 +144,7 @@ No matcher here is exhaustive — a branch name, a date or a `main` pin is a pin
 
 That guard only fires on **zero** hits. Find two stamps of three and the step reports two real stamps and proceeds — the miss is invisible, and that framework is then triaged against the wrong baseline or not at all. It has happened twice: to a 33-character separator, and to a commit-hash pin.
 
-Five details in that block are load-bearing, and each was measured rather than reasoned:
+Five details in the reconciliation (now `scripts/pin-scan.sh`) are load-bearing, and each was measured rather than reasoned:
 
 - **The unit is `(file, framework)`, not `file`.** A file-scoped difference cannot see the failure this section exists for. #72's own repro is one `CLAUDE.md` pinning two frameworks, one by hash and one by tag: with only the version matcher running, that file is "stamped" because the *other* framework matched, and the missing hash pin never appears in the difference. Measured on exactly that shape — file-scoped reported a clean reconciliation while a pin was invisible.
 
