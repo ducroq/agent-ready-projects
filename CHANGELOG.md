@@ -22,6 +22,16 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.52.0 (candidate, unreleased)
+
+**MINOR.** New guide pattern: delegated sessions. The session you talk to decides; workers with narrow briefs do the work.
+
+**Why it matters.** In three large adopter repos (25 sessions each), the median session peaked at 190k–270k tokens of context. The framework's own files were under a tenth of that; command output alone was roughly a third to a half. Curating persistent context cannot reach that. Moving the work out of the session you talk to is meant to; whether it does is being trialled.
+
+**Consumers.** No action required.
+
+- **Delegated sessions (`docs/GUIDE.md` § "Delegated Sessions: Decide Here, Work Elsewhere").** The new section describes moving the work into worker sessions. It covers two boundaries: a decision charter between the user and the lead session (what is always the user's, plus one batched report per session), and a brief between the lead and each worker (goal, the Before You Start rows to read, what's ruled out, what to return). It also covers when not to delegate. The problem is measured; that delegation lowers peak context and improves results are stated as hypotheses. The "Two Kinds of Context" and "Session strategy" paragraphs and the `README.md` TL;DR now link to it.
+
 ## v1.51.0 (2026-11-03)
 
 **MINOR.** `curate` now says when `audit-context` is due, and four skills run shipped scripts instead of carrying long embedded code (`scripts/md-structure-check.sh`, `scripts/pin-scan.sh`, `scripts/tagfree.sh`, `scripts/stampcheck.sh`). No existing consumer has to act, so rule 1 of `templates/release.md` Step 2 does not fire. The `Last audit:` nudge is new behaviour, so this is MINOR, as v1.50.0 was. Adopter-facing size: `templates/` shrinks by 8,919 bytes since v1.50.0, most of it code that moved into `scripts/`.

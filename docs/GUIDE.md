@@ -80,7 +80,7 @@ This is the single most practical insight in this guide: **auto-loaded files are
 
 This method reduces tokens by **curation** — a lean auto-loaded index, deep knowledge one task-triggered read away. Everything that follows (the layered model) governs **persistent context**: what the agent carries into every session. That's the [session-start reduction](#layer-1-identity--operations-the-project-file--always-present) progressive disclosure buys.
 
-But persistent context is only one of the two places tokens go. The other is **ephemeral context** — the per-turn content: tool output, search dumps, large file reads, inline images and PDFs. This method does nothing about that, by design. No amount of memory curation shrinks a 15,000-token search result or a pasted screenshot.
+But persistent context is only one of the two places tokens go. The other is **ephemeral context** — the per-turn content: tool output, search dumps, large file reads, inline images and PDFs. The layered model does nothing about that, by design. Compression (below) makes it cheaper; [delegation](#delegated-sessions-decide-here-work-elsewhere) moves it out of the session you talk to. No amount of memory curation shrinks a 15,000-token search result or a pasted screenshot.
 
 A different class of tool handles the ephemeral layer: **mechanical context compression** — proxies or wrappers that compress tool output and re-read caches before they reach the model (several open-source proxies and shell wrappers do this). These are largely complementary to this method — they operate on a different layer — provided they're scoped per the second caution below. The method decides *what the agent loads*; a compression tool decides *how much that costs once loaded*.
 
@@ -88,6 +88,32 @@ Two cautions before reaching for one:
 
 1. **Profile your bloat first.** Compression tools advertise large savings (one such tool pitched 60–95%), but those numbers assume your bloat is the kind they compress — usually structured tool output and repeated reads. In one informal evaluation, a maintainer estimated near-zero savings on their largest sessions: those transcripts were dominated by inline images and PDFs, which a shell-output compressor doesn't touch (one data point, that maintainer's workload — not a benchmark). Conversely, if your sessions *are* dominated by build logs, test output, or repeated large reads, such a tool may deliver close to the advertised savings. Measure where your tokens actually go before adopting a tool that compresses a category you don't have.
 2. **Keep compression off your auto-loaded files.** Compression that rewrites or summarizes the agent's input fights this method's premise: the agent acts faithfully on a curated project file and memory index. If a tool compresses those, the agent is acting on a lossy copy of your constraints. Scope mechanical compression to high-volume *ephemeral* content; leave the project file and the memory index untouched. (The memory index is not auto-loaded — see Layer 3 — but it is read in full whenever a pointer reaches it, so compressing it costs the same fidelity.)
+
+## Delegated Sessions: Decide Here, Work Elsewhere
+
+Compression shrinks ephemeral context. Delegation moves it somewhere else. In one maintainer's three largest adopter repos (25 recent sessions each), the median session peaked at 190k–270k tokens. The project file and memory indexes were under a tenth of that. Command output alone, thousands of small outputs averaging under 2 KB each, accounted for roughly a third to a half; the rest was mostly the agent's own turns and file reads, all of it accumulating over the session. Splitting the repo would likely not change that much, since a smaller repo still gets explored. Moving the exploring into another session should, and that is what this pattern is for.
+
+The pattern has two boundaries.
+
+**You and the lead session: a decision charter.** The session you talk to holds the decisions and the results, not the work. Write down what the agent may do without asking and what is always yours. The second list is usually short: values and promises the project makes, facts that are not in any file (a budget, a deadline), actions that are hard to undo or that leave the repo (deploys, deletions, pushes), and spending over a set cap. Everything else, the agent does and reports after. It sends one report per session: what ran, what changed, what it is unsure about, and the questions it held back. A question that blocks the work is asked at once, not held. Keep the charter as a decision record ([ADRs](#decision-records-adrs)) and link it from a Before You Start row, so the agent reads it before asking you anything.
+
+**The lead and a worker: a brief.** A worker is a subagent, a separate session or a background job, whatever your tool offers. It starts with only its brief, so the brief is its whole context:
+
+- **Goal and scope:** what done looks like, and what is out of scope.
+- **What to read:** the rows of your Before You Start table and the work item that apply. This is where curation pays off a second time: the routing you already wrote becomes the worker's context.
+- **What's ruled out:** what the lead already tried or decided, so the worker doesn't re-derive it.
+- **What to return:** the conclusion and its evidence (the commands it ran and the paths it touched), not the file contents it read.
+
+**What the lead keeps.** Enough to judge a proposal without just approving it: the work item, the decision being made, and the evidence each claim rests on. A worker's mistakes come back sounding as confident as its findings, so check any claim a decision depends on before relaying it, either yourself or with a fresh worker. A negative needs its check stated ([Verification Hooks](#verification-hooks)).
+
+**When not to delegate.**
+- A task of a handful of tool calls. Each worker pays its own startup context, so small tasks cost more delegated.
+- Tight debugging loops where each step depends on the last.
+- Anything where you want to watch the work.
+
+**Try the cheaper habits first.** A fresh session per task, with the work item's Current Status as the savepoint, may get part of the gain for the cost of re-orienting. Hand screenshots and PDFs to a worker that reports in words. Profile where your tokens go first, as for compression, and measure the peak again after.
+
+What is measured is the problem: where the context goes in sessions that do not delegate. That delegation lowers the peak, and that it improves results, are both still hypotheses; a lean, well-chosen context should help, but each worker pays its own startup context and every handoff loses some detail. If you adopt the pattern, measure the peak before and after, and track whether rework or review catches change.
 
 ## The Layered Model
 
@@ -445,7 +471,7 @@ This gives immediate orientation without reading files. It's the difference betw
 
 **Session strategy.** Don't review work in the same session that produced it. An agent that just spent 30 minutes building something has sunk-cost bias baked into its context — it's unlikely to catch its own mistakes. Use a fresh session for review, or a different model entirely. The same applies to any validation task: testing, security review, QA. The agent that built it is the worst one to judge it.
 
-The same principle applies to research and exploration. Offload search, grep, and codebase exploration to subagents or separate sessions so your main working context stays focused on the task. Every search result and file read that isn't directly relevant dilutes the context the agent is working in. Keep the building session clean; do the research elsewhere.
+The same principle applies to research and exploration. Offload search, grep, and codebase exploration to subagents or separate sessions so your main working context stays focused on the task. Every search result and file read that isn't directly relevant dilutes the context the agent is working in. Keep the building session clean; do the research elsewhere. For the full pattern, see [Delegated Sessions](#delegated-sessions-decide-here-work-elsewhere).
 
 ## Verification Hooks
 

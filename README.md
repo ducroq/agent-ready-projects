@@ -14,6 +14,7 @@ Works with any AI coding agent: Claude Code, Codex, Cursor, Windsurf, GitHub Cop
 - A **project file** (CLAUDE.md, AGENTS.md, etc.) is auto-loaded every session — it's your agent's home base.
 - **Task-triggered pointers** ("when doing X, read Y") bridge the gap between auto-loaded and on-demand docs.
 - A **self-learning loop** (Capture → Surface → Promote → Retire) moves lessons from session notes into always-loaded context.
+- In large projects, the session you talk to should **decide, not work**: it delegates the exploring to workers with narrow briefs and brings you decisions and results ([Delegated Sessions](docs/GUIDE.md#delegated-sessions-decide-here-work-elsewhere)).
 - Start with one file. Add layers only as your project needs them.
 
 ## Quick Start
