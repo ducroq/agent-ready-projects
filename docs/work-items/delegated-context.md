@@ -19,7 +19,7 @@ Last 25 sessions each in the three largest private adopter repos, read from Clau
 - [ ] Decide what the main session must hold to judge a worker's proposal (see Open Questions)
 - [x] Drafted `docs/GUIDE.md` § "Delegated Sessions" + CHANGELOG v1.52.0 candidate (2026-11-03); not yet reviewed (`/review-changes`)
 - [ ] Decide whether any template changes (project-file "Before You Start" rows as brief sources; work-item as the worker's savepoint)
-- [ ] Trial starts 2026-11-04 in the adopter that already has a delegation charter: lead/worker brief pasted at session start; its session report adds workers used, handoffs that lost something, rework. After a few sessions, rerun the transcript measurement (peak context before/after).
+- [ ] PR #275 held as draft until the trial has data. Trial starts 2026-11-04 in the adopter that already has a delegation charter: lead/worker brief pasted at session start; its session report adds workers used, handoffs that lost something, rework. After a few sessions, rerun the transcript measurement (peak context before/after).
 
 ## Decisions
 
