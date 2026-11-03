@@ -249,4 +249,4 @@ Fix what you can. Flag anything that needs engineer input.
 - **Gotchas**: New entries added, entries resolved or promoted, and **N promoted patterns re-checked, N recurred; N constraint rows, N re-checked, N false**. Report all, even zeros: zero constraint rows looks like a skipped step unless reported (#183). Name any pattern that recurred *after* promotion
 - **Memory index**: Updates made
 - **Doc sync**: Project file, runbook, backlog updates made or flagged
-- **Action needed**: anything needing an engineer decision
+- **Action needed**: anything needing an engineer decision, including `audit-context` (don't run it) when the memory index's `Last audit:` is missing, `never` or over 30 days old

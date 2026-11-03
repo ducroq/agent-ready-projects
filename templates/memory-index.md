@@ -1,5 +1,7 @@
 # Memory
 
+Last audit: never
+
 <!-- NOT loaded automatically. This file sits below the auto-loading cliff.
      A task-triggered pointer in your project file is what brings it into a
      session; if that pointer is missing or vague, nothing here is ever read,
@@ -20,7 +22,7 @@
      1. Review gotcha-log for recurring patterns — promote them here or to topic files
      2. Check if any entries below are stale (fixed, refactored, encoded in code) — retire them
      3. Update "Current State" to reflect what shipped or changed
-     Monthly: audit everything. Prune as much as you add. -->
+     Prune as much as you add. -->
 
 ## Topic Files
 

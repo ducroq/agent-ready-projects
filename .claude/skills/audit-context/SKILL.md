@@ -4,7 +4,7 @@ description: Periodic structural audit of the layered memory system — checks f
 disable-model-invocation: false
 ---
 
-Structural audit of the agent-ready-projects layered memory system. Run monthly or after major restructuring. Complements `/curate` (session-level cleanup) with framework-level health checks.
+Structural audit of the agent-ready-projects layered memory system. Run monthly (`/curate` flags it when due) or after major restructuring.
 
 ## Step 1 — Document size
 
@@ -166,3 +166,5 @@ Then summarize findings by severity:
 Plus one bucket that is not a severity, because it is not a defect: **Unconfirmed** — Step 4's undecided references, naming the rung that could not run and why. Populate it whenever there are any, not only on a *coverage incomplete* run, and never under *fix now*. State an empty bucket too — it separates "everything was checked" from "everything checkable was checked".
 
 For each finding, state what's wrong, where, and propose a specific fix. Don't make changes without showing the plan first.
+
+**Whatever the verdict, set `Last audit: YYYY-MM-DD (<verdict>)` after the memory index's first heading**, replacing any old one (no plan needed).
