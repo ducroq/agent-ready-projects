@@ -16,12 +16,12 @@ Last 25 sessions each in the three largest private adopter repos, read from Clau
 ## Current Status
 
 - [x] Measured three adopters (above)
-- [x] Guide section, reviewed and merged (#275); v1.52.0 is a candidate, not released
+- [x] Guide section, reviewed and merged (#275); shipped in v1.52.0 (2026-11-04)
 - [x] EXP-007 scored 2026-11-04 (`experiments/artifacts/exp007-lead-judgement.json`): H1 fails, H2 fails. A lead approves only after an independent review; the peak claim stays "being trialled"
 - [ ] Working runs restarted 2026-11-04 in R1, R2, R3 and R6, no new pre-registration. Read each run's report, add it to the private run log (pointer in `memory/MEMORY.md`), and later record defects found after the run
 - [ ] Decide whether any template changes (project-file "Before You Start" rows as brief sources; work-item as the worker's savepoint)
 
-**Next action**: when the run reports land, fill the log. Whether the pattern beats a single session is unknown; that needs a new comparison experiment, not more of these runs.
+**Next action**: when new run reports land, fill the log. The natural comparison is set up in the private run log and reads at 10 pairs; whether the pattern beats a single session is still unknown.
 
 ## Decisions
 

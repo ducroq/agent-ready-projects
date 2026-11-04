@@ -14,6 +14,16 @@ Goal: make the framework cheaper to run without cutting review of the shipped su
 
 ## Current Status
 
+**Savepoint — 2026-11-04 (wrap): next session starts with a prune.** The engineer asked for pruning, thinning, mechanizing and retiring. Read surface is 101.7k chars. Rank by bytes × load frequency:
+
+1. `memory/gotcha-log.md`, 31.2k: archive entries whose lesson is already in a check or the through-line.
+2. `memory/hypothesis-log.md`, 29.6k: thin the 13 open entries; close or go dormant where evidence has stalled.
+3. This file and `repositioning.md`, 7.3k and 9.3k: collapse old savepoints.
+4. Skill bodies, paid by adopters: `curate` 24.1k and `review-changes` 22.2k bytes. Mechanize further; edit both copies, and take the self-certification route.
+5. #274 first: it decides where the gotcha archive goes.
+
+Lock the ratchets last, after any review.
+
 **Savepoint — 2026-11-04 (prune done).** Audit clean. Gotcha log 44.5k → 30.5k bytes, hypothesis log 32.7k → 29.7k, dead-end file archived; item 0 below is closed except the review-hypothesis merge, which is the engineer's call. Next: `memory/MEMORY.md` Current State.
 
 **Savepoint — 2026-10-27 (prune, session 1).**
