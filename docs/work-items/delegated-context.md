@@ -19,7 +19,7 @@ Last 25 sessions each in the three largest private adopter repos, read from Clau
 - [ ] Decide what the main session must hold to judge a worker's proposal (see Open Questions)
 - [x] Drafted `docs/GUIDE.md` § "Delegated Sessions" + CHANGELOG v1.52.0 candidate (2026-11-03); not yet reviewed (`/review-changes`)
 - [ ] Decide whether any template changes (project-file "Before You Start" rows as brief sources; work-item as the worker's savepoint)
-- [ ] PR #275 held as draft until the trial has data. Trial starts 2026-11-04 in the adopter that already has a delegation charter: lead/worker brief pasted at session start; its session report adds workers used, handoffs that lost something, rework. After a few sessions, rerun the transcript measurement (peak context before/after).
+- [ ] PR #275 held as draft until the trials have data. Three runs, started or briefed 2026-11-04: R2 (general queue, charter), R3 (Codex builds, lead reviews), R6 (EXP-007, does the lead judge or only approve; PR #278). **Next:** collect their report lines; repoint the EXP-007 pin after any squash merge; score the R6 sensitivity case; rerun the peak measurement. The baseline and script are in `lab/experiments/2026-11-04-exp007-lead-judgement/`.
 
 ## Decisions
 
