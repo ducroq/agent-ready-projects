@@ -14,6 +14,8 @@ Goal: make the framework cheaper to run without cutting review of the shipped su
 
 ## Current Status
 
+**Savepoint — 2026-11-04.** The curate read surface is the next job: `memory/MEMORY.md` Current State holds the order. Item 0 below is still open, and its numbers are from 10-27.
+
 **Savepoint — 2026-10-27 (prune, session 1).**
 
 - **Last action**: prune session 2, 2026-10-27. Merged #265 (`release` → `scripts/tagfree.sh`), #266 (`review-changes` fetch check), #267 (`update-drift` → `scripts/pin-scan.sh`); filed #268 (fetch-check lint). Hypothesis log 50.8k → 31.5k (5 archived dormant, 14 open). Declined: `audit-context` Step 4 cut, infra cost practices, memory shorthand. **Not done: the release.** v1.50.1 candidate holds five adopter-facing bullets; `/release` is user-invoked by design, and globals refresh after its tag. Before that: prune session 1 (gotcha log 65k → 39k, `review-changes` and `curate` scripts).
