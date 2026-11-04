@@ -14,7 +14,7 @@ Goal: make the framework cheaper to run without cutting review of the shipped su
 
 ## Current Status
 
-**Savepoint — 2026-11-04.** The curate read surface is the next job: `memory/MEMORY.md` Current State holds the order. Item 0 below is still open, and its numbers are from 10-27.
+**Savepoint — 2026-11-04 (prune done).** Audit clean. Gotcha log 44.5k → 30.5k bytes, hypothesis log 32.7k → 29.7k, dead-end file archived; item 0 below is closed except the review-hypothesis merge, which is the engineer's call. Next: `memory/MEMORY.md` Current State.
 
 **Savepoint — 2026-10-27 (prune, session 1).**
 
