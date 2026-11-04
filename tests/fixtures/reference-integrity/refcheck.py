@@ -35,6 +35,7 @@ EXTRACTED (shapes outside the population, each labelled — #122), UNCONFIRMED
 (what this run could not decide), extensions in the tree the extractor misses,
 and — only when they apply — DOCUMENTS NOT READ and REFERENCES NOT EXTRACTED
 (backticked references in an unlisted extension, counted — #199).
+LINKED WORKTREES NOT SEARCHED prints only when a walk left one out (#277).
 The RUNG 4 COVERAGE line always prints; only its explanatory body is conditional
 on there being no neighbour (#97). On the default path a VERDICT line closes the report and
 names the exit status, so the two cannot drift apart unnoticed; `--legacy` is a
@@ -393,8 +394,50 @@ NEGATED_RE = re.compile(
     r'(?:!\s*(?:test|\[)\s+-[fe]|(?:test|\[)\s+!\s+-[fe])\s+[`"\']?([A-Za-z0-9_./-]+)')
 
 
-def _tree(root):
-    return [p for p in root.rglob('*') if p.is_file() and not PRUNE & set(p.parts)]
+# Linked worktrees left out of a walk, printed so the skip is never silent (#277).
+SKIPPED_WORKTREES = set()
+
+
+def _own_worktree(git_file, root):
+    """True when a `.git` FILE marks a linked worktree of the repo at `root` (#277).
+
+    All three links must hold, because each failure mode is a real tree. `commondir`
+    exists only in a linked worktree's git directory, so a submodule fails. It must
+    lead to `root/.git`, so another repo's worktree or a bare layout (where every
+    checkout is a worktree and there is no other copy) fails. The back-pointer must
+    name this file, so a `cp -a` of a worktree, a real second copy, fails. A failure
+    of any kind means "walk it", which is what happened before this check.
+    """
+    try:
+        line = git_file.read_text(errors='replace').splitlines()[0]
+        if not line.startswith('gitdir:'):
+            return False
+        admin = git_file.parent / line[len('gitdir:'):].strip()
+        common = admin / (admin / 'commondir').read_text(errors='replace').strip()
+        back = admin / (admin / 'gitdir').read_text(errors='replace').strip()
+        return (common.resolve() == (root / '.git').resolve()
+                and back.resolve() == git_file.resolve())
+    except (OSError, ValueError, RuntimeError, IndexError):
+        return False
+
+
+def _tree(root, skip_worktrees=True):
+    kept, git_files = [], []
+    for p in root.rglob('*'):
+        if not p.is_file():
+            continue
+        if p.name == '.git':  # read here: PRUNE drops every `.git` path below
+            git_files.append(p)
+        if not PRUNE & set(p.parts):
+            kept.append(p)
+    # A repo's own linked worktree is a second checkout, not a second copy of each
+    # file: counted, one session's temporary worktree became a false COLLISION in
+    # another repo's audit (#277).
+    linked = {p.parent for p in git_files if skip_worktrees and _own_worktree(p, root)}
+    if not linked:
+        return kept
+    SKIPPED_WORKTREES.update(linked)
+    return [p for p in kept if not linked & set(p.parents)]
 
 
 def _suffix_matches(rel_paths, frag):
@@ -547,7 +590,7 @@ def check_legacy(root, sources):
     siblings = [p for p in root.parent.glob('*')
                 if p.is_dir() and (p / '.git').exists() and p.resolve() != root]
     names = {p.name.lower() for p in siblings}
-    rel = [str(p.relative_to(root)) for p in _tree(root)]
+    rel = [str(p.relative_to(root)) for p in _tree(root, skip_worktrees=False)]
     loose = re.compile(r'`([A-Za-z0-9_.][A-Za-z0-9_./*-]*\.[A-Za-z0-9]{1,6})`')
     reports, stale = [], []
     for src in sources:
@@ -1397,6 +1440,12 @@ def main():
     for s_, p_, v_ in ([f for f in findings if f[2] == UNCONFIRMED] + undecided_markers):
         print(f"  {s_:24s} {p_:44s} {v_}")
     print(f"  total: {len([f for f in findings if f[2] == UNCONFIRMED]) + len(undecided_markers)}")
+
+    if SKIPPED_WORKTREES:
+        print("\n== LINKED WORKTREES NOT SEARCHED (a second checkout, not a second copy) ==")
+        for w in sorted(map(str, SKIPPED_WORKTREES)):
+            print(f"  {w}")
+        print(f"  total: {len(SKIPPED_WORKTREES)}")
 
     print(f"\n== EXTENSIONS IN TREE NOT EXTRACTED: {', '.join(unknown) if unknown else '(none)'} ==")
 

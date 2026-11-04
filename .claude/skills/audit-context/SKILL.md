@@ -83,6 +83,9 @@ fixed check from a disabled one.** Delete the seeded copy afterwards.
 - **Resolved below rung 1** — every rung-2, rung-3 and rung-4 resolution of an *unmarked* path, *enumerated with what it resolved to* (`config/settings.py → packages/worker/config/settings.py`); a marked path excused at rung 2 or 3 is counted in the skip section instead. Not defects, not "worth correcting", but visible, so a wrong-twin match can be spotted.
 - **Skipped as asserted-absent** — paths the document states are gone.
 
+**`LINKED WORKTREES NOT SEARCHED`, when present,** names a repo's own linked worktrees. A reference
+that exists only on one of those branches comes back unresolved.
+
 **A sixth section, `PATH SHAPES NOT EXTRACTED`,** lists backticked shapes the extractor never
 examines — brace groups, bracket placeholders, root-absolute, Windows and UNC paths. **Not
 findings**, only unchecked; a CLEAN verdict says nothing about them.

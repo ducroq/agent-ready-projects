@@ -1261,6 +1261,114 @@ else
   printf '  FAIL  N33 the #119 fix broke ordinary rung-4 resolution\n'; FAIL=1
 fi
 
+# #277 — a repo's own linked worktree is a second checkout, not a second copy.
+# W1 is the reported bug, W2 the control it must not mask, W4 the audited repo's own
+# worktree, W5 an audited root that IS one. The rest are trees that look like a
+# worktree and are not one to skip: W3 a submodule-shaped `.git` named to fool a path
+# match, W6 a bare layout, W7 a `cp -a` of a worktree, W8 another repo's worktree.
+# W9 is a relative gitdir, W10 a gitdir that cannot be read, W11 the report section.
+WT="$WORK/wt277"; mkdir -p "$WT/alpharepo/docs" "$WT/me" "$WT/own/src"
+wt_init() { git init -q . && git config user.email f@x && git config user.name f; }
+( cd "$WT/alpharepo" && wt_init
+  touch docs/spec-notes.md && git add -A && git commit -qm x
+  git worktree add -q .claude/worktrees/tmp -b tmp
+  mkdir -p vendored/docs sub/docs .git/modules/worktrees/sub
+  touch docs/two-copies.md vendored/docs/two-copies.md sub/docs/only-sub.md
+  touch .git/modules/worktrees/sub/HEAD
+  printf 'gitdir: ../.git/modules/worktrees/sub\n' > sub/.git )
+( cd "$WT/own" && wt_init
+  touch src/own_helper.py && git add -A && git commit -qm x
+  git worktree add -q .claude/worktrees/tmp -b tmp
+  printf 'See `own_helper.py`.\n' > D.md
+  printf 'See `own_helper.py`.\n' > .claude/worktrees/tmp/D.md )
+# W6: every checkout of a bare layout is a worktree; skipping them empties the repo.
+mkdir -p "$WT/barerepo"
+git clone -q --bare "$WT/own" "$WT/barerepo/.bare"
+printf 'gitdir: ./.bare\n' > "$WT/barerepo/.git"
+git -C "$WT/barerepo/.bare" worktree add -q ../main -b barecheckout
+mkdir -p "$WT/barerepo/main/docs"; touch "$WT/barerepo/main/docs/bare-notes.md"
+# W7: the copy keeps a live pointer to the worktree it was copied from. The file
+# lives in a commit, so the worktree and its copy each hold one, and the main
+# checkout a third: a skip of the copy would leave 2, not 3.
+mkdir -p "$WT/copyrepo/docs"
+( cd "$WT/copyrepo" && wt_init; touch docs/copied.md; git add -A; git commit -qm x
+  git worktree add -q wt -b wt; cp -a wt wtcopy )
+# W8: a worktree of ANOTHER repo vendored into this one really is a second copy.
+mkdir -p "$WT/hostrepo/docs" "$WT/hostrepo/vendor" "$WT/libsrc/docs"
+( cd "$WT/libsrc" && wt_init; touch docs/lib-api.md; git add -A; git commit -qm x
+  git worktree add -q "$WT/hostrepo/vendor/lib" -b vend )
+( cd "$WT/hostrepo" && wt_init; touch docs/lib-api.md )
+# W9: the same bug, written with relative pointers.
+mkdir -p "$WT/relrepo/docs"
+( cd "$WT/relrepo" && wt_init; touch docs/rel-notes.md; git add -A; git commit -qm x
+  git worktree add -q nested/wt -b wt
+  printf 'gitdir: ../../.git/worktrees/wt\n' > nested/wt/.git
+  printf '../../../nested/wt/.git\n' > .git/worktrees/wt/gitdir )
+# W10: `is_file` under an unreadable directory raised through the whole audit.
+mkdir -p "$WT/lockrepo/docs" "$WT/lockrepo/odd" "$WT/lockrepo/locked"
+( cd "$WT/lockrepo" && wt_init; touch docs/lock-notes.md
+  printf 'gitdir: ../locked/admin\n' > odd/.git )
+for r in spec-notes:alpharepo two-copies:alpharepo only-sub:alpharepo bare-notes:barerepo \
+         copied:copyrepo lib-api:hostrepo rel-notes:relrepo lock-notes:lockrepo; do
+  printf 'See `docs/%s.md` in the %s repo.\n' "${r%%:*}" "${r##*:}" > "$WT/me/${r%%:*}.md"
+done
+wt_out() { python3 "$1" --sibling-root "$WT" "$2" "$3" 2>&1 || true; }
+# Each predicate reads a run's output: 0 means the row holds.
+wt_clean() { has "$1" 'VERDICT: CLEAN'; }
+wt_coll() { has "$1" 'COLLISION ('; }
+wt_coll2() { has "$1" 'COLLISION (2 matches in copyrepo)'; }
+wt_row() {  # name, predicate, root, doc
+  if "$2" "$(wt_out refcheck.py "$3" "$4")"; then printf '  PASS  %s\n' "$1"
+  else printf '  FAIL  %s\n' "$1"; FAIL=1; fi
+}
+wt_row "W1 a repo's linked worktree in a sibling is not a collision" wt_clean "$WT/me" spec-notes.md
+wt_row "W2 a real second copy beside a worktree is still a collision" wt_coll "$WT/me" two-copies.md
+wt_row "W3 a submodule-shaped .git file is still walked" wt_clean "$WT/me" only-sub.md
+wt_row "W4 the audited repo's own worktree is not a collision" wt_clean "$WT/own" D.md
+wt_row "W5 an audited root that is a linked worktree keeps its own files" wt_clean "$WT/own/.claude/worktrees/tmp" D.md
+wt_row "W6 a bare layout's checkout is still walked" wt_clean "$WT/me" bare-notes.md
+wt_row "W7 a cp -a of a worktree is still a second copy" wt_coll2 "$WT/me" copied.md
+wt_row "W8 another repo's worktree is still a second copy" wt_coll "$WT/me" lib-api.md
+wt_row "W9 a worktree with relative pointers is not a collision" wt_clean "$WT/me" rel-notes.md
+if [ "$(id -u)" -eq 0 ]; then printf '  SKIP  W10 an unreadable gitdir does not crash the audit (root cannot seed it)\n'
+else chmod 000 "$WT/lockrepo/locked"
+  wt_row "W10 an unreadable gitdir does not crash the audit" wt_clean "$WT/me" lock-notes.md
+  chmod 755 "$WT/lockrepo/locked"; fi
+W11="$(wt_out refcheck.py "$WT/me" spec-notes.md)"
+if has "$W11" 'LINKED WORKTREES NOT SEARCHED' && has "$W11" '.claude/worktrees/tmp'; then
+  printf '  PASS  W11 a skipped worktree is named in the report\n'
+else printf '  FAIL  W11 — the worktree skip was silent\n'; FAIL=1; fi
+# W12: --legacy reproduces v1.15.0, so it keeps counting a worktree as a copy.
+W12="$(python3 refcheck.py --legacy --sibling-root "$WT" "$WT/own" D.md 2>&1 || true)"
+if has "$W12" 'own_helper.py' && has "$W12" 'COLLISION'; then printf '  PASS  W12 --legacy still walks worktrees\n'
+else printf '  FAIL  W12 — --legacy stopped reproducing v1.15.0 on a worktree\n'; FAIL=1; fi
+wt_mutant() {  # label, old, new, predicate, root, doc: the mutant must break the row
+  local m="$WORK/wt277-mutant.py"
+  cp refcheck.py "$m"
+  if ! OLD="$2" NEW="$3" python3 - "$m" <<'EOF'
+import os, sys, pathlib
+p = pathlib.Path(sys.argv[1]); s = p.read_text()
+old, new = os.environ['OLD'], os.environ['NEW']
+if s.count(old) != 1:
+    sys.exit('mutation site occurs %d times, not once' % s.count(old))
+p.write_text(s.replace(old, new))
+EOF
+  then printf '  FAIL  mutant %s could not be applied — its site has moved\n' "$1"; FAIL=1; return; fi
+  if "$4" "$(wt_out "$m" "$5" "$6")"; then printf '  FAIL  mutant %s survived\n' "$1"; FAIL=1
+  else printf '  PASS  mutant %s is caught\n' "$1"; fi
+}
+wt_mutant "W1: never skip a worktree" "if not linked:" "if True:" wt_clean "$WT/me" spec-notes.md
+wt_mutant "W8: any repo's worktree counts" "return (common.resolve() == (root / '.git').resolve()
+                and back.resolve() == git_file.resolve())" "return back.resolve() == git_file.resolve()" \
+  wt_coll "$WT/me" lib-api.md
+wt_mutant "W6: a bare layout's checkouts are skipped" "return (common.resolve() == (root / '.git').resolve()
+                and back.resolve() == git_file.resolve())" "return back.resolve() == git_file.resolve()" \
+  wt_clean "$WT/me" bare-notes.md
+wt_mutant "W7: no back-pointer check" "
+                and back.resolve() == git_file.resolve())" ")" wt_coll2 "$WT/me" copied.md
+wt_mutant "W9: gitdir read as absolute only" "admin = git_file.parent / line[len('gitdir:'):].strip()" \
+  "admin = pathlib.Path(line[len('gitdir:'):].strip())" wt_clean "$WT/me" rel-notes.md
+
 # --- Ablations. Committed rather than described, because the prose form of this
 # claim was refuted twice by reviewers who reconstructed the mutants and got a
 # different row count under an equally natural reading. A mutant's exact text is
