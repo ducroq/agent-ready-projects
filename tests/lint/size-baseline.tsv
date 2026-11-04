@@ -3,7 +3,7 @@
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and every raise is
 # recorded below, oldest first — notes accumulate and are never replaced.
-# BUDGET 169868
+# BUDGET 170034
 # SPILL 180314
 # RAISED 2026-09-06 from 247526 to 247969: #133: the #118 remedy string shipped unconditional and can turn a resolved reference into an AMBIGUOUS finding; the caveat that scopes it is +443 b on templates/audit-context.md, seeded as T39/T40/N39 (reason restored 2026-09-06 — write_baseline used to overwrite each note with the next)
 # RAISED 2026-09-06 from 247969 to 248237: #140: UNRESOLVED had two causes printing one reason. +268 b on templates/audit-context.md, seeded as T41/T41b/N40 (reason restored 2026-09-06)
@@ -102,8 +102,9 @@
 # RAISED 2026-10-27 from 171177 to 171331: review-changes Step 1.5: an empty or cut-off fetch of md-structure-check.sh ran as an empty script and reported a clean change; the last-line check and its one-line why (+154)
 # ratcheted down 2026-10-27 from 171331 to 169880, while docs/rationale/ grew 180278 -> 180314 (+36): part of this payment MOVED (#131, #157)
 # ratcheted down 2026-11-03 from 169880 to 169868: curate flags audit-context when the index's Last audit: is stale; paid for by cutting restatements in audit-context and the index template
+# RAISED 2026-11-04 from 169868 to 170034: #277: audit-context names the new LINKED WORKTREES NOT SEARCHED report section
 templates/adr.md	2115
-templates/audit-context.md	17513
+templates/audit-context.md	17679
 templates/checklists/architect-checklist.md	1263
 templates/checklists/implement-checklist.md	1329
 templates/checklists/qa-checklist.md	1836

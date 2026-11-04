@@ -22,6 +22,14 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.52.0 (candidate, unreleased)
+
+**MINOR.** `refcheck.py` no longer reads a linked worktree of a repo with a plain `.git` directory as a second copy of its files (#277).
+
+**Why it matters.** One session's temporary worktree could turn another repo's audit from CLEAN to DEFECTS with a false `COLLISION`, and the audited repo's own worktrees misfired the same way.
+
+**Consumers.** No action required. A new `LINKED WORKTREES NOT SEARCHED` section names what was left out, so a reference that exists only on such a branch now reads as unresolved rather than resolved. Submodules, bare layouts, copies of a worktree and other repos' worktrees are still walked. So are worktrees of a `--separate-git-dir` repo, or nested in a linked worktree: those can still report a false `COLLISION`, as before.
+
 ## v1.51.0 (2026-11-03)
 
 **MINOR.** `curate` now says when `audit-context` is due, and four skills run shipped scripts instead of carrying long embedded code (`scripts/md-structure-check.sh`, `scripts/pin-scan.sh`, `scripts/tagfree.sh`, `scripts/stampcheck.sh`). No existing consumer has to act, so rule 1 of `templates/release.md` Step 2 does not fire. The `Last audit:` nudge is new behaviour, so this is MINOR, as v1.50.0 was. Adopter-facing size: `templates/` shrinks by 8,919 bytes since v1.50.0, most of it code that moved into `scripts/`.
