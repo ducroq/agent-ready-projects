@@ -22,9 +22,11 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.52.0 (candidate, unreleased)
+## v1.52.0 (2026-11-04)
 
-**MINOR.** New guide pattern: delegated sessions. The session you talk to decides; workers with narrow briefs do the work.
+**MINOR.** New guide pattern: delegated sessions. The session you talk to decides; workers with narrow briefs do the work. No existing consumer has to act, so rule 1 of `templates/release.md` Step 2 does not fire; a new documented pattern is rule 2.
+
+Adopter-facing size: +166 bytes, the `audit-context` note below.
 
 **Why it matters.** In three large adopter repos (25 sessions each), the median session peaked at 190k–270k tokens of context. The framework's own files were under a tenth of that; command output alone was roughly a third to a half. Curating persistent context cannot reach that. Moving the work out of the session you talk to is meant to; whether it does is being trialled.
 
@@ -36,7 +38,7 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 **Why it matters.** One session's temporary worktree could turn another repo's audit from CLEAN to DEFECTS with a false `COLLISION`, and the audited repo's own worktrees misfired the same way.
 
-**Consumers.** No action required. A new `LINKED WORKTREES NOT SEARCHED` section names what was left out, so a reference that exists only on such a branch now reads as unresolved rather than resolved. Submodules, bare layouts, copies of a worktree and other repos' worktrees are still walked. So are worktrees of a `--separate-git-dir` repo, or nested in a linked worktree: those can still report a false `COLLISION`, as before.
+**Consumers.** No action required. A new `LINKED WORKTREES NOT SEARCHED` section names what was left out, so a reference that exists only on such a branch now reads as unresolved rather than resolved. Submodules, bare layouts, copies of a worktree and other repos' worktrees are still walked. So are worktrees of a `--separate-git-dir` repo, or nested in a linked worktree: those can still report a false `COLLISION`, as before. `templates/audit-context.md` and its skill install gain a short note on that section; an adapted copy should contain the string `LINKED WORKTREES NOT SEARCHED`, and works without it.
 
 ## v1.51.0 (2026-11-03)
 
