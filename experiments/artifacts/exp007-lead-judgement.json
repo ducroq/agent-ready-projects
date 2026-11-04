@@ -1,0 +1,12 @@
+{
+  "experiment": "EXP-007",
+  "scored": "2026-11-04",
+  "sensitivity_defect_caught": true,
+  "h1": {"lead_peak_tokens": 217867, "turns": 58, "bar": 158104, "result": "fails"},
+  "h2": {"approved": 21, "limit": 2, "confirmed_misses": 3, "false_in_old_text": 1, "result": "fails"},
+  "deviation": "Review arm added a second model and a validation worker. The single review worker found 2 of the 3 misses; the third counts by the engineer's ruling.",
+  "evidence_limit": "The pre-review draft was not committed, so the misses rest on the subject's addendum, the old text and the final commit.",
+  "later_peak_tokens": 229289,
+  "later_peak_note": "The session kept working after scoring and compacted once; H1 fails on either figure.",
+  "guide_outcome": "Peak claim stays 'being trialled'; a lead approves only after an independent review."
+}

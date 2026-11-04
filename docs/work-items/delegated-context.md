@@ -16,10 +16,12 @@ Last 25 sessions each in the three largest private adopter repos, read from Clau
 ## Current Status
 
 - [x] Measured three adopters (above)
-- [ ] Decide what the main session must hold to judge a worker's proposal (see Open Questions)
-- [x] Drafted `docs/GUIDE.md` § "Delegated Sessions" + CHANGELOG v1.52.0 candidate (2026-11-03); not yet reviewed (`/review-changes`)
+- [x] Guide section, reviewed and merged (#275); v1.52.0 is a candidate, not released
+- [x] EXP-007 scored 2026-11-04 (`experiments/artifacts/exp007-lead-judgement.json`): H1 fails, H2 fails. A lead approves only after an independent review; the peak claim stays "being trialled"
+- [ ] Working runs restarted 2026-11-04 in R1, R2, R3 and R6, no new pre-registration. Read each run's report, add it to the private run log (pointer in `memory/MEMORY.md`), and later record defects found after the run
 - [ ] Decide whether any template changes (project-file "Before You Start" rows as brief sources; work-item as the worker's savepoint)
-- [ ] PR #275 held as draft until the trials have data. Three runs, started or briefed 2026-11-04: R2 (general queue, charter), R3 (Codex builds, lead reviews), R6 (EXP-007, does the lead judge or only approve; PR #278). **Next:** collect their report lines; repoint the EXP-007 pin after any squash merge; score the R6 sensitivity case; rerun the peak measurement. The baseline and script are in `lab/experiments/2026-11-04-exp007-lead-judgement/`.
+
+**Next action**: when the run reports land, fill the log. Whether the pattern beats a single session is unknown; that needs a new comparison experiment, not more of these runs.
 
 ## Decisions
 

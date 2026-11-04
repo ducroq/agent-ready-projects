@@ -2,7 +2,7 @@
 # Lock a reduction in:  bash tests/lint/autoload-ratchet.sh . --update
 # Pay for growth deliberately:  ... --raise "why this must get bigger"
 # Every raise is recorded below, oldest first; notes accumulate, never replace.
-# BYTES 22975
+# BYTES 22964
 # LINES 80
 # seeded 2026-09-14
 # ratcheted down 2026-09-14
@@ -46,5 +46,6 @@
 # ratcheted down 2026-11-03
 # RAISED 2026-11-04 from 22842b/79l to 22975b/80l: memory index gained the 11-04 session pointer; CLAUDE.md shrank
 # ratcheted down 2026-11-04
+# ratcheted down 2026-11-04
 CLAUDE.md	14908
-memory/MEMORY.md	8067
+memory/MEMORY.md	8056
