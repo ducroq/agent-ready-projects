@@ -107,7 +107,7 @@ The pattern has two boundaries.
 
 **What the lead keeps.** Enough to judge a proposal without just approving it: the work item, the decision being made, and the evidence each claim rests on. A worker's mistakes come back sounding as confident as its findings, so check any claim a decision depends on before relaying it, either yourself or with a fresh worker. A negative needs its check stated ([Verification Hooks](#verification-hooks)).
 
-**The lead approves only after an independent review.** Reviewing a worker's diff yourself does not replace one. The reviewer is a fresh worker that has not seen your verdicts, and it compares the old text with the new and the new with the code. In one pre-registered run, a lead approved 21 proposals, and 3 of them held a false claim or lost a warning. A single reviewer found two of the three, which alone would have passed the bar set in advance of 2 in 21. A different model raised the third and a separate worker proved it. One run is a signal, not proof.
+**The lead approves only after an independent review.** Reviewing a worker's diff yourself does not replace one. The reviewer is a fresh worker that has not seen your verdicts, and it compares the old text with the new and the new with the code. In one pre-registered run, a lead approved 21 proposals, and 3 of them held a false claim or lost a warning. A single reviewer found two of the three, and two would have stayed within the limit set in advance. A different model raised the third and a separate worker proved it. One run is a signal, not proof.
 
 **When not to delegate.**
 - A task of a handful of tool calls. Each worker pays its own startup context, so small tasks cost more delegated.
