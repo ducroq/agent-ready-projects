@@ -103,8 +103,11 @@ The pattern has two boundaries.
 - **What to read:** the rows of your Before You Start table and the work item that apply. This is where curation pays off a second time: the routing you already wrote becomes the worker's context.
 - **What's ruled out:** what the lead already tried or decided, so the worker doesn't re-derive it.
 - **What to return:** the conclusion and its evidence (the commands it ran and the paths it touched), not the file contents it read.
+- **Where outputs land:** the file or folder each durable result must end up in. A list that exists only in the conversation, or a script left in scratch space, is lost when the session ends.
 
 **What the lead keeps.** Enough to judge a proposal without just approving it: the work item, the decision being made, and the evidence each claim rests on. A worker's mistakes come back sounding as confident as its findings, so check any claim a decision depends on before relaying it, either yourself or with a fresh worker. A negative needs its check stated ([Verification Hooks](#verification-hooks)).
+
+**The lead approves only after an independent review.** Reviewing a worker's diff yourself does not replace one. The reviewer is a fresh worker that has not seen your verdicts, and it compares the old text with the new and the new with the code. In one pre-registered run, a lead that read a fraction of the material approved 21 proposals, and 3 of them held a false claim or lost a warning. A single reviewer missed the worst of the three; a different model raised it and a separate worker proved it. One run is a signal, not proof.
 
 **When not to delegate.**
 - A task of a handful of tool calls. Each worker pays its own startup context, so small tasks cost more delegated.
@@ -113,7 +116,7 @@ The pattern has two boundaries.
 
 **Try the cheaper habits first.** A fresh session per task, with the work item's Current Status as the savepoint, may get part of the gain for the cost of re-orienting. Hand screenshots and PDFs to a worker that reports in words. Profile where your tokens go first, as for compression, and measure the peak again after.
 
-What is measured is the problem: where the context goes in sessions that do not delegate. That delegation lowers the peak, and that it improves results, are both still hypotheses; a lean, well-chosen context should help, but each worker pays its own startup context and every handoff loses some detail. If you adopt the pattern, measure the peak before and after, and track whether rework or review catches change.
+What is measured is the problem: where the context goes in sessions that do not delegate. Whether delegation lowers the peak is still being trialled: in that same run the lead peaked at 218k tokens, above the 158k bar set in advance. Whether it improves results is a hypothesis too; a lean, well-chosen context should help, but each worker pays its own startup context and every handoff loses some detail. If you adopt the pattern, measure the peak before and after, and track whether rework or review catches change.
 
 ## The Layered Model
 

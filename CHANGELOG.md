@@ -30,7 +30,13 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 **Consumers.** No action required.
 
-- **Delegated sessions (`docs/GUIDE.md` § "Delegated Sessions: Decide Here, Work Elsewhere").** The new section describes moving the work into worker sessions. It covers two boundaries: a decision charter between the user and the lead session (what is always the user's, plus one batched report per session), and a brief between the lead and each worker (goal, the Before You Start rows to read, what's ruled out, what to return). It also covers when not to delegate. The problem is measured; that delegation lowers peak context and improves results are stated as hypotheses. The "Two Kinds of Context" and "Session strategy" paragraphs and the `README.md` TL;DR now link to it.
+- **Delegated sessions (`docs/GUIDE.md` § "Delegated Sessions: Decide Here, Work Elsewhere").** The new section describes moving the work into worker sessions. It covers two boundaries: a decision charter between the user and the lead session (what is always the user's, plus one batched report per session), and a brief between the lead and each worker (goal, the Before You Start rows to read, what's ruled out, what to return). It also covers when not to delegate. The problem is measured. Whether delegation lowers peak context is still being trialled, and whether it improves results is a hypothesis. A lead approves only after an independent review, the outcome EXP-007's rule set: 3 of 21 proposals approved by the lead held a false claim or lost a warning. Briefs now also name where each output must land. The "Two Kinds of Context" and "Session strategy" paragraphs and the `README.md` TL;DR now link to it.
+
+**Also MINOR.** `refcheck.py` no longer reads a linked worktree of a repo with a plain `.git` directory as a second copy of its files (#277).
+
+**Why it matters.** One session's temporary worktree could turn another repo's audit from CLEAN to DEFECTS with a false `COLLISION`, and the audited repo's own worktrees misfired the same way.
+
+**Consumers.** No action required. A new `LINKED WORKTREES NOT SEARCHED` section names what was left out, so a reference that exists only on such a branch now reads as unresolved rather than resolved. Submodules, bare layouts, copies of a worktree and other repos' worktrees are still walked. So are worktrees of a `--separate-git-dir` repo, or nested in a linked worktree: those can still report a false `COLLISION`, as before.
 
 ## v1.51.0 (2026-11-03)
 
