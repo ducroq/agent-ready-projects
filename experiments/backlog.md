@@ -362,3 +362,59 @@ The parser (`experiments/exp001/parse.py` at `b77b45e`) is unchanged.
   not only the subject's.
 - **Labels**: the parser renumbers repos on each run. Map its labels back to EXP-002's through
   the repo paths in the raw output, which stays off-repo.
+
+## EXP-007: does a lead session judge a worker's work, or only approve it?
+
+**Hypotheses**: H1, a lead that delegates its reading peaks at a lower context than sessions that
+do the same kind of work themselves. H2, the lead still judges: what it approves holds up under an
+independent review.
+**Decision it feeds**: what `docs/GUIDE.md` § "Delegated Sessions" may claim (draft PR #275), and
+whether the lead may approve before an independent review or only after one.
+**Subject**: R6, one session. Its name is in the private hypothesis log.
+**Spend**: $0 metered.
+
+### What was seen before freezing
+
+R6's transcripts to 2026-11-04: 45 sessions, last 25 median peak 361,519 tokens. Thirty sessions
+committed read-surface or prune work (median peak 403,652, 237 turns, 11 agent calls), so R6 already
+delegates, and none of the thirty is single-task. The lowest is 158,104 (79 turns, several commits). The
+four whose commits pruned this target peaked at 238,625, 383,856, 406,387 and 485,533. The target has been
+pruned repeatedly, 97.8k to 46k bytes, so it may yield few proposals. R6's gotcha log records that
+prune errors are often old false claims that only a check against the code finds.
+
+### The run
+
+- **Target**: `docs/ARCHITECTURE.md`. If workers produce fewer than 5 proposals, add
+  `docs/OUTPUT_CONTRACT.md` in the same session.
+- **Workers propose** per section: what to move next to its code, what to retire, which phrases to
+  pin in a test.
+- **The lead writes each verdict to a file before any review runs**, with what it read to reach it.
+- **Sensitivity first**: a fresh worker runs the review brief on the pre-fix text of one defect from
+  R6's gotcha log, picked by the maintainer. The lead does not see which.
+- **Review**: a fresh worker that does not see the verdicts compares OLD with NEW, and NEW with the
+  code.
+
+### Measures
+
+- **Peak**: maximum over main-thread assistant turns of input + cache-read + cache-creation tokens.
+- **Miss**: an approved proposal that drops a trap with no new home, or makes a claim false,
+  confirmed by running it against the code or the old text. A false claim that was already in the
+  old text is counted separately and is not a miss. Disputes: the maintainer session rules from the
+  evidence, and the engineer has the last word.
+- **Reported without a bar**: workers used, handoffs that lost something, work redone, what the lead
+  read per verdict, and total tokens for lead and workers. No comparator is single-task, so a cost
+  bar would be invented.
+
+### Decision rule
+
+- **H1 holds** if the lead's peak is below 158,104, the lowest prune session. The bar sits there
+  because a session scoped to one target peaks lower than a mixed session anyway.
+- **H2 holds** if confirmed misses are at most 1 in 10 approved proposals, **fails** above that.
+  **Inconclusive** if fewer than 5 proposals were approved, or the review missed the sensitivity
+  defect: a review that cannot find a known defect proves nothing by finding none.
+- **H1 holds**: the guide may say the lead's peak fell in one run. **H1 fails**: the claim stays
+  "being trialled". **H2 fails**: the guide says a lead approves only after an independent review.
+  **H2 inconclusive**: the guide says nothing about it, and the run is repeated once on another target.
+
+One run gives a signal, not proof. This session is also the last of R6's decision-rights trial, so
+its decision list gets a note that it ran lead/worker.
