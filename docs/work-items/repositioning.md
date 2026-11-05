@@ -21,10 +21,12 @@ Switch commits are in H-032; R5's is still missing.
   13 were pipe filters, such as `grep -v` on another command's output, which no note could answer.
   The other 7 needed live values or every use. So "covered" means named, not answered, and the
   "notes get ignored" claim stays out of the pitch. Details: lab folder, `hand-check-2026-11-05.tsv`.
-- [ ] **Owner decision before EXP-003**: the parser counts pipe filters as searches. Dropping them
-  moves M1 from 13.2% to 10.3%. Also dropping searches of memory files (a rough path match) gives
-  7.0%, below the 10% bar that skips phase 2. Both are after the fact, not pre-registered. EXP-003
-  is pinned to the same parser, so as frozen it cannot show this. Amend it, or run it and report both?
+- [x] **EXP-003 decided 2026-11-05 (owner): run it frozen, report both.** The parser counts pipe
+  filters as searches. Dropping them moves EXP-002's M1 from 13.2% to 10.3%; also dropping searches
+  of memory files (a rough path match) gives 7.0%, below the 10% bar that skips phase 2. Both are
+  after the fact. EXP-003's frozen result stays the official one. Beside it, report M1 and M2 with
+  `<stdin>` events removed, then with memory-file paths removed too, using the same match as
+  `hand-check-sample.py` in the lab folder.
 - [ ] **On or after 2026-11-18**: run `experiments/check_pins.sh`, then EXP-003 (same parser, new
   transcripts). Same decision branch as EXP-002 confirms it.
 - [ ] **Open policy questions from the 2026-10-22 feedback; decide with EXP-005's result, not before**:
