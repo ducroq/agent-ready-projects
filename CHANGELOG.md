@@ -22,6 +22,12 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.52.1 (candidate, unreleased)
+
+### Gotcha archive moves to an `archive/` folder (#274)
+
+`templates/gotcha-log.md` and `docs/GUIDE.md` said to archive resolved entries to `gotcha-log-archive.md` beside the live log, but `curate` Step 0 excludes only `archive/` folders from its read surface, so the archive pass showed no saving. In one adopter, 130,794 chars with the archive beside the log against about 56k with it moved. The destination is now `gotcha-log-archive.md` in an `archive/` folder beside the log, and pointers between the two use repo-root paths. If your log is in `memory/` and you already archived beside it, move the file to `memory/archive/` and update the pointers. A log in `docs/` is outside that measurement, so nothing changes for you unless you want the tidier layout.
+
 ## v1.52.0 (2026-11-04)
 
 **MINOR.** New guide pattern: delegated sessions. The session you talk to decides; workers with narrow briefs do the work. No existing consumer has to act, so rule 1 of `templates/release.md` Step 2 does not fire; a new documented pattern is rule 2.
