@@ -16,7 +16,7 @@ Goal: make the framework cheaper to run without cutting review of the shipped su
 
 **Savepoint — 2026-11-05 (prune in progress).** The engineer wants pruning, thinning, mechanizing and retiring; a big read surface is the to-do. Rank by bytes × load frequency.
 
-Done: H-026, H-012 and the ratchet gotcha thinned; three gotchas archived; `repositioning.md`'s reference material moved to `archive/repositioning-reference.md`. Next:
+Done: H-026, H-012 and the ratchet gotcha thinned; two gotchas archived; `repositioning.md`'s reference material moved to `archive/repositioning-reference.md`. Next:
 
 1. Skill bodies, paid by adopters: `curate` 24.1k and `review-changes` 22.2k bytes. Moving `curate`'s last two `$(0)` uses into a script would retire H-012. Edit both copies, and take the self-certification route.
 2. Two gotchas stay until a check holds them: "Running it is the only thing" and "Retiring a check". Most other live gotchas exist only in that log, so a further cut needs a home for the lesson first.
