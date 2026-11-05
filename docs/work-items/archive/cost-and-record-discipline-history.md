@@ -548,3 +548,34 @@ Every one of these was a number that no longer matched the thing it counted, and
 - **Should `docs/archive/LANDSCAPE.md` carry a supersession marker?** Left untouched 2026-09-12 — archived under the 2026-04-14 pivot, and rewriting archived material may be worse than leaving it.
 - **Is "ask two or three claims per release" worth formalising?** On 2026-09-12 the maintainer caught two errors three lenses missed, by asking *"is that true?"* of one sentence. The lenses verified citations **resolved**; the question was whether they **said what was claimed**. Different question, much cheaper, better hit rate. Unclear whether it survives being turned into a step.
 
+## Savepoints moved 2026-11-05
+
+**Savepoint — 2026-11-04 (wrap): next session starts with a prune.** The engineer asked for pruning, thinning, mechanizing and retiring. Read surface is 101.7k chars. Rank by bytes × load frequency:
+
+1. `memory/gotcha-log.md`, 31.2k: archive entries whose lesson is already in a check or the through-line.
+2. `memory/hypothesis-log.md`, 29.6k: thin the 13 open entries; close or go dormant where evidence has stalled.
+3. This file and `repositioning.md`, 7.3k and 9.3k: collapse old savepoints.
+4. Skill bodies, paid by adopters: `curate` 24.1k and `review-changes` 22.2k bytes. Mechanize further; edit both copies, and take the self-certification route.
+5. #274 first: it decides where the gotcha archive goes.
+
+Lock the ratchets last, after any review.
+
+**Savepoint — 2026-11-04 (prune done).** Audit clean. Gotcha log 44.5k → 30.5k bytes, hypothesis log 32.7k → 29.7k, dead-end file archived; item 0 below is closed except the review-hypothesis merge, which is the engineer's call. Next: `memory/MEMORY.md` Current State.
+
+**Savepoint — 2026-10-27 (prune, session 1).**
+
+- **Last action**: prune session 2, 2026-10-27. Merged #265 (`release` → `scripts/tagfree.sh`), #266 (`review-changes` fetch check), #267 (`update-drift` → `scripts/pin-scan.sh`); filed #268 (fetch-check lint). Hypothesis log 50.8k → 31.5k (5 archived dormant, 14 open). Declined: `audit-context` Step 4 cut, infra cost practices, memory shorthand. **Not done: the release.** v1.50.1 candidate holds five adopter-facing bullets; `/release` is user-invoked by design, and globals refresh after its tag. Before that: prune session 1 (gotcha log 65k → 39k, `review-changes` and `curate` scripts).
+- **Next action** (savepoint 2026-10-27, session 2; the engineer asked for more pruning):
+  0. **The curate read surface: 113,651 chars, of which `memory/gotcha-log.md` is 40.2k and `memory/hypothesis-log.md` 31.5k.** Gotcha log: 29 entries; archive any whose fix is now a lint rule or a shipped step (check each Fix line against `tests/lint/README.md`), as session 1 did for the resolved ones. Hypothesis log: 14 open against ~10; H-024/H-021/H-025/H-027/H-033 are all about review rounds and may merge into one. Then `docs/work-items/repositioning.md` (9.3k).
+  1. **Prune.** Run `/audit-context` (last run 2026-09-26), then retire, archive, mechanize and thin. Rank cuts by bytes × load frequency. Measured 2026-10-27, in bytes:
+     - **Skill bodies: mechanization pass DONE (2026-10-27).** `review-changes` 26.6k → 22.1k, `curate` 25.9k → 23.8k, `release` 15.9k → 14.8k (#265), `update-drift` 15.7k → 14.3k (#267). All three merged 2026-10-27.
+     - **`audit-context` 17.6k: DECIDED, leave it (engineer, 2026-10-27).** Nothing to mechanize; the remaining ~3k in Step 4 describes the checker's report, and the skill stays the authority for it (#122). Saving too small for a monthly skill.
+     - **Fetch fallbacks: all three now check the download's last line** (#265, #266, #267). The lint check that would catch a fourth is a proposed Mechanized row.
+     - **The `curate` read surface here**: done for the gotcha log; `memory/hypothesis-log.md` 53k, 19 open against a clutter line of ~10, none past its review date.
+     - **`CLAUDE.md`**: 14.7k chars, at curate's 15k flag.
+     - **Method for a skill body (2026-10-27)**: run Step 8 (what has each sub-step ever caught), mechanize embedded programs into `scripts/` with a curl fallback, prove parity on real inputs, then review.
+     - **Moves that work**: archive resolved gotchas and dormant hypotheses, de-duplicate against an authority, and turn prose guards into lint rules (rule 21 now checks README/GUIDE version lines, #246). Tightening prose does not work.
+  2. **Infra's estate cost practices: DECLINED, none becomes guidance (engineer, 2026-10-27).** "Don't trust a tool's own meter" is already the first through-line and `review-changes`' measurement rule; model routing shipped as the profile's `Reviewer model` (v1.50.0); probe-first API estimates, budget visibility and session discipline are about API spend, not the memory method. Reopen only if an adopter asks for spend guidance.
+  3. **Shorthand + glossary for `memory/`: trialled and DECLINED (engineer, 2026-10-27).** On MEMORY.md's Current State: −16% characters (~14% by a regex token proxy; no API key for a real count). Two cold Sonnet readers, original vs shorthand, both answered 9 of 9 operative-clause questions correctly. No comprehension loss at n=1, but ~150 tokens per session does not pay for a glossary to maintain and an exception to "never compress prose". Archiving and mechanizing cut more.
+  4. **H-031** (curate's arc section): 4 of 10 runs, 0 catches. The trigger has fired; it is kept to run 10, with the contributor to be asked (engineer, 2026-10-21).
+- **Blockers**: none.
