@@ -35,9 +35,9 @@
 #     ${N}        SYNTAX ERROR, rc 2       correct
 #     \$N         SYNTAX ERROR, rc 2       a literal `$1`, not the parameter
 #
-# So: `$(N)` in awk, `${N}` in shell, `\$N` in prose and in comments. That also
-# keeps this rule consistent with `templates/curate.md`, which says `$(0)` is the
-# only form correct on both the delivery path and the fixtures' extraction path.
+# So: `$(N)` in awk, `${N}` in shell, `\$N` in prose and in comments. Better still
+# is no positional field at all, as `templates/curate.md` Step 0 now does: `$(0)`
+# rests on an undocumented substituter grammar.
 #
 # NO PROSE EXEMPTION, and the day this rule was written is the argument for
 # that: the only bare `$N` left in any skill body were four comment lines
