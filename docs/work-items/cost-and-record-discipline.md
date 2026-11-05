@@ -14,11 +14,12 @@ Goal: make the framework cheaper to run without cutting review of the shipped su
 
 ## Current Status
 
-**Savepoint — 2026-11-05 (wrap): next session starts with a prune.** The engineer wants pruning, thinning, mechanizing and retiring; a big read surface is the to-do. Read surface is 88750 chars. Rank by bytes × load frequency:
+**Savepoint — 2026-11-05 (prune in progress).** The engineer wants pruning, thinning, mechanizing and retiring; a big read surface is the to-do. Rank by bytes × load frequency.
 
-1. `memory/hypothesis-log.md` and `memory/gotcha-log.md`, about 28k each. Thin H-026 and H-012, the largest entries. Two gotchas stay until a check holds them: "Running it is the only thing" and "Retiring a check".
-2. `docs/work-items/repositioning.md`, 9.3k: collapse old savepoints, as done here.
-3. Skill bodies, paid by adopters: `curate` 24.1k and `review-changes` 22.2k bytes. Moving `curate`'s last two `$(0)` uses into a script would retire H-012. Edit both copies, and take the self-certification route.
+Done: H-026, H-012 and the ratchet gotcha thinned; two gotchas archived; `repositioning.md`'s reference material moved to `archive/repositioning-reference.md`. Next:
+
+1. Skill bodies, paid by adopters: `curate` 24.1k and `review-changes` 22.2k bytes. Moving `curate`'s last two `$(0)` uses into a script would retire H-012. Edit both copies, and take the self-certification route.
+2. Two gotchas stay until a check holds them: "Running it is the only thing" and "Retiring a check". Most other live gotchas exist only in that log, so a further cut needs a home for the lesson first.
 
 Lock the ratchets last, after any review. The v1.52.1 candidate holds #274; `/release` is the engineer's to invoke. Older savepoints: `docs/work-items/archive/cost-and-record-discipline-history.md`.
 

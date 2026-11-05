@@ -17,11 +17,16 @@ checkable repeats were already in memory), and EXP-005/006, pinned (#252): five 
 slim-downs (R1, R2, R3, R5, R6) as subjects, with EXP-004's controls narrowed to the other 11.
 Switch commits are in H-032; R5's is still missing.
 
-- [ ] **Next session, after the pruning**: hand-check 20 covered repeats from EXP-002 (lab folder,
-  memory-maintenance searches excluded). For each: would the note alone have answered the search?
-  Yes / no (it needed locations or every use) / unclear. 72% of covered repeats had the term in the
-  always-loaded `CLAUDE.md`, so "covered" may mostly mean "named", not "answered". If yes is rare,
-  drop the "notes get ignored" claim from the pitch and say why here. Aggregates only.
+- [x] **Hand-check of 20 covered repeats, 2026-11-05**: yes 0, no 20, unclear 0. One rater, not blind.
+  13 were pipe filters, such as `grep -v` on another command's output, which no note could answer.
+  The other 7 needed live values or every use. So "covered" means named, not answered, and the
+  "notes get ignored" claim stays out of the pitch. Details: lab folder, `hand-check-2026-11-05.tsv`.
+- [x] **EXP-003 decided 2026-11-05 (owner): run it frozen, report both.** The parser counts pipe
+  filters as searches. Dropping them moves EXP-002's M1 from 13.2% to 10.3%; also dropping searches
+  of memory files (a rough path match) gives 7.0%, below the 10% bar that skips phase 2. Both are
+  after the fact. EXP-003's frozen result stays the official one. Beside it, report M1 and M2 with
+  `<stdin>` events removed, then with memory-file paths removed too, using the same match as
+  `hand-check-sample.py` in the lab folder.
 - [ ] **On or after 2026-11-18**: run `experiments/check_pins.sh`, then EXP-003 (same parser, new
   transcripts). Same decision branch as EXP-002 confirms it.
 - [ ] **Open policy questions from the 2026-10-22 feedback; decide with EXP-005's result, not before**:
@@ -35,84 +40,12 @@ Switch commits are in H-032; R5's is still missing.
   deeper search for any context checker that tests its own checks (sentence B depends on it).
 - [ ] **Only after outside uptake**: README/GUIDE edits, which are a CHANGELOG-noted release.
 
-## Where the repo sits
+## Reference
 
-A harness runs the agent loop. This repo runs nothing. It is the part of harness engineering
-that **lasts across sessions and across harnesses**.
-
-| Discipline | In this repo | Strength |
-|---|---|---|
-| Context engineering | Layered memory, task-triggered pointers, curate pruning, session-start token ratchet | Core |
-| Evaluation engineering | Seeded-defect fixtures, review-bench scoring, `docs/seeded-defects-and-ablations.md`, lint | Strong |
-| Observability | Gotcha, hypothesis and dead-end logs; CHANGELOG. They record lessons, not traces | Partial |
-| Tool engineering | Skills and scripts the agent runs (curate, review-changes, `verify-runner.sh`, `refcheck.py`) | Partial |
-| Loop engineering | Work items and savepoints run the cross-session loop; the model↔tool loop is the harness's | Light |
-| Safety engineering | Hard constraints and review tiers; permissions and sandboxing are the harness's | Light |
-
-## Landscape, 2026-10-21
-
-What changed since the April pivot, and what it means for the pitch:
-
-1. **"Harness engineering" is the 2026 frame.** It sits after prompt and context engineering,
-   and covers context, tools, guardrails, feedback loops and observability ([Faros][faros],
-   [Noqta][noqta], [Lyzr][lyzr]). These are vendor and blog sources, not primary ones.
-2. **Context files are now measured, and the result is unflattering.** The ETH Zurich /
-   LogicStar study (ICLR 2026, [arXiv 2602.11988][eth]) found repository context files give
-   little or no gain in task success and raise inference cost by over 20%. Human-written,
-   minimal files did best. This *supports* the repo's lean-context and token-reduction stance,
-   and the pitch should cite it rather than ignore it.
-3. **"Memory must be checked against the code" is no longer a unique idea.** A 2026-10-03 survey
-   ([Dell, dev.to][dell]) lists several approaches: a commit-vs-spec drift hook, Sentry's
-   SOURCES.md, a refresh command in Every's compound-engineering plugin, `rulesync generate
-   --check`, and okl's executable lessons. It also reports that Copilot Memory validates facts
-   before use; that is second-hand and not checked here. The April memo counted
-   self-verifying memory as unique. **It is now a crowded idea.**
-4. **Structural linters for context files exist**: ctxlint, agents-doctor, AgentLint, ailint
-   ([survey of results][lint]). These overlap with lint rules and `refcheck.py`.
-5. **Memory products** (Cognee, Mem0, Zep) sell retrieval over MCP ([Cognee guide][cognee],
-   vendor-written). That is a different layer: they store and fetch, they do not curate or
-   verify.
-
-**What still looks unclaimed:** testing the checks themselves. Every tool above checks the
-context; none of the ones found shows that its checks catch seeded failures. That is the
-argument of `docs/seeded-defects-and-ablations.md`: "a check that finds nothing has told you
-nothing." The other gap is the **whole lifecycle** (capture, promote, verify, retire) in plain
-files any harness can read, instead of a single linter or a hosted store.
-
-## Drafts
-
-### Problem sentence (pick one)
-
-- A. *Your agent's project notes go stale, and it keeps acting on things that stopped being true.*
-- B. *Every agent tool can load your project notes. None of them tells you when the notes are wrong.*
-- C. *Context files cost tokens on every task and, measured, barely help. Keep only what earns
-  its place, and prove it is still true.*
-
-### One-line description
-
-> **Agent-Ready Projects: persistent context engineering for any coding agent.** Project memory
-> loaded by task, kept true by self-checks, improved session over session, and evaluated with
-> seeded defects.
-
-### Proof paragraph
-
-> Most tools that check agent context have never been shown to catch anything. This one has.
-> In its own repository, a structural rule matched 0 of the 4 references it existed to
-> validate, for its whole life, and stayed green. A rule comparing a template to its installed
-> copy passed for eight releases while both copies held the same syntax error. Neither was
-> found by reading. Both were found by running the check against failures planted on purpose.
-> Every check here ships with such a fixture, so "all clean" means something.
-
-(Examples from `docs/seeded-defects-and-ablations.md`; keep them in step with that page.)
-
-### Demo outline (about one minute of reading)
-
-1. A small repo whose project file says "run tests with `make test`", backed by a verify probe.
-2. The Makefile is replaced by `just`. Nothing else changes.
-3. Next session: the probe fails and names the stale line before the agent acts on it.
-4. The agent fixes the line; the probe passes.
-5. Second beat: remove the probe's teeth (make it always pass). The seeded-defect fixture goes
-   red. The check is itself checked.
+The six-discipline mapping, the 2026-10-21 landscape scan and the drafts (problem sentences,
+one-line description, proof paragraph, demo outline) are in
+`docs/work-items/archive/repositioning-reference.md`. Read it when drafting the front door,
+demo or post.
 
 ## Decisions
 
@@ -143,12 +76,4 @@ files any harness can read, instead of a single linter or a hosted store.
 
 **What remains**:
 
-**Related**: `memory/project_framework_pivot.md`, `docs/seeded-defects-and-ablations.md`
-
-[faros]: https://www.faros.ai/blog/harness-engineering
-[noqta]: https://noqta.tn/en/blog/harness-engineering-ai-agents-production-ready-2026
-[lyzr]: https://lyzr.ai/blog/harness-engineering-for-ai-agents/
-[eth]: https://arxiv.org/abs/2602.11988
-[dell]: https://dev.to/emeraldleaf/what-keeps-an-agent-setup-true-2ggp
-[lint]: https://forum.cursor.com/t/built-a-small-cli-to-detect-agents-md-drift-missing-commands-dead-paths-conflicting-nested-files/159582
-[cognee]: https://www.cognee.ai/blog/guides/memory-tooling-ai-coding-agents
+**Related**: `memory/project_framework_pivot.md`, `docs/seeded-defects-and-ablations.md`, `docs/work-items/archive/repositioning-reference.md`
