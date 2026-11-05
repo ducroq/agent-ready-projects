@@ -17,11 +17,14 @@ checkable repeats were already in memory), and EXP-005/006, pinned (#252): five 
 slim-downs (R1, R2, R3, R5, R6) as subjects, with EXP-004's controls narrowed to the other 11.
 Switch commits are in H-032; R5's is still missing.
 
-- [ ] **Next session, after the pruning**: hand-check 20 covered repeats from EXP-002 (lab folder,
-  memory-maintenance searches excluded). For each: would the note alone have answered the search?
-  Yes / no (it needed locations or every use) / unclear. 72% of covered repeats had the term in the
-  always-loaded `CLAUDE.md`, so "covered" may mostly mean "named", not "answered". If yes is rare,
-  drop the "notes get ignored" claim from the pitch and say why here. Aggregates only.
+- [x] **Hand-check of 20 covered repeats, 2026-11-05**: yes 0, no 20, unclear 0. One rater, not blind.
+  13 were pipe filters, such as `grep -v` on another command's output, which no note could answer.
+  The other 7 needed live values or every use. So "covered" means named, not answered, and the
+  "notes get ignored" claim stays out of the pitch. Details: lab folder, `hand-check-2026-11-05.tsv`.
+- [ ] **Owner decision before EXP-003**: the parser counts pipe filters as searches. Dropping them
+  moves M1 from 13.2% to 10.3%. Also dropping searches of memory files (a rough path match) gives
+  7.0%, below the 10% bar that skips phase 2. Both are after the fact, not pre-registered. EXP-003
+  is pinned to the same parser, so as frozen it cannot show this. Amend it, or run it and report both?
 - [ ] **On or after 2026-11-18**: run `experiments/check_pins.sh`, then EXP-003 (same parser, new
   transcripts). Same decision branch as EXP-002 confirms it.
 - [ ] **Open policy questions from the 2026-10-22 feedback; decide with EXP-005's result, not before**:
