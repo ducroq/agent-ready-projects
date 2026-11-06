@@ -22,7 +22,11 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.52.1 (candidate, unreleased)
+## v1.52.1 (2026-11-06)
+
+**PATCH.** Two `curate` changes and one archive correction, all inside existing files: no consumer has to act and nothing new is added, so rule 2 of `templates/release.md` Step 2 fires, on the v1.10.1 precedent. `templates/` shrinks by 2021 bytes, nearly all of it paid on every `/curate` run.
+
+**Consumers.** No action required to keep working. If you adapted your copy of `curate`, two edits in Step 0 carry the changes: the Promoted-table extractor should contain `sub(/ .*/,"")` and no `$(0)`, and "Writing a verify command" should contain `#writing-a-verify-command`. For a log with an archive beside it, moving that file into an `archive/` folder is what makes the read-surface saving show.
 
 ### Gotcha archive moves to an `archive/` folder (#274)
 
