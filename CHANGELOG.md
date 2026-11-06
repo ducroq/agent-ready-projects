@@ -22,6 +22,12 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.52.2 (candidate, unreleased)
+
+### `review-changes` drops the reasoning comments from its bash blocks
+
+The comments explaining why the blocks are written as they are go to `docs/rationale/review-changes.md`, word for word and tied to the lines they described. An agent running the blocks does not read them for anything; the code and everything the blocks print are unchanged.
+
 ## v1.52.1 (2026-11-06)
 
 **PATCH.** Two `curate` changes and one archive correction, all inside existing files: no consumer has to act and nothing new is added, so rule 2 of `templates/release.md` Step 2 fires, on the v1.10.1 precedent. `templates/` shrinks by 2021 bytes, nearly all of it paid on every `/curate` run.
