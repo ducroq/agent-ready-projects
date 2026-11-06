@@ -6,6 +6,7 @@
      from this repo.) A project-local copy is INERT — the global one shadows it.
      Diff an install against THAT file, never this one: the header differs by construction (#187).
      For other tools, run this as a pre-commit prompt manually.
+     Editing a bash block below? Its reasons are in <https://github.com/ducroq/agent-ready-projects/blob/master/docs/rationale/review-changes.md>. lint-skip: maintainer-path — a URL, not a repo-relative path.
 
      Claude Code skills require SKILL.md as the entry point inside a
      named directory under .claude/skills/. Add frontmatter:
@@ -22,42 +23,23 @@ Pre-commit review of pending changes. Scope and depth are driven by what changed
 Resolve the baseline first; everything below reads `$BASE`. It is the default branch — `@{u}` only on the default branch itself, since on a pushed, unmerged branch `@{u}` is empty.
 
 ```bash
-# Every arm ends in a success, or `set -e` aborts before the fallback that is the
-# one place reporting the failure.
 BASE=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD) ||
-# Fully qualified: `rev-parse` resolves refs/heads/ first, so a LOCAL branch named
-# `origin/main` would win and silently reintroduce #64.
 BASE=$(for c in refs/remotes/origin/main refs/remotes/origin/master main master; do
          git rev-parse --verify --quiet "$c" >/dev/null && { printf %s "$c"; break; }; done) || :
-# On the default branch HEAD...HEAD is empty, so the upstream is the baseline.
 if [ -n "${BASE:-}" ] && [ "$(git rev-parse --abbrev-ref HEAD 2>/dev/null)" = "${BASE##*/}" ]; then
   BASE=$(git rev-parse --abbrev-ref '@{u}' 2>/dev/null || printf %s '')
 fi
-# An empty or dangling BASE diffs to nothing, which is what a clean tree yields.
-# The fallback is NOT "the whole branch": three-dot excludes the root's own
-# content, so a one-commit repo diffs to NOTHING (#149). No `${BASE:-sentinel}`
-# placeholder — any sentinel word is a legal branch name.
 ROOTFALLBACK=          # initialised, or a later `set -u` reader aborts on it
 { [ -n "${BASE:-}" ] && git rev-parse --verify --quiet "$BASE^{commit}" >/dev/null; } || {
-  # `|| :` is load-bearing: without it `set -eo pipefail` kills the shell here and
-  # prints nothing. Four SHELL-OPTION modes are seeded in the fixture — the axis
-  # matters, because the block was broken only in the ones without `set -e`.
   BASE=$(git rev-list --max-parents=0 HEAD 2>/dev/null | tail -1) || :
   : "${BASE:?no commits in this repository — nothing can be reviewed}"
   ROOTFALLBACK=1
-  # PRINTED as well as set: a shell variable does not reach the next tool call and
-  # this one degrades toward PERMITTING a clean result. Key off the printed token.
   { echo "BASELINE UNRESOLVED (ROOTFALLBACK=1) — fell back to root commit $BASE,"
     echo "  whose OWN content \"\$BASE\"...HEAD EXCLUDES. Run 'git show --stat $BASE'"
     echo "  too. Report this as a FINDING, never a clean result — Step 1.5's file"
     echo "  list carries the same term and the same hole."; } >&2
 }
 
-# #153 — a baseline can RESOLVE and still leave every term legitimately empty
-# (HEAD already contained in $BASE). No other guard fires, so unreviewed commits
-# report as a clean review. A diagnostic, not an abort.
-# ⚠️ The equality case is EXCLUDED, or this fires on the commonest pre-commit
-# state there is, and a guard that cries wolf is skipped.
 if git merge-base --is-ancestor HEAD "$BASE" 2>/dev/null &&
    [ "$(git rev-parse HEAD)" != "$(git rev-parse "$BASE^{commit}" 2>/dev/null)" ]; then
   { echo "HEAD IS CONTAINED IN $BASE — nothing on this branch is absent from the"
@@ -70,12 +52,6 @@ fi
 git diff --shortstat "$BASE"...HEAD    # committed on this branch
 git diff --shortstat                   # unstaged
 git diff --cached --shortstat          # staged
-# #145 — no `git diff` variant lists a file git has not seen, so the carve-out for
-# "any new file in a HIGH path" fired on a class this step could not observe.
-# Step 1.5 having its own `ls-files` is no substitute: it checks markdown, not tiers.
-# ⚠️ ROOT-ANCHORED on purpose: `ls-files` defaults to the CWD SUBTREE while every
-# term above is repo-wide, and this skill runs with the cwd of whatever repo is
-# under review.
 git -C "$(git rev-parse --show-toplevel)" -c core.quotePath=false \
     ls-files --others --exclude-standard    # untracked, not ignored
 ```
@@ -110,14 +86,6 @@ Classify each changed file using the profile's tier table, then apply the magnit
 git diff --shortstat "$BASE"...HEAD    # committed on this branch
 git diff --shortstat                   # unstaged
 git diff --cached --shortstat          # staged
-# Untracked lines count too — none of the three terms above sees them (#145).
-# No `xargs -r` (a GNU extension) and no plain `xargs` either: on empty input that
-# runs `wc -l` with no argument, which reads stdin and BLOCKS on a terminal. The
-# form below prints 0 on an empty list. ⚠️ Not verified on BSD/macOS.
-# ⚠️ `-z`, not a plain list: `ls-files` C-QUOTES any path with a non-ASCII byte, a
-# tab or a newline, and `wc -l < "$f"` then opens nothing — measured 5 against a
-# true 105. Same quoting hits the TIER listing, hence `core.quotePath=false`.
-# `|| echo 0` keeps a broken symlink from aborting the stream under `set -e`.
 git -C "$(git rev-parse --show-toplevel)" ls-files -z --others --exclude-standard |
   while IFS= read -r -d '' f; do wc -l < "$f" 2>/dev/null || echo 0; done |
   awk '{ n += $(1) } END { print n + 0, "untracked lines" }'
@@ -146,7 +114,6 @@ Runs at **every tier and every magnitude**, before any lens, on every changed ma
 cd "$(git rev-parse --show-toplevel)"   # git prints root-relative paths; from a subdirectory nothing matches
 CHECK=~/repos/agent-ready-projects/scripts/md-structure-check.sh   # this framework's clone
 # No clone, or one older than the script: fetch it; never hand-write a checker.
-# The tail check matters: an empty or cut-off 200 response would run, report nothing, and exit 0.
 [ -f "$CHECK" ] || { _mc=$(mktemp) && curl -m 10 -fsSL https://raw.githubusercontent.com/ducroq/agent-ready-projects/master/scripts/md-structure-check.sh -o "$_mc" && tail -n 1 "$_mc" | grep -q 'hits" -eq 0' && CHECK=$_mc; }
 { git -c core.quotePath=false diff --name-only
   git -c core.quotePath=false diff --cached --name-only

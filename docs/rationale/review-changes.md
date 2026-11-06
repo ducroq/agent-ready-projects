@@ -635,3 +635,73 @@ State the lens set and the ceiling **before** starting; record the cost after. L
 - **Never run a lens for a class a deterministic check covers *completely*.** Partial coverage is not coverage: where the tier table mandates a lens and a check covers only part of its class, the tier table wins — say which part the check already settled, and let the lens have the rest.
 - ⚠️ **Do not economise by collapsing lenses into the author's own context.** This is about *whose context* the reviewer holds, not how many run: one independent reviewer instead of four is a legitimate saving, and the magnitude gate prescribes that for small diffs. Asking the questions inside the context that wrote the change is not — that reviewer holds the author's blind spots, the failure this skill exists to prevent. Measured twice: two lenses once returned **disjoint** findings; and on a four-lens round *every* lens found the top blocker while **two of them each found a blocker no other lens did**. Breadth buys the defects nobody predicted — not disjointness.
 - **Promote rather than re-catch.** Step 3.1 triages each round's findings into checks; this is where the loop closes. **Read the Mechanized table in Step 1, before choosing lenses** — not here, which is read before Step 3.1 has ever run. ⚠️ A `live` row is not a reason to drop a lens the tier table mandates: it covers one *shape*, a lens covers a *class*, and the bullet above governs — partial coverage is not coverage. Use it to narrow a lens's scope, never to skip one.
+
+### Comments moved out of the skill's bash blocks, 2026-11-06
+
+An agent running these blocks does not need them; an editor of the blocks does. Read them before changing Step 1, the magnitude gate or Step 1.5. Each group is followed by the line of code it sat above.
+
+**Step 1, baseline block:**
+
+```text
+# Every arm ends in a success, or `set -e` aborts before the fallback that is the
+# one place reporting the failure.
+    ^ above: BASE=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD) ||
+
+# Fully qualified: `rev-parse` resolves refs/heads/ first, so a LOCAL branch named
+# `origin/main` would win and silently reintroduce #64.
+    ^ above: BASE=$(for c in refs/remotes/origin/main refs/remotes/origin/master main master; do
+
+# On the default branch HEAD...HEAD is empty, so the upstream is the baseline.
+    ^ above: if [ -n "${BASE:-}" ] && [ "$(git rev-parse --abbrev-ref HEAD 2>/dev/null)" = "${BASE##*/}" ]; then
+
+# An empty or dangling BASE diffs to nothing, which is what a clean tree yields.
+# The fallback is NOT "the whole branch": three-dot excludes the root's own
+# content, so a one-commit repo diffs to NOTHING (#149). No `${BASE:-sentinel}`
+# placeholder — any sentinel word is a legal branch name.
+    ^ above: ROOTFALLBACK=          # initialised, or a later `set -u` reader aborts on it
+
+# `|| :` is load-bearing: without it `set -eo pipefail` kills the shell here and
+# prints nothing. Four SHELL-OPTION modes are seeded in the fixture — the axis
+# matters, because the block was broken only in the ones without `set -e`.
+    ^ above: BASE=$(git rev-list --max-parents=0 HEAD 2>/dev/null | tail -1) || :
+
+# PRINTED as well as set: a shell variable does not reach the next tool call and
+# this one degrades toward PERMITTING a clean result. Key off the printed token.
+    ^ above: { echo "BASELINE UNRESOLVED (ROOTFALLBACK=1) — fell back to root commit $BASE,"
+
+# #153 — a baseline can RESOLVE and still leave every term legitimately empty
+# (HEAD already contained in $BASE). No other guard fires, so unreviewed commits
+# report as a clean review. A diagnostic, not an abort.
+# ⚠️ The equality case is EXCLUDED, or this fires on the commonest pre-commit
+# state there is, and a guard that cries wolf is skipped.
+    ^ above: if git merge-base --is-ancestor HEAD "$BASE" 2>/dev/null &&
+
+# #145 — no `git diff` variant lists a file git has not seen, so the carve-out for
+# "any new file in a HIGH path" fired on a class this step could not observe.
+# Step 1.5 having its own `ls-files` is no substitute: it checks markdown, not tiers.
+# ⚠️ ROOT-ANCHORED on purpose: `ls-files` defaults to the CWD SUBTREE while every
+# term above is repo-wide, and this skill runs with the cwd of whatever repo is
+# under review.
+    ^ above: git -C "$(git rev-parse --show-toplevel)" -c core.quotePath=false \
+```
+
+**Magnitude gate, line count:**
+
+```text
+# Untracked lines count too — none of the three terms above sees them (#145).
+# No `xargs -r` (a GNU extension) and no plain `xargs` either: on empty input that
+# runs `wc -l` with no argument, which reads stdin and BLOCKS on a terminal. The
+# form below prints 0 on an empty list. ⚠️ Not verified on BSD/macOS.
+# ⚠️ `-z`, not a plain list: `ls-files` C-QUOTES any path with a non-ASCII byte, a
+# tab or a newline, and `wc -l < "$f"` then opens nothing — measured 5 against a
+# true 105. Same quoting hits the TIER listing, hence `core.quotePath=false`.
+# `|| echo 0` keeps a broken symlink from aborting the stream under `set -e`.
+    ^ above: git -C "$(git rev-parse --show-toplevel)" ls-files -z --others --exclude-standard |
+```
+
+**Step 1.5, checker call:**
+
+```text
+# The tail check matters: an empty or cut-off 200 response would run, report nothing, and exit 0.
+    ^ above: [ -f "$CHECK" ] || { _mc=$(mktemp) && curl -m 10 -fsSL https://raw.githubusercontent.com/ducroq/agent-ready-pr
+```
