@@ -17,7 +17,6 @@ CANNOT VERIFY line naming the cause.
 
 Written as an explicit `if`, not as `guard && check || echo ...`: in that form
 the fallback also runs when the *check* fails, so a reachable appliance whose
-snapshot is genuinely missing would report as un-checkable. curate Step 0
-sub-step 3 forbids the shape for that reason, and a fixture may not model what
-the step forbids.
+snapshot is genuinely missing would report as un-checkable. The probe-writing rules forbid the shape for that reason, and a
+fixture may not model what those rules forbid.
 -->

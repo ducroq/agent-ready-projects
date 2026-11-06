@@ -32,6 +32,10 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 `curate` Step 0's Promoted-table extractor used `$(0)`, whose survival rests on an undocumented substitution grammar. It now takes the heading level with `sub` and bare `length`, with no positional field. Same output on all 411 gotcha files in the maintainer's estate, 130 of them with a Promoted table, on mawk and busybox awk; gawk not tested. No adopter action beyond taking the skill update.
 
+### `curate` links to the probe-writing rules instead of carrying them
+
+`curate` Step 0 carried every rule for writing a `<!-- verify: -->` command, paid on each run but needed only when writing one. It keeps "run it once" and "print on success, fail with a non-zero exit", and links to `docs/rationale/curate.md` § Writing a verify command for the rest. An agent that cannot reach the link writes the probe, runs it, and says so in its report.
+
 ## v1.52.0 (2026-11-04)
 
 **MINOR.** New guide pattern: delegated sessions. The session you talk to decides; workers with narrow briefs do the work. No existing consumer has to act, so rule 1 of `templates/release.md` Step 2 does not fire; a new documented pattern is rule 2.
