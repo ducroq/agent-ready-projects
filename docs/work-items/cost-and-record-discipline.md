@@ -24,7 +24,7 @@ Goal: make the framework cheaper to run without cutting review of the shipped su
 
 Done 11-05/06: both logs thinned, `repositioning.md` reference archived, `curate` -2.0k, `review-changes` -2.4k, H-012 closed. Every thinning gets a fresh lens **before** the commit, `memory/` included. Make that lens new-text-against-the-code: on one FS prune, old-vs-new found nothing and new-vs-code found eight older defects, and fixing them grew the doc, so size alone is not the score.
 
-Lock the ratchets last, after any review. The v1.52.2 candidate holds #295; owner 2026-11-06: release once, after the next prune items; `/release` is the engineer's to invoke. Older savepoints: `docs/work-items/archive/cost-and-record-discipline-history.md`.
+Lock the ratchets last, after any review. v1.52.2 shipped #295 on 2026-11-06, ahead of this list; the next candidate is empty, so the prune items ship together in one release; `/release` is the engineer's to invoke. Older savepoints: `docs/work-items/archive/cost-and-record-discipline-history.md`.
 
 **Before each cut**, check it still holds:
 - Account for every `<!-- verify: -->` probe by name, before and after the cut. A probe may move but must not vanish.
