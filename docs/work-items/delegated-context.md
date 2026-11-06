@@ -21,7 +21,7 @@ Last 25 sessions each in the three largest private adopter repos, read from Clau
 - [ ] Working runs restarted 2026-11-04 in R1, R2, R3 and R6, no new pre-registration. Read each run's report, add it to the private run log (pointer in `memory/MEMORY.md`), and later record defects found after the run
 - [ ] Decide whether any template changes (project-file "Before You Start" rows as brief sources; work-item as the worker's savepoint)
 
-**Next action**: when new run reports land, fill the log. The natural comparison is set up in the private run log and reads at 10 pairs; whether the pattern beats a single session is still unknown. Peer feedback and the 2026-11-05 amendments are in that log.
+**Next action**: the owner flips each eligible task; relay each peer's landing line into the private run log. Decided 2026-11-06: a randomised arm, with fresh review on both sides, read at 10 complete pairs, with its decision rule fixed in that log. No task flipped yet. The blind reader is a fresh agent. The natural comparison stays separate, at 2 of 10 pairs.
 
 ## Decisions
 
