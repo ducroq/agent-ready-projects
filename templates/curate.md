@@ -63,8 +63,8 @@ Check for context rot from *previous* sessions. **Read metadata, not documents**
    # Bounded at the next same-or-shallower heading. `,0` ran to EOF and swallowed any
    # later section: 11 rows read where 7 exist. Level-aware, because entries nest as
    # `###` under `## Promoted` — exiting at ANY heading returns zero rows there.
-   awk '/^#+ Promoted/ && !f { f=1; match($(0),/^#+/); n=RLENGTH; next }
-        f && /^#+ / { match($(0),/^#+/); if (RLENGTH<=n) exit } f' <log> | grep '^|'
+   awk '/^#+ Promoted/ && !f { f=1; sub(/ .*/,""); n=length; next }
+        f && /^#+ / { sub(/ .*/,""); if (length<=n) exit } f' <log> | grep '^|'
    grep -c '^\*\*Problem\*\*' <log>          # ground truth: entry count, obtained a different way
    ```
 

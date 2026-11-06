@@ -18,10 +18,10 @@ Goal: make the framework cheaper to run without cutting review of the shipped su
 
 Done: H-026, H-012 and the ratchet gotcha thinned; two gotchas archived; `repositioning.md`'s reference material moved to `archive/repositioning-reference.md`. Next:
 
-1. Skill bodies, paid by adopters: `curate` 24.1k and `review-changes` 22.2k bytes. Moving `curate`'s last two `$(0)` uses into a script would retire H-012. Edit both copies, and take the self-certification route.
+1. Skill bodies, paid by adopters: `curate` 24.1k and `review-changes` 22.2k bytes. `curate`'s last two `$(0)` uses are gone, without a script, in the v1.52.1 candidate; H-012 closes when that ships. Further cuts: edit both copies, and take the self-certification route.
 2. Two gotchas stay until a check holds them: "Running it is the only thing" and "Retiring a check". Most other live gotchas exist only in that log, so a further cut needs a home for the lesson first.
 
-Lock the ratchets last, after any review. The v1.52.1 candidate holds #274; `/release` is the engineer's to invoke. Older savepoints: `docs/work-items/archive/cost-and-record-discipline-history.md`.
+Lock the ratchets last, after any review. The v1.52.1 candidate holds #274 and the `curate` change, and waits for the skill-body cuts (owner, 2026-11-05); `/release` is the engineer's to invoke. Older savepoints: `docs/work-items/archive/cost-and-record-discipline-history.md`.
 
 **Before each cut**, check it still holds:
 - Account for every `<!-- verify: -->` probe by name, before and after the cut. A probe may move but must not vanish.

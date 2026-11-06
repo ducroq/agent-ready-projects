@@ -100,7 +100,7 @@ bash tests/fixtures/dollar-digit/run.sh
 | `${N}` | **syntax error, rc 2** | correct |
 | `\$N` | **syntax error, rc 2** | a literal `$1`, not the parameter |
 
-Measured on mawk 1.3.4 and bash 5; the cases re-measure it on every run, so the advice cannot rot into wrong advice. The message now says `$(N)` in awk, `${N}` in shell, `\$N` in prose — which is also what `templates/curate.md` already said when it called `$(0)` the only form correct on both the delivery path and the extraction path.
+Measured on mawk 1.3.4 and bash 5; the cases re-measure it on every run, so the advice cannot rot into wrong advice. The message now says `$(N)` in awk, `${N}` in shell, `\$N` in prose.
 
 **10 ablations**, each naming the case it must move and in which direction — a mutant that merely breaks differently is a FAIL, not a PASS:
 
