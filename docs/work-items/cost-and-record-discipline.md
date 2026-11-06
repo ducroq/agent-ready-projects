@@ -14,14 +14,17 @@ Goal: make the framework cheaper to run without cutting review of the shipped su
 
 ## Current Status
 
-**Savepoint — 2026-11-05 (prune in progress).** The engineer wants pruning, thinning, mechanizing and retiring; a big read surface is the to-do. Rank by bytes × load frequency.
+**Savepoint — 2026-11-06 (wrap): next session starts with a prune.** The engineer wants pruning, thinning, mechanizing and retiring; a big read surface is the to-do. Read surface is about 77k characters. Rank by bytes × load frequency, adopter skills first, since adopters pay every run:
 
-Done: H-026, H-012 and the ratchet gotcha thinned; two gotchas archived; `repositioning.md`'s reference material moved to `archive/repositioning-reference.md`. Next:
+1. `release`: 2.1k of reasoning comments in its bash blocks. Move them to its rationale, as #295 did for `review-changes`: tied to their lines, with a pointer in the template header. `curate` has about 0.5k of the same, indentation aside; `audit-context` and `update-drift` under 0.2k, so skip those.
+2. `curate` "Before Step 0", 1.7k: H-031's Method says cut it. Owner call first; #201's author hears first.
+3. `curate` Step 0's length: two adopters read it and applied a part, because their scripts wrap it. Measure what could move into a script before cutting prose.
+4. `memory/gotcha-log.md` and `memory/hypothesis-log.md`, about 25k each. Most gotchas exist only there, so a cut needs a home for the lesson; prefer a check that retires one. "Running it is the only thing" and "Retiring a check" stay until a check holds them.
+5. Open issues: triage the 18 for any a prune or a check can close.
 
-1. Skill bodies, paid by adopters: `curate` is down to about 22.1k and H-012 is closed (both in v1.52.1). `review-changes`, 22.2k bytes, has not been examined. Edit both copies, and take the self-certification route.
-2. Two gotchas stay until a check holds them: "Running it is the only thing" and "Retiring a check". Most other live gotchas exist only in that log, so a further cut needs a home for the lesson first.
+Done 11-05/06: both logs thinned, `repositioning.md` reference archived, `curate` -2.0k, `review-changes` -2.4k, H-012 closed. Every thinning gets a fresh lens **before** the commit, `memory/` included.
 
-Lock the ratchets last, after any review. `/release` is the engineer's to invoke. Older savepoints: `docs/work-items/archive/cost-and-record-discipline-history.md`.
+Lock the ratchets last, after any review. The v1.52.2 candidate holds #295; `/release` is the engineer's to invoke. Older savepoints: `docs/work-items/archive/cost-and-record-discipline-history.md`.
 
 **Before each cut**, check it still holds:
 - Account for every `<!-- verify: -->` probe by name, before and after the cut. A probe may move but must not vanish.
