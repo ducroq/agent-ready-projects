@@ -3,7 +3,7 @@
 Superseded drafts and the measurements that refuted them, moved out of `templates/curate.md` so that
 adopters do not pay for this repo's litigation on every invocation. **The decision lives in the
 skill; the argument lives here.** Nothing is duplicated between the two — if a claim appears in
-both, one of them is wrong.
+both, one of them is wrong. The exception is § Writing a verify command.
 
 ###    One deprecated exception, and it is the only place a word in the output changes anythin…
 
@@ -244,7 +244,11 @@ The four disposition-table rows whose cells were shortened, as they read before:
 
 **A negative existence claim — or a count — is a state claim, and it is the shape that escapes this step.** "There is no reader-facing count", "that endpoint doesn't exist", "nothing references the old path", "4 issues open" — these read as settled fact rather than as claims about a world that moves, so nobody attaches a probe to them and the decay rule never reaches them. They are also the claims most likely to be about *another* repository, where you cannot see the change that falsified them. Give each one a probe that fails loudly if the thing turns out to exist — **and guard the target first**, because `grep -rq` on a path that no longer exists returns "not found" and certifies the claim: `if [ ! -d /abs/path/other-repo ]; then echo "CANNOT VERIFY: repo not at that path"; elif grep -rq 'pattern' /abs/path/other-repo; then echo "CLAIM REFUTED: it exists"; exit 1; else echo "still absent"; fi`. A sibling repo being moved or renamed is the commonest way one of these claims goes unverifiable, and it is exactly the case the unguarded form cannot see. **An instruction not to re-derive a claim is a reason to probe it, not a licence to skip it** — "verified in ../other-repo, don't re-check" is how a false claim survives five days and several curate runs.
 
-**Writing a verify command — it has to survive two syntaxes it is not written in.** The body sits inside an HTML comment, inside markdown, and shell is hostile to both. Check each command against the six rules below, then **run it once, at the moment you write it**. A verify command that fails on day one is worthless; one that cannot be *extracted* is worse than none, because it reports nothing while looking like it ran.
+#### Writing a verify command
+
+`curate` links here for these rules, the one place this file carries instructions: they are needed only when writing a probe, and every run would otherwise pay for them. The skill keeps "run it once" and "print on success, fail with a non-zero exit".
+
+**Writing a verify command — it has to survive two syntaxes it is not written in.** The body sits inside an HTML comment, inside markdown, and shell is hostile to both. Check each command against the rules below, then **run it once, at the moment you write it**. A verify command that fails on day one is worthless; one that cannot be *extracted* is worse than none, because it reports nothing while looking like it ran.
 
 - **Avoid `--`, and never let `-->` appear.** The hard rule is narrow: an HTML comment ends at the first `-->`, so a command containing that sequence truncates the comment and spills the remainder onto the page. Bare `--` is conforming HTML and renders fine — but it breaks two things that matter here. XML and XHTML pipelines reject it outright, and, the failure actually observed, a naive extraction regex over comment bodies stops early and returns **zero** commands, so the step examines nothing and completes cleanly. Long flags are the commonest construct in shell, so this is near-certain rather than an edge case: `--user`, `--no-pager`, `--json`, `--quiet`. In order of preference: **check the artifact instead of asking the tool** (`test -L ~/.config/systemd/user/UNIT` rather than `systemctl --user is-enabled`); **set an environment variable instead of passing a flag** (`SYSTEMD_PAGER=cat systemctl list-timers`); **use the short flag**.
 
@@ -268,7 +272,11 @@ Every branch was executed, not read: clean, a seeded drift (exit 1), no stamp, s
 
 ⚠️ **Compare against the REFERENCE INSTALL (`.claude/skills/<name>/SKILL.md`), never `templates/<name>.md`** — the template's `SAVE AS` comment is frontmatter in the install, a structural residue no tag clears, so every run reads as drift. **Preconditions, not universal**: a framework clone at `$FRAMEWORK`, skills installed globally.
 
+  **The probe, for this framework's global skills.** For this framework's global skills, `scripts/stampcheck.sh` in its clone does this: it reads the stamp, derives the skill list at that tag, and compares each install with the tag's **reference install** (`.claude/skills/<name>/SKILL.md`, never `templates/<name>.md`, whose header differs by construction). Exit 0 verified, 1 drift, 2 undecided. Annotate the stamp with a probe that runs it from the repo, with your clone's path for `F`: `F=~/repos/agent-ready-projects; if [ -f "$F/scripts/stampcheck.sh" ]; then FRAMEWORK=$F bash "$F/scripts/stampcheck.sh"; else echo "CANNOT VERIFY: no stampcheck.sh in $F"; fi`. **Preconditions**: a framework clone with tags fetched, skills installed globally.
+
 - **Assume nothing about the working directory.** The runner may be invoked from anywhere, and a relative command silently changes meaning when it is — `git ls-remote origin` checked a remote from the project root and, run one directory over, reported ERROR for a healthy claim. Address the target absolutely: `git -C /path/to/repo …`, absolute paths for files.
+
+#### Step 0, sub-steps 4 to 6
 
 4. **Index self-consistency**: Every check above compares the index to something *outside* it — gotcha ages, a verify probe, a hypothesis deadline. None asks whether the index agrees with itself, so two entries can assert opposite things indefinitely while each passes every check individually: both paths resolve, both files are fresh, neither is tagged as a state claim.
 

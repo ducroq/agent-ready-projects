@@ -97,30 +97,9 @@ Check for context rot from *previous* sessions. **Read metadata, not documents**
 
    **A negative existence claim — or a count — is a state claim** ("nothing references the old path", "4 issues open"). Give each one a probe that fails loudly if the thing turns out to exist — **and guard the target first**, because `grep -rq` on a path that no longer exists returns "not found" and certifies the claim: `if [ ! -d /abs/path/other-repo ]; then echo "CANNOT VERIFY: repo not at that path"; elif grep -rq 'pattern' /abs/path/other-repo; then echo "CLAIM REFUTED: it exists"; exit 1; else echo "still absent"; fi`. **An instruction not to re-derive a claim is a reason to probe it, not a licence to skip it.**
 
-   **Writing a verify command.** Follow the rules below, then **run it once, at the moment you write it**.
+   **Writing a verify command.** **Run it once, at the moment you write it.** **Print something on success — evidence by preference, `PASS` at minimum — and fail with a non-zero exit, not with a word**: exit status decides, so `git rev-parse v1.2.3 >/dev/null 2>&1 && echo OK || echo NOTAG` scores PASS when the tag is missing.
 
-   - **Avoid `--`, and never let `-->` appear.** `-->` ends the comment; bare `--` breaks naive extractors. In order of preference: **check the artifact instead of asking the tool** (`test -L ~/.config/systemd/user/UNIT` rather than `systemctl --user is-enabled`); **set an environment variable instead of passing a flag** (`SYSTEMD_PAGER=cat systemctl list-timers`); **use the short flag**.
-   - **One line, opened and closed on that line.** Too long? Put it in a script the annotation calls.
-   - **No unescaped `|` if the claim lives in a table cell — and no escaped `\|` if it does not.** The runner un-escapes `\|` only in table rows.
-   - **A probe needing a literal `|` builds it: `b=$(printf '\174')`, then `"^$b 2026-08-25 $b"`.** BRE or `-F` only: under `-E` it is alternation.
-   - **Guard anything host-dependent** so an unreachable target yields CANNOT VERIFY. Write the guard as an explicit `if`, not as `guard && check || echo ...`:
-
-     ```
-     if ping -c1 -W1 hostname >/dev/null 2>&1; then <real check>; else echo "CANNOT VERIFY: host unreachable"; fi
-     ```
-
-     `A && B || C` turns a real failure into CANNOT VERIFY. **Bound the guarded check too** — `curl -m 5`, `ssh -o ConnectTimeout=5`.
-   - **Print something on success — evidence by preference, `PASS` at minimum — and fail with a non-zero exit, not with a word.** Two idioms to avoid:
-
-     ```
-     git rev-parse v1.2.3 >/dev/null 2>&1 || echo NOTAG          # silent when it passes: proves nothing
-     git rev-parse v1.2.3 >/dev/null 2>&1 && echo OK || echo NOTAG   # speaks, but "NOTAG" exits 0 — scored PASS
-     ```
-
-     The second is a false PASS: exit status decides, not the word printed. Print the value you checked.
-   - **Never hardcode the version a probe corroborates — derive it from the stamp.** Then bumping the stamp re-arms the probe. For this framework's global skills, `scripts/stampcheck.sh` in its clone does this: it reads the stamp, derives the skill list at that tag, and compares each install with the tag's **reference install** (`.claude/skills/<name>/SKILL.md`, never `templates/<name>.md`, whose header differs by construction). Exit 0 verified, 1 drift, 2 undecided. Annotate the stamp with a probe that runs it from the repo, with your clone's path for `F`: `F=~/repos/agent-ready-projects; if [ -f "$F/scripts/stampcheck.sh" ]; then FRAMEWORK=$F bash "$F/scripts/stampcheck.sh"; else echo "CANNOT VERIFY: no stampcheck.sh in $F"; fi`. **Preconditions**: a framework clone with tags fetched, skills installed globally.
-   - **Assume nothing about the working directory.** Use `git -C /path/to/repo …` and absolute paths.
-
+   Before writing one, read the rules on `--` and `-->`, one-line form, `|`, host guards, stamp-derived versions and absolute paths: <https://github.com/ducroq/agent-ready-projects/blob/master/docs/rationale/curate.md#writing-a-verify-command> <!-- lint-skip: maintainer-path — a URL, not a repo-relative path: it resolves for a reader with no such directory. -->. If you cannot reach them, write the probe, run it, and say so in the report.
 
 4. **Index self-consistency**: Check whether two index entries assert opposite things.
 
