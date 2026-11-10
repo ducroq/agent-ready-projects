@@ -418,3 +418,102 @@ prune errors are often old false claims that only a check against the code finds
 
 One run gives a signal, not proof. This session is also the last of R6's decision-rights trial, so
 its decision list gets a note that it ran lead/worker.
+
+## EXP-008: does judgement pruning keep what later questions need?
+
+> **DRAFT, not pinned.** Freeze only after review; delete this line in the pinning commit.
+
+**Hypotheses**: H1, a fixed probe set detects a deleted load-bearing line (the instrument works).
+H2, an agent pruning a project file on judgement alone, as `curate` does, keeps more of what
+held-out questions need than random deletion of the same size.
+**Decision it feeds**: whether `curate` and `audit-context` gain a new rule: no cut to an
+auto-loaded file without a probe check. If adopted, it ships to adopters as a pattern (MINOR).
+**Subject**: this repo's `CLAUDE.md` at the pinning commit. It is public, so probes and scores
+can be published, and Claude Code loads it every session (`tests/lint/autoload-ratchet.sh`).
+**Spend**: $0 metered. About 33 agent sessions (1 probe writer, 3 pruners, 27 readers, 1-2
+graders); tokens reported per session.
+**Scripts**: `experiments/exp008/` holds the variant, seeding and grading scripts. They are committed in the pinning commit and are part of the design; where this text and
+a script disagree, the run stops.
+
+### Why this design
+
+The framework treats a memory file as a minimum-description-length problem: the shortest text
+that still lets an agent act correctly. A file's cost is its size *plus* what its gaps cost later.
+arXiv 2610.27301 found that compaction tuned to a known question was not detectably better than
+random deletion on questions that came later. arXiv 2602.11988 found that context files with
+unnecessary requirements lowered coding-agent task success; it measured tasks, not questions, so
+it supports pruning, not this method. Nothing here tests task success.
+
+### What was seen before freezing
+
+`CLAUDE.md`'s content, which the author has edited many times: 14,733 bytes, 111 non-blank,
+non-heading lines, the longest 1,809 bytes, 36 of them table rows. No probe has been written and
+no prune has been made.
+
+### The reader
+
+**Closed book**: the reader gets the variant's text and the probes, and nothing else: no repo, no
+files, no tools. This measures what the file itself carries. It cannot credit a line whose content
+is findable by search, so it is harsher on pruning than real use; the open-book version (a reader
+in a sandboxed export of the repo, H-032's idea) is deferred until this result shows it is worth
+the sandbox. Probes, key and transcripts live in `lab/experiments/<date>-exp008/`.
+
+### Probe set
+
+- A fresh agent that has not seen this section writes 30 questions whose answers are in
+  `CLAUDE.md`, each with an answer key and the line(s) it rests on. At least 10 must need an
+  exact identifier (a path, script, skill or rule number).
+- A script splits them at random, seed fixed in the pinning commit, into 15 **known** and 15
+  **held-out**, stratified on the exact-identifier flag.
+
+### Variants of the file
+
+A **unit** is a non-blank line that is not a markdown heading; lines inside a code fence are
+units, `#` comments included. A table's body row is a unit; its header and delimiter rows are
+deleted with its last body row and counted in that deletion. Size is bytes including each
+line's newline. The **window** is 57-60% of the original. If a random run ends above 60%, it
+restarts with the next seed in the pinned list, and the restart is reported.
+
+| Variant | How it is made |
+|---|---|
+| **full** | Unchanged. The ceiling. |
+| **empty** | No file. The floor: what the model guesses or already knows. |
+| **random** ×3 | Shuffle units with a fixed seed; delete in that order, skipping any unit whose deletion would go below 57%, until size ≤ 60%. |
+| **judged-blind** ×2 | Two fresh agents each prune to the window, told to keep what a future session needs. Neither sees a probe. H2's arm; its score is the mean of the two. |
+| **judged-known** | As judged-blind, but shown the 15 known probes. Reported, not decided on: it shows the known/held-out gap 2610.27301 found. |
+| **seeded** | full minus 3 lines picked by script: held-out probes whose evidence line backs no other probe; 3 drawn with the fixed seed. If fewer than 3 qualify, known probes are added to the pool; if still fewer than 3, H1 is inconclusive. |
+
+A pruner that lands outside the window is asked once more; if still outside, its size is reported
+and its score compared per 1,000 bytes kept as well.
+
+### Reader and grading
+
+- **Reader**: three fresh sessions per variant, each answering all 30 probes from the text alone.
+  Model written into this section in the pinning commit. A variant's score is the mean of its three runs.
+- **Grading**: exact-identifier probes are matched by script: case-insensitive, after stripping
+  backticks, quotes and a leading `./`; correct if the key appears in the answer. The rest go
+  to a fresh grader with the key; answers from all variants are pooled, shuffled and unlabelled.
+- **Measures per variant**: held-out correct, known correct, and file bytes.
+
+### Decision rule
+
+- **H1 holds** if, in each of the three **seeded** runs, at least 2 of the 3 seeded probes fail,
+  and those same 3 probes pass in at least 2 of 3 **full** runs. Otherwise the run is
+  **inconclusive** and H2 is not read: a probe set that cannot see a known hole proves nothing by
+  seeing none. **H1 inconclusive**: no rule changes; the instrument is fixed and re-registered
+  as a new EXP. H1 tests one
+  small cut, not a 40% cut; that limit is stated with any result.
+- **H2 holds** if **judged-blind**'s mean held-out score is above the highest of the three **random**
+  scores. **Fails** if it is at or below their median. **Inconclusive** in between. Scores are
+  compared as computed; a tie counts as the lower outcome.
+- **H2 holds**: judgement pruning continues, and the probe check is offered as optional.
+  **H2 fails**: `curate` and `audit-context` gain the no-cut-without-a-probe-check rule.
+  **Inconclusive**: run once more on `templates/project-file.md` filled for a fixture project.
+- **Reported without a bar**: **empty**'s score, a **judged** arm scoring below **empty**,
+  **judged-known**'s known-vs-held-out gap, the spread of the random runs, and per variant
+  bytes against held-out score.
+- **Published** to `experiments/artifacts/exp008.json`: probes, key and per-variant scores (all
+  about a public file). Reader and grader transcripts stay in `lab/`.
+
+With 15 held-out probes and two judged prunes, this gives a signal, not proof. Any rule it
+triggers ships with that stated.
