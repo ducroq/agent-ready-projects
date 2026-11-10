@@ -103,6 +103,27 @@ def main(work):
           X.exact_ok('scripts/x.sh', 'Run `./Scripts/X.sh` first'))
     check('exact match rejects a different path (seeded)', not X.exact_ok('scripts/x.sh', 'scripts/y.sh'))
     check('exact match rejects an empty key (seeded)', not X.exact_ok('', 'anything'))
+    check('exact match rejects the key inside a longer path (seeded)',
+          not X.exact_ok('run.sh', 'tests/fixtures/q/run.sh'))
+    check('exact match rejects the key inside a longer number (seeded)', not X.exact_ok('12', 'rule 112'))
+    check('exact match allows sentence punctuation', X.exact_ok('run.sh', 'It is run.sh.'))
+    check('table without a delimiter row: every line is a unit',
+          len(X.parse(['| a |\n', '| b |\n'])[0]) == 2)
+
+    def chk(name, text):
+        pth = os.path.join(work, name)
+        with open(pth, 'w') as f:
+            f.write(text)
+        return run('check', orig, pth).returncode
+    base = X.random_variant(lines, 8101).text()
+    check('check rejects a deleted heading (seeded)', chk('nohead.md', base.replace('## Code\n', '', 1)) == 2)
+    check('check rejects a deleted blank line (seeded)', chk('noblank.md', base.replace('\n\n', '\n', 1)) == 2)
+    check('check rejects an inserted blank line (seeded)', chk('extrablank.md', base.replace('\n', '\n\n', 1)) == 2)
+    Xd = X.Doc(lines)
+    for i, l in enumerate(lines):
+        if 'alpha' in l or 'beta' in l:
+            Xd.removed.add(i)       # rows gone, header and delimiter left dangling
+    check('check rejects a dangling table header (seeded)', chk('dangle.md', Xd.text()) == 2)
 
     check('H2 holds above the max', X.decide_h2(9.0, [5, 6, 8]) == 'holds')
     check('H2 tie at the max is inconclusive', X.decide_h2(8.0, [5, 6, 8]) == 'inconclusive')
@@ -146,12 +167,33 @@ def main(work):
     real = os.path.join(HERE, '..', '..', 'CLAUDE.md')
     rl = X.read_lines(real)
     ru, _, _ = X.parse(rl)
-    rp = [{'id': f'P{k + 1:02d}', 'question': f'q{k}', 'answer': 'scripts/x.sh' if k < 12 else 'a',
-           'evidence': [ru[k * 3] + 1], 'exact': k < 12} for k in range(30)]
+    import re as _re
+    tick = [u for u in ru if _re.search(r'`([^`\s]{4,})`', rl[u])]
+    plain = [u for u in ru if u not in tick]
+    rp = []
+    for k in range(30):
+        if k < 12:
+            u = tick[k * 2]
+            key = _re.search(r'`([^`\s]{4,})`', rl[u]).group(1)
+            rp.append({'id': f'P{k + 1:02d}', 'question': f'question {k}', 'answer': key,
+                       'evidence': [u + 1], 'exact': True})
+        else:
+            rp.append({'id': f'P{k + 1:02d}', 'question': f'question {k}', 'answer': 'a',
+                       'evidence': [plain[k * 2] + 1], 'exact': False})
     pp, sp, vd = (os.path.join(work, n) for n in ('probes.json', 'split.json', 'variants'))
     X.dump(rp, pp)
-    r1 = run('split', pp, sp)
-    check('split runs on 30 probes', r1.returncode == 0)
+    r1 = run('split', real, pp, sp)
+    check('split runs on 30 valid probes', r1.returncode == 0)
+    bad = [dict(q) for q in rp]
+    bad[20]['question'] = 'what is ' + rp[0]['answer'] + '?'
+    X.dump(bad, os.path.join(work, 'leak.json'))
+    check('split refuses a question carrying another probe\'s exact key (seeded)',
+          run('split', real, os.path.join(work, 'leak.json'), os.path.join(work, 'x.json')).returncode == 2)
+    bad = [dict(q) for q in rp]
+    bad[0]['evidence'] = [rp[15]['evidence'][0]]
+    X.dump(bad, os.path.join(work, 'offline.json'))
+    check('split refuses an exact key not on its evidence line (seeded)',
+          run('split', real, os.path.join(work, 'offline.json'), os.path.join(work, 'x.json')).returncode == 2)
     s = X.load(sp)
     ex_held = sum(1 for p in rp if p['exact'] and p['id'] in s['held_out'])
     check('split is stratified (6 of 12 exact held out)', ex_held == 6)
@@ -190,6 +232,28 @@ def main(work):
     out = X.load(art) if r3.returncode == 0 else {}
     check('score: H1 holds on a clean seeded run', out.get('H1') == 'holds')
     check('score: H2 holds when judged beats every random', out.get('H2') == 'holds')
+    held = set(s['held_out'])
+    odd_held = sum(1 for i in held if int(i[1:]) % 2)
+    sc = out.get('scores', {})
+    check('score: held-out counted on held-out ids, not known',
+          sc.get('judged-blind-1', {}).get('held_out') == 15 and sc.get('random-1', {}).get('held_out') == odd_held
+          and sc.get('empty', {}).get('known') == 0)
+    check('score: bytes recorded for judged variants',
+          all('bytes' in sc.get(v, {}) for v in ('judged-blind-1', 'judged-blind-2', 'judged-known')))
+    # H2 fails end to end: judged-blind answers like random
+    for v in ('judged-blind-1', 'judged-blind-2'):
+        for k in range(1, 4):
+            X.dump({p['id']: (p['answer'] if int(p['id'][1:]) % 2 else 'UNKNOWN') for p in rp},
+                   os.path.join(ad, v, f'run-{k}.json'))
+    run('pool', pp, vd, ad, pool, pmap)
+    X.dump({i['item']: i['answer'] != 'UNKNOWN' for i in X.load(pool)}, verd)
+    r4 = run('score', pp, sp, vd, ad, pmap, verd, art)
+    check('score: H2 fails when judged only matches random', r4.returncode == 0 and X.load(art)['H2'] == 'fails')
+    run_one = X.load(os.path.join(ad, 'empty', 'run-1.json'))
+    run_one.pop('P01')
+    X.dump(run_one, os.path.join(ad, 'empty', 'run-1.json'))
+    run('score', pp, sp, vd, ad, pmap, verd, art)
+    check('score: an unanswered probe is counted', X.load(art).get('unanswered') == 1)
     X.dump({}, verd)
     check('score refuses missing verdicts (seeded)', run('score', pp, sp, vd, ad, pmap, verd, art).returncode == 2)
 

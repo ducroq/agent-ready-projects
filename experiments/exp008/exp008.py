@@ -6,7 +6,8 @@ marked CHOICE. The agent steps (probe writer, pruners, readers, grader) are not 
 prompts are in prompts.md, and this script checks and scores what they return.
 
 Usage (run dir = lab/experiments/<date>-exp008/):
-  exp008.py split    <probes.json> <split.json>
+  exp008.py number   <original.md>                       # numbered text for the probe writer
+  exp008.py split    <original.md> <probes.json> <split.json>
   exp008.py variants <original.md> <probes.json> <split.json> <variants-dir>
   exp008.py check    <original.md> <variant.md>          # a pruner's output: lines only, in window
   exp008.py pool     <probes.json> <variants-dir> <answers-dir> <pool.json> <pool-map.json>
@@ -90,7 +91,8 @@ def parse(lines):
             j = i
             while j < n and lines[j].lstrip().startswith('|'):
                 j += 1
-            body_start = i + 2 if i + 1 < j and TABLE_DELIM.match(lines[i + 1].rstrip('\n')) else i + 1
+            # CHOICE: without a delimiter row it is not a table header; every line is a unit
+            body_start = i + 2 if i + 1 < j and TABLE_DELIM.match(lines[i + 1].rstrip('\n')) else i
             gid += 1
             scaffold[gid] = list(range(i, body_start))
             for k in range(body_start, j):
@@ -150,8 +152,24 @@ def random_variant(lines, seed):
     return None                        # ended above 60%: caller restarts with the next seed
 
 
-def cmd_split(probes_p, out_p):
+def cmd_number(orig_p):
+    for n, line in enumerate(read_lines(orig_p), 1):
+        sys.stdout.write(f'{n}: {line}')
+
+
+def cmd_split(orig_p, probes_p, out_p):
     probes = load(probes_p)
+    lines = read_lines(orig_p)
+    for p in probes:
+        ev = p.get('evidence') or []
+        if not ev or not all(isinstance(n, int) and 1 <= n <= len(lines) for n in ev):
+            die(f'{p.get("id")}: evidence {ev} is not a list of line numbers 1..{len(lines)}')
+        if p['exact'] and not any(exact_ok(p['answer'], lines[n - 1]) for n in ev):
+            die(f'{p["id"]}: exact key {p["answer"]!r} is not on its evidence line(s)')
+    for p in probes:                      # backlog: no question may carry another's exact key
+        for q in probes:
+            if q['exact'] and exact_ok(q['answer'], p['question']):
+                die(f'{p["id"]}\'s question contains {q["id"]}\'s exact key {q["answer"]!r}')
     ids = [p['id'] for p in probes]
     if len(ids) != 30 or len(set(ids)) != 30:
         die(f'need 30 probes with unique ids, got {len(ids)} ({len(set(ids))} unique)')
@@ -240,13 +258,31 @@ def cmd_variants(orig_p, probes_p, split_p, out_dir):
 
 
 def cmd_check(orig_p, var_p):
-    """A pruner's output must be the original with whole lines deleted, in order, inside the
-    window. CHOICE: blank lines and headings may be deleted by a pruner too; random does not."""
+    """A pruner's output must be the original with units deleted, in order, inside the window:
+    headings and blank lines kept, and a table's or fence's scaffolding deleted exactly when all
+    its units are. Same freedom as random, so neither arm gets a cheaper budget.
+    CHOICE: lines are aligned by keeping each original line that matches the next output line;
+    a rare duplicate line that defeats this fails loudly rather than passing."""
     orig, var = read_lines(orig_p), read_lines(var_p)
-    it = iter(orig)
-    for n, line in enumerate(var, 1):
-        if not any(line == o for o in it):
-            die(f'{var_p}: line {n} is not an original line in order (rewritten or reordered)')
+    units, group_of, scaffold = parse(orig)
+    unit_set = set(units)
+    removed, j = set(), 0
+    for i, line in enumerate(orig):
+        if j < len(var) and var[j] == line:
+            j += 1
+        else:
+            removed.add(i)
+    if j != len(var):
+        die(f'{var_p}: line {j + 1} is not an original line in order (rewritten, added or reordered)')
+    gone_groups = {g for g in scaffold if all(k in removed for k, gg in group_of.items() if gg == g)}
+    allowed = unit_set | {i for g in gone_groups for i in scaffold[g]}
+    bad = sorted(removed - allowed)
+    if bad:
+        die(f'{var_p}: deleted line {bad[0] + 1}, which is a heading, blank line or scaffolding '
+            f'of a block that still has lines ({len(bad)} such)')
+    dangling = sorted(i for g in gone_groups for i in scaffold[g] if i not in removed)
+    if dangling:
+        die(f'{var_p}: kept line {dangling[0] + 1}, scaffolding of a block whose lines are all deleted')
     total = sum(nbytes(l) for l in orig)
     size = sum(nbytes(l) for l in var)
     pct = size / total
@@ -264,8 +300,12 @@ def norm(s):
 
 def exact_ok(key, answer):
     """Backlog: case-insensitive, after stripping backticks, quotes and a leading ./; correct if
-    the key appears in the answer."""
-    return bool(norm(key)) and norm(key) in norm(answer)
+    the key appears in the answer as a whole token: not inside a longer path, name or number."""
+    k = norm(key)
+    if not k:
+        return False
+    pat = r'(?<![\w./-])' + re.escape(k) + r'(?![\w/-])(?!\.\w)'
+    return re.search(pat, norm(answer)) is not None
 
 
 def answers_for(answers_dir, variant):
@@ -352,8 +392,9 @@ def cmd_score(probes_p, split_p, variants_dir, answers_dir, map_p, verdicts_p, a
         kn = [sum(g[i] for i in known) for g in per_run]
         scores[v] = {'held_out_runs': h, 'known_runs': kn,
                      'held_out': sum(h) / len(h), 'known': sum(kn) / len(kn)}
-        if v in manifest and manifest[v]:
-            scores[v]['bytes'] = manifest[v]['bytes']
+        b = os.path.getsize(os.path.join(variants_dir, v + '.md'))
+        scores[v]['bytes'] = b
+        scores[v]['held_out_per_1000_bytes'] = round(1000 * scores[v]['held_out'] / b, 4) if b else None
     seeded = manifest.get('seeded')
     if seeded and 'seeded' in correct:
         sp = seeded['probes']
@@ -372,7 +413,7 @@ def cmd_score(probes_p, split_p, variants_dir, answers_dir, map_p, verdicts_p, a
           f'unanswered {missing}')
 
 
-CMDS = {'split': (cmd_split, 2), 'variants': (cmd_variants, 4), 'check': (cmd_check, 2),
+CMDS = {'number': (cmd_number, 1), 'split': (cmd_split, 3), 'variants': (cmd_variants, 4), 'check': (cmd_check, 2),
         'pool': (cmd_pool, 5), 'score': (cmd_score, 7)}
 
 if __name__ == '__main__':

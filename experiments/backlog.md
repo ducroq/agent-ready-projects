@@ -434,7 +434,8 @@ can be published, and Claude Code loads it every session (`tests/lint/autoload-r
 graders); tokens reported per session.
 **Scripts**: `experiments/exp008/`: `exp008.py` (split, variants, pruner check, grading pool,
 score), `prompts.md` (every agent prompt), `fixture.py` (the instrument check, run before the
-experiment). They are committed in the pinning commit and are part of the design; where this text and
+experiment). The pinning commit writes each file's sha256 into this section, so the section's
+pin covers them; `sha256sum` before the run must match. They are committed in the pinning commit and are part of the design; where this text and
 a script disagree, the run stops.
 
 ### Why this design
@@ -448,8 +449,8 @@ it supports pruning, not this method. Nothing here tests task success.
 
 ### What was seen before freezing
 
-`CLAUDE.md`'s content, which the author has edited many times: 14,733 bytes, 111 non-blank,
-non-heading lines, the longest 1,809 bytes, 36 of them table rows. No probe has been written and
+`CLAUDE.md`'s content, which the author has edited many times: 14,733 bytes, 107 units as
+`exp008.py` counts them, the longest line 1,809 bytes. No probe has been written and
 no prune has been made.
 
 ### The reader
@@ -462,9 +463,12 @@ the sandbox. Probes, key and transcripts live in `lab/experiments/<date>-exp008/
 
 ### Probe set
 
-- A fresh agent that has not seen this section writes 30 questions whose answers are in
+- A fresh agent that has not seen this section writes 30 questions from the numbered file whose answers are in
   `CLAUDE.md`, each with an answer key and the line(s) it rests on. At least 10 must need an
   exact identifier (a path, script, skill or rule number).
+- `exp008.py split` refuses a probe whose evidence is not a line of the file, whose exact key is
+  not on its evidence line, or whose key appears in another probe's question; the writer is asked
+  once more, then the run stops.
 - A script splits them at random, seed fixed in the pinning commit, into 15 **known** and 15
   **held-out**, stratified on the exact-identifier flag.
 
@@ -482,20 +486,23 @@ restarts with the next seed in the pinned list, and the restart is reported.
 | **full** | Unchanged. The ceiling. |
 | **empty** | No file. The floor: what the model guesses or already knows. |
 | **random** ×3 | Shuffle units with a fixed seed; delete in that order, skipping any unit whose deletion would go below 57%, until size ≤ 60%. |
-| **judged-blind** ×2 | Two fresh agents each prune to the window by deleting whole lines only, told to keep what a future session needs. Neither sees a probe. H2's arm; its score is the mean of the two. |
+| **judged-blind** ×2 | Two fresh agents each prune to the window by deleting units only, as random does, told to keep what a future session needs. Neither sees a probe. H2's arm; its score is the mean of the two. |
 | **judged-known** | As judged-blind, but shown the 15 known probes. Reported, not decided on: it shows the known/held-out gap 2610.27301 found. |
-| **seeded** | full minus 3 lines picked by script: held-out probes that rest on exactly one line, which is a unit and backs no other probe; 3 drawn with the fixed seed. If fewer than 3 qualify, known probes are added to the pool; if still fewer than 3, H1 is inconclusive. |
+| **seeded** | full minus 3 lines picked by script: held-out probes that rest on exactly one line, which is a unit and backs no other probe; 3 drawn with the fixed seed. If fewer than 3 qualify, all that do are used and the rest drawn from qualifying known probes; if still fewer than 3, H1 is inconclusive. |
 
-`exp008.py check` rejects a pruner's output that rewrites or reorders a line. One that lands
+`exp008.py check` rejects a pruner's output that rewrites, adds or reorders a line, deletes a
+heading or blank line, or leaves a block's scaffolding without its lines; the pruner is asked once
+more, then the run stops. One that lands
 outside the window is asked once more; if still outside, its size is reported
 and its score compared per 1,000 bytes kept as well.
 
 ### Reader and grading
 
-- **Reader**: three fresh sessions per variant, each answering all 30 probes from the text alone.
-  Model written into this section in the pinning commit. A variant's score is the mean of its three runs.
+- **Reader**: three fresh sessions per variant, each answering all 30 probes from the text alone,
+  launched as `prompts.md` requires. Model written into this section in the pinning commit. A variant's score is the mean of its three runs.
 - **Grading**: exact-identifier probes are matched by script: case-insensitive, after stripping
-  backticks, quotes and a leading `./`; correct if the key appears in the answer. The rest go
+  backticks, quotes and a leading `./`; correct if the key appears in the answer as a whole
+  token, not inside a longer path, name or number. The rest go
   to a fresh grader with the key; answers from all variants are pooled, shuffled and unlabelled.
 - **Measures per variant**: held-out correct, known correct, and file bytes.
 
@@ -506,7 +513,9 @@ and its score compared per 1,000 bytes kept as well.
   **inconclusive** and H2 is not read: a probe set that cannot see a known hole proves nothing by
   seeing none. **H1 inconclusive**: no rule changes; the instrument is fixed and re-registered
   as a new EXP. H1 tests one
-  small cut, not a 40% cut; that limit is stated with any result.
+  small cut, not a 40% cut, and closed book makes it nearly true by construction: it mainly
+  checks that the probes cannot be guessed and that grading works. Both limits are stated with
+  any result.
 - **H2 holds** if **judged-blind**'s mean held-out score is above the highest of the three **random**
   scores. **Fails** if it is at or below their median. **Inconclusive** in between. Scores are
   compared as computed; a tie counts as the lower outcome.

@@ -13,8 +13,10 @@ item tests whether that holds for our pruning, and whether a probe check should 
 - [x] 2026-11-10: research done (sources under Decisions); EXP-008 drafted in `experiments/backlog.md`, not pinned
 - [x] 2026-11-10: round 1 review (adversarial + doc-accuracy): 3 blockers, revised in the draft
 - [x] 2026-11-10: round 2 (adversarial): the reader-sees-original blocker recurred. Resolved by going closed-book (see Decisions)
-- [ ] Write `experiments/exp008/` scripts (variants, seeding, grading); the prose leaves byte rules to them
-- [ ] Round 3 review of draft + scripts together, then pin
+- [x] 2026-11-10: `experiments/exp008/` written: `exp008.py`, `prompts.md`, `fixture.py` (53 checks, seeded negatives included)
+- [x] 2026-11-10: round 3 (adversarial, draft + scripts): 3 blockers (pruner got a cheaper budget than random; closed book not enforced at launch; one probe could leak another's answer), 5 warnings; all fixed. Round cap reached, so **the round-3 fixes are unreviewed**
+- [ ] Before pinning: an independent read of the round-3 fix diff (`git diff 3bd55ca -- experiments/`); fill in the reader model and the three sha256s; drop the DRAFT line; pin per `experiments/README.md`
+- [ ] Then run: number, probe writer, split, variants, pruners + check, readers, pool, grader, score
 
 ## Decisions
 
