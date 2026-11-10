@@ -432,7 +432,9 @@ auto-loaded file without a probe check. If adopted, it ships to adopters as a pa
 can be published, and Claude Code loads it every session (`tests/lint/autoload-ratchet.sh`).
 **Spend**: $0 metered. About 33 agent sessions (1 probe writer, 3 pruners, 27 readers, 1-2
 graders); tokens reported per session.
-**Scripts**: `experiments/exp008/` holds the variant, seeding and grading scripts. They are committed in the pinning commit and are part of the design; where this text and
+**Scripts**: `experiments/exp008/`: `exp008.py` (split, variants, pruner check, grading pool,
+score), `prompts.md` (every agent prompt), `fixture.py` (the instrument check, run before the
+experiment). They are committed in the pinning commit and are part of the design; where this text and
 a script disagree, the run stops.
 
 ### Why this design
@@ -470,7 +472,8 @@ the sandbox. Probes, key and transcripts live in `lab/experiments/<date>-exp008/
 
 A **unit** is a non-blank line that is not a markdown heading; lines inside a code fence are
 units, `#` comments included. A table's body row is a unit; its header and delimiter rows are
-deleted with its last body row and counted in that deletion. Size is bytes including each
+deleted with its last body row and counted in that deletion, and a code fence's opening and
+closing lines likewise go with its last line. Size is bytes including each
 line's newline. The **window** is 57-60% of the original. If a random run ends above 60%, it
 restarts with the next seed in the pinned list, and the restart is reported.
 
@@ -479,11 +482,12 @@ restarts with the next seed in the pinned list, and the restart is reported.
 | **full** | Unchanged. The ceiling. |
 | **empty** | No file. The floor: what the model guesses or already knows. |
 | **random** ×3 | Shuffle units with a fixed seed; delete in that order, skipping any unit whose deletion would go below 57%, until size ≤ 60%. |
-| **judged-blind** ×2 | Two fresh agents each prune to the window, told to keep what a future session needs. Neither sees a probe. H2's arm; its score is the mean of the two. |
+| **judged-blind** ×2 | Two fresh agents each prune to the window by deleting whole lines only, told to keep what a future session needs. Neither sees a probe. H2's arm; its score is the mean of the two. |
 | **judged-known** | As judged-blind, but shown the 15 known probes. Reported, not decided on: it shows the known/held-out gap 2610.27301 found. |
-| **seeded** | full minus 3 lines picked by script: held-out probes whose evidence line backs no other probe; 3 drawn with the fixed seed. If fewer than 3 qualify, known probes are added to the pool; if still fewer than 3, H1 is inconclusive. |
+| **seeded** | full minus 3 lines picked by script: held-out probes that rest on exactly one line, which is a unit and backs no other probe; 3 drawn with the fixed seed. If fewer than 3 qualify, known probes are added to the pool; if still fewer than 3, H1 is inconclusive. |
 
-A pruner that lands outside the window is asked once more; if still outside, its size is reported
+`exp008.py check` rejects a pruner's output that rewrites or reorders a line. One that lands
+outside the window is asked once more; if still outside, its size is reported
 and its score compared per 1,000 bytes kept as well.
 
 ### Reader and grading
@@ -498,7 +502,7 @@ and its score compared per 1,000 bytes kept as well.
 ### Decision rule
 
 - **H1 holds** if, in each of the three **seeded** runs, at least 2 of the 3 seeded probes fail,
-  and those same 3 probes pass in at least 2 of 3 **full** runs. Otherwise the run is
+  and in at least 2 of the 3 **full** runs at least 2 of them pass. Otherwise the run is
   **inconclusive** and H2 is not read: a probe set that cannot see a known hole proves nothing by
   seeing none. **H1 inconclusive**: no rule changes; the instrument is fixed and re-registered
   as a new EXP. H1 tests one
