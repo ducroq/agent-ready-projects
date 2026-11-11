@@ -2,8 +2,8 @@
 # Lock a reduction in:  bash tests/lint/autoload-ratchet.sh . --update
 # Pay for growth deliberately:  ... --raise "why this must get bigger"
 # Every raise is recorded below, oldest first; notes accumulate, never replace.
-# BYTES 22164
-# LINES 79
+# BYTES 22137
+# LINES 78
 # seeded 2026-09-14
 # ratcheted down 2026-09-14
 # ratcheted down 2026-09-14
@@ -60,5 +60,6 @@
 # ratcheted down 2026-11-06
 # RAISED 2026-11-10 from 22068b/78l to 22179b/79l: work-item pointer for EXP-008 (description length); goes when the work item closes
 # ratcheted down 2026-11-11
+# ratcheted down 2026-11-11
 CLAUDE.md	14733
-memory/MEMORY.md	7431
+memory/MEMORY.md	7404
