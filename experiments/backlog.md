@@ -539,7 +539,9 @@ triggers ships with that stated.
 ## EXP-009: EXP-008 re-registered after its pruner rule stopped the run
 
 **Everything in EXP-008 applies** (hypotheses, decision, subject, models, probes, variants,
-reader, grading, decision rule) **except the three changes below.** EXP-008 is closed: stopped by
+reader, grading, decision rule) **except the changes below**, which override EXP-008's
+text on what \`check\` rejects and when a pruner failure stops the run. EXP-008's \`exp008.py\`
+is read as \`exp009.py\` throughout, including \`check\`'s new third argument. EXP-008 is closed: stopped by
 its own rule, no score produced.
 
 ### What was seen before freezing
@@ -549,14 +551,15 @@ EXP-008's run on 2026-11-11, up to its stop (`lab/experiments/2026-11-11-exp008/
 - The probe set: 30 probes, 16 exact, no key leaked into another question; the split.
 - The scripted variants: random-1 to 3 at 59.6-59.7% with no restart; seeded at 96.5%.
 - Five pruner attempts and EXP-008's `check` verdict on each: blind-1 passed first time.
-  Blind-2 was rejected (a line out of order), then passed. Known was rejected twice (deleted
-  blank lines, inside the code block among others), which stopped the run.
-- The pruner outputs were read only as far as diagnosing the rejections: 3 of 5 attempts
-  deleted blank lines that the prompt said to keep.
+  Blind-2 was rejected, then passed. Known was rejected twice, which stopped the run.
+- The pruner outputs were read only as far as diagnosing the rejections. Blank lines changed in
+  3 of 5 attempts: blind-2's first added 2 (its only fault), known's first deleted 6, and known's
+  second deleted 5 and added 3.
+- Under `exp009.py check`, run while drafting this section, all five attempts pass, at 58.3-58.9%.
 
 No reader ran, no answer was graded, no score exists.
 
-### The three changes
+### The changes
 
 1. **Blank lines are layout.** `exp009.py check` ignores blank lines when aligning a pruner's
    output, and writes the variant as the original minus exactly the deleted lines, so every
@@ -566,14 +569,18 @@ No reader ran, no answer was graded, no score exists.
    arm (judged-blind-1 or 2) that fails twice still stops the run.
 3. **Reuse.** The probes and split are reused. The scripted variants are rebuilt with
    `exp009.py variants` (same seeds). For each judged arm, the first of its existing attempts,
-   in the order they were made, that passes `exp009.py check` is used; no new pruner call is
-   made, since every arm has had its two attempts or already passed.
+   in the order they were made, that passes `exp009.py check` is used: blind-1's only attempt,
+   and the first attempts of blind-2 and known. No new pruner call is made. The rule leaves no
+   choice of attempt; it moves blind-2 off the attempt EXP-008 accepted, because change 1 is
+   kept for every arm: a layout difference must not decide which prune is read.
+4. The pruner prompt still asks for blank lines to be kept; with no new pruner call, it only
+   describes how the reused attempts were made.
 
-**Scripts**: `experiments/exp009/`; `prompts.md` is identical to EXP-008's. Run
-`cd experiments/exp009 && sha256sum -c` on these lines before the run:
+**Scripts**: `experiments/exp009/`; `prompts.md` is identical to EXP-008's. Before the run:
+`cd experiments/exp009 && grep -E '^    [0-9a-f]{64}  ' ../backlog.md | tail -3 | sed 's/^    //' | sha256sum -c`
 
     c7c00b4e18496aa88616f4ae7d15cf225ad4969026e7ffa520445db5e0821dde  exp009.py
     256fad61f8a2f75b80a0f7d6a5c7ab8e0224e48f4422a67a191e2f2e930c886d  prompts.md
-    0603a27e1c4a6d19aef0b119e66d5f180d5aed31c989b79431752ef91681dfbf  fixture.py
+    d27a967847903e9ede24bd2b09669d9fe341a8b8ca16369f9d528b13aa5088d9  fixture.py
 
 Where this text and a script disagree, the run stops. Run data: `lab/experiments/2026-11-11-exp009/`.

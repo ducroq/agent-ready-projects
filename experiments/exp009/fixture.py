@@ -283,6 +283,21 @@ def main(work):
     X.dump(run_one, os.path.join(ad, 'empty', 'run-1.json'))
     run('score', pp, sp, vd, ad, pmap, verd, art)
     check('score: an unanswered probe is counted', X.load(art).get('unanswered') == 1)
+    fo = os.path.join(work, 'fence-orig.md')
+    fl = ['# t\n', '\n'] + [f'prose line {i} with some padding text here\n' for i in range(12)] + \
+         ['\n', '```\n', 'cmd one\n', '\n', 'cmd two\n', '```\n', '\n', 'tail line\n']
+    with open(fo, 'w') as f:
+        f.write(''.join(fl))
+    fd = X.Doc(fl)
+    for i, l in enumerate(fl):
+        if l.startswith('cmd') or l.startswith('prose line 1') or l in ('prose line 2 with some padding text here\n',):
+            fd.delete(i)
+    fp = os.path.join(work, 'fence-pruned.md')
+    with open(fp, 'w') as f:
+        f.write(''.join(l for l in fd.text().splitlines(True) if l.strip()))
+    rf = run('check', fo, fp, fp + '.c')
+    check('EXP-009: a deleted fence with a blank inside restores what random would leave',
+          rf.returncode in (0, 1) and open(fp + '.c').read() == fd.text())
     os.remove(os.path.join(vd, 'judged-known.md'))
     run('pool', pp, vd, ad, pool, pmap)
     X.dump({i['item']: i['answer'] != 'UNKNOWN' for i in X.load(pool)}, verd)
