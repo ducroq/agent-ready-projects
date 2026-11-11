@@ -421,8 +421,6 @@ its decision list gets a note that it ran lead/worker.
 
 ## EXP-008: does judgement pruning keep what later questions need?
 
-> **DRAFT, not pinned.** Freeze only after review; delete this line in the pinning commit.
-
 **Hypotheses**: H1, a fixed probe set detects a deleted load-bearing line (the instrument works).
 H2, an agent pruning a project file on judgement alone, as `curate` does, keeps more of what
 held-out questions need than random deletion of the same size.
@@ -434,9 +432,14 @@ can be published, and Claude Code loads it every session (`tests/lint/autoload-r
 graders); tokens reported per session.
 **Scripts**: `experiments/exp008/`: `exp008.py` (split, variants, pruner check, grading pool,
 score), `prompts.md` (every agent prompt), `fixture.py` (the instrument check, run before the
-experiment). The pinning commit writes each file's sha256 into this section, so the section's
-pin covers them; `sha256sum` before the run must match. They are committed in the pinning commit and are part of the design; where this text and
-a script disagree, the run stops.
+experiment). Their sha256 at freezing, so this section's pin covers them; run
+`cd experiments/exp008 && sha256sum -c` on these lines before the run:
+
+    a06ffb9250ab2922ad69684a68d41a0e65b42e5b8b9982532b00b59e27b8067d  exp008.py
+    256fad61f8a2f75b80a0f7d6a5c7ab8e0224e48f4422a67a191e2f2e930c886d  prompts.md
+    0b46f55bcfbc8b797ced6d44a0f48fc9633a910faab4a7a1f61d8513db919aa4  fixture.py
+
+They are part of the design; where this text and a script disagree, the run stops.
 
 ### Why this design
 
@@ -467,8 +470,9 @@ the sandbox. Probes, key and transcripts live in `lab/experiments/<date>-exp008/
   `CLAUDE.md`, each with an answer key and the line(s) it rests on. At least 10 must need an
   exact identifier (a path, script, skill or rule number).
 - `exp008.py split` refuses a probe whose evidence is not a line of the file, whose exact key is
-  not on its evidence line, or whose key appears in another probe's question; the writer is asked
-  once more, then the run stops.
+  not on its evidence line, or whose question contains its own key; the writer is asked once
+  more, then the run stops. A key that appears in *another* probe's question is recorded, and
+  that probe cannot be seeded.
 - A script splits them at random, seed fixed in the pinning commit, into 15 **known** and 15
   **held-out**, stratified on the exact-identifier flag.
 
@@ -488,7 +492,7 @@ restarts with the next seed in the pinned list, and the restart is reported.
 | **random** ×3 | Shuffle units with a fixed seed; delete in that order, skipping any unit whose deletion would go below 57%, until size ≤ 60%. |
 | **judged-blind** ×2 | Two fresh agents each prune to the window by deleting units only, as random does, told to keep what a future session needs. Neither sees a probe. H2's arm; its score is the mean of the two. |
 | **judged-known** | As judged-blind, but shown the 15 known probes. Reported, not decided on: it shows the known/held-out gap 2610.27301 found. |
-| **seeded** | full minus 3 lines picked by script: held-out probes that rest on exactly one line, which is a unit and backs no other probe; 3 drawn with the fixed seed. If fewer than 3 qualify, all that do are used and the rest drawn from qualifying known probes; if still fewer than 3, H1 is inconclusive. |
+| **seeded** | full minus 3 lines picked by script: held-out probes that rest on exactly one line, which is a unit and backs no other probe, and whose key leaked into no other question; 3 drawn with the fixed seed. If fewer than 3 qualify, all that do are used and the rest drawn from qualifying known probes; if still fewer than 3, H1 is inconclusive. |
 
 `exp008.py check` rejects a pruner's output that rewrites, adds or reorders a line, deletes a
 heading or blank line, or leaves a block's scaffolding without its lines; the pruner is asked once
@@ -499,7 +503,8 @@ and its score compared per 1,000 bytes kept as well.
 ### Reader and grading
 
 - **Reader**: three fresh sessions per variant, each answering all 30 probes from the text alone,
-  launched as `prompts.md` requires. Model written into this section in the pinning commit. A variant's score is the mean of its three runs.
+  launched as `prompts.md` requires. Model `claude-sonnet-5-5`; other steps' models are in
+  `prompts.md`. A variant's score is the mean of its three runs.
 - **Grading**: exact-identifier probes are matched by script: case-insensitive, after stripping
   backticks, quotes and a leading `./`; correct if the key appears in the answer as a whole
   token, not inside a longer path, name or number. The rest go

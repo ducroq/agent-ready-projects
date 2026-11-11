@@ -6,7 +6,17 @@ is a changed design.
 **Launch condition, every step**: a fresh model call with **no tools and no project context**,
 so nothing but this text reaches the model. Either an API call, or a CLI session started in an
 empty directory outside any repo with tools disabled; a session started inside this repo would
-load `CLAUDE.md`, the subject, and void the run. The runner records which was used and the model.
+load `CLAUDE.md`, the subject, and void the run. The command, run with the prompt on stdin:
+
+    cd "$(mktemp -d)" && claude -p --tools "" --setting-sources "" --strict-mcp-config \
+      --no-session-persistence --model <model> --system-prompt "You are a careful assistant."
+
+`mktemp -d` must resolve outside any repo. Pre-freeze control (2026-11-11): asked to quote any
+instructions or memory it was given, this command answered NONE from an empty directory; run
+from inside this repo it quoted the project's auto-memory, so the empty directory is required.
+
+**Models**: probe writer, both pruner prompts and grader `claude-opus-5-5` (the model `curate`
+runs on here); readers `claude-sonnet-5-5`.
 
 ## 1. Probe writer (once)
 

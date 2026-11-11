@@ -15,7 +15,9 @@ item tests whether that holds for our pruning, and whether a probe check should 
 - [x] 2026-11-10: round 2 (adversarial): the reader-sees-original blocker recurred. Resolved by going closed-book (see Decisions)
 - [x] 2026-11-10: `experiments/exp008/` written: `exp008.py`, `prompts.md`, `fixture.py` (53 checks, seeded negatives included)
 - [x] 2026-11-10: round 3 (adversarial, draft + scripts): 3 blockers (pruner got a cheaper budget than random; closed book not enforced at launch; one probe could leak another's answer), 5 warnings; all fixed. Round cap reached, so **the round-3 fixes are unreviewed**
-- [ ] Before pinning: an independent read of the round-3 fix diff (`git diff 3bd55ca -- experiments/`); fill in the reader model and the three sha256s; drop the DRAFT line; pin per `experiments/README.md`
+- [x] 2026-11-11: round 4 (adversarial, round-3 fixes, user-approved past the cap): no blocker; empty-fence false reject and an over-strict leak rule fixed; fixture 56 checks
+- [x] 2026-11-11: models, launch command (with a pre-freeze control) and script hashes written into the section; pinned
+- [ ] Note: the CLI sign-in expires by 2026-11-14; run before then or renew
 - [ ] Then run: number, probe writer, split, variants, pruners + check, readers, pool, grader, score
 
 ## Decisions

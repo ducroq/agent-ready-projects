@@ -161,15 +161,20 @@ def cmd_split(orig_p, probes_p, out_p):
     probes = load(probes_p)
     lines = read_lines(orig_p)
     for p in probes:
+        if not all(k in p for k in ('id', 'question', 'answer', 'evidence', 'exact')):
+            die(f'probe {p.get("id", "?")} lacks one of id, question, answer, evidence, exact')
         ev = p.get('evidence') or []
         if not ev or not all(isinstance(n, int) and 1 <= n <= len(lines) for n in ev):
             die(f'{p.get("id")}: evidence {ev} is not a list of line numbers 1..{len(lines)}')
         if p['exact'] and not any(exact_ok(p['answer'], lines[n - 1]) for n in ev):
             die(f'{p["id"]}: exact key {p["answer"]!r} is not on its evidence line(s)')
-    for p in probes:                      # backlog: no question may carry another's exact key
+    leaked = set()                       # backlog: a key in another probe's question is recorded,
+    for p in probes:                     # and that probe cannot be seeded; in its own question, refused
         for q in probes:
             if q['exact'] and exact_ok(q['answer'], p['question']):
-                die(f'{p["id"]}\'s question contains {q["id"]}\'s exact key {q["answer"]!r}')
+                if p is q:
+                    die(f'{p["id"]}\'s question contains its own exact key {q["answer"]!r}')
+                leaked.add(q['id'])
     ids = [p['id'] for p in probes]
     if len(ids) != 30 or len(set(ids)) != 30:
         die(f'need 30 probes with unique ids, got {len(ids)} ({len(set(ids))} unique)')
@@ -190,8 +195,9 @@ def cmd_split(orig_p, probes_p, out_p):
             (held if len(held) <= len(known) else known).append(e)
     if len(known) != 15 or len(held) != 15:
         die(f'split came out {len(known)}/{len(held)}')
-    dump({'seed': SPLIT_SEED, 'known': sorted(known), 'held_out': sorted(held)}, out_p)
-    print(f'split: 15 known, 15 held-out, seed {SPLIT_SEED}')
+    dump({'seed': SPLIT_SEED, 'known': sorted(known), 'held_out': sorted(held),
+          'leaked': sorted(leaked)}, out_p)
+    print(f'split: 15 known, 15 held-out, seed {SPLIT_SEED}; {len(leaked)} key(s) leaked into other questions')
 
 
 def pick_seeded(probes, split, units):
@@ -204,8 +210,10 @@ def pick_seeded(probes, split, units):
             backers.setdefault(ln, set()).add(p['id'])
     unit_lines = {u + 1 for u in units}
 
+    leaked = set(split.get('leaked', []))
+
     def ok(p):
-        return (len(p['evidence']) == 1 and p['evidence'][0] in unit_lines
+        return (p['id'] not in leaked and len(p['evidence']) == 1 and p['evidence'][0] in unit_lines
                 and backers[p['evidence'][0]] == {p['id']})
     held = sorted(p['id'] for p in probes if p['id'] in split['held_out'] and ok(p))
     known = sorted(p['id'] for p in probes if p['id'] in split['known'] and ok(p))
@@ -274,7 +282,8 @@ def cmd_check(orig_p, var_p):
             removed.add(i)
     if j != len(var):
         die(f'{var_p}: line {j + 1} is not an original line in order (rewritten, added or reordered)')
-    gone_groups = {g for g in scaffold if all(k in removed for k, gg in group_of.items() if gg == g)}
+    members = {g: [k for k, gg in group_of.items() if gg == g] for g in scaffold}
+    gone_groups = {g for g in scaffold if members[g] and all(k in removed for k in members[g])}
     allowed = unit_set | {i for g in gone_groups for i in scaffold[g]}
     bad = sorted(removed - allowed)
     if bad:

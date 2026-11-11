@@ -124,6 +124,12 @@ def main(work):
         if 'alpha' in l or 'beta' in l:
             Xd.removed.add(i)       # rows gone, header and delimiter left dangling
     check('check rejects a dangling table header (seeded)', chk('dangle.md', Xd.text()) == 2)
+    ef = os.path.join(work, 'emptyfence.md')
+    with open(ef, 'w') as f:
+        f.write('# a\n```\n\n```\nx\n')
+    check('check accepts an unchanged file with an empty fence',
+          subprocess.run([sys.executable, os.path.join(HERE, 'exp008.py'), 'check', ef, ef],
+                         capture_output=True).returncode in (0, 1))
 
     check('H2 holds above the max', X.decide_h2(9.0, [5, 6, 8]) == 'holds')
     check('H2 tie at the max is inconclusive', X.decide_h2(8.0, [5, 6, 8]) == 'inconclusive')
@@ -187,8 +193,20 @@ def main(work):
     bad = [dict(q) for q in rp]
     bad[20]['question'] = 'what is ' + rp[0]['answer'] + '?'
     X.dump(bad, os.path.join(work, 'leak.json'))
-    check('split refuses a question carrying another probe\'s exact key (seeded)',
-          run('split', real, os.path.join(work, 'leak.json'), os.path.join(work, 'x.json')).returncode == 2)
+    lx = os.path.join(work, 'leak-split.json')
+    rl_ = run('split', real, os.path.join(work, 'leak.json'), lx)
+    check('split records a key leaked into another question (seeded)',
+          rl_.returncode == 0 and X.load(lx)['leaked'] == ['P01'])
+    lu = X.parse(rl)[0]
+    only = {'held_out': ['P01'], 'known': [], 'leaked': []}
+    _, n_clean, _ = X.pick_seeded(rp, only, lu)
+    _, n_leak, _ = X.pick_seeded(rp, dict(only, leaked=['P01']), lu)
+    check('a leaked probe stops qualifying for seeding', (n_clean, n_leak) == (1, 0))
+    bad = [dict(q) for q in rp]
+    bad[0]['question'] = 'is it ' + rp[0]['answer'] + '?'
+    X.dump(bad, os.path.join(work, 'self.json'))
+    check('split refuses a question carrying its own exact key (seeded)',
+          run('split', real, os.path.join(work, 'self.json'), os.path.join(work, 'x.json')).returncode == 2)
     bad = [dict(q) for q in rp]
     bad[0]['evidence'] = [rp[15]['evidence'][0]]
     X.dump(bad, os.path.join(work, 'offline.json'))
