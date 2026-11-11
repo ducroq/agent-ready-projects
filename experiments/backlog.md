@@ -418,3 +418,169 @@ prune errors are often old false claims that only a check against the code finds
 
 One run gives a signal, not proof. This session is also the last of R6's decision-rights trial, so
 its decision list gets a note that it ran lead/worker.
+
+## EXP-008: does judgement pruning keep what later questions need?
+
+**Hypotheses**: H1, a fixed probe set detects a deleted load-bearing line (the instrument works).
+H2, an agent pruning a project file on judgement alone, as `curate` does, keeps more of what
+held-out questions need than random deletion of the same size.
+**Decision it feeds**: whether `curate` and `audit-context` gain a new rule: no cut to an
+auto-loaded file without a probe check. If adopted, it ships to adopters as a pattern (MINOR).
+**Subject**: this repo's `CLAUDE.md` at the pinning commit. It is public, so probes and scores
+can be published, and Claude Code loads it every session (`tests/lint/autoload-ratchet.sh`).
+**Spend**: $0 metered. About 33 agent sessions (1 probe writer, 3 pruners, 27 readers, 1-2
+graders); tokens reported per session.
+**Scripts**: `experiments/exp008/`: `exp008.py` (split, variants, pruner check, grading pool,
+score), `prompts.md` (every agent prompt), `fixture.py` (the instrument check, run before the
+experiment). Their sha256 at freezing, so this section's pin covers them; run
+`cd experiments/exp008 && sha256sum -c` on these lines before the run:
+
+    a06ffb9250ab2922ad69684a68d41a0e65b42e5b8b9982532b00b59e27b8067d  exp008.py
+    256fad61f8a2f75b80a0f7d6a5c7ab8e0224e48f4422a67a191e2f2e930c886d  prompts.md
+    0b46f55bcfbc8b797ced6d44a0f48fc9633a910faab4a7a1f61d8513db919aa4  fixture.py
+
+They are part of the design; where this text and a script disagree, the run stops.
+
+### Why this design
+
+The framework treats a memory file as a minimum-description-length problem: the shortest text
+that still lets an agent act correctly. A file's cost is its size *plus* what its gaps cost later.
+arXiv 2610.27301 found that compaction tuned to a known question was not detectably better than
+random deletion on questions that came later. arXiv 2602.11988 found that context files with
+unnecessary requirements lowered coding-agent task success; it measured tasks, not questions, so
+it supports pruning, not this method. Nothing here tests task success.
+
+### What was seen before freezing
+
+`CLAUDE.md`'s content, which the author has edited many times: 14,733 bytes, 107 units as
+`exp008.py` counts them, the longest line 1,809 bytes. No probe has been written and
+no prune has been made.
+
+### The reader
+
+**Closed book**: the reader gets the variant's text and the probes, and nothing else: no repo, no
+files, no tools. This measures what the file itself carries. It cannot credit a line whose content
+is findable by search, so it is harsher on pruning than real use; the open-book version (a reader
+in a sandboxed export of the repo, H-032's idea) is deferred until this result shows it is worth
+the sandbox. Probes, key and transcripts live in `lab/experiments/<date>-exp008/`.
+
+### Probe set
+
+- A fresh agent that has not seen this section writes 30 questions from the numbered file whose answers are in
+  `CLAUDE.md`, each with an answer key and the line(s) it rests on. At least 10 must need an
+  exact identifier (a path, script, skill or rule number).
+- `exp008.py split` refuses a probe whose evidence is not a line of the file, whose exact key is
+  not on its evidence line, or whose question contains its own key; the writer is asked once
+  more, then the run stops. A key that appears in *another* probe's question is recorded, and
+  that probe cannot be seeded.
+- A script splits them at random, seed fixed in the pinning commit, into 15 **known** and 15
+  **held-out**, stratified on the exact-identifier flag.
+
+### Variants of the file
+
+A **unit** is a non-blank line that is not a markdown heading; lines inside a code fence are
+units, `#` comments included. A table's body row is a unit; its header and delimiter rows are
+deleted with its last body row and counted in that deletion, and a code fence's opening and
+closing lines likewise go with its last line. Size is bytes including each
+line's newline. The **window** is 57-60% of the original. If a random run ends above 60%, it
+restarts with the next seed in the pinned list, and the restart is reported.
+
+| Variant | How it is made |
+|---|---|
+| **full** | Unchanged. The ceiling. |
+| **empty** | No file. The floor: what the model guesses or already knows. |
+| **random** ×3 | Shuffle units with a fixed seed; delete in that order, skipping any unit whose deletion would go below 57%, until size ≤ 60%. |
+| **judged-blind** ×2 | Two fresh agents each prune to the window by deleting units only, as random does, told to keep what a future session needs. Neither sees a probe. H2's arm; its score is the mean of the two. |
+| **judged-known** | As judged-blind, but shown the 15 known probes. Reported, not decided on: it shows the known/held-out gap 2610.27301 found. |
+| **seeded** | full minus 3 lines picked by script: held-out probes that rest on exactly one line, which is a unit and backs no other probe, and whose key leaked into no other question; 3 drawn with the fixed seed. If fewer than 3 qualify, all that do are used and the rest drawn from qualifying known probes; if still fewer than 3, H1 is inconclusive. |
+
+`exp008.py check` rejects a pruner's output that rewrites, adds or reorders a line, deletes a
+heading or blank line, or leaves a block's scaffolding without its lines; the pruner is asked once
+more, then the run stops. One that lands
+outside the window is asked once more; if still outside, its size is reported
+and its score compared per 1,000 bytes kept as well.
+
+### Reader and grading
+
+- **Reader**: three fresh sessions per variant, each answering all 30 probes from the text alone,
+  launched as `prompts.md` requires. Model `claude-sonnet-5-5`; other steps' models are in
+  `prompts.md`. A variant's score is the mean of its three runs.
+- **Grading**: exact-identifier probes are matched by script: case-insensitive, after stripping
+  backticks, quotes and a leading `./`; correct if the key appears in the answer as a whole
+  token, not inside a longer path, name or number. The rest go
+  to a fresh grader with the key; answers from all variants are pooled, shuffled and unlabelled.
+- **Measures per variant**: held-out correct, known correct, and file bytes.
+
+### Decision rule
+
+- **H1 holds** if, in each of the three **seeded** runs, at least 2 of the 3 seeded probes fail,
+  and in at least 2 of the 3 **full** runs at least 2 of them pass. Otherwise the run is
+  **inconclusive** and H2 is not read: a probe set that cannot see a known hole proves nothing by
+  seeing none. **H1 inconclusive**: no rule changes; the instrument is fixed and re-registered
+  as a new EXP. H1 tests one
+  small cut, not a 40% cut, and closed book makes it nearly true by construction: it mainly
+  checks that the probes cannot be guessed and that grading works. Both limits are stated with
+  any result.
+- **H2 holds** if **judged-blind**'s mean held-out score is above the highest of the three **random**
+  scores. **Fails** if it is at or below their median. **Inconclusive** in between. Scores are
+  compared as computed; a tie counts as the lower outcome.
+- **H2 holds**: judgement pruning continues, and the probe check is offered as optional.
+  **H2 fails**: `curate` and `audit-context` gain the no-cut-without-a-probe-check rule.
+  **Inconclusive**: run once more on `templates/project-file.md` filled for a fixture project.
+- **Reported without a bar**: **empty**'s score, a **judged** arm scoring below **empty**,
+  **judged-known**'s known-vs-held-out gap, the spread of the random runs, and per variant
+  bytes against held-out score.
+- **Published** to `experiments/artifacts/exp008.json`: probes, key and per-variant scores (all
+  about a public file). Reader and grader transcripts stay in `lab/`.
+
+With 15 held-out probes and two judged prunes, this gives a signal, not proof. Any rule it
+triggers ships with that stated.
+
+## EXP-009: EXP-008 re-registered after its pruner rule stopped the run
+
+**Everything in EXP-008 applies** (hypotheses, decision, subject, models, probes, variants,
+reader, grading, decision rule) **except the changes below**, which override EXP-008's
+text on what \`check\` rejects and when a pruner failure stops the run. EXP-008's \`exp008.py\`
+is read as \`exp009.py\` throughout, including \`check\`'s new third argument. EXP-008 is closed: stopped by
+its own rule, no score produced.
+
+### What was seen before freezing
+
+EXP-008's run on 2026-11-11, up to its stop (`lab/experiments/2026-11-11-exp008/`):
+
+- The probe set: 30 probes, 16 exact, no key leaked into another question; the split.
+- The scripted variants: random-1 to 3 at 59.6-59.7% with no restart; seeded at 96.5%.
+- Five pruner attempts and EXP-008's `check` verdict on each: blind-1 passed first time.
+  Blind-2 was rejected, then passed. Known was rejected twice, which stopped the run.
+- The pruner outputs were read only as far as diagnosing the rejections. Blank lines changed in
+  3 of 5 attempts: blind-2's first added 2 (its only fault), known's first deleted 6, and known's
+  second deleted 5 and added 3.
+- Under `exp009.py check`, run while drafting this section, all five attempts pass, at 58.3-58.9%.
+
+No reader ran, no answer was graded, no score exists.
+
+### The changes
+
+1. **Blank lines are layout.** `exp009.py check` ignores blank lines when aligning a pruner's
+   output, and writes the variant as the original minus exactly the deleted lines, so every
+   original blank line is restored, as random keeps them all. Both arms then share one layout,
+   and a blank line, which carries no content, can no longer stop a run.
+2. **A report-only arm that fails `check` twice is dropped and listed**, not a stop. A decision
+   arm (judged-blind-1 or 2) that fails twice still stops the run.
+3. **Reuse.** The probes and split are reused. The scripted variants are rebuilt with
+   `exp009.py variants` (same seeds). For each judged arm, the first of its existing attempts,
+   in the order they were made, that passes `exp009.py check` is used: blind-1's only attempt,
+   and the first attempts of blind-2 and known. No new pruner call is made. The rule leaves no
+   choice of attempt; it moves blind-2 off the attempt EXP-008 accepted, because change 1 is
+   kept for every arm: a layout difference must not decide which prune is read.
+4. The pruner prompt still asks for blank lines to be kept; with no new pruner call, it only
+   describes how the reused attempts were made.
+
+**Scripts**: `experiments/exp009/`; `prompts.md` is identical to EXP-008's. Before the run:
+`cd experiments/exp009 && grep -E '^    [0-9a-f]{64}  ' ../backlog.md | tail -3 | sed 's/^    //' | sha256sum -c`
+
+    c7c00b4e18496aa88616f4ae7d15cf225ad4969026e7ffa520445db5e0821dde  exp009.py
+    256fad61f8a2f75b80a0f7d6a5c7ab8e0224e48f4422a67a191e2f2e930c886d  prompts.md
+    d27a967847903e9ede24bd2b09669d9fe341a8b8ca16369f9d528b13aa5088d9  fixture.py
+
+Where this text and a script disagree, the run stops. Run data: `lab/experiments/2026-11-11-exp009/`.
