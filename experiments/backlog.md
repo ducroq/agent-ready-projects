@@ -535,3 +535,45 @@ and its score compared per 1,000 bytes kept as well.
 
 With 15 held-out probes and two judged prunes, this gives a signal, not proof. Any rule it
 triggers ships with that stated.
+
+## EXP-009: EXP-008 re-registered after its pruner rule stopped the run
+
+**Everything in EXP-008 applies** (hypotheses, decision, subject, models, probes, variants,
+reader, grading, decision rule) **except the three changes below.** EXP-008 is closed: stopped by
+its own rule, no score produced.
+
+### What was seen before freezing
+
+EXP-008's run on 2026-11-11, up to its stop (`lab/experiments/2026-11-11-exp008/`):
+
+- The probe set: 30 probes, 16 exact, no key leaked into another question; the split.
+- The scripted variants: random-1 to 3 at 59.6-59.7% with no restart; seeded at 96.5%.
+- Five pruner attempts and EXP-008's `check` verdict on each: blind-1 passed first time.
+  Blind-2 was rejected (a line out of order), then passed. Known was rejected twice (deleted
+  blank lines, inside the code block among others), which stopped the run.
+- The pruner outputs were read only as far as diagnosing the rejections: 3 of 5 attempts
+  deleted blank lines that the prompt said to keep.
+
+No reader ran, no answer was graded, no score exists.
+
+### The three changes
+
+1. **Blank lines are layout.** `exp009.py check` ignores blank lines when aligning a pruner's
+   output, and writes the variant as the original minus exactly the deleted lines, so every
+   original blank line is restored, as random keeps them all. Both arms then share one layout,
+   and a blank line, which carries no content, can no longer stop a run.
+2. **A report-only arm that fails `check` twice is dropped and listed**, not a stop. A decision
+   arm (judged-blind-1 or 2) that fails twice still stops the run.
+3. **Reuse.** The probes and split are reused. The scripted variants are rebuilt with
+   `exp009.py variants` (same seeds). For each judged arm, the first of its existing attempts,
+   in the order they were made, that passes `exp009.py check` is used; no new pruner call is
+   made, since every arm has had its two attempts or already passed.
+
+**Scripts**: `experiments/exp009/`; `prompts.md` is identical to EXP-008's. Run
+`cd experiments/exp009 && sha256sum -c` on these lines before the run:
+
+    c7c00b4e18496aa88616f4ae7d15cf225ad4969026e7ffa520445db5e0821dde  exp009.py
+    256fad61f8a2f75b80a0f7d6a5c7ab8e0224e48f4422a67a191e2f2e930c886d  prompts.md
+    0603a27e1c4a6d19aef0b119e66d5f180d5aed31c989b79431752ef91681dfbf  fixture.py
+
+Where this text and a script disagree, the run stops. Run data: `lab/experiments/2026-11-11-exp009/`.
