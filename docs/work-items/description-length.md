@@ -17,7 +17,9 @@ item tests whether that holds for our pruning, and whether a probe check should 
 - [x] 2026-11-10: round 3 (adversarial, draft + scripts): 3 blockers (pruner got a cheaper budget than random; closed book not enforced at launch; one probe could leak another's answer), 5 warnings; all fixed. Round cap reached, so **the round-3 fixes are unreviewed**
 - [x] 2026-11-11: round 4 (adversarial, round-3 fixes, user-approved past the cap): no blocker; empty-fence false reject and an over-strict leak rule fixed; fixture 56 checks
 - [x] 2026-11-11: models, launch command (with a pre-freeze control) and script hashes written into the section; pinned
-- [ ] Note: the CLI sign-in expires by 2026-11-14; run before then or renew
+- [x] 2026-11-11: EXP-008 run stopped by its own rule (report-only pruner broke the blank-line rule twice); re-registered and pinned as EXP-009
+- [x] 2026-11-11: EXP-009 ran. Artifact: `experiments/artifacts/exp009-description-length.json`
+- [ ] Record H2's result where `curate`'s pruning guidance lives, if anywhere should cite it; optional probe check stays optional
 - [ ] Then run: number, probe writer, split, variants, pruners + check, readers, pool, grader, score
 
 ## Decisions
@@ -40,4 +42,12 @@ success), 2512.24601 (RLM), 2310.19791 (LILO, MDL library compression).
 
 ## Outcome
 
-**Status**: in progress
+**Status**: EXP-009 concluded 2026-11-11. **H1 holds, H2 holds.**
+
+Held-out correct of 15 (mean of 3 reader runs) at about 59% of `CLAUDE.md`'s bytes: judged-blind
+12.0 and 13.0 (mean 12.5); random 9.0, 10.0, 11.3; full 14.7; empty 0. Probe-aware pruning:
+15/15 known against 13/15 held-out, the gap 2610.27301 predicts. Per the decision rule: judgement
+pruning continues; a probe check is optional, not required.
+
+**Limits**: one file, 15 held-out probes, closed book, margin over the best random cut of
+1.2 probes. A signal, not proof. Task success was not measured.
