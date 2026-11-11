@@ -19,7 +19,7 @@ item tests whether that holds for our pruning, and whether a probe check should 
 - [x] 2026-11-11: models, launch command (with a pre-freeze control) and script hashes written into the section; pinned
 - [x] 2026-11-11: EXP-008 run stopped by its own rule (report-only pruner broke the blank-line rule twice); re-registered and pinned as EXP-009
 - [x] 2026-11-11: EXP-009 ran. Artifact: `experiments/artifacts/exp009-description-length.json`
-- [ ] Record H2's result where `curate`'s pruning guidance lives, if anywhere should cite it; optional probe check stays optional
+- [x] 2026-11-11: optional probe check filed as an issue; hypothesis H-035 opened; work item archived
 - [ ] Then run: number, probe writer, split, variants, pruners + check, readers, pool, grader, score
 
 ## Decisions
