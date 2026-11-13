@@ -144,7 +144,18 @@ annotations=$(grep -ahoiE '<!--[[:space:]]*verify:' "$@" | wc -l)
 printf 'ran %d of %d annotations — %d pass, %d fail, %d error, %d cannot-verify; %d manual, %d malformed\n' \
   "$n" "$annotations" "$pass" "$fail" "$err" "$cannot" "$manual" "$bad"
 [ "$tmo" -eq 0 ] || echo "$tmo error(s) timed out — raise VERIFY_TIMEOUT before reading them as findings"
+# What to do with each disposition present: the skill points here instead of restating it.
+[ "$fail" -eq 0 ]   || echo '  FAIL: the claimed state is no longer true. Flag the entry for correction or removal.'
+[ "$err" -eq 0 ]    || echo '  ERROR: the command is broken (not found, silent, or timed out), not the claim. Fix the command.'
+[ "$cannot" -eq 0 ] || echo '  CANNOT-VERIFY: the check could not reach its target. Neither pass nor failure; report the reason.'
+[ "$manual" -eq 0 ] || echo '  MANUAL: nothing was run. Surface the noted reason to the engineer.'
+[ "$bad" -eq 0 ]    || echo '  MALFORMED: the annotation cannot be read as one command. Fix it.'
+[ $((n + manual + bad)) -eq "$annotations" ] ||      # manual and malformed have their own rows
+  echo "  ran $n of $annotations, $((annotations - n - manual - bad)) with no row: account for each. Fenced or code-span examples are expected; anything else is a bug."
 [ "$seen" -gt 0 ] || { [ "$bad" -eq 0 ] && echo 'ZERO COMMANDS EXTRACTED — a defect in the runner or the annotations, never a pass.' \
-                                        || echo 'NO USABLE ANNOTATIONS — every one found was malformed.'; exit 2; }
-[ $((pass + fail + err)) -gt 0 ] || { echo 'NOTHING PRODUCED A VERDICT — every annotation was manual or unreachable.'; exit 2; }
-[ $((fail + err + bad)) -eq 0 ] || exit 1
+                                        || echo 'NO USABLE ANNOTATIONS — every one found was malformed.'
+                       echo 'exit 2: this run cannot be trusted.'; exit 2; }
+[ $((pass + fail + err)) -gt 0 ] || { echo 'NOTHING PRODUCED A VERDICT — every annotation was manual or unreachable.'
+                                      echo 'exit 2: this run cannot be trusted.'; exit 2; }
+[ $((fail + err + bad)) -eq 0 ] || { echo 'exit 1: a claim failed, errored or was malformed.'; exit 1; }
+echo 'exit 0: everything reachable checked out.'
