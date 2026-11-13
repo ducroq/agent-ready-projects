@@ -14,17 +14,17 @@ Goal: make the framework cheaper to run without cutting review of the shipped su
 
 ## Current Status
 
-**Savepoint — 2026-11-06 (wrap): next session starts with a prune.** The engineer wants pruning, thinning, mechanizing and retiring; a big read surface is the to-do. Read surface is about 79k characters. Rank by bytes × load frequency, adopter skills first, since adopters pay every run:
+**Savepoint — 2026-11-13 (wrap): `continue` starts at step 1 below. Retire or mechanize before thinning (H-035).** The engineer wants pruning, thinning, mechanizing and retiring; a big read surface is the to-do. The five installed skills total 81k bytes (`wc -c .claude/skills/*/SKILL.md`); rank by bytes × load frequency, adopter skills first.
 
-1. ~~`release` bash-block reasoning~~: done 2026-11-13, -1.0k on the template, reasons in `docs/rationale/release.md`, ratchet locked. `curate` Step 0 done the same way, same day (-0.3k). `audit-context` and `update-drift` are under 0.2k, so skip.
-2. `curate` "Before Step 0", 1.7k: owner decided 2026-11-06: cut it, once #201's author has replied.
-3. `curate` Step 0's length (12.3k), measured 2026-11-13: ~2.9k is mechanizable. **Done**: the dispositions table and exit paragraph (~1.7k), now printed by `verify-runner.sh`. Sub-step 2's extraction is now `scripts/gotcha-headers.sh` with a fixture: only ~0.1k net, since the fetch line costs most of the saving, but the reconcile is now tested rather than re-derived. The other ~8k is judgment: probe-writing guidance (~3.5k, movable to the rationale but that is thinning) and sub-steps 4 and 6.
-4. `memory/gotcha-log.md` and `memory/hypothesis-log.md`, about 25k each. Most gotchas exist only there, so a cut needs a home for the lesson; prefer a check that retires one. "Running it is the only thing" and "Retiring a check" stay until a check holds them.
-5. Open issues: triage the 18 for any a prune or a check can close.
+1. **`audit-context` (17.1k) and `review-changes` (19.0k): measure what a script could take over**, as was done for `curate` Step 0 on 11-13: per-step bytes, then which parts restate what a shipped script already decides. That pass found ~2.9k in `curate`, and the runner-legend move (-1.7k) was the best yield of the day.
+2. **`memory/hypothesis-log.md` (25k)**: `curate` sub-step 5 reads it whole every run. H-031 closes when #201's author replies (message sent 11-13); H-026 is at 4 of 5. The gotcha log needs no thinning now that `curate` reads only its headers (`scripts/gotcha-headers.sh`).
+3. **#303**: put the rationale pointer in each `SKILL.md` body for `review-changes`, `release` and `curate` (it adds bytes, so pay for it from step 1).
+4. Blocked: `curate` "Before Step 0" (1.7k) and #296. Cut both when #201's author replies.
+5. Open issues: triage the 10 for any a prune or a check can close.
 
-Done 11-05/06: both logs thinned, `repositioning.md` reference archived, `curate` -2.0k, `review-changes` -2.4k, H-012 closed. Every thinning gets a fresh lens **before** the commit, `memory/` included. Make that lens new-text-against-the-code: on one FS prune, old-vs-new found nothing and new-vs-code found eight older defects, and fixing them grew the doc, so size alone is not the score.
+**Done 11-13** (#312 to #315, merged): `release` and `curate` bash-comment reasoning moved to the rationale; `verify-runner.sh` now prints what to do with each disposition, so `curate` lost its table; `curate` sub-step 2 is `scripts/gotcha-headers.sh`, with a fixture. About -3k adopter bytes in total. **Lesson: run old and new over the real corpus (`find ~/repos -maxdepth 4 -name 'gotcha-log*.md'`) before review.** Two lenses passed `gotcha-headers.sh`, and the corpus then showed it dropping every Promoted row adopters keep inside the template's comment (H-026).
 
-Lock the ratchets last, after any review. v1.52.2 shipped #295 on 2026-11-06, ahead of this list; the next candidate is empty, so the prune items ship together in one release; `/release` is the engineer's to invoke. Older savepoints: `docs/work-items/archive/cost-and-record-discipline-history.md`.
+Every thinning gets a fresh lens **before** the commit, `memory/` included, comparing the new text against the code. Lock the ratchets **last**, after review (gotcha x8). Branch each PR from master; never stack (`CLAUDE.md`). The 11-13 work is unreleased; `/release` is the engineer's to invoke. Older savepoints: `docs/work-items/archive/cost-and-record-discipline-history.md`.
 
 **Before each cut**, check it still holds:
 - Account for every `<!-- verify: -->` probe by name, before and after the cut. A probe may move but must not vanish.
