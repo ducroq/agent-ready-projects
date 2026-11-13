@@ -141,3 +141,15 @@ Then **stop and report**:
 - **Do not choose the version number yourself.** Propose it with reasoning; the engineer confirms.
 - **Do not claim a check passed without running it.** Report the actual command output. "I couldn't run it" is a valid report; "it passed" without evidence is not.
 - **Do not batch unrelated changes into a release** just because they're sitting in the tree. If the diff contains work that isn't part of this release, surface it and ask.
+
+## Bash-block comments, moved out of the skill on 2026-11-13
+
+The reasoning that used to sit in the skill's bash comments. Each block keeps its instruction; the why is here, keyed to the comment it came from.
+
+- **Step 1, `# The highest RELEASE tag reachable from HEAD`**: a wrong answer here mis-scopes the entire release silently, because every diff below is computed against it.
+- **Step 3, `# Tag free … keep the call guarded`**: under `set -e` a bare call kills the shell before the status line prints.
+- **Step 3, the `curl` fetch's `tail -n 1 … | grep -q` check**: it requires the last line to carry `tagfree.sh`'s success string, because an empty or cut-off 200 response would run and exit 0.
+- **Step 3, `# ⚠️ 2 IS NOT A PASS`**: elsewhere this framework treats CANNOT VERIFY as a third outcome rather than a failure. For this precondition it means the remote was never checked, so it is a STOP.
+- **Step 3, `# Version references. Use git grep …`**: `git grep` is gitignore-aware (skips `node_modules/`, `vendor/`, `.venv/`), repo-root-relative rather than cwd-relative, and excludes by path. A content-based `| grep -v CHANGELOG` drops any line that merely links to the changelog, which is how version badges are usually written (`**Version 1.2.3** | [Changelog](CHANGELOG.md)`), so it silently hides the most visible version reference in the project.
+- **Step 3, `# Then sweep VERSION-AGNOSTICALLY`**: this is the only check that finds a file stuck two releases back; the current-version grep cannot, because such a file does not contain the current version. Matching any version-shaped number returns hundreds of dependency pins in a repo with a lockfile, and lockfiles are committed, so gitignore-awareness does not help; an agent facing that output will rationally skip the check. The two patterns match the things that actually carry a version instead.
+- **Step 3, `# two-component versions (v1.13) match by design`**: a bare `[0-9]+\.[0-9]+\.[0-9]+` would miss them.
