@@ -5,6 +5,7 @@
      inside this comment. Prefer .claude/skills/curate/SKILL.md from this repo.)
      Diff an install against THAT file, never this one: the header differs by construction (#187).
      For other tools, run this as an end-of-session prompt manually.
+     Editing a bash block below? Its reasons are in <https://github.com/ducroq/agent-ready-projects/blob/master/docs/rationale/curate.md>. lint-skip: maintainer-path — a URL, not a repo-relative path.
 
      This is a skill (/curate) that automates the end-of-session
      curation step of the self-learning loop. Instead of manually reviewing
@@ -38,12 +39,7 @@ Before tending memory, go back to what this session was asked to do. The detour 
 **Measure the read surface first, and say the number.**
 
 ```bash
-# -print0/-0 because a single spaced path (`docs/work-items/my slug.md`) is
-# word-split into nonexistent paths and its bytes vanish from the total. `cat |
-# wc -m` rather than `xargs wc -c | tail -1` for two reasons: xargs BATCHES above
-# a few thousand files and `tail -1` then reports one batch's total (measured:
-# 6000 files reported 105,600 of 600,000), and `wc -m` counts characters, which
-# is what the threshold below is in. Both failures were silent and both read LOW.
+# Keep -print0/-0 (spaced paths) and `cat | wc -m` (chars); never `xargs wc -c | tail -1`.
 find memory docs/work-items -type f -name '*.md' ! -path '*/archive/*' -print0 2>/dev/null \
   | xargs -0 cat | wc -m
 ```
@@ -60,9 +56,7 @@ Check for context rot from *previous* sessions. **Read metadata, not documents**
 
    ```
    grep -nE '^#{2,3} ' <log>                 # entries: date, title, status, line number
-   # Bounded at the next same-or-shallower heading. `,0` ran to EOF and swallowed any
-   # later section: 11 rows read where 7 exist. Level-aware, because entries nest as
-   # `###` under `## Promoted` — exiting at ANY heading returns zero rows there.
+   # Stops at the next same-or-shallower heading; keep it level-aware (entries are ### under ## Promoted).
    awk '/^#+ Promoted/ && !f { f=1; sub(/ .*/,""); n=length; next }
         f && /^#+ / { sub(/ .*/,""); if (length<=n) exit } f' <log> | grep '^|'
    grep -c '^\*\*Problem\*\*' <log>          # ground truth: entry count, obtained a different way
