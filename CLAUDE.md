@@ -38,6 +38,7 @@ The source framework that teaches the layered memory method for AI coding agents
 - **An absolute in an instruction is a decision; an absolute in a description is a measurement, and it needs one.** *Every*, *all*, *none*, *cannot* or *guaranteed* about how a tool, spec or codebase behaves needs a measurement with its command and scope, a spec citation, or a hedge. Seeds drawn from cases the implementation already handles are not a measurement; the account is in `docs/rationale/review-changes.md`.
 - **A user-global skill shadows a project-local one of the same name — in Claude Code** (the local copy is silently never loaded) (other tools differ; see `docs/GUIDE.md` § "Where a skill lives"). So `release` and `test-verify-memory` stay project-local while `curate`, `audit-context`, `update-drift` and `review-changes` ship global, and a global install is always derived from tracked `.claude/skills/` via `scripts/install-global-skills.sh`, never authored in `~/.claude/`.
 - **Lead with the point; one or two lines.** The answer first, then stop. Side findings go in a short list or get dropped; no recaps, no restated decisions, no numbers nothing reads — in files as much as in replies.
+- **Never stack PRs.** Branch each from master; deleting a merged base closes the PR on it (x3, `memory/gotcha-log.md`).
 - **Tool-agnostic in adopter-facing content.** `README.md`, `adopt.md`, `templates/` and `docs/GUIDE.md` must not assume Claude Code. Maintainer infrastructure (this file, `memory/`, `.claude/`) can be Claude-specific.
 
 ## Architecture
