@@ -276,6 +276,23 @@ Every branch was executed, not read: clean, a seeded drift (exit 1), no stamp, s
 
 - **Assume nothing about the working directory.** The runner may be invoked from anywhere, and a relative command silently changes meaning when it is — `git ls-remote origin` checked a remote from the project root and, run one directory over, reported ERROR for a healthy claim. Address the target absolutely: `git -C /path/to/repo …`, absolute paths for files.
 
+**How the runner scores a probe** (moved out of the skill on 2026-11-13; the runner now prints what to do with each disposition, and its exit status, at the end of every run):
+
+**Dispositions** — first match wins:
+
+| Result | Disposition | What it means |
+|--------|-------------|---------------|
+| Command begins `manual` (then a space, a colon, or nothing) | **MANUAL CHECK NEEDED** | Nothing is run. Surface the noted reason to the engineer. `manual-check.sh` is a command, not a note. |
+| The annotation cannot be read as one command | **MALFORMED** | No closing `-->` on the line; a second `<!-- verify:` before the first closes; an opener inside a code span whose `-->` is outside it; an empty command; or, reported against the file, a fence that never closes. |
+| First non-blank line of **stdout** begins `CANNOT VERIFY` | **CANNOT VERIFY** | The check could not reach its target. Neither pass nor failure; the prefix wins regardless of exit status. Add a colon and a reason. |
+| Timed out | **ERROR** | Default 30s, `VERIFY_TIMEOUT` to change it, only where `timeout` is on `PATH`. Often too low. |
+| Exit 127 | **ERROR** | Command not found; the verify command itself is stale. |
+| No output on stdout | **ERROR** | Silence proves nothing, *whatever the exit status*: `exit 3` in silence is ERROR. Fix the command. |
+| Exit 0 | **PASS** | |
+| Any other non-zero | **FAIL** | The claimed state is no longer true. Flag the entry for correction or removal. |
+
+Deprecated: a first line exactly `FAIL` with exit 0 is scored FAIL. Rewrite such a command.
+
 #### Step 0, sub-steps 4 to 6
 
 4. **Index self-consistency**: Every check above compares the index to something *outside* it — gotcha ages, a verify probe, a hypothesis deadline. None asks whether the index agrees with itself, so two entries can assert opposite things indefinitely while each passes every check individually: both paths resolve, both files are fresh, neither is tagged as a state claim.

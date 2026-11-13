@@ -18,7 +18,7 @@ Goal: make the framework cheaper to run without cutting review of the shipped su
 
 1. ~~`release` bash-block reasoning~~: done 2026-11-13, -1.0k on the template, reasons in `docs/rationale/release.md`, ratchet locked. `curate` Step 0 done the same way, same day (-0.3k). `audit-context` and `update-drift` are under 0.2k, so skip.
 2. `curate` "Before Step 0", 1.7k: owner decided 2026-11-06: cut it, once #201's author has replied.
-3. `curate` Step 0's length: two adopters read it and applied a part, because their scripts wrap it. Measure what could move into a script before cutting prose.
+3. `curate` Step 0's length (12.3k), measured 2026-11-13: ~2.9k is mechanizable. **Done**: the dispositions table and exit paragraph (~1.7k), now printed by `verify-runner.sh`. **Open**: sub-step 2's gotcha-header extraction as a script (~0.6k net). The other ~8k is judgment: probe-writing guidance (~3.5k, movable to the rationale but that is thinning) and sub-steps 4 and 6.
 4. `memory/gotcha-log.md` and `memory/hypothesis-log.md`, about 25k each. Most gotchas exist only there, so a cut needs a home for the lesson; prefer a check that retires one. "Running it is the only thing" and "Retiring a check" stay until a check holds them.
 5. Open issues: triage the 18 for any a prune or a check can close.
 

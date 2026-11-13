@@ -85,22 +85,7 @@ Check for context rot from *previous* sessions. **Read metadata, not documents**
 
    Probes run with `bash -c` in the current directory. Pass every file that holds a probe.
 
-   **Zero commands extracted is a defect, never a pass.** Account for the difference in the `ran N of M` line item by item: syntax documentation (code spans, fenced examples) is expected; anything else is a bug. Exit status: **2** means the run itself cannot be trusted — no files given, an operand that is not a readable file, nothing extracted, or nothing produced a verdict because every annotation was manual or unreachable; **1** means a claim failed, errored or was malformed; **0** means everything reachable checked out; **127** means the runner script itself was not found (wrong `$CLONE` or failed fetch), not a claim result. Read the exit status, and count the rows you received against `ran N of M` — a capture can lose rows.
-
-   **Dispositions** — first match wins:
-
-   | Result | Disposition | What it means |
-   |--------|-------------|---------------|
-   | Command begins `manual` (then a space, a colon, or nothing) | **MANUAL CHECK NEEDED** | Nothing is run. Surface the noted reason to the engineer. `manual-check.sh` is a command, not a note. |
-   | The annotation cannot be read as one command | **MALFORMED** | No closing `-->` on the line; a second `<!-- verify:` before the first closes; an opener inside a code span whose `-->` is outside it; an empty command; or, reported against the file, a fence that never closes. |
-   | First non-blank line of **stdout** begins `CANNOT VERIFY` | **CANNOT VERIFY** | The check could not reach its target. Neither pass nor failure; the prefix wins regardless of exit status. Add a colon and a reason. |
-   | Timed out | **ERROR** | Default 30s, `VERIFY_TIMEOUT` to change it, only where `timeout` is on `PATH`. Often too low. |
-   | Exit 127 | **ERROR** | Command not found; the verify command itself is stale. |
-   | No output on stdout | **ERROR** | Silence proves nothing, *whatever the exit status*: `exit 3` in silence is ERROR. Fix the command. |
-   | Exit 0 | **PASS** | |
-   | Any other non-zero | **FAIL** | The claimed state is no longer true. Flag the entry for correction or removal. |
-
-   Deprecated: a first line exactly `FAIL` with exit 0 is scored FAIL. Rewrite such a command.
+   **Read the runner's closing lines**: they say what to do with each disposition it found, and what its exit status means. **Zero commands extracted is a defect, never a pass.** Count the rows you received against `ran N of M`, because a capture can lose rows. Exit **127** means the runner itself was not found (wrong `$CLONE` or failed fetch), not a claim result. How it scores each probe matters only when writing one; it is in the rules for writing a verify command, linked below.
 
    **Blind spot:** fenced blocks are skipped, but an annotation in an unfenced four-space-indented block or a blockquote **will run**. Write examples in fenced blocks. UNVERIFIED is your judgement, not a runner disposition.
 
