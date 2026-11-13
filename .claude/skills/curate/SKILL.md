@@ -36,17 +36,15 @@ Check for context rot from *previous* sessions. **Read metadata, not documents**
 
 1. **RETIRED in v1.45.0** (dead refs, stale mtime, ground-truth drift; dead refs are `audit-context` Step 4's). Re-add none without a catch.
 
-2. **Gotcha log headers**: Read the gotcha log's **headers plus its Promoted table**, not the log.
+2. **Gotcha log headers**: Read the gotcha log's **headers plus its Promoted table**, not the log. Run the shipped script; never hand-write the extractor:
 
-   ```
-   grep -nE '^#{2,3} ' <log>                 # entries: date, title, status, line number
-   # Stops at the next same-or-shallower heading; keep it level-aware (entries are ### under ## Promoted).
-   awk '/^#+ Promoted/ && !f { f=1; sub(/ .*/,""); n=length; next }
-        f && /^#+ / { sub(/ .*/,""); if (length<=n) exit } f' <log> | grep '^|'
-   grep -c '^\*\*Problem\*\*' <log>          # ground truth: entry count, obtained a different way
+   ```bash
+   GH=~/repos/agent-ready-projects/scripts/gotcha-headers.sh   # this framework's clone
+   # No clone? curl -fsSL https://raw.githubusercontent.com/ducroq/agent-ready-projects/master/scripts/gotcha-headers.sh -o /tmp/gotcha-headers.sh && GH=/tmp/gotcha-headers.sh
+   bash "$GH" <log>
    ```
 
-   **Match both heading levels, and reconcile the count.** If the header count and the `**Problem**` count disagree by more than the section headings, the extractor is wrong. Ignore headings inside `<!-- -->` (the template's example entry). Read the Promoted table too: resolutions recorded there may have no header marker.
+   It lists the headings and Promoted rows outside comments and reconciles entries against `**Problem**` lines. **Exit 1: read the lines it names before trusting the list. Exit 2: nothing was examined. Exit 127: the script was not found, not a result.** Read the Promoted table too: resolutions recorded there may have no header marker.
 
 3. **Unverified state claims**: Scan memory files **and the project file** for state claims ("shipped," "deployed," "live," "running," "working in production") and for counts about this repo. Claims carrying a `<!-- verify: ... -->` annotation are run by `scripts/verify-runner.sh` (below); **read its report, not the memory files**. A claim with no annotation is **UNVERIFIED** — suggest adding an annotation or requalifying it as a session observation.
 
