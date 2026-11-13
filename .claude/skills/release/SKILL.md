@@ -15,8 +15,7 @@ Commands below use a literal `X.Y.Z`; run Step 1 first, agree the version in Ste
 ## Step 1 — Establish what changed
 
 ```bash
-# The highest RELEASE tag reachable from HEAD. Every diff below is computed
-# against it, so a wrong answer here mis-scopes the entire release silently.
+# The highest RELEASE tag reachable from HEAD; every diff below is against it.
 git tag --sort=-v:refname --merged HEAD --list 'v[0-9]*' | sed '/-/d' | head -1
 git log <last-tag>..HEAD --oneline      # commits since
 git diff <last-tag>..HEAD --stat        # files touched
@@ -72,40 +71,22 @@ git status --porcelain
 git rev-parse --abbrev-ref HEAD
 
 # Tag free, locally and on the remote? scripts/tagfree.sh, from this framework's
-# clone. THE VERDICT IS THE EXIT STATUS, never the word, so call it guarded:
-# under `set -e` a bare call kills the shell before the status line prints.
+# clone. The verdict is the exit status, never the word: call it as below, never bare.
 TF=~/repos/agent-ready-projects/scripts/tagfree.sh   # this framework's clone
 # No clone, or one older than the script: fetch it; never hand-write the check.
-# The tail check matters: an empty or cut-off 200 response would run and exit 0.
 [ -f "$TF" ] || { _tf=$(mktemp) && curl -m 10 -fsSL https://raw.githubusercontent.com/ducroq/agent-ready-projects/master/scripts/tagfree.sh -o "$_tf" && tail -n 1 "$_tf" | grep -q 'free, local and remote' && TF=$_tf; }
 if [ -f "$TF" ] && bash "$TF" vX.Y.Z; then rc=0; else rc=$?; [ -f "$TF" ] || { echo "CANNOT VERIFY: no tagfree.sh"; rc=2; }; fi
 echo "  exit=$rc   # 0 free, 1 taken, 2 COULD NOT BE DECIDED"
-# ⚠️ 2 IS NOT A PASS HERE. Elsewhere this framework treats CANNOT VERIFY as a
-# third outcome rather than a failure; for THIS precondition it means the remote
-# was never checked, so treat it as STOP. Do not continue to Step 7 on a 2.
+# ⚠️ 2 IS NOT A PASS: the remote was never checked. STOP; do not continue to Step 7.
 
-# Version references. Use git grep: it is gitignore-aware (skips node_modules/,
-# vendor/, .venv/), repo-root-relative rather than cwd-relative, and excludes by
-# PATH. A content-based `| grep -v CHANGELOG` would drop any line that merely
-# links to the changelog — which is exactly how version badges are usually
-# written ("**Version 1.2.3** | [Changelog](CHANGELOG.md)"), silently hiding
-# the most visible version reference in the project.
+# Version references. Use git grep and exclude by PATH, never `| grep -v CHANGELOG`.
 git grep -n "1\.2\.3" -- ':!CHANGELOG.md'
 
-# Then sweep VERSION-AGNOSTICALLY. This is the only check that finds a file stuck
-# two releases back — the grep above cannot, because such a file does not contain
-# the current version. Do NOT do this by matching any version-shaped number: in a
-# repo with a lockfile that returns hundreds of dependency pins, and lockfiles are
-# committed, so git grep's gitignore-awareness does not save you. An agent facing
-# that output will rationally skip the check.
-#
-# Match the two things that actually carry your version instead. Substitute your
-# own project name in the first pattern.
+# Then sweep VERSION-AGNOSTICALLY, for a file stuck two releases back. Do NOT match
+# any version-shaped number (lockfiles). Substitute your project name below;
+# two-component versions (v1.13) match by design.
 git grep -nE "your-project-name v?[0-9]+\.[0-9]+" -- ':!CHANGELOG.md'
 git grep -niE "version[\"': ]*v?[0-9]+\.[0-9]+" -- ':!CHANGELOG.md' ':!*.lock' ':!*lock.json'
-
-# Two-component versions (v1.13) are matched by design; a bare
-# `[0-9]+\.[0-9]+\.[0-9]+` would miss them.
 ```
 
 Search **all** file types, not just `*.md` (`package.json`, `pyproject.toml`, `Cargo.toml`, `setup.py`, `__init__.py`, `docs/conf.py`, CI configs). Then cover by reading what the greps cannot see:
