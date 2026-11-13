@@ -69,6 +69,11 @@ check p1-level-aware      "$T/nested.md" 0 'row-under-nested' 'not-promoted'
 printf '# Log\n### E (2026-01-01)\n**Problem**: p\n## Promoted\n| a | first-table | 1 | x |\n## Promoted (archive)\n| b | second-table | 1 | x |\n' > "$T/twoprom.md"
 check n7-first-promoted   "$T/twoprom.md" 0 'first-table' 'second-table'
 
+# Rows inside a comment under Promoted are real: adopters fill the template's commented
+# table (3 of 37 real logs, 2026-11-13 corpus run). A heading in that comment is not.
+printf '# Log\n### E (2026-01-01)\n**Problem**: p\n## Promoted\n<!-- table:\n| d | commented-row | 1 | x |\n### not-a-heading\n-->\n' > "$T/commented.md"
+check n8-commented-rows   "$T/commented.md" 0 'commented-row' 'not-a-heading'
+
 # Positives: each is reported (p3 as a note, the rest as exit 1).
 printf '# Log\n**Problem**: orphan\n### E (2026-01-01)\n**Problem**: p\n' > "$T/orphan.md"
 check p2-orphan-problem   "$T/orphan.md" 1 'line 2: \*\*Problem\*\* under no entry heading'

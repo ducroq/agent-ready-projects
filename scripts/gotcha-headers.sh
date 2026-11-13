@@ -5,7 +5,8 @@
 # Exit:  0 every **Problem** sits under exactly one entry heading (a ### with none is a note) ·
 #        1 they do not reconcile (named below) · 2 nothing was examined — no readable file,
 #        or no headings outside comments.
-# Lines inside <!-- --> are skipped (the template's example entry and table live there).
+# Headings and **Problem** lines inside <!-- --> are skipped (the template's example entry);
+# Promoted table rows are not, because adopters fill in the template's commented table.
 set -u
 
 log=${1-}
@@ -13,6 +14,8 @@ log=${1-}
 
 awk '
   { sub(/\r+$/, "") }
+  prom && /^[ \t]*\|/ { rows[++nr] = $0 }               # Promoted rows count even inside a comment:
+                                                       # adopters fill in the commented template table
   incom { if (index($0, "-->")) incom = 0; next }
   /^[ \t]*<!--/ { if (!index($0, "-->")) incom = 1; next }
   /^#+ / {
@@ -25,7 +28,6 @@ awk '
     next
   }
   /^\*\*Problem\*\*/ { problems++; if (h && hl[h] >= 2) owned[h]++; else orphan[++no] = NR; next }   # a title owns no entry
-  prom && /^\|/ { rows[++nr] = $0 }
   END {
     if (h == 0) { print "NO HEADINGS outside comments — nothing was examined"; exit 2 }
     print "== headings (line: heading) =="
