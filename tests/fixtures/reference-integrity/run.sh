@@ -370,6 +370,61 @@ else printf '  FAIL  T65 — the REFERENCES NOT EXTRACTED section does not count
 if grep -qF 'xcfdata' <<<"$COST"; then
   printf '  FAIL  N54 — an identifier (self.xcfdata) was counted as a reference\n'; FAIL=1
 else printf '  PASS  N54 an identifier-shaped span is not counted\n'; fi
+
+# Liveness self-test: every run seeds its own fabricated path, reports it caught,
+# and strips it from every section. T70 checks the line and that no section leaks
+# the seed; T71 kills the extractor in a copy and requires exit 70, not a CLEAN.
+if printf '%s' "$OUT" | grep -qxF '== LIVENESS: a fabricated path this run seeded was reported; rung 4 resolved and missed paths in a seeded neighbour =='; then
+  printf '  PASS  T70 the run reports its own seeded breaks caught, rung 4 included\n'
+else printf '  FAIL  T70 — no LIVENESS line, or the seeded break was not caught\n'; FAIL=1; fi
+if printf '%s' "$OUT" | grep -qF 'refcheck-selftest-'; then
+  printf '  FAIL  T70b — the self-test seed leaked into the report\n'; FAIL=1
+else printf '  PASS  T70b the self-test seed is stripped from every section\n'; fi
+LIVE_DIR="$(mktemp -d)"
+cp refcheck.py "$LIVE_DIR/refcheck.py"
+python3 - "$LIVE_DIR/refcheck.py" <<'EOF'
+import sys, pathlib
+p = pathlib.Path(sys.argv[1]); s = p.read_text(); o = "def _candidates(raw_line):\n"
+assert s.count(o) == 1, "T71 mutation site moved"
+p.write_text(s.replace(o, o + "    return []\n"))
+EOF
+set +e; live_out="$(python3 "$LIVE_DIR/refcheck.py" --sibling-root "$WORK" "$WORK/repo" CLAUDE.md 2>&1)"; live_rc=$?; set -e
+rm -rf "$LIVE_DIR"
+if [ "$live_rc" -eq 70 ] && grep -qF '== VERDICT: CHECKER NOT ALIVE' <<<"$live_out"; then
+  printf '  PASS  T71 a dead extractor exits 70, not clean\n'
+else printf '  FAIL  T71 — a dead extractor exited %s, not 70\n' "$live_rc"; FAIL=1; fi
+# T72-T74: a rung 4 that skips named siblings, searches none, or lists nothing
+# must each fail liveness (exit 70). T73 and T74 are the round-2 review's
+# mutants, which passed a seed that only checked an absent path.
+live_mutant() {
+  local label="$1" old="$2" new="$3" dir out rc
+  dir="$(mktemp -d)"; cp refcheck.py "$dir/refcheck.py"
+  if ! OLD="$old" NEW="$new" python3 - "$dir/refcheck.py" <<'EOF'
+import os, sys, pathlib
+p = pathlib.Path(sys.argv[1]); s = p.read_text(); o = os.environ['OLD']
+if s.count(o) != 1:
+    sys.exit('mutation site occurs %d times' % s.count(o))
+p.write_text(s.replace(o, os.environ['NEW']))
+EOF
+  then rm -rf "$dir"; printf '  FAIL  %s — mutation site moved\n' "$label"; FAIL=1; return; fi
+  set +e; out="$(python3 "$dir/refcheck.py" --sibling-root "$WORK" "$WORK/repo" CLAUDE.md 2>&1)"; rc=$?; set -e
+  rm -rf "$dir"
+  if [ "$rc" -eq 70 ] && grep -qF '== VERDICT: CHECKER NOT ALIVE' <<<"$out"; then
+    printf '  PASS  %s exits 70\n' "$label"
+  else printf '  FAIL  %s exited %s, not 70\n' "$label" "$rc"; FAIL=1; fi
+}
+# T75: a TMPDIR inside the audited repo must not fail a healthy checker (round-3
+# review: the throwaway sibling landed in the walk and resolved locally).
+mkdir -p "$WORK/repo/.tmp"
+set +e; t75_out="$(TMPDIR="$WORK/repo/.tmp" python3 refcheck.py --sibling-root "$WORK" "$WORK/repo" CLAUDE.md 2>&1)"; t75_rc=$?; set -e
+rm -rf "$WORK/repo/.tmp"
+if [ "$t75_rc" -ne 70 ] && grep -qF '== LIVENESS: ' <<<"$t75_out"; then
+  printf '  PASS  T75 a TMPDIR inside the repo does not fail a healthy checker\n'
+else printf '  FAIL  T75 — TMPDIR inside the repo exited %s\n' "$t75_rc"; FAIL=1; fi
+live_mutant "T72 a rung 4 that skips named siblings" "if sib in named_siblings():" "if False:"
+live_mutant "T73 a rung 4 that searches no sibling" "for s in named_siblings():" "for s in []:"
+live_mutant "T74 a rung 4 whose sibling listing is empty" \
+  "_listing_cache[s] = [str(q.relative_to(s)) for q in _tree(s)]" "_listing_cache[s] = []"
 # --ext widens EVERY derived regex, not only EXT: the widened run must REPORT
 # the reference the default run only counted. A flag that set EXT alone would
 # print the same report as the default run — the wrapper failure #199 names.
@@ -1432,7 +1487,12 @@ ablate "A2 exit 0 when unconfirmed" "rc, verdict = 2, ('COVERAGE" "rc, verdict =
 # string and UNCONFIRMED, so the mutant text changed with it. The fixture
 # refused to apply the old mutant rather than silently passing — which is
 # the whole point of asserting that an ablation could be applied at all.
-ablate "A3 everything unconfirmed"  "why if rung4_runnable else UNCONFIRMED" "UNCONFIRMED" "$X3N"
+# A3 also breaks the rung-4 liveness seed (its reason becomes UNCONFIRMED), so
+# every neighbours-reachable row exits 70 and dies: the kill set widened from X3
+# alone to all eight. Measured by running the mutant. The six extra rows die from
+# the liveness check, not from their own assertions: no better guarded than before.
+ablate "A3 everything unconfirmed"  "why if rung4_runnable else UNCONFIRMED" "UNCONFIRMED" \
+       "X1 clean, neighbours reachable,X11 angle-bracket placeholder, neighbours reachable,X13 BOTH marker forms on one path, neighbours reachable,X17 marked path the LOCAL tree answers, neighbours reachable,$X19N,$X3N,X5 local collision, neighbours reachable,X8 marked cross-repo path, neighbour on disk — STALE MARKER"
 ablate "A4 drop the unread arm"     "if confirmed or missing:" "if confirmed:"                "$X7N"
 # A5, A6 and A7 each widened when a row was added below them, and A5 and A6
 # widened AGAIN when round 5 added X17-X20 (A5 gains X20, A6 gains X18). Recorded rather
@@ -1475,7 +1535,8 @@ ablate "A11 marked path skips the local suffix rung" \
        "                    if mhits:" "                    if False:"                            "$X18N"
 ablate "A12 marked path skips the doc-relative rung" \
        "if mdocrel.exists() and mdocrel.is_file():" "if False:"                                    "$X19N,$X20N"
-# ⚠️ X1, X5, X8, X11, X13 and X17 are killed by none of the twelve. Re-measured
+# ⚠️ X1, X5, X8, X11, X13 and X17 are killed by none of the twelve except A3, and
+# A3 kills them only through the liveness check (see A3). Re-measured
 # 2026-08-27 by running every mutant, not by reading the rows — round 4 found
 # five of ten kill sets wrong when written, so this comment is a MEASUREMENT. They are shape coverage, not
 # guards: each pins the neighbours-reachable half of a pair so that its twin's

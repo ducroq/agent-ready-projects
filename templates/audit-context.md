@@ -80,12 +80,12 @@ spec: **1** the path as written · **1b** relative to the referencing document �
 suffix in the working tree · **3** runtime state the system writes · **4** inside a sibling repo
 the prose names in bare text. Anything below rung 1 is enumerated, not a defect.
 
-**Prove the checker is alive before you trust a short findings list.** Append a fabricated
-path to a copy of one audited document, re-run, and confirm it is reported; a cross-repo
-fabrication too, if neighbours are reachable. **A run that finds nothing cannot distinguish a
-fixed check from a disabled one.** Delete the seeded copy afterwards.
+**The checker seeds its own breaks**: a fabricated local path and, when a neighbour is
+reachable, a throwaway neighbour holding one present and one absent path. `LIVENESS` says all
+were ruled correctly; otherwise it exits **70** (`CHECKER NOT ALIVE`), which overrides any verdict. **A run that finds nothing cannot otherwise distinguish a
+fixed check from a disabled one.**
 
-**Carry that into the verdict — three outcomes, not two.** *Defects*: a rung that ran ruled a reference out or ambiguous, or a document could not be read. *Clean*: nothing found. **Coverage incomplete**: nothing ruled on, but something left undecided because **rung 4** had no neighbouring repo to run against. Name the outcome on a line of its own and enumerate the undecided in a counted section (Step 9's *Unconfirmed* bucket). Do not fold the third into *defects* — a correct repo would then fail on **where it ran** (CI, a fresh clone, a container) rather than on what it audited — nor into *clean*, where a genuine break can sit undecided. **If you automate this step**: exit 1 / exit 0 / **exit 2**, and 2 must stay non-zero, so a caller written as `check && …` behaves as before and only one that opts in (`|| [ $? -eq 2 ]`) accepts an undecided run. Run as prose, the verdict line is the output.
+**Carry that into the verdict — three outcomes, not two.** *Defects*: a rung that ran ruled a reference out or ambiguous, or a document could not be read. *Clean*: nothing found. **Coverage incomplete**: nothing ruled on, but something left undecided because **rung 4** had no neighbouring repo to run against. Name the outcome on a line of its own and enumerate the undecided in a counted section (Step 9's *Unconfirmed* bucket). Do not fold the third into *defects* — a correct repo would then fail on **where it ran** (CI, a fresh clone, a container) rather than on what it audited — nor into *clean*, where a genuine break can sit undecided. **If you automate this step**: exit 1 / exit 0 / **exit 2**, and 2 must stay non-zero, so a caller written as `check && …` behaves as before and only one that opts in (`|| [ $? -eq 2 ]`) accepts an undecided run; **70** means the instrument failed and is never a verdict. Run as prose, the verdict line is the output.
 
 **Do not suppress; re-label.** Split the output into sections instead of one list — these three, plus the table's other two whenever either has members:
 
@@ -104,7 +104,7 @@ findings**, only unchecked; a CLEAN verdict says nothing about them.
 
 **Expect a residue; do not loosen the check to erase it.** Some references are *meant* not to resolve: instructional placeholders, files a runbook tells the reader to create, units owned and deployed by another repo. **Mark them** — `<!-- placeholder -->` **immediately after** the path, same line (`` `src/aggregators/<name>.py` <!-- placeholder --> ``). **Span-scoped**: it covers the nearest path *before* it, never the line or the rest of a row, so in a table it goes in that path's own cell; a marker at the row's end silently excuses the row's last path instead. Marked paths move to a counted section. **That form and no other**: a marker the checker never learned leaves the finding in the list. A short residue is a healthy result. **Zero is not the target**; a change that drives the count to zero has almost certainly disabled the check rather than fixed it.
 
-If the same non-finding repeats on consecutive runs, fix the check — **but first distinguish wolf-crying from residue**: a repeated finding that is an acknowledged placeholder, a cross-repo unit, or a file the reader is told to create is residue; mark it rather than loosening the extractor. Seed a break first (above); if it is caught and the repeat remains, the repeat is residue and the check is fine. **Loosening any check is the most dangerous edit you can make**: a run that found nothing real measures specificity, not sensitivity, so seed the failures the change newly *permits*. (`SPEC.md` carries the checker-specific rules.)
+If the same non-finding repeats on consecutive runs, fix the check — **but first distinguish wolf-crying from residue**: a repeated finding that is an acknowledged placeholder, a cross-repo unit, or a file the reader is told to create is residue; mark it rather than loosening the extractor. If `LIVENESS` printed and the repeat remains, the repeat is residue and the check is fine. **Loosening any check is the most dangerous edit you can make**: a run that found nothing real measures specificity, not sensitivity, so seed the failures the change newly *permits*. (`SPEC.md` carries the checker-specific rules.)
 
 For every "Before You Start" pointer:
 - Verify the target file exists
@@ -168,7 +168,7 @@ Check what's tracked vs untracked:
 
 ## Step 9 — Report
 
-Open with the **verdict** — *defects*, *clean*, or *coverage incomplete*, Step 4's three outcomes — on a line of its own, above everything else, so a reader of only the first line cannot mistake an undecided run for a clean one.
+Open with the **verdict** — *defects*, *clean*, or *coverage incomplete*, Step 4's three outcomes, or *checker broken, no verdict* after an exit 70 — on a line of its own, above everything else, so a reader of only the first line cannot mistake an undecided run for a clean one.
 
 Then summarize findings by severity:
 
