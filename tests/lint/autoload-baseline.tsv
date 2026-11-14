@@ -2,7 +2,7 @@
 # Lock a reduction in:  bash tests/lint/autoload-ratchet.sh . --update
 # Pay for growth deliberately:  ... --raise "why this must get bigger"
 # Every raise is recorded below, oldest first; notes accumulate, never replace.
-# BYTES 22258
+# BYTES 22256
 # LINES 78
 # seeded 2026-09-14
 # ratcheted down 2026-09-14
@@ -62,5 +62,6 @@
 # ratcheted down 2026-11-11
 # ratcheted down 2026-11-11
 # RAISED 2026-11-13 from 22137b/78l to 22258b/78l: owner-approved Hard Constraint: never stack PRs (gotcha x3, 2026-11-13)
+# ratcheted down 2026-11-14
 CLAUDE.md	14854
-memory/MEMORY.md	7404
+memory/MEMORY.md	7402
