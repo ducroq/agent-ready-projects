@@ -584,3 +584,88 @@ No reader ran, no answer was graded, no score exists.
     d27a967847903e9ede24bd2b09669d9fe341a8b8ca16369f9d528b13aa5088d9  fixture.py
 
 Where this text and a script disagree, the run stops. Run data: `lab/experiments/2026-11-11-exp009/`.
+
+## EXP-010: what do context-compaction prompts keep for later sessions? (DRAFT, not pinned)
+
+⚠️ **Draft.** Nothing below is frozen until a commit pins it in `pins.tsv`. Open items are listed
+at the end; scripts are not written. Issue #325.
+
+**Hypotheses**: H1, the probe set separates a full transcript from no transcript (the instrument
+works). H2, a vendor compaction summary keeps more of what **later-session** questions need than
+random deletion of the transcript to the same size: H-035's claim, replicated on session
+transcripts instead of a project file. H3 (reported, no bar), whether a longer compaction prompt
+keeps more per byte than a shorter one.
+**Decision it feeds**: (1) H-035, which needs a second text type before the optional probe check
+(#310) is decided; (2) whether `curate` should keep its verbatim rules (#321) and its advice to
+steer compaction (#323), or whether a short summary keeps as much; (3) nothing ships from H3 alone.
+**Subject**: N = 6 Claude Code transcripts of this repo, drawn at random (fixed seed) from those
+with 40k-150k tokens of rendered text, a curate run or none. Private: they stay in `lab/`; only
+aggregates are published.
+
+### Why this design
+
+Coding-agent tools compact long sessions with very different prompts, and none publishes an
+evaluation. Read 2026-11-14: Claude Code (v2.1.325, in the binary, ~1,000 words, 9 sections,
+every user message kept, next step quoted verbatim), Codex (`codex-rs/prompts/templates/compact/
+prompt.md`, ~70 words), Mistral Vibe (`vibe/core/prompts/compact.md`, ~150 words), Gemini CLI
+(`getCompressionPrompt` in `packages/core/src/prompts/snippets.ts`, ~500 words, XML snapshot).
+Every one is written to continue the current task. arXiv 2610.27301 found compaction tuned to a
+known question no better than random deletion on later ones; EXP-009 found probe-blind judgement
+pruning of a project file beat random (12.5 vs 9.0-11.3 of 15). A compaction prompt is
+probe-blind judgement on a different text, so this replicates or breaks H-035 cheaply.
+
+### Arms (per transcript)
+
+| Arm | How it is made |
+|---|---|
+| **full** | The rendered transcript. Ceiling. |
+| **empty** | Nothing. Floor. |
+| **claude**, **codex**, **mistral**, **gemini** | One summary each, made by the same model (`claude-sonnet-5-5`) with that vendor's prompt verbatim; the model is held fixed so the prompt is what varies. Prompt texts and their sha256 live in `lab/` (the Claude Code one is not redistributable); the hashes are pinned here. |
+| **random** ×3 per summary | The transcript with random whole messages deleted (fixed seeds) until its size is within ±5% of that summary's. Matched to each summary, so every compaction arm has its own size-matched control. |
+
+### Probes
+
+A fresh agent that sees the full rendered transcript, and nothing about the arms, writes 24
+questions per transcript, each with a key and the message(s) it rests on, in two pre-set kinds:
+
+- **continuation** (8): what a session resuming the task needs (goal, current step, next step,
+  pending tasks). What every prompt is built for.
+- **later-session** (16): what curation and a later, different task need: user corrections and
+  stated preferences, gotchas with their fix, decisions with their reason, exact identifiers
+  (paths, commands, issue numbers). At least 6 must need an exact identifier.
+
+No arm sees a probe, so every probe is held out; no known/held-out split is needed.
+
+### Reader and grading
+
+As EXP-009: closed-book readers (text only, no tools), three per arm per transcript, model
+`claude-sonnet-5-5`; exact-identifier probes graded by script, the rest by a fresh grader with the
+key, answers pooled, shuffled and unlabelled.
+
+### Decision rule
+
+- **H1 holds** if, pooled over transcripts, **full** scores at least 75% on later-session probes
+  and **empty** at most 25%. Otherwise inconclusive, and H2 is not read.
+- **H2 holds** if the mean of the four compaction arms' later-session scores is above the mean of
+  their size-matched random controls in at least 5 of 6 transcripts; **fails** if in 3 or fewer;
+  inconclusive at 4. Holds: H-035 is supported on a second text type, and #310 can be decided.
+  Fails: H-035 is marked contested, and the 2610.27301 result is the better model of compaction.
+- **For #321 and #323**: if **claude** beats **codex** on later-session probes in at least 5 of 6
+  transcripts *and* the gap is mostly in the user-correction and exact-identifier probes, the
+  verbatim rules stay as shipped. If **codex** is within one probe of **claude** per transcript on
+  average, the verbatim rules are reviewed for cost.
+- **Reported without a bar**: per arm, bytes against score; continuation against later-session
+  score for each prompt (the gap the design exists to show); spread of the random controls.
+- **Published** to `experiments/artifacts/exp010.json`: per-arm aggregate scores, sizes and probe
+  kinds only. No probe text, transcript text or summary text.
+
+### Open before pinning
+
+1. Rendering: how tool results are put in the text (full, truncated to N chars, or dropped), since
+   compaction prompts see them and readers' context is finite. Must be identical for all arms.
+2. Whether to also run each prompt on its own vendor's model, as a report-only arm.
+3. Probe-writer leak rule and grader prompt: reuse `exp009.py`'s split checks where they apply.
+4. Spend estimate: about 6 × (1 writer + 4 summaries + 7 arms × 3 readers... plus random arms) —
+   compute exactly once the random-arm count per transcript is fixed; the user approved spending
+   on 2026-11-14, but the number should be stated before the run.
+5. Review rounds on this section and its scripts, as EXP-008 had, before pinning.
