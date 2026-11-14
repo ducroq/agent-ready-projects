@@ -3,7 +3,7 @@
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and every raise is
 # recorded below, oldest first — notes accumulate and are never replaced.
-# BUDGET 164225
+# BUDGET 164794
 # SPILL 190558
 # RAISED 2026-09-06 from 247526 to 247969: #133: the #118 remedy string shipped unconditional and can turn a resolved reference into an AMBIGUOUS finding; the caveat that scopes it is +443 b on templates/audit-context.md, seeded as T39/T40/N39 (reason restored 2026-09-06 — write_baseline used to overwrite each note with the next)
 # RAISED 2026-09-06 from 247969 to 248237: #140: UNRESOLVED had two causes printing one reason. +268 b on templates/audit-context.md, seeded as T41/T41b/N40 (reason restored 2026-09-06)
@@ -116,6 +116,7 @@
 # RAISED 2026-11-14 from 162550 to 163172: v1.53.0 candidate: compaction-prompt lessons (#319 #321 #322 #323 #324 #326, part of #256). +1466 drafted, cut to +622 by tightening and replacing two gotcha-log history notes with a CHANGELOG pointer; the rest is new curate rules (read-text source test, delete-not-reword, pointers) paid once per run
 # RAISED 2026-11-14 from 163172 to 164108: v1.53.0 candidate: compaction-prompt lessons (#256 #319 #320 #321 #322 #323 #324 #326). Two history notes in gotcha-log.md cut to pay part; the rest is new curate rules (fix-provenance test for read text, delete-not-reword, pointers, fresh-reader comparison, correction sweep), paid once per curate run
 # RAISED 2026-11-14 from 164108 to 164225: v1.53.0 candidate, merged with #327: audit-context Step 4 liveness moves into refcheck.py; the +117 is Step 4's exit-70 clause and Step 9's 'checker broken, no verdict' outcome
+# RAISED 2026-11-14 from 164225 to 164794: v1.53.0 candidate, merged with #327/#329: curate sub-step 5 reads scripts/hypothesis-due.sh output instead of the whole hypothesis log (25.4k -> 5.1k here); +569 is the invocation block
 templates/adr.md	2115
 templates/audit-context.md	17796
 templates/checklists/architect-checklist.md	1263
@@ -124,7 +125,7 @@ templates/checklists/qa-checklist.md	1836
 templates/checklists/README.md	1097
 templates/checklists/test-checklist.md	1234
 templates/coordination.md	3909
-templates/curate.md	21602
+templates/curate.md	22171
 templates/gotcha-log.md	10638
 templates/hypothesis-log.md	3570
 templates/memory-index.md	3388
