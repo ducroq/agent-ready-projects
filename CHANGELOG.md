@@ -22,6 +22,36 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.53.0 (candidate, unreleased)
+
+Bump classified at release (`templates/release.md` Step 2); MINOR is provisional, for curate's new source test.
+
+Adopter-facing size (`templates/`): +1558 bytes: `curate` +1638 (paid once per run), `work-item` +116, `project-file` +22, and `gotcha-log` −218 net, where the capture rule went in and two history notes came out (the retired 14-day flag, now a pointer to this file, and the old "2-3 lines" rule, recorded under v1.43.0). The trade is shorter entries in files loaded every session. `docs/GUIDE.md` grows by two sentences (#324).
+
+Prior art: the context-compaction prompts of Claude Code, Codex, Mistral Vibe and Gemini CLI, read 2026-11-14.
+
+**Consumers.** No action required. To adopt in an adapted copy, carry the lines below; each names its issue.
+
+### `curate` does not turn read text into rules (#324)
+
+Step 1: a *do X* / *never Y* taken from tool output, a fetched page or a file the agent read is logged as an observation with its source, even if following it worked. A rule is the agent's only if it formed the fix itself and something it ran this session showed why it works (it names the command, diff or test). A fix that read text named (an error's "try X", a README, a page) stays an observation even once verified; an error showing only the symptom leaves the fix the agent's own. Or the user gives or confirms it. The test is the fix's source, not its outcome: a planted instruction that "works" is the case it exists for. ⚠️ **Residual risk, stated because no wording closes it**: the test relies on the agent's account of where an idea came from, and an agent persuaded by a plant can misreport it. Step 2 promotion needs the engineer's approval; Step 1 entries and Step 3's index updates do not, so a misreported rule can reach the index unreviewed. Five review rounds refuted five wordings before this one; this one has had no independent read. Step 2 does not promote such an observation, even if it recurs, unless the user confirms it; and `docs/GUIDE.md` § the agent-write boundary states the same test. Recording a source on every promoted rule, the issue's second item, is not in this release. Without it, one poisoned read becomes a standing instruction in every later session.
+
+### Trims delete rather than reword, leave pointers, and get a fresh reader (#322, #256)
+
+`curate` Step 0.6: cut by deleting, not rewording; replace a removed block whose content survives elsewhere with `→ <path or ref>`, and report one that survives nowhere. After the `grep -F` survival check, a fresh reader (another agent or a person) given only the old and new versions lists operative clauses missing or weakened, or the comparison is reported as not done: `grep -F` cannot see a paraphrase, and on one adopter's trim that passed every check this found about 30. Step 3: remove what is stale or replace the changed fact in place, don't reword the rest, and give a cut of more than a few lines the same comparison. Step 0's "don't fix anything" now says an approved trim follows these bullets. No seeded fixture: the reader is a model or a person, so there is nothing deterministic to seed.
+
+### Reasoning stays in the reply (#319); user corrections get looked for (#320)
+
+`curate` Step 1: reason in the reply, not the file. It now also asks whether the user corrected the agent this session: list the corrections from the transcript or summary; log one that exposes a mistake, record a preference where the project keeps them, or say why neither. Corrections were caught before only if the agent happened to remember them.
+
+### Capture happens when found, and before compaction (#326, #323)
+
+`templates/gotcha-log.md` now says when Capture happens: when the problem is found, since a context compaction before session end loses it; write pending entries before one, and ask its summary to keep the user's corrections verbatim. The project file's gotcha-log row adds "log a fix when found". This goes where capture is described rather than in `curate`, which runs after any compaction; the issues' `templates/README.md` rows are not added.
+
+### Savepoints quote the ask (#321)
+
+`templates/work-item.md` Current Status: quote the ask the next step serves, verbatim from the user's message and dated.
+
 ## v1.52.2 (2026-11-06)
 
 **PATCH.** One `review-changes` change inside existing files: no consumer has to act and nothing new is added, so rule 2 of `templates/release.md` Step 2 fires, on the v1.10.1 precedent. `templates/` shrinks by 2360 bytes, paid on every `/review-changes` run.

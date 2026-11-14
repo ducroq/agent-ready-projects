@@ -4,7 +4,10 @@
      Part of the self-learning loop: Capture → Surface → Promote → Retire.
 
      PROMOTION LIFECYCLE:
-     - New entries start here (Capture phase)
+     - New entries start here (Capture phase), when the problem is found:
+       a context compaction before session end loses it. Write pending
+       entries before one, and ask its summary to keep the user's
+       corrections verbatim (Claude Code: `PreCompact` hook, `/compact <text>`).
      - At end-of-session, review for patterns (Surface phase)
      - When an entry recurs 2-3 times, promote it to the relevant topic file
        as an "if X, then Y" pattern (Promote phase). Word it without the
@@ -16,12 +19,8 @@
        headings and the Promoted table, not bodies, so a status written in a
        body is invisible to it — and so is a resolved entry whose heading was
        never marked, which then reads as open forever.
-       WARNING: this used to say curation FLAGS such an entry once it is older
-       than 14 days. That flag was retired in v1.45.0: in the framework's own
-       log it fired on about 100 of 107 entries every run, where exactly one
-       had ever been marked resolved. Nothing chases you now. Marking the
-       heading is the only thing that keeps the log's open set meaningful, and
-       it is now entirely on the author.
+       Nothing flags an unmarked entry (the 14-day flag was retired in
+       v1.45.0; the framework's CHANGELOG has why): marking the heading is on the author.
      - Track what you've promoted in the "Promoted" section below
 
      When the root cause is fixed, mark it resolved here (don't delete).
@@ -78,10 +77,6 @@
      with every checkable claim intact. Do not abbreviate words to save
      characters: a tokenizer can split an abbreviation into more tokens
      than the word.
-
-     This said "keep it to 2-3 lines" until v1.43.0. That rule was
-     unenforceable — a markdown line has no length limit, so every log
-     passed it while running 3-6x the size it intended.
 -->
 
 <!-- WORKED EXAMPLE — delete or keep as a reference for entry style -->
