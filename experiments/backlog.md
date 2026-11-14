@@ -720,7 +720,10 @@ scan after redaction is replaced by the next draw, and that is reported.
 3. Spend: per transcript, 1 writer + 5 summaries + 18 arms (full, empty, seeded, 5 summaries,
    5 extract, 5 tail) × 3 readers, + 18 Opus reader calls on one transcript, + grading; state the
    total before the run.
-4. Pool measured 2026-11-14 (characters ÷ 4, tool results capped at 2,000 characters): 28
-   transcripts, 2 with a compaction boundary, 14 eligible, so N = 6 is drawable. The 150k upper
-   bound fits a 200k-token reader with the probes; re-measure with the real tokenizer in the
-   render script, since ÷ 4 is an estimate.
+4. Pool measured 2026-11-14 with `experiments/exp010/render.py pool` (characters ÷ 4): 28
+   transcripts, 2 with a compaction boundary, **10 eligible**, so N = 6 is drawable. A first
+   ad-hoc count said 14: it read `api-request-blob` entries, which duplicate messages. ÷ 4 is an
+   estimate; re-measure with a real tokenizer before pinning.
+5. Scripts so far: `exp010/render.py` (render, user-message rule, secret redaction, pool) and
+   `exp010/fixture.py` (14 seeded cases; four rule mutations each turned it red). Still to write:
+   split checks, extract/tail/seeded builders, grading, scoring, `prompts.md`.
