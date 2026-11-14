@@ -26,7 +26,7 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 Bump classified at release (`templates/release.md` Step 2); MINOR is provisional, for curate's new source test.
 
-Adopter-facing size (`templates/`): +1675 bytes: `curate` +1638 and `audit-context` +117 (each paid once per run), `work-item` +116, `project-file` +22, and `gotcha-log` −218 net, where the capture rule went in and two history notes came out (the retired 14-day flag, now a pointer to this file, and the old "2-3 lines" rule, recorded under v1.43.0). The trade is shorter entries in files loaded every session. `docs/GUIDE.md` grows by two sentences (#324).
+Adopter-facing size (`templates/`): +2244 bytes: `curate` +2207 and `audit-context` +117 (each paid once per run), `work-item` +116, `project-file` +22, and `gotcha-log` −218 net, where the capture rule went in and two history notes came out (the retired 14-day flag, now a pointer to this file, and the old "2-3 lines" rule, recorded under v1.43.0). The trade is shorter entries in files loaded every session. `docs/GUIDE.md` grows by two sentences (#324).
 
 Prior art: the context-compaction prompts of Claude Code, Codex, Mistral Vibe and Gemini CLI, read 2026-11-14.
 
@@ -57,6 +57,14 @@ Step 1: a *do X* / *never Y* taken from tool output, a fetched page or a file th
 Every run of the Step 4 checker now seeds its own breaks in the same pass: a fabricated local path and, when a real neighbour is reachable, a throwaway neighbour repo with a random name holding one present and one absent path, which only a rung 4 that searched it resolves and misses correctly. It prints `LIVENESS` when all are ruled correctly, strips them from every section, and otherwise exits **70** (`CHECKER NOT ALIVE`), overriding the verdict; a seed that cannot be written also exits 70. Step 4 told the agent to do both by hand on every audit. Step 4's exit codes and Step 9's report name the 70 case. The seed is kept outside the audited tree, so a `TMPDIR` inside the repo does not fail a healthy run. Fixture cases T70/T70b/T71/T75 and mutants T72-T74 (rung 4 skips, searches nothing, lists nothing), each shown to fail with the behaviour removed; ablation A3's kill set widened from one row to eight, because the rung-4 seed now catches that mutant too.
 
 A caller that treated any non-zero exit as failure is unaffected; one that matched exit codes 0/1/2 exactly sees 70 only when the checker is broken.
+
+### `curate` sub-step 5 reads `scripts/hypothesis-due.sh`, not the hypothesis log
+
++569 bytes in `curate`. It replaces reading the whole hypothesis log on every `curate` run: 25.4k → 5.1k on this framework's own log, 7.5k → 1.2k and 8.8k → 3.8k on two adopters'.
+
+The new script prints each entry's heading, Review-by, trigger and status lines, the open and dormant counts, and flags a past date, a condition to check (alone or as "date or condition, whichever is first"), and a status that says triggered, so the agent reads only the entries that are due. A log it cannot read as one (no `###` heading, an unclosed comment or fence) exits 2 rather than reporting 0 open. It accepts the field spellings seen in the wild, including inline labels (`**Trigger.** … **Review by** 2026-12-31.`), which a first draft missed on a downstream log (11 of 12 entries reported as lacking a Review-by). A past date is flagged as a question, since a Review-by line can carry other dates. Fixture `tests/fixtures/hypothesis-due/`: 25 cases, 25 ablations; output byte-identical under mawk and busybox awk (gawk and macOS awk not tested). `adopt.md` lists the script with the other two `/curate` needs. The curl fallback runs the download unchecked, as the other two do (#268).
+
+A clone or the curl fallback supplies the script, as for sub-step 2.
 
 ## v1.52.2 (2026-11-06)
 

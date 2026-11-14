@@ -110,10 +110,18 @@ Check for context rot from *previous* sessions. **Read metadata, not documents**
    - **Report the pair verbatim; do not pick a winner from the text.** Probe whichever claim can be probed; otherwise surface both to the engineer.
    - If the index exceeds ~200 lines or the sub-step 6 budget, report that and run the identifier pass alone.
 
-5. **Hypothesis log surface**: If a hypothesis log exists, scan its `## Open` section. **Check both `memory/hypothesis-log.md` and `docs/hypothesis-log.md`**. For each entry:
-   - **Past `Review by:`**: Flag as **DUE FOR REVIEW**. Surface its Position and Method so the engineer can resolve or extend it.
-   - **`Revisit trigger:` fired**: If its evidence threshold is now met, flag as **TRIGGERED**. Surface only; do not resolve.
-   - **Stale (no movement, no trigger)**: Count open entries. If more than ~10, flag as memory-cluttering — promote to ADRs or mark `dormant` / closed.
+5. **Hypothesis log surface**: If a hypothesis log exists (**check both `memory/hypothesis-log.md` and `docs/hypothesis-log.md`**), read the script's list, not the log:
+
+   ```bash
+   HD=~/repos/agent-ready-projects/scripts/hypothesis-due.sh   # this framework's clone
+   # No clone? curl -fsSL https://raw.githubusercontent.com/ducroq/agent-ready-projects/master/scripts/hypothesis-due.sh -o /tmp/hypothesis-due.sh && HD=/tmp/hypothesis-due.sh
+   bash "$HD" <log>
+   ```
+
+   It prints each entry's heading, Review-by, trigger and status lines, the open and dormant counts, and flags a past date or a dateless condition. **Exit 1: an entry has no Review-by line. Exit 2: nothing was examined. Exit 127: the script was not found, not a result.** For each entry:
+   - **A flagged date that is the deadline, or a condition now met**: flag as **DUE FOR REVIEW**; read that entry's Position and Method so the engineer can resolve or extend it.
+   - **Trigger fired**, by its trigger or its status line: flag as **TRIGGERED**. Surface only; do not resolve.
+   - **More than ~10 open**: flag as memory-cluttering — promote to ADRs or mark `dormant` / closed.
 
 6. **Auto-loaded size budget — the whole set, not the project file alone.** Sum **every file your tool loads without being asked** (for Claude Code, the project file *and* the user-level memory index), and compare the total against the budget. Claude Code warns at 40k chars; the soft target is under 35k. **List the set before measuring**, and name any file not counted. Budget the index in characters, not lines, and **name the unit with every number you report** (#179): this step counts characters (`wc -m`), `audit-context` Step 1 counts bytes (`wc -c`), which read higher on every non-ASCII character (0.4-1.9% on this framework's own files), so a set under 35k here can be over it there.
 
