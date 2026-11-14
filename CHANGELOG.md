@@ -22,6 +22,36 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.53.0 (candidate, unreleased)
+
+Bump classified at release (`templates/release.md` Step 2); MINOR is provisional, for curate's new source test.
+
+Adopter-facing size (`templates/`): +622 bytes: `curate` +702 (paid once per run), `work-item` +116, `project-file` +22, and `gotcha-log` −218 net, where the capture rule went in and two history notes came out (the retired 14-day flag, now a pointer to this file, and the old "2-3 lines" rule, recorded under v1.43.0). The trade is shorter entries in files loaded every session. `docs/GUIDE.md` grows by one paragraph's worth (#324).
+
+Prior art: the context-compaction prompts of Claude Code, Codex, Mistral Vibe and Gemini CLI, read 2026-11-14.
+
+**Consumers.** No action required. To adopt in an adapted copy, carry the lines below; each names its issue.
+
+### `curate` does not turn read text into rules (#324)
+
+Step 1: a *do X* / *never Y* taken from tool output, a fetched page or a file the agent read is logged as an observation with its source, even if following it worked. A rule is the agent's only if it can state the cause and why the fix follows (read text such as an error is evidence, not the source), or if the user gave or confirmed it. The test is the idea's source, not its outcome: a planted instruction that "works" is the case it exists for. Step 2 does not promote such an observation, even if it recurs, unless the user confirms it; and `docs/GUIDE.md` § the agent-write boundary says the same. Without it, one poisoned read becomes a standing instruction in every later session.
+
+### Trims delete rather than reword, and leave pointers (#322, part of #256)
+
+`curate` Step 0.6: cut by deleting, not rewording; replace a removed block whose content survives elsewhere with `→ <path or ref>`, and report one that survives nowhere. Step 3: remove what is stale or replace the changed fact in place; don't reword the rest. #256's required old-vs-new clause review is not in this release.
+
+### Reasoning stays in the reply (#319)
+
+`curate` Step 1: reason in the reply, not the file.
+
+### Capture happens when found, and before compaction (#326, #323)
+
+`templates/gotcha-log.md` now says when Capture happens: when the problem is found, since a context compaction before session end loses it; write pending entries before one, and ask its summary to keep the user's corrections verbatim. The project file's gotcha-log row adds "log a fix when found". This goes where capture is described rather than in `curate`, which runs after any compaction; the issues' `templates/README.md` rows are not added.
+
+### Savepoints quote the ask (#321)
+
+`templates/work-item.md` Current Status: quote the ask the next step serves, verbatim from the user's message and dated.
+
 ## v1.52.2 (2026-11-06)
 
 **PATCH.** One `review-changes` change inside existing files: no consumer has to act and nothing new is added, so rule 2 of `templates/release.md` Step 2 fires, on the v1.10.1 precedent. `templates/` shrinks by 2360 bytes, paid on every `/review-changes` run.

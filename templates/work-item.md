@@ -49,7 +49,8 @@
 
      Keep this concrete. "Working on X" is not a savepoint. "Feature flag
      added, API stubbed, DB migration still failing with constraint
-     violation on user_id" IS a savepoint.
+     violation on user_id" IS a savepoint. Quote the ask the next step
+     serves verbatim from the user's message, dated: a paraphrase drifts across resets.
 
      That pointer list — the memory index's "Current State" section, or
      the project file's "Active work" section — tracks active work items.
