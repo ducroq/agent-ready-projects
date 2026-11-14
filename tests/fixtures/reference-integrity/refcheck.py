@@ -36,6 +36,9 @@ EXTRACTED (shapes outside the population, each labelled — #122), UNCONFIRMED
 and — only when they apply — DOCUMENTS NOT READ and REFERENCES NOT EXTRACTED
 (backticked references in an unlisted extension, counted — #199).
 LINKED WORKTREES NOT SEARCHED prints only when a walk left one out (#277).
+On the default path a LIVENESS line always prints: the run seeds its own fabricated path (and,
+with a real neighbour reachable, a throwaway neighbour with a present and an absent path
+for rung 4) and, if any is ruled wrongly, exits 70 (CHECKER NOT ALIVE), overriding the verdict.
 The RUNG 4 COVERAGE line always prints; only its explanatory body is conditional
 on there being no neighbour (#97). On the default path a VERDICT line closes the report and
 names the exit status, so the two cannot drift apart unnoticed; `--legacy` is a
@@ -48,7 +51,8 @@ but something was left undecided, because rung 4 had no neighbouring repo to run
 against (#93). **2 is still non-zero** — a gate written as `refcheck.py ... && ...`
 behaves exactly as it did before, and only a caller that opts in
 (`|| [ $? -eq 2 ]`) accepts an undecided run. A usage error exits **64**
-(`EX_USAGE`), so a typo'd flag cannot be read as either verdict.
+(`EX_USAGE`), so a typo'd flag cannot be read as either verdict. **70**
+(`EX_SOFTWARE`): the liveness self-test failed or could not run, so no verdict stands.
 
 **Backticked paths and markdown-link URLs are extracted; a bare prose path is
 not.** A link's *label* is a display name and is masked before extraction, while
@@ -61,6 +65,9 @@ check that DOCUMENTS NOT READ is absent, before reading empty as passing.
 import re
 import sys
 import pathlib
+import os
+import shutil
+import tempfile
 
 # The verdict a reference gets when every rung that could run has run and none
 # of them could rule on it, because rung 4 needs a neighbouring repo on disk and
@@ -1349,8 +1356,82 @@ def main():
         print(f"  TOTAL ITEMS PUT TO A HUMAN: {len(reports) + len(stale)}")
         return 0
 
-    (findings, weak, skipped, placeheld, unknown, missing, n_siblings, unchecked,
-     undecided_markers, dropped_shapes, cost, ignored_hits) = check(root, sources, sibling_roots)
+    # Liveness self-test: one extra document holding fabricated paths rides along
+    # in the SAME check() call (one tree walk), is asserted reported, then removed
+    # from every section. Replaces Step 4's manual "seed a break and re-run": a
+    # run that finds nothing cannot otherwise tell a working check from a dead one.
+    #
+    # Rung 4, only when a real neighbour is reachable (so coverage reporting is
+    # unchanged): a throwaway sibling repo with a random name and one file is added
+    # as an extra sibling root. The seed names it and cites one PRESENT and one
+    # ABSENT path in it. Only a rung 4 that searched it resolves the first, and
+    # only one that searched and missed gives the second its "named in the prose
+    # and resolved" reason. A random name cannot collide with prose or with a
+    # real repo, and costs no walk of a real neighbour (round-2 review).
+    st_dir, st_src = None, None
+    st_needle = 'refcheck-selftest-%s/never_here.py' % os.urandom(4).hex()
+    rt = pathlib.Path(root).resolve()
+    eff_roots = list(sibling_roots or [rt.parent, rt.parent.parent])
+    has_real = any(_is_repo_dir(sp) and sp.resolve() != rt
+                   for cand in eff_roots for pat in ('*', '*/*')
+                   for sp in pathlib.Path(cand).glob(pat))
+    st_sib = 'rcselftest%s' % os.urandom(4).hex() if has_real else None
+    st_sib_skip = None
+    try:
+        # The seed must live OUTSIDE the audited tree: a TMPDIR inside the repo
+        # (a common CI pattern) put the throwaway sibling in the walk, where it
+        # resolved locally and failed a healthy checker (round-3 review).
+        for base in (None, '/tmp', '/var/tmp', str(rt.parent)):
+            try:
+                st_dir = tempfile.mkdtemp(prefix='refcheck-selftest-', dir=base)
+            except OSError:
+                continue
+            if rt not in pathlib.Path(st_dir).resolve().parents:
+                break
+            shutil.rmtree(st_dir, ignore_errors=True)
+            st_dir = None
+        if st_dir is None:
+            st_dir = tempfile.mkdtemp(prefix='refcheck-selftest-')
+            if st_sib:
+                st_sib, st_sib_skip = None, 'no temp dir outside the audited repo'
+        st_src = os.path.join(st_dir, 'SELFTEST.md')
+        with open(st_src, 'w') as fh:
+            fh.write('Seeded by refcheck itself: `%s`\n' % st_needle)
+            if st_sib:
+                fh.write('\n\nAlso in %s: `%s/present.py`\n' % (st_sib, st_sib))
+                fh.write('\n\nAlso in %s: `%s/absent.py`\n' % (st_sib, st_sib))
+        if st_sib:
+            sib = os.path.join(st_dir, 'siblings', st_sib)
+            os.makedirs(os.path.join(sib, '.git'))
+            with open(os.path.join(sib, 'present.py'), 'w') as fh:
+                fh.write('# refcheck liveness seed\n')
+            eff_roots.append(os.path.join(st_dir, 'siblings'))
+    except OSError as e:
+        print('== LIVENESS NOT RUN: could not write the seed (%s) ==' % e)
+        st_src = st_sib = None
+    try:
+        (findings, weak, skipped, placeheld, unknown, missing, n_siblings, unchecked,
+         undecided_markers, dropped_shapes, cost, ignored_hits) = check(
+             root, sources + ([st_src] if st_src else []),
+             eff_roots if st_sib else sibling_roots)
+    finally:
+        if st_dir:
+            shutil.rmtree(st_dir, ignore_errors=True)
+    if st_sib:
+        n_siblings -= 1
+    st_caught = bool(st_src) and any(r[0] == st_src and st_needle in r[1] for r in findings)
+    st_caught4 = (not st_sib) or (
+        any(r[0] == st_src and r[1] == '%s/present.py' % st_sib and 'sibling %s ->' % st_sib in r[2]
+            for r in weak)
+        and any(r[0] == st_src and r[1] == '%s/absent.py' % st_sib
+                and 'named in the prose and resolved' in r[2] for r in findings))
+    findings, weak, skipped, placeheld, unchecked, undecided_markers, dropped_shapes = (
+        [r for r in lst if r[0] != st_src] for lst in
+        (findings, weak, skipped, placeheld, unchecked, undecided_markers, dropped_shapes))
+    missing = [m for m in missing if m != st_src]
+    if ignored_hits:
+        ignored_hits = {d: [h for h in v if h[0] != st_src] for d, v in ignored_hits.items()}
+        ignored_hits = {d: v for d, v in ignored_hits.items() if v}
 
     # State rung 4's coverage as a fact rather than inferring a verdict per
     # reference. We cannot tell which unresolved paths a sibling would have
@@ -1485,6 +1566,16 @@ def main():
                           'is ruled on either way' % len(unconfirmed))
     else:
         rc, verdict = 0, 'CLEAN — no findings'
+    if st_caught and st_caught4:
+        print("\n== LIVENESS: a fabricated path this run seeded was reported%s ==" % (
+            '; rung 4 resolved and missed paths in a seeded neighbour' if st_sib
+            else '; rung 4 not seeded (%s)' % (st_sib_skip or 'no neighbour reachable')))
+    else:
+        # 70 is EX_SOFTWARE: the instrument failed, so no verdict above stands.
+        print("\n== LIVENESS FAILED: %s ==" % (
+            'the seed could not be written, so nothing was checked for liveness' if not st_src
+            else 'a path this run seeded was NOT ruled as expected'))
+        rc, verdict = 70, 'CHECKER NOT ALIVE — nothing above can be trusted, ' + verdict
     print(f"\n== VERDICT: {verdict} (exit {rc}) ==")
     return rc
 
