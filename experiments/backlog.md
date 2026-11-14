@@ -710,5 +710,7 @@ scan after redaction is replaced by the next draw, and that is reported.
 2. Script hashes and the sha256 check line, as EXP-009.
 3. Spend: per transcript, 1 writer + 5 summaries + 11 arms × 3 readers + 11 Opus reader calls on
    one transcript + grading; state the total before the run.
-4. Whether 2,000 characters per tool result keeps rendered transcripts inside the readers'
-   context at 150k tokens; measure on the pool before pinning, and lower the cap if not.
+4. Pool measured 2026-11-14 (characters ÷ 4, tool results capped at 2,000 characters): 28
+   transcripts, 2 with a compaction boundary, 14 eligible, so N = 6 is drawable. The 150k upper
+   bound fits a 200k-token reader with the probes; re-measure with the real tokenizer in the
+   render script, since ÷ 4 is an estimate.
