@@ -16,7 +16,7 @@ The source framework that teaches the layered memory method for AI coding agents
 | Installing, moving, or removing a skill | `docs/GUIDE.md` § "Where a skill lives". Verify with `bash scripts/install-global-skills.sh --check ~/repos`. Refresh globals only after the release tag is pushed and verified (`templates/release.md` Step 7); `--force` overrides the installer's refusal, knowingly. |
 | Editing a skill — either `templates/<name>.md` or `.claude/skills/<name>/SKILL.md` | **Edit both.** One edited alone is drift. Lint rule 6 catches it; `install-global-skills.sh --check` does not. |
 | Closing an issue that was filed against a **skill** | Name the adopter-installed file that changed because of it before writing `Closes #N`. If `git diff -- templates/<skill>.md \| grep -c '<the concept>'` returns 0, it did not ship. |
-| Before committing structural changes (CLAUDE.md, `memory/`, `templates/`) | Run `bash tests/lint/run.sh` (catalog and blind spots: `tests/lint/README.md`), then `/review-changes` (tiers from `.claude/review-profile.md`). A green CI tick (`.github/workflows/checks.yml`) is not a review, and the local lint run is stronger: rules 2, 12, 15, 18 and 19 SKIP in CI, and 21 does too while the top CHANGELOG block is a candidate. |
+| Before committing structural changes (CLAUDE.md, `memory/`, `templates/`) | Run `bash tests/lint/run.sh` (catalog and blind spots: `tests/lint/README.md`), then `/review-changes` (tiers from `.claude/review-profile.md`). A green CI tick (`.github/workflows/checks.yml`) is not a review, and the local run is stronger: some rules SKIP in CI (`tests/lint/README.md`). |
 | Picking up where the last session left off — **including a bare "continue", "carry on" or "pick up where we left off"** | `memory/MEMORY.md`. **Read it before doing anything else, and before asking what to work on: the answer is in there.** Nothing else loads it. |
 | Editing templates | `templates/README.md` for the tool-agnostic naming map. Changes ripple to every downstream consumer. |
 | Editing the guide | `docs/GUIDE.md` is the full reference; `README.md` is the on-ramp. When you change one, check whether the other needs the same change. |
@@ -69,10 +69,7 @@ agent-ready-projects/
 │   ├── memory-index.md        <- Layer 3 index
 │   ├── gotcha-log.md          <- Layer 4
 │   ├── coordination.md        <- Layer 5 (multi-contributor)
-│   ├── curate.md, audit-context.md, review-changes.md, release.md, update-drift.md
-│   │                          <- The five skills (plus review-profile.md)
-│   └── hypothesis-log.md, work-item.md, adr.md, review-agent.md, test-verify-memory.md,
-│       test-fixtures/, checklists/, README.md
+│   └── ...                    <- The five skills and the rest: see templates/README.md
 ├── scripts/                   <- Run by skills; each header names its step
 ├── .github/workflows/checks.yml      <- CI: lint + fixtures
 ├── tests/                     <- Self-tests; read a fixture's README before loosening it
@@ -96,8 +93,6 @@ These paths exist in the maintainer's local clone but are gitignored — they ar
 | `memory/MEMORY.md` | Index of current project state | Build your own per the templates |
 | `memory/project_*.md` | Topic files | Build your own as needed |
 | `memory/gotcha-log.md`, `memory/hypothesis-log.md`, `memory/review-ledger.tsv` | Layer-4 journal, provisional positions, review-cost ledger; cited above but not in your clone | Build your own from `templates/gotcha-log.md` and `templates/hypothesis-log.md` |
-
-The public framework — `README.md`, `adopt.md`, `docs/`, `templates/`, `CHANGELOG.md`, `LICENSE` — is fully consumable without any of the above.
 
 `memory/` stays gitignored: it holds private project names that lint rule 12 never scans, so check what is inside before tracking it. It has its own local-only git history, never pushed. Use `git -C memory log` before asserting how an entry or heading got that way.
 
@@ -123,10 +118,6 @@ The public framework — `README.md`, `adopt.md`, `docs/`, `templates/`, `CHANGE
 ## How to Work Here
 
 ```bash
-# Cut a release (per CHANGELOG.md header)
-git tag vX.Y.Z <commit>
-git push --tags
-
 # Check what changed for a downstream adopter pinned at an older version
 git diff vX.Y.Z..vX.Y+1.0 -- templates/
 
@@ -138,15 +129,9 @@ bash tests/fixtures/<name>/run.sh                   # one suite, while iterating
 # Score a review config against seeded defects (no pass/fail; not in the suite)
 bash tests/fixtures/review-bench/build.sh /tmp/rb
 bash tests/fixtures/review-bench/score.sh <findings-file> seeded
-
-# End a session
-/curate     # if installed locally from templates/curate.md
-
-# Monthly check
-/audit-context     # if installed locally from templates/audit-context.md
 ```
 
 ## Cross-Repo Evidence
 
 - **Downstream consumer**: [agent-ready-papers](https://github.com/ducroq/agent-ready-papers) — applies this method to academic and structured non-fiction writing. Forward-feedback evidence lands there first and informs this repo's evolution.
-- **Adopter projects**: 28+ at last count (`memory/project_framework_pivot.md`). Each pins a version and reads `CHANGELOG.md` to decide whether to upgrade.
+- **Adopter projects**: each pins a version and reads `CHANGELOG.md` to decide whether to upgrade.
