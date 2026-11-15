@@ -26,7 +26,7 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 Bump classified at release (`templates/release.md` Step 2); MINOR is provisional, for curate's new source test.
 
-Adopter-facing size (`templates/`): +2244 bytes: `curate` +2207 and `audit-context` +117 (each paid once per run), `work-item` +116, `project-file` +22, and `gotcha-log` −218 net, where the capture rule went in and two history notes came out (the retired 14-day flag, now a pointer to this file, and the old "2-3 lines" rule, recorded under v1.43.0). The trade is shorter entries in files loaded every session. `docs/GUIDE.md` grows by two sentences (#324).
+Adopter-facing size (`templates/`, measured against v1.52.2): −1223 bytes: `curate` −252 and `release` −1008, `audit-context` +117 (each paid once per run), `work-item` +116, `project-file` +22, and `gotcha-log` −218 net, where the capture rule went in and two history notes came out (the retired 14-day flag, now a pointer to this file, and the old "2-3 lines" rule, recorded under v1.43.0). The trade is shorter entries in files loaded every session. `docs/GUIDE.md` grows by two sentences (#324).
 
 Prior art: the context-compaction prompts of Claude Code, Codex, Mistral Vibe and Gemini CLI, read 2026-11-14.
 
@@ -65,6 +65,10 @@ A caller that treated any non-zero exit as failure is unaffected; one that match
 The new script prints each entry's heading, Review-by, trigger and status lines, the open and dormant counts, and flags a past date, a condition to check (alone or as "date or condition, whichever is first"), and a status that says triggered, so the agent reads only the entries that are due. A log it cannot read as one (no `###` heading, an unclosed comment or fence) exits 2 rather than reporting 0 open. It accepts the field spellings seen in the wild, including inline labels (`**Trigger.** … **Review by** 2026-12-31.`), which a first draft missed on a downstream log (11 of 12 entries reported as lacking a Review-by). A past date is flagged as a question, since a Review-by line can carry other dates. Fixture `tests/fixtures/hypothesis-due/`: 25 cases, 25 ablations; output byte-identical under mawk and busybox awk (gawk and macOS awk not tested). `adopt.md` lists the script with the other two `/curate` needs. The curl fallback runs the download unchecked, as the other two do (#268).
 
 A clone or the curl fallback supplies the script, as for sub-step 2.
+
+### `curate` Step 0 drops text that lives elsewhere
+
+−364 bytes in `curate`, paid every session end. Deleted: "zero commands extracted is a defect", which `verify-runner.sh` prints itself; a sentence that pointed at the scoring rules a second time; three adopter anecdotes in sub-step 6, moved to the curate rationale. No instruction changed. A fresh reader ruled on a larger cut: the four ways a probe passes while false, the guarded-probe template, the fenced-examples rule, the padding bullets and the entity-pass note each change what an agent does when the rationale is not at hand, so they stay.
 
 ## v1.52.2 (2026-11-06)
 
