@@ -48,6 +48,10 @@ Step 1: a *do X* / *never Y* taken from tool output, a fetched page or a file th
 
 `curate` Step 1: reason in the reply, not the file. It now also asks whether the user corrected the agent this session: list the corrections from the transcript or summary; log one that exposes a mistake, record a preference where the project keeps them, or say why neither. Corrections were caught before only if the agent happened to remember them.
 
+### `scripts/tagfree.sh` refuses the placeholder and cannot hang (#276)
+
+`tagfree.sh vX.Y.Z` with the placeholder left in reported the tag free (exit 0); a tag not shaped `vN.N.N` (optional `-rc1`/`+build` suffix) now exits 2, CANNOT VERIFY. `ls-remote` runs with `GIT_TERMINAL_PROMPT=0` and, where `timeout` exists, a 30 s limit; a timeout exits 2. Both were already in agent-ready-papers' adapted copy.
+
 ### `curate` Step 0 says CANNOT MEASURE instead of 0 (#238)
 
 The read-surface command printed `0` when `memory/` and `docs/work-items/` are absent (a layout using a tool's own memory directory), which read as under budget. It now prints `CANNOT MEASURE`, and the step says to point the command at the project's real roots. +270 bytes.

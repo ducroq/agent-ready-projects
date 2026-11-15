@@ -24,10 +24,19 @@ t=${1:-}
 # An empty argument was a FALSE PASS once: it printed "tag  free" and exited 0,
 # having checked nothing, with a double space as the only tell.
 [ -n "$t" ] || { echo "CANNOT VERIFY: no tag given"; exit 2; }
+# An unfilled placeholder (release Step 3 is written with vX.Y.Z) was a FALSE
+# PASS too: no such tag exists, so it read "free" (#276). Pre-release and build
+# suffixes (v1.2.3-rc1) pass.
+[[ $t =~ ^v[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?$ ]] ||
+  { echo "CANNOT VERIFY: '$t' is not a vX.Y.Z tag"; exit 2; }
+# A hung remote or a credential prompt must not stall the step: no prompt, and
+# a 30 s limit where `timeout` exists (not stock macOS). A timeout exits
+# non-zero, so it lands on the CANNOT VERIFY path below.
+to=(); command -v timeout >/dev/null 2>&1 && to=(timeout 30)
 if git rev-parse --verify --quiet "refs/tags/$t" >/dev/null; then
   echo "LOCAL TAG $t EXISTS — STOP"; exit 1
 fi
-lsr=$(git ls-remote --tags origin "refs/tags/$t" 2>/dev/null) || {
+lsr=$(GIT_TERMINAL_PROMPT=0 "${to[@]}" git ls-remote --tags origin "refs/tags/$t" 2>/dev/null) || {
   echo "CANNOT VERIFY $t on the remote — ls-remote failed (offline? no origin?)"
   exit 2
 }
