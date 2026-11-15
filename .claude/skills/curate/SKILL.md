@@ -127,7 +127,7 @@ Read the gotcha log's **headers** (the sub-step 2 grep). For each existing entry
 
    Recurrence is a match on *mechanism*, which lives in the body: grep for a distinguishing term, and when a new entry feels familiar, read the matches.
 
-Then check: did anything go wrong or surprise you during this session, and **did the user correct you** (#320)? List the corrections from the transcript or summary: log one that exposes a mistake below, record a preference where the project keeps them (memory index or a topic file), or say why neither. For each surprise and logged correction, add a new entry above the Promoted heading, found as a line start (`^#+ Promoted`), else at the end. Entries quote that heading, and a substring match splits one (#233): `grep -cE '^#+ Promoted'` must not change.
+Then check: did anything go wrong or surprise you during this session, and **did the user correct you** (#320)? List the corrections from the transcript or summary: log one that exposes a mistake below, record a preference where the project keeps them (memory index or a topic file), or say why neither. For each surprise and logged correction, add a new entry at the top if the log says it runs newest-first, else above its first index heading, a line start matching `^#+ (Promoted|Mechanized)`, else at the end. Entries quote those headings, and a substring match splits one (#233): `grep -cE '^#+ (Promoted|Mechanized)'` must not change.
 
 ```
 ### [Short description] (YYYY-MM-DD)
