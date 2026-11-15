@@ -29,6 +29,8 @@ t=${1:-}
 # suffixes (v1.2.3-rc1) pass.
 [[ $t =~ ^v[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?$ ]] ||
   { echo "CANNOT VERIFY: '$t' is not a vX.Y.Z tag"; exit 2; }
+git check-ref-format "refs/tags/$t" ||
+  { echo "CANNOT VERIFY: '$t' is not a valid tag name"; exit 2; }
 # A hung remote or a credential prompt must not stall the step: no prompt, and
 # a 30 s limit where `timeout` exists (not stock macOS). A timeout exits
 # non-zero, so it lands on the CANNOT VERIFY path below.
@@ -36,7 +38,11 @@ to=(); command -v timeout >/dev/null 2>&1 && to=(timeout 30)
 if git rev-parse --verify --quiet "refs/tags/$t" >/dev/null; then
   echo "LOCAL TAG $t EXISTS — STOP"; exit 1
 fi
-lsr=$(GIT_TERMINAL_PROMPT=0 "${to[@]}" git ls-remote --tags origin "refs/tags/$t" 2>/dev/null) || {
+# Resolve origin's URL first: with no such remote, `ls-remote origin` reads a
+# ./origin directory as the remote and can answer "free" for the wrong repo.
+url=$(git remote get-url origin 2>/dev/null) ||
+  { echo "CANNOT VERIFY $t on the remote — no origin remote"; exit 2; }
+lsr=$(GIT_TERMINAL_PROMPT=0 "${to[@]}" git ls-remote --tags -- "$url" "refs/tags/$t" 2>/dev/null) || {
   echo "CANNOT VERIFY $t on the remote — ls-remote failed (offline? no origin?)"
   exit 2
 }
