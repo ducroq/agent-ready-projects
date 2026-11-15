@@ -14,7 +14,7 @@ Goal: make the framework cheaper to run without cutting review of the shipped su
 
 ## Current Status
 
-**Savepoint — 2026-11-15 (fourth): steps 1, 2, 4 and 7-10 are done. `continue` starts at step 11. Steps 3 and 5 are the engineer's to call. Start nothing else. Prune, thin, mechanize, retire (the engineer, 11-14 and again 11-15: "Large Read surface ?? that means we need to start pruning, thinning, mechanizing, retiring!").** Rank every cut by bytes × how often it loads. `curate` is ~19.9k against ≤18.9k.
+**Savepoint — 2026-11-15 (fourth): steps 1, 2, 4 and 7-11 are done. `continue` starts at step 12. Steps 3 and 5 are the engineer's to call. Start nothing else. Prune, thin, mechanize, retire (the engineer, 11-14 and again 11-15: "Large Read surface ?? that means we need to start pruning, thinning, mechanizing, retiring!").** Rank every cut by bytes × how often it loads. `curate` is ~19.9k against ≤18.9k.
 
 **Measured 11-15: thinning `curate` is exhausted, and scripting is now mostly exhausted too.** Rationale pointers are dead on adopter installs; only prose a shipped script prints can leave a skill body, and only if no step needs it before the script runs (gotcha 2026-11-15). Scripting sub-steps 3 and 6 bought −463 bytes, not 3k. `curate` is ~21.3k bytes against ≤18.9k: what remains needs judgement, so **retiring** (step 4) is the next lever.
 
@@ -22,13 +22,13 @@ Goal: make the framework cheaper to run without cutting review of the shipped su
 2. ✅ **`curate` Step 0 mechanized, partly**: `scripts/autoload-size.sh` carries sub-step 6's measurement and over-budget order; verify-runner notes two probe shapes. `curate` −463 bytes, not the 3k hoped: a fresh reader showed sub-step 3's examples are needed before the runner runs, and the trim rules serve Step 3 under budget. `curate` is ~21.3k against ≤18.9k; what remains needs intent, so the next cut is retiring (step 4), not scripting.
 3. **#333**: `review-changes` Step 1 into a script, after #268. Engineer's call.
 4. ✅ **Retired** H-031's "Before Step 0" from `curate` (−1751 bytes; engineer's go 11-15 without #201's reply). A fresh reader found no dangling refs; it noted the section's commit/push/watcher rules now survive nowhere in `curate` (GUIDE.md covers "don't commit unless asked").
-5. **Release v1.53.0** (`/release`, the engineer's to invoke): #312-#316, #327, #329, #330, #335, #336, #343-#345, #347 are unreleased. The candidate's size line in `CHANGELOG.md` is the measurement; do not copy it here.
+5. **Release v1.53.0** (`/release`, the engineer's to invoke): #312-#316, #327, #329, #330, #335, #336, #343-#345, #347, #350 are unreleased. The candidate's size line in `CHANGELOG.md` is the measurement; do not copy it here.
 6. **#303** (rationale pointer in each `SKILL.md` body; adds bytes, pay for it from step 2). H-026 at 4 of 5.
-7. ✅ Cheap issues: #238 (#344), #276 (#345), #237 (#347) merged and closed 11-15. #345 had seeded runs only, no fresh reader: give it one before the release.
+7. ✅ Cheap issues: #238 (#344), #276 (#345), #237 (#347) merged and closed 11-15; #296 closed as obsolete (its section was cut in #343).
 8. ✅ The four rules the H-031 cut dropped stay out (engineer, 11-15).
 9. ✅ H-021 resolved, supported for this repo with the fixer as classifier (engineer, 11-15); 10 hypotheses open.
 10. ✅ Retire candidates found and preregistered (engineer, 11-15): `curate` Step 0.4 index self-consistency (H-036, 1241 bytes) and Step 4 doc sync (H-037, 1128 bytes) had no recorded catch here. Each is kept at 2 of 8 curate runs, else cut. **Every curate run from now: tally both in the session file.** Together they would put `curate` under 18.9k.
-11. **Fresh-reader review of #345** (`scripts/tagfree.sh`, seeded runs only), before `/release`. Hostile cases: bash 3.2 empty array, `set -e` callers, `v1.2.3+build`.
+11. ✅ #345 fresh-read: one false free (no `origin` remote + a `./origin` dir) and invalid ref names, fixed in #350 (merged 11-15, seeded, no second reader). Release blocker cleared.
 12. Then triage the remaining open issues for a prune or a check that closes one (`gh issue list`); #241 (curate: ask whether an experiment concluded) adds bytes, so it needs a retire to pay for it.
 
 **Done 11-15** (merged #335, #336): `curate` Step 0 −364 bytes (only what the runner prints, a duplicate pointer, three anecdotes to the rationale); `CLAUDE.md` 14.9k → 14.1k (deleted what duplicates a named authority; the release snippet it dropped contradicted the CHANGELOG header). Both trims had a fresh-reader comparison; each caught losses the author missed (H-035 note). `/review-changes` was not run on either; the fresh readers were the review.
