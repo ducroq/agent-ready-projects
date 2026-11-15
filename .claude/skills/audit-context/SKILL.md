@@ -55,7 +55,6 @@ placeholder and deletion markers, cross-repo gating, and the three-outcome verdi
 
 ```bash
 CLONE=~/repos/agent-ready-projects   # this framework's clone
-# Repeat --sibling-root for every directory holding neighbouring repos.
 python3 "$CLONE/tests/fixtures/reference-integrity/refcheck.py" \
         --sibling-root ~/repos \
         . CLAUDE.md memory/MEMORY.md memory/gotcha-log.md
@@ -86,7 +85,7 @@ fixed check from a disabled one.**
 **`LINKED WORKTREES NOT SEARCHED`, when present,** names a repo's own linked worktrees. A reference
 that exists only on one of those branches comes back unresolved.
 
-**A sixth section, `PATH SHAPES NOT EXTRACTED`,** lists backticked shapes the extractor never
+**A sixth section, `PATH SHAPES NOT EXTRACTED`,** counts backticked shapes the extractor never
 examines — brace groups, bracket placeholders, root-absolute, Windows and UNC paths. **Not
 findings**, only unchecked; a CLEAN verdict says nothing about them.
 

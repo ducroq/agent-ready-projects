@@ -14,7 +14,7 @@ DOCS="CLAUDE.md docs/RECORDS.md docs/NEGATED.md docs/ADVERSARIAL.md docs/MONOREP
 # --sibling-root pins the search to the fixture. Without it the search
 # reaches the system temp dir and adopts stray repos, including fixtures
 # left behind by an interrupted run of this harness.
-OUT="$(python3 refcheck.py --sibling-root "$WORK" "$WORK/repo" $DOCS || true)"
+OUT="$(python3 refcheck.py --verbose --sibling-root "$WORK" "$WORK/repo" $DOCS || true)"
 FINDINGS="$(printf '%s' "$OUT" | sed -n '/== FINDINGS/,/^  total:/p')"
 
 # Each seeded break, and the substring that proves it was reported.
@@ -388,7 +388,7 @@ p = pathlib.Path(sys.argv[1]); s = p.read_text(); o = "def _candidates(raw_line)
 assert s.count(o) == 1, "T71 mutation site moved"
 p.write_text(s.replace(o, o + "    return []\n"))
 EOF
-set +e; live_out="$(python3 "$LIVE_DIR/refcheck.py" --sibling-root "$WORK" "$WORK/repo" CLAUDE.md 2>&1)"; live_rc=$?; set -e
+set +e; live_out="$(python3 "$LIVE_DIR/refcheck.py" --verbose --sibling-root "$WORK" "$WORK/repo" CLAUDE.md 2>&1)"; live_rc=$?; set -e
 rm -rf "$LIVE_DIR"
 if [ "$live_rc" -eq 70 ] && grep -qF '== VERDICT: CHECKER NOT ALIVE' <<<"$live_out"; then
   printf '  PASS  T71 a dead extractor exits 70, not clean\n'
@@ -407,7 +407,7 @@ if s.count(o) != 1:
 p.write_text(s.replace(o, os.environ['NEW']))
 EOF
   then rm -rf "$dir"; printf '  FAIL  %s — mutation site moved\n' "$label"; FAIL=1; return; fi
-  set +e; out="$(python3 "$dir/refcheck.py" --sibling-root "$WORK" "$WORK/repo" CLAUDE.md 2>&1)"; rc=$?; set -e
+  set +e; out="$(python3 "$dir/refcheck.py" --verbose --sibling-root "$WORK" "$WORK/repo" CLAUDE.md 2>&1)"; rc=$?; set -e
   rm -rf "$dir"
   if [ "$rc" -eq 70 ] && grep -qF '== VERDICT: CHECKER NOT ALIVE' <<<"$out"; then
     printf '  PASS  %s exits 70\n' "$label"
@@ -416,7 +416,7 @@ EOF
 # T75: a TMPDIR inside the audited repo must not fail a healthy checker (round-3
 # review: the throwaway sibling landed in the walk and resolved locally).
 mkdir -p "$WORK/repo/.tmp"
-set +e; t75_out="$(TMPDIR="$WORK/repo/.tmp" python3 refcheck.py --sibling-root "$WORK" "$WORK/repo" CLAUDE.md 2>&1)"; t75_rc=$?; set -e
+set +e; t75_out="$(TMPDIR="$WORK/repo/.tmp" python3 refcheck.py --verbose --sibling-root "$WORK" "$WORK/repo" CLAUDE.md 2>&1)"; t75_rc=$?; set -e
 rm -rf "$WORK/repo/.tmp"
 if [ "$t75_rc" -ne 70 ] && grep -qF '== LIVENESS: ' <<<"$t75_out"; then
   printf '  PASS  T75 a TMPDIR inside the repo does not fail a healthy checker\n'
@@ -428,7 +428,7 @@ live_mutant "T74 a rung 4 whose sibling listing is empty" \
 # --ext widens EVERY derived regex, not only EXT: the widened run must REPORT
 # the reference the default run only counted. A flag that set EXT alone would
 # print the same report as the default run — the wrapper failure #199 names.
-EXTOUT="$(python3 refcheck.py --ext xcf --sibling-root "$WORK" "$WORK/repo" $DOCS || true)"
+EXTOUT="$(python3 refcheck.py --verbose --ext xcf --sibling-root "$WORK" "$WORK/repo" $DOCS || true)"
 if printf '%s' "$EXTOUT" | sed -n '/== FINDINGS/,/^  total:/p' | grep -qF 'assets/art/missing_poster.xcf' \
    && ! printf '%s' "$FINDINGS" | grep -qF 'assets/art/missing_poster.xcf'; then
   printf '  PASS  T64 --ext turns a counted reference into a checked one\n'
@@ -443,7 +443,7 @@ IG="$WORK/ig154"; mkdir -p "$IG/.next/types" "$IG/dist" "$IG/src"
   printf '.next/\ndist/\n' > .gitignore; touch .next/types/routes.d.ts dist/app.js src/ok.ts
   git add .gitignore src && git add -f dist/app.js && git commit -qm x
   printf '`.next/types/routes.d.ts` and `dist/app.js` and `src/ok.ts`\n' > D.md )
-IGO="$(python3 refcheck.py --sibling-root "$IG" "$IG" D.md 2>&1)"; igrc=$?
+IGO="$(python3 refcheck.py --verbose --sibling-root "$IG" "$IG" D.md 2>&1)"; igrc=$?
 IGS="$(printf '%s' "$IGO" | sed -n '/RESOLVED INSIDE A GITIGNORED/,/total:/p')"
 if grep -qE '^  \.next/ +1 reference' <<<"$IGS"; then printf '  PASS  T68 a build tree answering a lookup is listed under its ignored directory\n'
 else printf '  FAIL  T68 — .next/ is not listed in the gitignored-directory section\n'; FAIL=1; fi
@@ -454,14 +454,14 @@ else printf '  FAIL  N63 — the listing changed the exit status to %s\n' "$igrc
 # N65 (#154 review) — one landed path OUTSIDE the work tree must not collapse
 # the section: check-ignore exits 128 on it, which once blanked the whole batch.
 touch "$WORK/outside154.md"; printf '`../outside154.md` and `.next/types/routes.d.ts`\n' > "$IG/E.md"
-if python3 refcheck.py --sibling-root "$IG" "$IG" E.md 2>&1 | grep -qE '^  \.next/ +1 reference'; then
+if python3 refcheck.py --verbose --sibling-root "$IG" "$IG" E.md 2>&1 | grep -qE '^  \.next/ +1 reference'; then
   printf '  PASS  N65 a path outside the work tree does not blank the section\n'
 else printf '  FAIL  N65 — an out-of-tree path collapsed the gitignored-directory section\n'; FAIL=1; fi
 # N64 — outside git, and with NOTHING resolving: the section must still say so.
 NG="$WORK/ng154"; mkdir -p "$NG"; printf 'no references here\n' > "$NG/D.md"
 # GIT_CEILING_DIRECTORIES, or a repo anywhere above $WORK makes this a work tree:
 # CI failed N64 twice on exactly that (the checker was right; the case was not).
-NGO="$(GIT_CEILING_DIRECTORIES="$WORK" python3 refcheck.py --sibling-root "$NG" "$NG" D.md 2>&1)" || :
+NGO="$(GIT_CEILING_DIRECTORIES="$WORK" python3 refcheck.py --verbose --sibling-root "$NG" "$NG" D.md 2>&1)" || :
 if grep -qF 'GITIGNORED DIRECTORY: not checked (not a git work tree)' <<<"$NGO"; then
   printf '  PASS  N64 outside git the section says it did not check\n'
 else printf '  FAIL  N64 — outside git the section is silent\n'; FAIL=1
@@ -479,7 +479,7 @@ if [ "$(id -u)" -eq 0 ]; then
 else
   UR="$WORK/ur66"; mkdir -p "$UR/locked/x" "$UR/w/repo"; chmod 000 "$UR/locked"
   printf 'none\n' > "$UR/w/repo/D.md"
-  if URO="$(python3 refcheck.py "$UR/w/repo" D.md 2>&1)" && ! grep -q Traceback <<<"$URO"; then
+  if URO="$(python3 refcheck.py --verbose "$UR/w/repo" D.md 2>&1)" && ! grep -q Traceback <<<"$URO"; then
     printf '  PASS  N66 an unreadable sibling directory does not crash the audit\n'
   else printf '  FAIL  N66 — an unreadable sibling directory crashed the audit\n'; FAIL=1; fi
   chmod 755 "$UR/locked"
@@ -488,11 +488,11 @@ fi
 # N56 — an --ext naming only already-listed extensions appended an EMPTY
 # alternative, and every `name.` token became a phantom (Sonnet review, #199).
 printf 'A bare trailing dot is not a path: `weird.` and `readme.`\n' > "$WORK/repo/docs/DOTS.md"
-DOTS="$(python3 refcheck.py --ext pdf,PDF,tf "$WORK/repo" docs/DOTS.md 2>&1 || true)"
+DOTS="$(python3 refcheck.py --verbose --ext pdf,PDF,tf "$WORK/repo" docs/DOTS.md 2>&1 || true)"
 if printf '%s' "$DOTS" | grep -qE 'weird\.|readme\.'; then
   printf '  FAIL  N56 — --ext with already-listed names made a bare trailing dot a path\n'; FAIL=1
 else printf '  PASS  N56 --ext with already-listed names changes nothing\n'; fi
-rc=0; python3 refcheck.py --ext 'x y' "$WORK/repo" CLAUDE.md >/dev/null 2>&1 || rc=$?
+rc=0; python3 refcheck.py --verbose --ext 'x y' "$WORK/repo" CLAUDE.md >/dev/null 2>&1 || rc=$?
 if [ "$rc" = 64 ]; then printf '  PASS  N55 a malformed --ext is a usage error (64), not a verdict\n'
 else printf '  FAIL  N55 — a malformed --ext exited %s, not 64\n' "$rc"; FAIL=1; fi
 
@@ -773,10 +773,10 @@ fi
 # collision. Measured: T19 failed on 1 seed in 8 with a stray fixture present.
 #
 # Assert INVARIANCE, not a verdict. A single run cannot see this at all.
-D1_REF="$(PYTHONHASHSEED=1 python3 refcheck.py --sibling-root "$WORK/dupname" --sibling-root "$WORK/dupname/mid" "$WORK/dupname/mid/repo" CLAUDE.md 2>&1 || true)"
+D1_REF="$(PYTHONHASHSEED=1 python3 refcheck.py --verbose --sibling-root "$WORK/dupname" --sibling-root "$WORK/dupname/mid" "$WORK/dupname/mid/repo" CLAUDE.md 2>&1 || true)"
 D1_OK=1
 for seed in 2 3 4 5 6 7 8; do
-  if [ "$(PYTHONHASHSEED=$seed python3 refcheck.py --sibling-root "$WORK/dupname" --sibling-root "$WORK/dupname/mid" "$WORK/dupname/mid/repo" CLAUDE.md 2>&1 || true)" != "$D1_REF" ]; then
+  if [ "$(PYTHONHASHSEED=$seed python3 refcheck.py --verbose --sibling-root "$WORK/dupname" --sibling-root "$WORK/dupname/mid" "$WORK/dupname/mid/repo" CLAUDE.md 2>&1 || true)" != "$D1_REF" ]; then
     D1_OK=0; break
   fi
 done
@@ -855,7 +855,7 @@ xrun() {
     IFS='|' read -r xname xdoc xroot xwant xlabel <<<"$x"
     # `set -e` would abort on the non-zero statuses this table is built to
     # assert, so run inside `if`, which is exempt.
-    if XOUT="$(python3 "$oracle" --sibling-root "$WORK/exitcodes/$xroot" \
+    if XOUT="$(python3 "$oracle" --verbose --sibling-root "$WORK/exitcodes/$xroot" \
                                  "$WORK/exitcodes/repo" "$xdoc" 2>&1)"; then xgot=0; else xgot=$?; fi
     # Here-strings rather than `printf | grep -q`: with `pipefail` a `-q` that
     # matches early can SIGPIPE the writer and score 141 as a miss. Harmless on a
@@ -882,7 +882,7 @@ done
 # assert `VERDICT: CLEAN`, which a silent drop satisfies perfectly. The identical
 # mutation one arm down (rung 3) is killed instantly by N20. A verdict row cannot
 # guard an excusing arm; only an enumeration can.
-XP="$( { python3 refcheck.py --sibling-root "$WORK/exitcodes/empty" \
+XP="$( { python3 refcheck.py --verbose --sibling-root "$WORK/exitcodes/empty" \
            "$WORK/exitcodes/repo" localmark.md 2>&1 || true; } \
        | sed -n '/== SKIPPED as declared-placeholder/,/^  total:/p')"
 XP_OK=1
@@ -906,7 +906,7 @@ grep -qF -- "decided at rung 2 (2 local matches)" <<<"$XP" || { XP_OK=0; printf 
 # repo root, which is the same argument this file makes twice for ordering rung 3
 # before rung 4. This fixture's own T19 rule: a positive that cannot distinguish
 # why it fired is not a test.
-XD="$( { python3 refcheck.py --sibling-root "$WORK/exitcodes/empty" \
+XD="$( { python3 refcheck.py --verbose --sibling-root "$WORK/exitcodes/empty" \
            "$WORK/exitcodes/repo" docs/docrel.md 2>&1 || true; } \
        | sed -n '/== FINDINGS/,/^  total:/p')"
 XD_OK=1
@@ -924,9 +924,9 @@ grep -qF -- "PLACEHOLDER SHAPE THAT RESOLVES (resolves at rung 1b, doc-relative:
 # over this file returned NOTHING before this row: the module docstring claimed a
 # mistyped flag cannot be read as either verdict and nothing had ever checked it.
 X21_OK=1
-if python3 refcheck.py --sibling-roots /tmp . CLAUDE.md >/dev/null 2>&1; then xg=0; else xg=$?; fi
+if python3 refcheck.py --verbose --sibling-roots /tmp . CLAUDE.md >/dev/null 2>&1; then xg=0; else xg=$?; fi
 [ "$xg" -eq 64 ] || { X21_OK=0; printf '  FAIL  X21 an unrecognised flag returned %s, not 64 (EX_USAGE) — a typo is being read as a verdict\n' "$xg"; FAIL=1; }
-if python3 refcheck.py >/dev/null 2>&1; then xg=0; else xg=$?; fi
+if python3 refcheck.py --verbose >/dev/null 2>&1; then xg=0; else xg=$?; fi
 [ "$xg" -eq 64 ] || { X21_OK=0; printf '  FAIL  X21 no arguments returned %s, not 64\n' "$xg"; FAIL=1; }
 [ "$X21_OK" -eq 1 ] && printf '  PASS  X21 a usage error is 64, distinct from both verdicts\n'
 
@@ -934,7 +934,7 @@ if python3 refcheck.py >/dev/null 2>&1; then xg=0; else xg=$?; fi
 # carries both marker forms; it is excused by SHAPE, and printing
 # `declared-placeholder` pointed its reader at the rung-4 coverage sentence, which
 # is false for a row no rung decided.
-XL="$( { python3 refcheck.py --sibling-root "$WORK/exitcodes/empty" \
+XL="$( { python3 refcheck.py --verbose --sibling-root "$WORK/exitcodes/empty" \
            "$WORK/exitcodes/repo" both.md 2>&1 || true; } | sed -n '/== SKIPPED as declared-placeholder/,/^  total:/p')"
 if grep -qE 'docs/work-items/<slug>\.md +angle-bracket segment' <<<"$XL"; then
   printf '  PASS  X22 a both-forms path is labelled by the shape that excused it\n'
@@ -947,7 +947,7 @@ fi
 # assertion had ever read the findings body without a neighbour. Two mutants
 # survived green: an UNCONFIRMED row printing inside FINDINGS, and the total
 # counting undecided rows. Both are caught here.
-XF="$( { python3 refcheck.py --sibling-root "$WORK/exitcodes/empty" \
+XF="$( { python3 refcheck.py --verbose --sibling-root "$WORK/exitcodes/empty" \
            "$WORK/exitcodes/repo" mixed.md 2>&1 || true; } | sed -n '/== FINDINGS/,/^  total:/p')"
 X23_OK=1
 grep -qF -- "  total: 1" <<<"$XF" || { X23_OK=0; printf '  FAIL  X23 the FINDINGS total is not 1 — undecided rows are being counted as findings\n'; FAIL=1; }
@@ -958,7 +958,7 @@ grep -qF -- "helpers.py" <<<"$XF" || { X23_OK=0; printf '  FAIL  X23 the one rea
 # X24 — "one section or the other, never both", which Step 4 states as a design rule
 # and which nothing checked. Dropping a `continue` after a finding put one reference
 # in FINDINGS and in the skip section at once, suite green.
-XA="$( { python3 refcheck.py --sibling-root "$WORK/exitcodes/empty" \
+XA="$( { python3 refcheck.py --verbose --sibling-root "$WORK/exitcodes/empty" \
            "$WORK/exitcodes/repo" docs/docrel.md mixed.md both.md localmark.md 2>&1 || true; } )"
 # Keyed on DOC+PATH, not path alone: two different documents may legitimately
 # reference the same fragment and land in different sections — `helpers.py` is a
@@ -982,7 +982,7 @@ fi
 # abort the harness here under `set -e` — silently skipping every later
 # assertion, which is the failure this block is itself about. X15 above is what
 # asserts that status; this block only reads the section.
-XU="$( { python3 refcheck.py --sibling-root "$WORK/exitcodes/empty" \
+XU="$( { python3 refcheck.py --verbose --sibling-root "$WORK/exitcodes/empty" \
            "$WORK/exitcodes/repo" mixed.md 2>&1 || true; } | sed -n '/== UNCONFIRMED/,/^  total:/p')"
 XU_OK=1
 for want in "src/absent_for_sure.py" "scripts/over_there.sh"; do
@@ -1020,7 +1020,7 @@ printf 'See `neighbour/scripts/contract_check.py` for the check.\n' > "$U/repo/u
 # with no docs/). A draft diagnosed it anyway; N35 caught that and the branch was
 # removed. Kept as a NEGATIVE so the branch cannot come back.
 printf 'See `absentrepo/scripts/gone.py` for the check.\n' > "$U/repo/u2.md"
-UOUT="$(python3 refcheck.py --sibling-root "$U" "$U/repo" u1.md u2.md 2>&1 || true)"
+UOUT="$(python3 refcheck.py --verbose --sibling-root "$U" "$U/repo" u1.md u2.md 2>&1 || true)"
 
 if printf '%s' "$UOUT" | grep -q 'is on disk but the prose never names it'; then
   printf '  PASS  T33 UNRESOLVED names the declined-gate case and its remedy (#118)\n'
@@ -1037,7 +1037,7 @@ fi
 # invented for a situation not actually diagnosed is worse than silence, and this
 # step already has a scar from a printed remedy that failed when followed (#102).
 printf 'A local file: `docs/definitely_absent.md`\n' > "$U/repo/u3.md"
-UOUT3="$(python3 refcheck.py --sibling-root "$U" "$U/repo" u3.md 2>&1 || true)"
+UOUT3="$(python3 refcheck.py --verbose --sibling-root "$U" "$U/repo" u3.md 2>&1 || true)"
 if printf '%s' "$UOUT3" | grep -F 'definitely_absent.md' | grep -qE 'UNRESOLVED$'; then
   printf '  PASS  N35 a plain local break still reports a bare UNRESOLVED\n'
 else
@@ -1066,7 +1066,7 @@ mkdir -p "$BR/repo/.git" "$BR/alpha/.git" "$BR/gamma/.git" "$BR/alpha/scripts" \
 # style, same as $UOUT above. Output is CAPTURED, then asserted with a single
 # grep -- a `grep | grep -q` chain under `pipefail` can return 141 on SIGPIPE and
 # turn a real match into a FAIL.
-bref() { python3 refcheck.py --sibling-root "$BR" "$BR/repo" "$1" 2>&1 || true; }
+bref() { python3 refcheck.py --verbose --sibling-root "$BR" "$BR/repo" "$1" 2>&1 || true; }
 has() { printf '%s' "$1" | grep -qF "$2"; }
 b_say() { if [ "$1" = 1 ]; then printf '  PASS  %s\n' "$2"
           else printf '  FAIL  %s\n' "$3"; FAIL=1; fi; }
@@ -1178,7 +1178,7 @@ if s.count(old) != 1:
 p.write_text(s.replace(old, new))
 PY
   then printf '  FAIL  ablation %s could not be applied — its site has moved\n' "$label"; FAIL=1; return; fi
-  out="$(python3 "$WORK/m133.py" --sibling-root "$BR" "$BR/repo" "$doc" 2>&1 || true)"
+  out="$(python3 "$WORK/m133.py" --verbose --sibling-root "$BR" "$BR/repo" "$doc" 2>&1 || true)"
   if [ "$neg" = 1 ]; then
     if printf '%s' "$out" | grep -qF "$pat"
       then printf '  FAIL  ablation %s changed NOTHING — the row it guards is not measuring it\n' "$label"; FAIL=1
@@ -1220,7 +1220,7 @@ ST="$WORK/statedir"; mkdir -p "$ST/repo/data" "$ST/repo/.git"
 : > "$ST/repo/data/real_state.json"
 printf 'Source under data: `data/fabricated_source.py` and `data/nope_not_real.json.py`\n' > "$ST/repo/s1.md"
 printf 'Genuine state: `data/absent_cache.json` and `data/run_state.json`\n' > "$ST/repo/s2.md"
-STOUT="$(python3 refcheck.py --sibling-root "$ST" "$ST/repo" s1.md s2.md 2>&1 || true)"
+STOUT="$(python3 refcheck.py --verbose --sibling-root "$ST" "$ST/repo" s1.md s2.md 2>&1 || true)"
 
 for f in fabricated_source.py nope_not_real.json.py; do
   if printf '%s' "$STOUT" | grep -F -- "$f" | grep -q 'runtime state'; then
@@ -1237,7 +1237,7 @@ done
 # rows — the unactionable shape #118 exists to reduce, and #118's hint cannot
 # fire for them because their heads exist locally.
 printf 'Real state: `var/cache/prod/App_KernelProdContainer.php` `data/segment0001.ts` `cache/bundle.js`\n' > "$ST/repo/s3.md"
-STOUT3="$(python3 refcheck.py --sibling-root "$ST" "$ST/repo" s3.md 2>&1 || true)"
+STOUT3="$(python3 refcheck.py --verbose --sibling-root "$ST" "$ST/repo" s3.md 2>&1 || true)"
 for f in App_KernelProdContainer.php segment0001.ts bundle.js; do
   if printf '%s' "$STOUT3" | grep -F -- "$f" | grep -q 'runtime state'; then
     printf '  PASS  N37 %s is still runtime state — an ambiguous extension is not evidence of source\n' "$f"
@@ -1280,7 +1280,7 @@ printf 'The beta-alpharepo checkout owns this:\n`scripts/only_in_alpha.py`\n' \
 printf 'Both beta-alpharepo and alpharepo hold it:\n`scripts/twin.py`\n' \
   > "$P/repo/h2.md"
 
-PROV="$(python3 refcheck.py --sibling-root "$P" "$P/repo" h1.md h2.md 2>&1 || true)"
+PROV="$(python3 refcheck.py --verbose --sibling-root "$P" "$P/repo" h1.md h2.md 2>&1 || true)"
 
 if printf '%s' "$PROV" | grep -qF -- 'sibling alpharepo -> scripts/only_in_alpha.py'; then
   printf '  FAIL  T30 a hyphen-separated component still marks a different sibling (#119)\n'; FAIL=1
@@ -1299,7 +1299,7 @@ fi
 # marking the sibling it names. A repo name containing an underscore is rarer
 # than italics around one.
 printf 'We integrate with _alpharepo_ for this:\n`scripts/only_in_alpha.py`\n' > "$P/repo/h4.md"
-PROV4="$(python3 refcheck.py --sibling-root "$P" "$P/repo" h4.md 2>&1 || true)"
+PROV4="$(python3 refcheck.py --verbose --sibling-root "$P" "$P/repo" h4.md 2>&1 || true)"
 if printf '%s' "$PROV4" | grep -qF -- 'sibling alpharepo -> scripts/only_in_alpha.py'; then
   printf '  PASS  N38 markdown emphasis around a sibling name still marks it (#119)\n'
 else
@@ -1309,7 +1309,7 @@ fi
 # N33 — the fix must not cost the ordinary case: a sibling named in bare prose,
 # whole word, still marks. Without this, "never mark anything" scores 2/2 above.
 printf 'The alpharepo repo owns this:\n`scripts/only_in_alpha.py`\n' > "$P/repo/h3.md"
-PROV3="$(python3 refcheck.py --sibling-root "$P" "$P/repo" h3.md 2>&1 || true)"
+PROV3="$(python3 refcheck.py --verbose --sibling-root "$P" "$P/repo" h3.md 2>&1 || true)"
 if printf '%s' "$PROV3" | grep -qF -- 'sibling alpharepo -> scripts/only_in_alpha.py'; then
   printf '  PASS  N33 a whole-word sibling name in bare prose still resolves\n'
 else
@@ -1367,7 +1367,7 @@ for r in spec-notes:alpharepo two-copies:alpharepo only-sub:alpharepo bare-notes
          copied:copyrepo lib-api:hostrepo rel-notes:relrepo lock-notes:lockrepo; do
   printf 'See `docs/%s.md` in the %s repo.\n' "${r%%:*}" "${r##*:}" > "$WT/me/${r%%:*}.md"
 done
-wt_out() { python3 "$1" --sibling-root "$WT" "$2" "$3" 2>&1 || true; }
+wt_out() { python3 "$1" --verbose --sibling-root "$WT" "$2" "$3" 2>&1 || true; }
 # Each predicate reads a run's output: 0 means the row holds.
 wt_clean() { has "$1" 'VERDICT: CLEAN'; }
 wt_coll() { has "$1" 'COLLISION ('; }
@@ -1394,7 +1394,7 @@ if has "$W11" 'LINKED WORKTREES NOT SEARCHED' && has "$W11" '.claude/worktrees/t
   printf '  PASS  W11 a skipped worktree is named in the report\n'
 else printf '  FAIL  W11 — the worktree skip was silent\n'; FAIL=1; fi
 # W12: --legacy reproduces v1.15.0, so it keeps counting a worktree as a copy.
-W12="$(python3 refcheck.py --legacy --sibling-root "$WT" "$WT/own" D.md 2>&1 || true)"
+W12="$(python3 refcheck.py --verbose --legacy --sibling-root "$WT" "$WT/own" D.md 2>&1 || true)"
 if has "$W12" 'own_helper.py' && has "$W12" 'COLLISION'; then printf '  PASS  W12 --legacy still walks worktrees\n'
 else printf '  FAIL  W12 — --legacy stopped reproducing v1.15.0 on a worktree\n'; FAIL=1; fi
 wt_mutant() {  # label, old, new, predicate, root, doc: the mutant must break the row
@@ -1541,6 +1541,55 @@ ablate "A12 marked path skips the doc-relative rung" \
 # five of ten kill sets wrong when written, so this comment is a MEASUREMENT. They are shape coverage, not
 # guards: each pins the neighbours-reachable half of a pair so that its twin's
 # PASS cannot be read as environment-independent by accident.
+
+# --- #306: summary-by-default. Every row above runs with --verbose, which is the
+# pre-#306 output; these hold the default to it. S1: the sections an agent acts on
+# (FINDINGS, RESOLVED BELOW RUNG 1, UNCONFIRMED, the verdict) are byte-identical
+# to --verbose, so a seeded break still shows. S2: each summarised section keeps
+# its header and its count and drops only rows. S3: the default is smaller.
+sec() { sed -n "/^== $2/,/^  total:/p" <<<"$1"; }
+s306_same() {  # verbose, default: 0 when every acted-on section matches
+  local h
+  for h in 'FINDINGS' 'RESOLVED BELOW RUNG 1' 'UNCONFIRMED'; do
+    [ -n "$(sec "$1" "$h")" ] && [ "$(sec "$1" "$h")" = "$(sec "$2" "$h")" ] || return 1
+  done
+  [ -n "$(grep '^== VERDICT' <<<"$1")" ] && [ "$(grep '^== VERDICT' <<<"$1")" = "$(grep '^== VERDICT' <<<"$2")" ]
+}
+S306_DEF="$(python3 refcheck.py --sibling-root "$WORK" "$WORK/repo" $DOCS || true)"
+if s306_same "$OUT" "$S306_DEF" && grep -qF 'src/utils/nonexistent_thing.py' <<<"$(sec "$S306_DEF" FINDINGS)"; then
+  printf '  PASS  S1 default output keeps FINDINGS, RESOLVED BELOW RUNG 1, UNCONFIRMED and the verdict whole\n'
+else printf '  FAIL  S1 default output differs from --verbose in a section an agent acts on\n'; FAIL=1; fi
+s2_bad=""
+for h in 'PATH SHAPES NOT EXTRACTED' 'SKIPPED as declared-placeholder' 'LINK URLs NOT CHECKED' 'SKIPPED as asserted-absent'; do
+  v="$(sec "$OUT" "$h")"; d="$(sec "$S306_DEF" "$h")"
+  vt="$(tail -1 <<<"$v")"; n="${vt#  total: }"
+  # The fixture must populate the section, or this row measures nothing.
+  if [ -z "$v" ] || [ "${n:-0}" -eq 0 ] 2>/dev/null; then s2_bad="$s2_bad [$h: empty in the fixture]"; continue; fi
+  [ "$(wc -l <<<"$d")" -eq 2 ] && [ "$(tail -1 <<<"$d")" = "$vt  (rows listed with --verbose)" ] \
+    || s2_bad="$s2_bad [$h]"
+done
+if [ -z "$s2_bad" ]; then printf '  PASS  S2 summarised sections keep header and count, drop rows\n'
+else printf '  FAIL  S2 summary shape wrong:%s\n' "$s2_bad"; FAIL=1; fi
+if [ "${#S306_DEF}" -lt "${#OUT}" ]; then printf '  PASS  S3 default output is smaller (%d vs %d chars)\n' "${#S306_DEF}" "${#OUT}"
+else printf '  FAIL  S3 default output is not smaller (%d vs %d chars)\n' "${#S306_DEF}" "${#OUT}"; FAIL=1; fi
+# Mutant: route FINDINGS through the summary. S1 must go red.
+cp refcheck.py "$WORK/m306.py"
+if OLD='    for s, p, v in confirmed_findings:
+        print(f"  {s:24s} {p:44s} {v}")
+    print(f"  total: {len(confirmed_findings)}")' NEW='    rows(confirmed_findings)' python3 - "$WORK/m306.py" <<'PY'
+import os, sys, pathlib
+p = pathlib.Path(sys.argv[1]); s = p.read_text()
+old, new = os.environ['OLD'], os.environ['NEW']
+if s.count(old) != 1:
+    sys.exit('mutation site occurs %d times, not once' % s.count(old))
+p.write_text(s.replace(old, new))
+PY
+then
+  M306="$(python3 "$WORK/m306.py" --sibling-root "$WORK" "$WORK/repo" $DOCS || true)"
+  # A crashed mutant prints no verdict and would otherwise score as caught.
+  if s306_same "$OUT" "$M306" || ! grep -q '^== VERDICT' <<<"$M306"; then printf '  FAIL  mutant S1: FINDINGS summarised survived, or crashed\n'; FAIL=1
+  else printf '  PASS  mutant S1: FINDINGS summarised is caught\n'; fi
+else printf '  FAIL  mutant S1 could not be applied — its site has moved\n'; FAIL=1; fi
 
 echo
 [ "$FAIL" -eq 0 ] && echo "All seeded cases behaved correctly." || echo "SENSITIVITY REGRESSION — do not ship."
