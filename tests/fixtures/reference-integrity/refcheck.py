@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Reference implementation of audit-context Step 4 (reference integrity).
 
-    python3 refcheck.py [--legacy] [--sibling-root DIR] [--ext a,b] <repo-root> <doc> [<doc> ...]
+    python3 refcheck.py [--legacy] [--verbose] [--sibling-root DIR] [--ext a,b] <repo-root> <doc> [<doc> ...]
 
 This exists so that a change to Step 4 can be *tested* rather than asserted.
 Run run.sh in this directory to exercise it against a fixture that seeds the
@@ -36,6 +36,9 @@ EXTRACTED (shapes outside the population, each labelled — #122), UNCONFIRMED
 and — only when they apply — DOCUMENTS NOT READ and REFERENCES NOT EXTRACTED
 (backticked references in an unlisted extension, counted — #199).
 LINKED WORKTREES NOT SEARCHED prints only when a walk left one out (#277).
+By default (#306) PATH SHAPES NOT EXTRACTED, both SKIPPED sections and LINK URLs
+NOT CHECKED print their header and count only; `--verbose` lists their rows.
+Every other section lists in full either way.
 On the default path a LIVENESS line always prints: the run seeds its own fabricated path (and,
 with a real neighbour reachable, a throwaway neighbour with a present and an absent path
 for rung 4) and, if any is ruled wrongly, exits 70 (CHECKER NOT ALIVE), overriding the verdict.
@@ -1291,6 +1294,13 @@ def main():
     legacy = '--legacy' in argv
     if legacy:
         argv.remove('--legacy')
+    # #306 — the sections that are neither defects nor undecided print a count
+    # only; this lists their rows. FINDINGS, UNCONFIRMED and RESOLVED BELOW
+    # RUNG 1 (the skill requires those visible, for wrong-twin spotting) list
+    # in full either way.
+    verbose = '--verbose' in argv
+    while '--verbose' in argv:
+        argv.remove('--verbose')
     # `check()` has always accepted explicit sibling roots; nothing could pass
     # them. Without that, the search is root.parent and root.parent.parent, so a
     # fixture built under the system temp dir adopts every git repo sitting in
@@ -1342,7 +1352,7 @@ def main():
             sys.exit(_usage('unrecognised option: %s' % a))
     if len(argv) < 2:
         sys.exit(_usage(
-            'usage: refcheck.py [--legacy] [--sibling-root DIR] [--ext a,b] <repo-root> <doc> [<doc> ...]\n'
+            'usage: refcheck.py [--legacy] [--verbose] [--sibling-root DIR] [--ext a,b] <repo-root> <doc> [<doc> ...]\n'
             '  e.g. refcheck.py . CLAUDE.md memory/MEMORY.md'))
     root, sources = argv[0], argv[1:]
 
@@ -1467,6 +1477,14 @@ def main():
         print(f"  total: {sum(cost.values())} — none of these was checked. "
               f"Widen with --ext {','.join(sorted(cost))}\n")
 
+    def rows(lst):
+        # Summary mode (#306): the count line still prints, so an empty section
+        # and a hidden one never look alike.
+        if verbose:
+            for s_, p_, v_ in lst:
+                print(f"  {s_:24s} {p_:44s} {v_}")
+        print(f"  total: {len(lst)}" + ("" if verbose or not lst else "  (rows listed with --verbose)"))
+
     confirmed_findings = [f for f in findings if f[2] != UNCONFIRMED]
     print("== FINDINGS (broken or ambiguous) ==")
     for s, p, v in confirmed_findings:
@@ -1496,26 +1514,18 @@ def main():
     # wrong, only unexamined — which is the whole point of saying it out loud.
     if dropped_shapes:
         print("\n== PATH SHAPES NOT EXTRACTED (outside the population, not checked) ==")
-        for s_, frag, lbl in dropped_shapes:
-            print(f"  {s_:24s} {frag:44s} {lbl}")
-        print(f"  total: {len(dropped_shapes)}")
+        rows(dropped_shapes)
         print("  Backticked, path-shaped, never extracted — each labelled with the shape\n"
               "  that put it here. A CLEAN verdict above says nothing about them.")
 
     print("\n== SKIPPED as declared-placeholder ==")
-    for s, p, v in placeheld:
-        print(f"  {s:24s} {p:44s} {v}")
-    print(f"  total: {len(placeheld)}")
+    rows(placeheld)
 
     print("\n== LINK URLs NOT CHECKED (every URL LINK_RE matched, plus a count of those it could not) ==")
-    for s, p, v in unchecked:
-        print(f"  {s:24s} {p:44s} {v}")
-    print(f"  total: {len(unchecked)}")
+    rows(unchecked)
 
     print("\n== SKIPPED as asserted-absent ==")
-    for s, p, v in skipped:
-        print(f"  {s:24s} {p:44s} {v}")
-    print(f"  total: {len(skipped)}")
+    rows(skipped)
 
     print("\n== UNCONFIRMED (this run could not decide these) ==")
     for s_, p_, v_ in ([f for f in findings if f[2] == UNCONFIRMED] + undecided_markers):

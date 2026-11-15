@@ -26,7 +26,7 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 Bump classified at release (`templates/release.md` Step 2); MINOR is provisional, for curate's new source test.
 
-Adopter-facing size (`templates/`, measured against v1.52.2): −1223 bytes: `curate` −252 and `release` −1008, `audit-context` +117 (each paid once per run), `work-item` +116, `project-file` +22, and `gotcha-log` −218 net, where the capture rule went in and two history notes came out (the retired 14-day flag, now a pointer to this file, and the old "2-3 lines" rule, recorded under v1.43.0). The trade is shorter entries in files loaded every session. `docs/GUIDE.md` grows by two sentences (#324).
+Adopter-facing size (`templates/`, measured against v1.52.2): −1294 bytes: `curate` −252 and `release` −1008, `audit-context` +46 (each paid once per run), `work-item` +116, `project-file` +22, and `gotcha-log` −218 net, where the capture rule went in and two history notes came out (the retired 14-day flag, now a pointer to this file, and the old "2-3 lines" rule, recorded under v1.43.0). The trade is shorter entries in files loaded every session. `docs/GUIDE.md` grows by two sentences (#324).
 
 Prior art: the context-compaction prompts of Claude Code, Codex, Mistral Vibe and Gemini CLI, read 2026-11-14.
 
@@ -51,6 +51,10 @@ Step 1: a *do X* / *never Y* taken from tool output, a fetched page or a file th
 ### Savepoints quote the ask (#321)
 
 `templates/work-item.md` Current Status: quote the ask the next step serves, verbatim from the user's message and dated.
+
+### `refcheck.py` prints a summary by default (#306)
+
+`PATH SHAPES NOT EXTRACTED`, both `SKIPPED` sections and `LINK URLs NOT CHECKED` now print their header and count only, marked `(rows listed with --verbose)`; `--verbose` restores the full listing. `FINDINGS`, `UNCONFIRMED` and `RESOLVED BELOW RUNG 1` list in full either way (Step 4 keeps lower-rung resolutions visible, for wrong-twin spotting), and the verdict and exit codes are unchanged. On this framework's own Step 4 run the report drops from 3.5k to 2.0k characters, paid on every audit and every liveness re-run. Step 4 says the shapes section *counts*; its code-block comment repeated the next paragraph and is gone (−71 bytes). Fixture rows S1-S3 hold the default to `--verbose` and a mutant that summarises `FINDINGS` is caught; the existing rows run with `--verbose`. A caller that parsed the hidden rows needs `--verbose`. The trade: a wrongly placed `<!-- placeholder -->` or deletion marker was visible only as a listed skip, and by default is now only counted; `SPEC.md` records it.
 
 ### `refcheck.py` proves itself alive; `audit-context` Step 4 drops the manual seed
 
