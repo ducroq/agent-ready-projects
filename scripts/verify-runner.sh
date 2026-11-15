@@ -97,10 +97,25 @@ extract() {
   ' "$@"
 }
 
+# Probe-writing defects (#332 follow-on): a note under the row, printed only for a
+# probe that has the defect, so curate need not carry the examples. Notes, never
+# dispositions: each is a shape, and a shape can be deliberate.
+lint() {
+  printf '%s' "$1" | grep -qE '&&[[:space:]]*echo[^|]*[|][|][[:space:]]*echo' &&
+    notes=$((notes + 1)) && printf '                 ! word verdict: `&& echo X || echo Y` exits 0 either way. End the failing branch with a non-zero exit\n'
+  # The target may be absolute or held in a variable; relative paths are left alone.
+  # Only the recursive grep's own arguments are read, up to the next | ; or &.
+  printf '%s' "$1" | grep -oE 'grep[[:space:]]+(-[a-zA-Z-]*[[:space:]]+)*(-[a-zA-Z]*[rR]|--recursive)[^|;&]*' |
+    grep -qE '[[:space:]"'"'"'](/|~/|[$])' &&
+    ! printf '%s' "$1" | grep -qE '(\[|test)[[:space:]]+(![[:space:]]+)?-[de][[:space:]]|(^|[;&|][[:space:]]*)cd[[:space:]][^;|]*&&[^;|]*grep' &&
+    notes=$((notes + 1)) && printf '                 ! unguarded: a recursive grep on a missing path finds nothing, which certifies a negative. Guard it: [ -d DIR ] || { echo "CANNOT VERIFY: DIR absent"; exit 0; }\n'
+  return 0
+}
+
 case "${VERIFY_TIMEOUT:-30}" in *[!0-9]*|'') echo "VERIFY_TIMEOUT must be whole seconds" >&2; exit 2 ;; esac
 TMPD=$(mktemp -d); trap 'rm -rf "$TMPD"' EXIT
 TO=""; command -v timeout >/dev/null 2>&1 && TO="timeout ${VERIFY_TIMEOUT:-30}"
-pass=0 fail=0 err=0 manual=0 cannot=0 bad=0 seen=0 n=0 tmo=0
+pass=0 fail=0 err=0 manual=0 cannot=0 bad=0 seen=0 n=0 tmo=0 notes=0
 
 while IFS=$'\034' read -r kind file cmd; do
   if [ "$kind" != C ]; then
@@ -138,6 +153,7 @@ while IFS=$'\034' read -r kind file cmd; do
   fi
   printf '%-14s %s :: %s\n                 %s%s\n' "$d" "$file" "$cmd" "$head1" "$note"
   [ "$d" = PASS ] || [ ! -s "$ERRF" ] || printf '                 ! %s\n' "$(awk 'NF { print; exit }' "$ERRF")"
+  lint "$cmd"
 done < <(extract "$@")
 
 annotations=$(grep -ahoiE '<!--[[:space:]]*verify:' "$@" | wc -l)
@@ -150,6 +166,7 @@ printf 'ran %d of %d annotations — %d pass, %d fail, %d error, %d cannot-verif
 [ "$cannot" -eq 0 ] || echo '  CANNOT-VERIFY: the check could not reach its target. Neither pass nor failure; report the reason.'
 [ "$manual" -eq 0 ] || echo '  MANUAL: nothing was run. Surface the noted reason to the engineer.'
 [ "$bad" -eq 0 ]    || echo '  MALFORMED: the annotation cannot be read as one command. Fix it.'
+[ "$notes" -eq 0 ]  || echo "  ! NOTE ($notes): a probe shape that can pass while its claim is false. The row stands; rewrite the probe."
 [ $((n + manual + bad)) -eq "$annotations" ] ||      # manual and malformed have their own rows
   echo "  ran $n of $annotations, $((annotations - n - manual - bad)) with no row: account for each. Fenced or code-span examples are expected; anything else is a bug."
 [ "$seen" -gt 0 ] || { [ "$bad" -eq 0 ] && echo 'ZERO COMMANDS EXTRACTED — a defect in the runner or the annotations, never a pass.' \

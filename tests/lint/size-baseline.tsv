@@ -3,7 +3,7 @@
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and every raise is
 # recorded below, oldest first — notes accumulate and are never replaced.
-# BUDGET 161884
+# BUDGET 161421
 # SPILL 190933
 # RAISED 2026-09-06 from 247526 to 247969: #133: the #118 remedy string shipped unconditional and can turn a resolved reference into an AMBIGUOUS finding; the caveat that scopes it is +443 b on templates/audit-context.md, seeded as T39/T40/N39 (reason restored 2026-09-06 — write_baseline used to overwrite each note with the next)
 # RAISED 2026-09-06 from 247969 to 248237: #140: UNRESOLVED had two causes printing one reason. +268 b on templates/audit-context.md, seeded as T41/T41b/N40 (reason restored 2026-09-06)
@@ -120,6 +120,7 @@
 # ratcheted down 2026-11-15 from 164794 to 164430, while docs/rationale/ grew 190558 -> 190933 (+375): part of this payment MOVED (#131, #157)
 # ratcheted down 2026-11-15
 # ratcheted down 2026-11-15
+# ratcheted down 2026-11-15
 templates/adr.md	2115
 templates/audit-context.md	15250
 templates/checklists/architect-checklist.md	1263
@@ -128,7 +129,7 @@ templates/checklists/qa-checklist.md	1836
 templates/checklists/README.md	1097
 templates/checklists/test-checklist.md	1234
 templates/coordination.md	3909
-templates/curate.md	21807
+templates/curate.md	21344
 templates/gotcha-log.md	10638
 templates/hypothesis-log.md	3570
 templates/memory-index.md	3388
