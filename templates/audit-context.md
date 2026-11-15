@@ -74,32 +74,13 @@ Pass a `--sibling-root` for every directory holding neighbouring repos: rung 4 r
 cross-repo references and, with no neighbour reachable, cannot rule. The rules are in
 `tests/fixtures/reference-integrity/SPEC.md`; **read it only if you are CHANGING the checker.**
 
-The report labels each resolution by the rung that made it, so you can read it without the
-spec: **1** the path as written · **1b** relative to the referencing document · **2** as a path
-suffix in the working tree · **3** runtime state the system writes · **4** inside a sibling repo
-the prose names in bare text. Anything below rung 1 is enumerated, not a defect.
-
-**The checker seeds its own breaks**: a fabricated local path and, when a neighbour is
-reachable, a throwaway neighbour holding one present and one absent path. `LIVENESS` says all
-were ruled correctly; otherwise it exits **70** (`CHECKER NOT ALIVE`), which overrides any verdict. **A run that finds nothing cannot otherwise distinguish a
-fixed check from a disabled one.**
-
-**Carry that into the verdict — three outcomes, not two.** *Defects*: a rung that ran ruled a reference out or ambiguous, or a document could not be read. *Clean*: nothing found. **Coverage incomplete**: nothing ruled on, but something left undecided because **rung 4** had no neighbouring repo to run against. Name the outcome on a line of its own and enumerate the undecided in a counted section (Step 9's *Unconfirmed* bucket). Do not fold the third into *defects* — a correct repo would then fail on **where it ran** (CI, a fresh clone, a container) rather than on what it audited — nor into *clean*, where a genuine break can sit undecided. **If you automate this step**: exit 1 / exit 0 / **exit 2**, and 2 must stay non-zero, so a caller written as `check && …` behaves as before and only one that opts in (`|| [ $? -eq 2 ]`) accepts an undecided run; **70** means the instrument failed and is never a verdict. Run as prose, the verdict line is the output.
-
-**Do not suppress; re-label.** Split the output into sections instead of one list — these three, plus the table's other two whenever either has members:
-
-- **Findings** — unresolved references and collisions. These are the defects.
-- **Resolved below rung 1** — every rung-2, rung-3 and rung-4 resolution of an *unmarked* path, *enumerated with what it resolved to* (`config/settings.py → packages/worker/config/settings.py`); a marked path excused at rung 2 or 3 is counted in the skip section instead. Not defects, not "worth correcting", but visible, so a wrong-twin match can be spotted.
-- **Skipped as asserted-absent** — paths the document states are gone.
-
-**`LINKED WORKTREES NOT SEARCHED`, when present,** names a repo's own linked worktrees. A reference
-that exists only on one of those branches comes back unresolved.
-
-**A sixth section, `PATH SHAPES NOT EXTRACTED`,** counts backticked shapes the extractor never
-examines — brace groups, bracket placeholders, root-absolute, Windows and UNC paths. **Not
-findings**, only unchecked; a CLEAN verdict says nothing about them.
-
-**Report what the extractor dropped**: the file extensions in the working tree that the whitelist does not cover. The checker counts the cost as `REFERENCES NOT EXTRACTED`, printed before the findings; `--ext pdf,tex` widens the whitelist for the run — a documents repo can otherwise lose most of its references.
+**Read the report as printed; its legends are part of this step.** The closing `VERDICT` line is
+Step 4's outcome, one of three: *defects*, *clean* or *coverage incomplete*. An undecided
+reference is neither a defect nor a pass, whatever the exit code. After exit **70** (`CHECKER NOT
+ALIVE`: its self-test failed or could not run) there is no verdict. Keep every printed section in
+your report, non-defects included, and carry `UNCONFIRMED` into Step 9's *Unconfirmed* bucket.
+**If you automate this step**, gate on the exit status: 0 clean, 1 defects, 2 coverage incomplete
+(non-zero; accept it only by opting in, `|| [ $? -eq 2 ]`), 70 never a verdict.
 
 **Expect a residue; do not loosen the check to erase it.** Some references are *meant* not to resolve: instructional placeholders, files a runbook tells the reader to create, units owned and deployed by another repo. **Mark them** — `<!-- placeholder -->` **immediately after** the path, same line (`` `src/aggregators/<name>.py` <!-- placeholder --> ``). **Span-scoped**: it covers the nearest path *before* it, never the line or the rest of a row, so in a table it goes in that path's own cell; a marker at the row's end silently excuses the row's last path instead. Marked paths move to a counted section. **That form and no other**: a marker the checker never learned leaves the finding in the list. A short residue is a healthy result. **Zero is not the target**; a change that drives the count to zero has almost certainly disabled the check rather than fixed it.
 

@@ -99,8 +99,9 @@ Check it in this direction: read each entry below, then find its tier above.
   oracle** (#185) — a change here reaches every adopter who runs the step. Two invariants that
   live only in the source today and were each violated in one session: it must not contradict
   `SPEC.md`, which is normative and is NOT edited by the same change by default (SPEC's rung-2
-  rule — *search the working tree, not the git index* — is the one that bit); and every report
-  section it prints must be described in `templates/audit-context.md`, per its own header
+  rule — *search the working tree, not the git index* — is the one that bit); and since #332 every
+  section legend it prints is normative for the agent and is asserted by a fixture row
+  (L1-L5), because `templates/audit-context.md` no longer restates them
 
 ## Run budget
 

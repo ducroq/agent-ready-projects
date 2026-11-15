@@ -1591,6 +1591,28 @@ then
   else printf '  PASS  mutant S1: FINDINGS summarised is caught\n'; fi
 else printf '  FAIL  mutant S1 could not be applied — its site has moved\n'; FAIL=1; fi
 
+# --- #332: the report explains itself. Each legend prints only when its section
+# has members; the skill no longer states them, so a legend lost here is lost to
+# the agent. Positives are asserted present; L1 and L5 are also asserted ABSENT
+# where they do not apply, so "print always" and "print never" both go red.
+lg() {  # label, output, needle, [absent]
+  if [ "${4:-}" = absent ]; then
+    if grep -qF -- "$3" <<<"$2"; then printf '  FAIL  %s\n' "$1"; FAIL=1; else printf '  PASS  %s\n' "$1"; fi
+  elif grep -qF -- "$3" <<<"$2"; then printf '  PASS  %s\n' "$1"
+  else printf '  FAIL  %s\n' "$1"; FAIL=1; fi
+}
+for n in 'Rung 1 = as written' 'doc-relative = rung 1b' 'fragment = rung 2' 'runtime state = rung 3' 'sibling = rung 4' 'read each for a wrong twin'; do
+  lg "L1 the rung legend under a populated RESOLVED BELOW RUNG 1 carries: $n" "$(tr -s ' \n' ' ' <<<"$S306_DEF")" "$n"
+done
+L_X4="$(python3 refcheck.py --sibling-root "$WORK/exitcodes/empty" "$WORK/exitcodes/repo" unresolved.md 2>&1 || true)"
+lg "L1b the rung legend is absent when nothing resolved below rung 1" "$L_X4" 'fragment = rung 2' absent
+lg "L2 a skipped worktree says what it costs" "$W11" 'exists only on one of these branches comes back unresolved'
+lg "L3 the shapes section names the shapes and that CLEAN says nothing about them" "$S306_DEF" 'root-absolute, Windows and UNC paths). Not findings'
+lg "L4 an unextracted extension warns a documents repo" "$S306_DEF" 'A documents repo can otherwise lose most of its references.'
+lg "L5 an exit-2 verdict says how to report and gate it" "$L_X4" 'Report this as its own outcome, never as clean'
+grep -qF '(exit 2) ==' <<<"$L_X4" || { printf '  FAIL  L5 measured nothing: the X4 run did not exit 2\n'; FAIL=1; }
+lg "L5b no exit-2 note on a DEFECTS run" "$S306_DEF" 'Report this as its own outcome' absent
+
 echo
 [ "$FAIL" -eq 0 ] && echo "All seeded cases behaved correctly." || echo "SENSITIVITY REGRESSION — do not ship."
 exit "$FAIL"

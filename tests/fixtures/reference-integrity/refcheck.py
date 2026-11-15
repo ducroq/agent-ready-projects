@@ -24,8 +24,11 @@ and no Step 4 at all. The last fallback written omitted the report-shape split a
 silently reproduced the v1.15.0 defect it replaced, which is why none is written
 here rather than a bad one (#185).
 
-Where the skill still states behaviour in its own words -- the three-outcome
-verdict, the report sections -- the skill is normative and this file implements it.
+Since #332 the report explains itself: each section with members prints its own
+legend, and an exit-2 verdict prints how to report and gate it. The skill names the
+three outcomes and the exit codes; what a section means is stated HERE, in the
+output, and a legend is normative for the agent reading it. Change one only with
+a fixture row asserting it (run.sh L1-L5).
 The extraction and resolution RULES are no longer stated there at all: they moved
 to SPEC.md beside this code at v1.40.0, and SPEC.md defers to the script.
 
@@ -1475,7 +1478,8 @@ def main():
         for e in sorted(cost, key=lambda k: (-cost[k], k)):
             print(f"  .{e:12s} {cost[e]}")
         print(f"  total: {sum(cost.values())} — none of these was checked. "
-              f"Widen with --ext {','.join(sorted(cost))}\n")
+              f"Widen with --ext {','.join(sorted(cost))}\n"
+              "  A documents repo can otherwise lose most of its references.\n")
 
     def rows(lst):
         # Summary mode (#306): the count line still prints, so an empty section
@@ -1495,6 +1499,13 @@ def main():
     for s, p, v in weak:
         print(f"  {s:24s} {p:44s} {v}")
     print(f"  total: {len(weak)}")
+    # #332 — the legends below print only when their section has members, so a
+    # run pays for the explanation only when it has something to explain.
+    if weak or ignored_hits:
+        print("  Rung 1 = as written; doc-relative = rung 1b (beside the referencing document);\n"
+              "  fragment = rung 2 (a path suffix in the tree); runtime state = rung 3; sibling =\n"
+              "  rung 4 (a neighbouring repo the prose names). Not defects; read each for a wrong\n"
+              "  twin (the intended file gone, a namesake matched).")
 
     # #154 — listed, never ruled. See _in_ignored_dirs.
     if ignored_hits is None:
@@ -1515,8 +1526,9 @@ def main():
     if dropped_shapes:
         print("\n== PATH SHAPES NOT EXTRACTED (outside the population, not checked) ==")
         rows(dropped_shapes)
-        print("  Backticked, path-shaped, never extracted — each labelled with the shape\n"
-              "  that put it here. A CLEAN verdict above says nothing about them.")
+        print("  Backticked, path-shaped, never extracted (brace groups, bracket placeholders,\n"
+              "  root-absolute, Windows and UNC paths). Not findings: a CLEAN verdict says nothing\n"
+              "  about them.")
 
     print("\n== SKIPPED as declared-placeholder ==")
     rows(placeheld)
@@ -1537,6 +1549,7 @@ def main():
         for w in sorted(map(str, SKIPPED_WORKTREES)):
             print(f"  {w}")
         print(f"  total: {len(SKIPPED_WORKTREES)}")
+        print("  A reference that exists only on one of these branches comes back unresolved.")
 
     print(f"\n== EXTENSIONS IN TREE NOT EXTRACTED: {', '.join(unknown) if unknown else '(none)'} ==")
 
@@ -1587,6 +1600,10 @@ def main():
             else 'a path this run seeded was NOT ruled as expected'))
         rc, verdict = 70, 'CHECKER NOT ALIVE — nothing above can be trusted, ' + verdict
     print(f"\n== VERDICT: {verdict} (exit {rc}) ==")
+    if rc == 2:
+        print("  Report this as its own outcome, never as clean (a real break can sit undecided)\n"
+              "  or as defects (a correct repo would fail on where it ran). Exit 2 stays non-zero;\n"
+              "  a gate accepts it only by opting in: `|| [ $? -eq 2 ]`.")
     return rc
 
 
