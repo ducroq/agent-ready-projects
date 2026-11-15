@@ -107,25 +107,24 @@ Check for context rot from *previous* sessions. **Read metadata, not documents**
    - **Trigger fired**, by its trigger or its status line: flag as **TRIGGERED**. Surface only; do not resolve.
    - **More than ~10 open**: flag as memory-cluttering — promote to ADRs or mark `dormant` / closed.
 
-6. **Auto-loaded size budget — the whole set, not the project file alone.** Sum **every file your tool loads without being asked** (for Claude Code, the project file *and* the user-level memory index), and compare the total against the budget. Claude Code warns at 40k chars; the soft target is under 35k. **List the set before measuring**, and name any file not counted. Budget the index in characters, not lines, and **name the unit with every number you report** (#179): this step counts characters (`wc -m`), `audit-context` Step 1 counts bytes (`wc -c`), which read higher on every non-ASCII character (0.4-1.9% on this framework's own files), so a set under 35k here can be over it there.
+6. **Auto-loaded size budget — the whole set, not the project file alone.** **List the set before measuring**: every file your tool loads without being asked (for Claude Code, the project file, `~/.claude/CLAUDE.md` *and* the user-level memory index), plus, after `--instructed`, files the project file tells the agent to read every session. Run the shipped script, project file first; leave out a file that does not exist and name it as uncounted:
 
-   **List instruction-loaded files on their own line**: files the project file tells the agent to read every session (a large memory index, say), with their sizes, without claiming they are always read.
+   ```bash
+   AS=~/repos/agent-ready-projects/scripts/autoload-size.sh   # this framework's clone
+   # No clone? curl -fsSL https://raw.githubusercontent.com/ducroq/agent-ready-projects/master/scripts/autoload-size.sh -o /tmp/autoload-size.sh && AS=/tmp/autoload-size.sh
+   SLUG=$(pwd | sed 's|[^A-Za-z0-9]|-|g')   # Claude Code's name for this project; if absent, find it in `ls ~/.claude/projects`
+   bash "$AS" CLAUDE.md ~/.claude/CLAUDE.md ~/.claude/projects/"$SLUG"/memory/MEMORY.md --instructed memory/MEMORY.md
+   ```
 
-   **Flag a project file over ~15k characters on its own**, even when the set is under budget: past 15k it is carrying narrative.
+   The budget is in characters: a soft target under 35k; Claude Code warns at 40k. The script sums the set, flags a project file over ~15k (it is carrying narrative) and measures table padding; near or over budget it prints the order to work in. Exit 1 means over the soft target, 2 a file it could not read or count, 127 the script was not found. Report each number with its unit.
 
-   If the set is approaching or over budget:
-   - **First, check for formatter table padding.** If a markdown formatter (prettier, dprint, markdownlint) pads tables, measure the de-padded size (cells stripped to `| value |`) before proposing any cut.
-   - If padding is material, de-pad the file **and** exempt it from whatever re-pads it (editor format-on-save, pre-commit hook, CI) — confirm which one actually touches it.
-   - Verify the exemption from the cwd the formatter runs in; Prettier resolves its ignore file from the cwd.
-   - Then **session-narrative footers** (`_Last updated: ..._` / `_Earlier ..._` blocks), in any auto-loaded file: they duplicate `memory/project_session_*.md`. An index row is a pointer, not a re-summary.
-   - Keep at most **one** footer block (the most recent), and only if the index can't carry it.
+   **Trim rules**, for any trim here or in Step 3:
    - Don't trim structural sections (Hard Constraints, Before You Start, Architecture, Key Paths). "Active work" is not protected: trim it to items in progress.
    - **Name the facts the trim may not lose before cutting** (#114): the version line, each Hard Constraint's operative clause, anything a `<!-- verify: -->` probe reads. Afterwards `grep -F` each one. A missing one is a finding for the engineer, not an under-budget success: a section can survive while a rewrite paraphrases its fact away.
    - **Then have a fresh reader compare old and new** (#256): another agent or a person, given only the two versions, lists operative clauses missing or weakened; with neither available, report the comparison as not done and leave the trim for the engineer to approve. `grep -F` cannot see a paraphrase.
    - **Delete, don't reword** (#256). Where removed text survives elsewhere, leave `→ <path or ref>` (#322); report what survives nowhere.
-   - If that is not enough, surface to the engineer.
 
-Report findings before proceeding. Don't fix anything in this step — just surface what's stale so the engineer can decide. A trim the engineer then approves follows sub-step 6's bullets.
+Report findings before proceeding. Don't fix anything in this step — just surface what's stale so the engineer can decide. A trim the engineer then approves follows sub-step 6's trim rules and, near budget, the order its script printed.
 
 ## Step 1 — Gotcha log review
 

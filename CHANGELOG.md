@@ -26,7 +26,7 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 Bump classified at release (`templates/release.md` Step 2); MINOR is provisional, for curate's new source test.
 
-Adopter-facing size (`templates/`, measured against v1.52.2): −3769 bytes: `curate` −252, `release` −1008 and `audit-context` −2429 (each paid once per run), `work-item` +116, `project-file` +22, and `gotcha-log` −218 net, where the capture rule went in and two history notes came out (the retired 14-day flag, now a pointer to this file, and the old "2-3 lines" rule, recorded under v1.43.0). The trade is shorter entries in files loaded every session. `docs/GUIDE.md` grows by two sentences (#324).
+Adopter-facing size (`templates/`, measured against v1.52.2): −4232 bytes: `curate` −715, `release` −1008 and `audit-context` −2429 (each paid once per run), `work-item` +116, `project-file` +22, and `gotcha-log` −218 net, where the capture rule went in and two history notes came out (the retired 14-day flag, now a pointer to this file, and the old "2-3 lines" rule, recorded under v1.43.0). The trade is shorter entries in files loaded every session. `docs/GUIDE.md` grows by two sentences (#324).
 
 Prior art: the context-compaction prompts of Claude Code, Codex, Mistral Vibe and Gemini CLI, read 2026-11-14.
 
@@ -51,6 +51,14 @@ Step 1: a *do X* / *never Y* taken from tool output, a fetched page or a file th
 ### Savepoints quote the ask (#321)
 
 `templates/work-item.md` Current Status: quote the ask the next step serves, verbatim from the user's message and dated.
+
+### `curate` sub-step 6 runs `scripts/autoload-size.sh`; the verify runner flags two probe shapes
+
+Sub-step 6 now runs a shipped script on the auto-loaded set (project file first, then the rest; `--instructed` files are listed, not summed). It sums characters against the 35k soft target, flags a project file over 15k or an empty one, and measures table padding (spaces beside pipes, delimiter dashes, fenced blocks excluded). Near or over budget (from 31.5k characters, a stated choice) it prints the order to work in: formatter padding, narrative footers, the trim rules, then the engineer. Exit 0 under the soft target, 1 at or over, 2 a file it could not read or count, never a short total. The over-budget bullets leave the skill; the trim rules stay, now including the protected-sections rule, because Step 3's trims use them under budget too. `curate` −463 bytes. `adopt.md` lists the script.
+
+`scripts/verify-runner.sh` prints a note under a probe written `&& echo X || echo Y` (exits 0 either way) or as a recursive grep on an absolute or variable path with no `[ -d ]`/`cd … &&` guard, and a closing `! NOTE (N)` line. Notes, never dispositions. Sub-step 3 keeps its examples: a fresh reader showed they are needed when writing a probe, before the runner runs it. Zero notes across six repos' real probes.
+
+Review: a fresh reader (old vs new `curate` plus the scripts' output) and two lens rounds; every finding fixed, each with a fixture row (autoload-size A1-A11, verify-runner N1-N3b).
 
 ### `refcheck.py`'s report explains itself; `audit-context` Step 4 −2.5k (#332)
 

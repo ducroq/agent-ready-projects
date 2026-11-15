@@ -643,5 +643,54 @@ ablate A30-unterminated  "reporting an unterminated fence"  '/and never closed/d
 ablate A28-fail-exact    "matching the legacy word exactly" '/this framework taught/s|FAIL)|FAIL*)|' row:p31=FAIL
 
 echo
+echo "probe-writing notes (each prints only on a probe with the defect):"
+LINTF="$WORK/lint.md"
+cat > "$LINTF" <<'LEOF'
+- w1 <!-- verify: git rev-parse vNOPE-w1 >/dev/null 2>&1 && echo w1-OK || echo w1-NOTAG -->
+- w2 <!-- verify: true && echo w2-ok || { echo w2-missing; exit 1; } -->
+- g1 <!-- verify: ! grep -rq zzqq /nonexistent-g1 && echo g1-absent -->
+- g2 <!-- verify: [ -d /nonexistent-g2 ] || { echo "CANNOT VERIFY: g2 absent"; exit 0; }; ! grep -rq zzqq /nonexistent-g2 && echo g2-absent -->
+- g3 <!-- verify: ! grep -rq zzqq-g3 . && echo g3-relative -->
+- g4 <!-- verify: d=/nonexistent-g4; ! grep -rq zzqq "$d" && echo g4-variable -->
+- g5 <!-- verify: ! grep --recursive -q zzqq /nonexistent-g5 && echo g5-longopt -->
+- g7 <!-- verify: ! grep -rq zzqq-g7 . | awk '{print $1}'; echo g7-awkvar -->
+- g8 <!-- verify: ! grep -rq zzqq /nonexistent-g8 && cd /tmp && echo g8-cdafter -->
+- g6 <!-- verify: cd /nonexistent-g6 2>/dev/null && ! grep -rq zzqq . && echo g6-cd || { echo "CANNOT VERIFY: g6"; exit 0; } -->
+LEOF
+note_after() {  # note_after <output> <marker>: the note lines printed under that row
+  awk -v m="$2" '/ :: /{on = index($0, m) > 0; next} on && /^                 ! /' <<<"$1"
+}
+lint_case() {  # lint_case <output> <marker> <needle-or-empty> <label>
+  local got; got="$(note_after "$1" "$2")"
+  if [ -n "$3" ]; then grep -qF -- "$3" <<<"$got" && printf '  PASS  %s\n' "$4" || { printf '  FAIL  %s\n' "$4"; FAIL=1; }
+  else [ -z "$got" ] && printf '  PASS  %s\n' "$4" || { printf '  FAIL  %s (got: %s)\n' "$4" "$got"; FAIL=1; }; fi
+}
+LOUT="$(cd "$WORK" && bash "$RUNNER" "$LINTF" 2>&1)"
+grep -qF 'ran 10 of 10' <<<"$LOUT" || { printf '  FAIL  lint seeds: not all 10 ran\n'; FAIL=1; }
+lint_case "$LOUT" w1-OK  'word verdict'  'N1 `&& echo X || echo Y` gets the word-verdict note'
+lint_case "$LOUT" w2-ok  ''              'N1b a failing branch that exits non-zero gets no note'
+lint_case "$LOUT" g1-abs 'unguarded'     'N2 a recursive grep on an absolute, unguarded path gets the guard note'
+lint_case "$LOUT" g2-abs ''              'N2b the guarded form gets no note'
+lint_case "$LOUT" g3-rel ''              'N2c a relative-path grep gets no note'
+lint_case "$LOUT" g4-var 'unguarded'     'N2e a variable-held target gets the guard note'
+lint_case "$LOUT" g5-lon 'unguarded'     'N2f --recursive gets the guard note'
+grep -qF 'CANNOT VERIFY: g6' <<<"$LOUT" && lint_case "$LOUT" 'echo g6-cd' '' 'N2g cd ... && guards the grep: no note' || { printf '  FAIL  N2g seed did not run as designed\n'; FAIL=1; }
+lint_case "$LOUT" g7-awk ''              'N2h a $ in a later pipeline stage is not the grep target: no note'
+lint_case "$LOUT" g8-cda 'unguarded'     'N2i a cd AFTER the grep guards nothing: note'
+grep -qF '! NOTE (5): a probe shape' <<<"$LOUT" && printf '  PASS  N3 the closing lines count the notes and say to rewrite the probe\n' || { printf '  FAIL  N3 closing note line missing or miscounted\n'; FAIL=1; }
+printf -- '- w2 <!-- verify: true \&\& echo w2-ok -->\n' > "$WORK/clean.md"
+grep -qF '! NOTE (' <<<"$(cd "$WORK" && bash "$RUNNER" "$WORK/clean.md" 2>&1)" && { printf '  FAIL  N3b the closing note prints on a run with no noted probe\n'; FAIL=1; } || printf '  PASS  N3b no closing note without a noted probe\n'
+grep -qF '[ -d DIR ] || { echo "CANNOT VERIFY: DIR absent"; exit 0; }' <<<"$LOUT" \
+  && printf '  PASS  N2d the guard note carries the guard to copy\n' || { printf '  FAIL  N2d the guard note lost its example\n'; FAIL=1; }
+# Mutant: the notes never print. N1 and N2 must go red.
+sed 's|^  lint "\$cmd"$|  :|' "$RUNNER" > "$WORK/nolint.sh"
+if cmp -s "$WORK/nolint.sh" "$RUNNER"; then printf '  FAIL  mutant N: its site has moved\n'; FAIL=1
+else MOUT="$(cd "$WORK" && bash "$WORK/nolint.sh" "$LINTF" 2>&1)"
+  if [ -z "$(note_after "$MOUT" w1-OK)" ] && [ -z "$(note_after "$MOUT" g1-abs)" ] && grep -qF 'ran 10 of 10' <<<"$MOUT"; then
+    printf '  PASS  mutant N: with the call removed, both notes are absent (N1/N2 would go red)\n'
+  else printf '  FAIL  mutant N: notes survived removing the call\n'; FAIL=1; fi
+fi
+
+echo
 if [ $FAIL -eq 0 ]; then echo "All verify-runner fixture cases passed."; else echo "Fixture failures above."; fi
 exit $FAIL
