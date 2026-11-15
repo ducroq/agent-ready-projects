@@ -295,6 +295,8 @@ Deprecated: a first line exactly `FAIL` with exit 0 is scored FAIL. Rewrite such
 
 #### Step 0, sub-steps 4 to 6
 
+**Evidence moved out of sub-step 6 (2026-11-15).** A template-sized project file is about 6k characters; one adopter's reached 35k. For one adopter, the instruction-loaded files were bigger than everything auto-loaded. On one adopter's trim that passed every `grep -F` check, a fresh reader comparing old and new found about 30 operative clauses missing or weakened (#256).
+
 4. **Index self-consistency**: Every check above compares the index to something *outside* it — gotcha ages, a verify probe, a hypothesis deadline. None asks whether the index agrees with itself, so two entries can assert opposite things indefinitely while each passes every check individually: both paths resolve, both files are fresh, neither is tagged as a state claim.
 
 This is worse than an ordinary stale entry. A stale entry is wrong; **a self-contradicting index is wrong while also carrying its own correction**, so which version an agent acts on depends on read order rather than on evidence. Where the index is always-loaded — the `@memory/MEMORY.md` import in `templates/memory-index.md` — both versions enter every session's context.

@@ -67,7 +67,7 @@ Check for context rot from *previous* sessions. **Read metadata, not documents**
 
    Probes run with `bash -c` in the current directory. Pass every file that holds a probe.
 
-   **Read the runner's closing lines**: they say what to do with each disposition it found, and what its exit status means. **Zero commands extracted is a defect, never a pass.** Count the rows you received against `ran N of M`, because a capture can lose rows. Exit **127** means the runner itself was not found (wrong `$CLONE` or failed fetch), not a claim result. How it scores each probe matters only when writing one; it is in the rules for writing a verify command, linked below.
+   **Read the runner's closing lines**: they say what to do with each disposition it found, and what its exit status means. Count the rows you received against `ran N of M`, because a capture can lose rows. Exit **127** means the runner itself was not found (wrong `$CLONE` or failed fetch), not a claim result.
 
    **Blind spot:** fenced blocks are skipped, but an annotation in an unfenced four-space-indented block or a blockquote **will run**. Write examples in fenced blocks. UNVERIFIED is your judgement, not a runner disposition.
 
@@ -109,9 +109,9 @@ Check for context rot from *previous* sessions. **Read metadata, not documents**
 
 6. **Auto-loaded size budget — the whole set, not the project file alone.** Sum **every file your tool loads without being asked** (for Claude Code, the project file *and* the user-level memory index), and compare the total against the budget. Claude Code warns at 40k chars; the soft target is under 35k. **List the set before measuring**, and name any file not counted. Budget the index in characters, not lines, and **name the unit with every number you report** (#179): this step counts characters (`wc -m`), `audit-context` Step 1 counts bytes (`wc -c`), which read higher on every non-ASCII character (0.4-1.9% on this framework's own files), so a set under 35k here can be over it there.
 
-   **List instruction-loaded files on their own line**: files the project file tells the agent to read every session (a large memory index, say), with their sizes, without claiming they are always read. For one adopter that was bigger than everything auto-loaded.
+   **List instruction-loaded files on their own line**: files the project file tells the agent to read every session (a large memory index, say), with their sizes, without claiming they are always read.
 
-   **Flag a project file over ~15k characters on its own**, even when the set is under budget: a template-sized one is ~6k, and past 15k it is carrying narrative (one adopter's reached 35k).
+   **Flag a project file over ~15k characters on its own**, even when the set is under budget: past 15k it is carrying narrative.
 
    If the set is approaching or over budget:
    - **First, check for formatter table padding.** If a markdown formatter (prettier, dprint, markdownlint) pads tables, measure the de-padded size (cells stripped to `| value |`) before proposing any cut.
@@ -121,7 +121,7 @@ Check for context rot from *previous* sessions. **Read metadata, not documents**
    - Keep at most **one** footer block (the most recent), and only if the index can't carry it.
    - Don't trim structural sections (Hard Constraints, Before You Start, Architecture, Key Paths). "Active work" is not protected: trim it to items in progress.
    - **Name the facts the trim may not lose before cutting** (#114): the version line, each Hard Constraint's operative clause, anything a `<!-- verify: -->` probe reads. Afterwards `grep -F` each one. A missing one is a finding for the engineer, not an under-budget success: a section can survive while a rewrite paraphrases its fact away.
-   - **Then have a fresh reader compare old and new** (#256): another agent or a person, given only the two versions, lists operative clauses missing or weakened; with neither available, report the comparison as not done and leave the trim for the engineer to approve. `grep -F` cannot see a paraphrase; on one adopter's trim that passed every check, this found about 30.
+   - **Then have a fresh reader compare old and new** (#256): another agent or a person, given only the two versions, lists operative clauses missing or weakened; with neither available, report the comparison as not done and leave the trim for the engineer to approve. `grep -F` cannot see a paraphrase.
    - **Delete, don't reword** (#256). Where removed text survives elsewhere, leave `→ <path or ref>` (#322); report what survives nowhere.
    - If that is not enough, surface to the engineer.
 
