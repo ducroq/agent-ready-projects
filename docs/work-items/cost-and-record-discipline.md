@@ -14,17 +14,19 @@ Goal: make the framework cheaper to run without cutting review of the shipped su
 
 ## Current Status
 
-**Savepoint — 2026-11-14 (wrap): `continue` starts at step 1 below and does not start anything else. Prune, thin, mechanize, retire (the engineer, again, 11-14).** The read surface GREW this session: the five installed skills went 81k → 83.3k (`wc -c .claude/skills/*/SKILL.md`), `templates/` +2.2k in the unreleased v1.53.0 candidate. Pay that back first. Rank every cut by bytes × how often it loads; mechanize a decision a script can make before thinning prose.
+**Savepoint — 2026-11-15 (wrap): `continue` starts at step 1 below and does not start anything else. Prune, thin, mechanize, retire (the engineer, 11-14 and again 11-15: "Large read surface ?? that means we need to start pruning, thinning, mechanizing, retiring!").** Rank every cut by bytes × how often it loads.
 
-1. **`curate` Step 0, 11.7k of 21.1k, paid every session end.** Measure per sub-step what a shipped script already decides (`scripts/verify-runner.sh`, `gotcha-headers.sh`, `hypothesis-due.sh`) and cut the prose that restates it, as 11-13 did for sub-step 2. Target: return `curate` to ≤18.9k (its size before 11-14; 21.1k now).
-2. **`CLAUDE.md`, 14.9k, loaded every session.** Over the ~15k flag in all but name. Cut with `curate` Step 0.6's new rules: delete, don't reword; pointer where the text lives; a fresh reader compares old and new (#256).
-3. **#306**: refcheck summary-by-default output, a token cut on every audit. Then the decisions #332 (Step 4's section prose into refcheck output) and #333 (`review-changes` Step 1 into a script, after #268), both the engineer's call.
-4. **Release v1.53.0** (`/release`, the engineer's to invoke) once steps 1-2 have shrunk it: #327, #329, #330 and 11-13's #312-#316 are unreleased.
-5. **#303**: the rationale pointer in each `SKILL.md` body for `review-changes`, `release` and `curate`; it adds bytes, so pay for it from step 1. H-026 is at 4 of 5 (run old and new over the real corpus before review).
-6. Triage the 29 open issues for any a prune or a check can close; #306, #276, #238 and #237 looked cheapest on 11-14.
-7. Blocked: `curate` "Before Step 0" (1.7k), #296 and H-031's cut wait on a reply from #201's author (a closed PR; message sent 11-13). EXP-010 (#328, draft) waits on its remaining scripts and a spend total.
+**Measured 11-15: thinning `curate` is exhausted; mechanizing is the route.** A 1.5k cut of Step 0 into rationale pointers was refuted by a fresh reader: the rationale is not on an adopter's install, so operative clauses moved there are lost to the running agent. Only prose a shipped script **prints** can leave a skill body (#332 comment). `curate` is 20.7k against the ≤18.9k target; get there by scripts, not by deleting rules.
 
-**Done 11-14** (merged #327, #329, #330; draft #328): `curate` gained the read-text rule (#324), delete-don't-reword with pointers and a fresh-reader comparison (#322, #256), the correction sweep (#320); `refcheck.py` checks itself alive every run, rung 4 included, so `audit-context` Step 4 lost its manual seed; `curate` sub-step 5 reads `scripts/hypothesis-due.sh` (26.3k → 5.1k per run here). Follow-ups filed: #331 (source per promoted rule), #332, #333.
+1. **#306**: `refcheck.py` prints a summary by default (token cut on every audit). Code change with fixture cases; seed the true positives (CLAUDE.md Hard Constraint (3)). Then **#332** (Step 4's section prose into refcheck output), the same move: the script prints the legend, the skill drops it.
+2. **Mechanize `curate` Step 0 sub-step 3** (3.9k, every session end): the verify-runner's closing lines already carry the dispositions; move "four ways a probe passes while false" and the negative-claim guard into what the runner prints or into a probe linter. Then sub-step 6 (3.3k): a script that lists and sums the auto-loaded set (it is the same measurement lint rule 15 makes) so the prose stops describing it.
+3. **#333**: `review-changes` Step 1 into a script, after #268. Engineer's call.
+4. **Retire**: H-031 is at 10 of 10 runs, 0 catches, against a bar of 3; its Method says cut `curate` "Before Step 0" (1.7k). Blocked only on a reply from #201's author (message sent 11-13). If no reply by the next session, ask the engineer whether to proceed without it.
+5. **Release v1.53.0** (`/release`, the engineer's to invoke): #312-#316, #327, #329, #330, #335, #336 are unreleased. The candidate's size line is measured (−1223 bytes vs v1.52.2).
+6. **#303** (rationale pointer in each `SKILL.md` body; adds bytes, pay for it from step 2). H-026 at 4 of 5.
+7. Triage the open issues for any a prune or a check can close; #276, #238 and #237 looked cheapest on 11-14.
+
+**Done 11-15** (merged #335, #336): `curate` Step 0 −364 bytes (only what the runner prints, a duplicate pointer, three anecdotes to the rationale); `CLAUDE.md` 14.9k → 14.1k (deleted what duplicates a named authority; the release snippet it dropped contradicted the CHANGELOG header). Both trims had a fresh-reader comparison; each caught losses the author missed (H-035 note). `/review-changes` was not run on either; the fresh readers were the review.
 
 Every thinning gets a fresh lens **before** the commit, `memory/` included, comparing the new text against the code. Lock the ratchets **last**, after review (gotcha x8). Branch each PR from master; never stack (`CLAUDE.md`). The 11-13 work is unreleased; `/release` is the engineer's to invoke. Older savepoints: `docs/work-items/archive/cost-and-record-discipline-history.md`.
 
