@@ -24,9 +24,12 @@ Before tending memory, go back to what this session was asked to do. The detour 
 
 ```bash
 # Keep -print0/-0 (spaced paths) and `cat | wc -m` (chars); never `xargs wc -c | tail -1`.
-find memory docs/work-items -type f -name '*.md' ! -path '*/archive/*' -print0 2>/dev/null \
-  | xargs -0 cat | wc -m
+n=$(find memory docs/work-items -type f -name '*.md' ! -path '*/archive/*' -print0 2>/dev/null \
+  | xargs -0 cat | wc -m)
+[ "$n" -gt 0 ] && echo "$n" || echo "CANNOT MEASURE: no memory/ or docs/work-items/ content here"
 ```
+
+On CANNOT MEASURE, point the same command at wherever this project keeps memory and work items (a tool's own memory directory, say); zero is not under budget (#238).
 
 **Above roughly 300k characters, do not read the corpus.** Work from metadata and the verify runner, and do not improvise a dead-reference check. Curate **the index and the newest topic file only**, and say in the report which files you did not open. **And propose an archive pass**: resolved gotchas, closed hypotheses, old session files and done work items move into an `archive/` folder beside them (`memory/archive/`, `docs/work-items/archive/`), which the measurement above excludes. Propose it; do not move anything in this step.
 

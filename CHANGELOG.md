@@ -44,6 +44,10 @@ Step 1: a *do X* / *never Y* taken from tool output, a fetched page or a file th
 
 `curate` Step 1: reason in the reply, not the file. It now also asks whether the user corrected the agent this session: list the corrections from the transcript or summary; log one that exposes a mistake, record a preference where the project keeps them, or say why neither. Corrections were caught before only if the agent happened to remember them.
 
+### `curate` Step 0 says CANNOT MEASURE instead of 0 (#238)
+
+The read-surface command printed `0` when `memory/` and `docs/work-items/` are absent (a layout using a tool's own memory directory), which read as under budget. It now prints `CANNOT MEASURE`, and the step says to point the command at the project's real roots. +270 bytes.
+
 ### Capture happens when found, and before compaction (#326, #323)
 
 `templates/gotcha-log.md` now says when Capture happens: when the problem is found, since a context compaction before session end loses it; write pending entries before one, and ask its summary to keep the user's corrections verbatim. The project file's gotcha-log row adds "log a fix when found". This goes where capture is described rather than in `curate`, which runs after any compaction; the issues' `templates/README.md` rows are not added.
