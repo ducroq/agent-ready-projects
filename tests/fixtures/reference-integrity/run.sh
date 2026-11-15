@@ -449,6 +449,18 @@ if grep -qE '^  \.next/ +1 reference' <<<"$IGS"; then printf '  PASS  T68 a buil
 else printf '  FAIL  T68 — .next/ is not listed in the gitignored-directory section\n'; FAIL=1; fi
 if grep -qF 'dist/' <<<"$IGS"; then printf '  FAIL  N62 — a TRACKED file inside an ignored directory was listed\n'; FAIL=1
 else printf '  PASS  N62 a tracked file inside an ignored directory is not listed\n'; fi
+# T76 (#341): the section's "e.g." row is the same on every run. The hits come in
+# hash order, so [0] differed between identical runs; assert invariance across seeds.
+IGD="$WORK/ig341"; mkdir -p "$IGD/out"
+( cd "$IGD" && git init -q . && printf 'out/\n' > .gitignore
+  for n in a b c d e f g h; do touch "out/$n.js"; printf '`out/%s.js`\n' "$n"; done > D.md )
+T76_REF="$(PYTHONHASHSEED=1 python3 refcheck.py --verbose --sibling-root "$IGD" "$IGD" D.md 2>&1 | grep 'e\.g\.')"
+T76_OK=1; [ -n "$T76_REF" ] || T76_OK=0
+for seed in 2 3 4 5 6 7 8; do
+  [ "$(PYTHONHASHSEED=$seed python3 refcheck.py --verbose --sibling-root "$IGD" "$IGD" D.md 2>&1 | grep 'e\.g\.')" = "$T76_REF" ] || { T76_OK=0; break; }
+done
+if [ "$T76_OK" -eq 1 ]; then printf '  PASS  T76 the gitignored-directory example row is the same on every run\n'
+else printf '  FAIL  T76 — the gitignored-directory example row changed with the hash seed (or was absent)\n'; FAIL=1; fi
 if [ "$igrc" -eq 0 ]; then printf '  PASS  N63 listing is not ruling: the run stays CLEAN (exit 0)\n'
 else printf '  FAIL  N63 — the listing changed the exit status to %s\n' "$igrc"; FAIL=1; fi
 # N65 (#154 review) — one landed path OUTSIDE the work tree must not collapse

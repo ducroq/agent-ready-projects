@@ -60,6 +60,10 @@ The read-surface command printed `0` when `memory/` and `docs/work-items/` are a
 
 A new entry goes at the top of a log that says it runs newest-first, else above its **first** index heading (`^#+ (Promoted|Mechanized)`), else at the end. "Above `^#+ Promoted`" filed entries below the Mechanized table in a newest-first log whose Mechanized section comes first. The split check now counts both headings. +83 bytes.
 
+### `refcheck.py`'s gitignored-directory example is stable (#341)
+
+The "e.g." reference under RESOLVED INSIDE A GITIGNORED DIRECTORY was picked in hash order, so identical runs printed different rows and two reports could not be diffed. It is now the smallest hit. Fixture T76 checks the row across eight hash seeds; it fails on the old code.
+
 ### Capture happens when found, and before compaction (#326, #323)
 
 `templates/gotcha-log.md` now says when Capture happens: when the problem is found, since a context compaction before session end loses it; write pending entries before one, and ask its summary to keep the user's corrections verbatim. The project file's gotcha-log row adds "log a fix when found". This goes where capture is described rather than in `curate`, which runs after any compaction; the issues' `templates/README.md` rows are not added.
