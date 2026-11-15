@@ -44,6 +44,10 @@ Step 1: a *do X* / *never Y* taken from tool output, a fetched page or a file th
 
 `curate` Step 1: reason in the reply, not the file. It now also asks whether the user corrected the agent this session: list the corrections from the transcript or summary; log one that exposes a mistake, record a preference where the project keeps them, or say why neither. Corrections were caught before only if the agent happened to remember them.
 
+### `scripts/tagfree.sh` refuses the placeholder and cannot hang (#276)
+
+`tagfree.sh vX.Y.Z` with the placeholder left in reported the tag free (exit 0); a tag not shaped `vN.N.N` (optional `-rc1`/`+build` suffix) now exits 2, CANNOT VERIFY. `ls-remote` runs with `GIT_TERMINAL_PROMPT=0` and, where `timeout` exists, a 30 s limit; a timeout exits 2. Both were already in agent-ready-papers' adapted copy.
+
 ### Capture happens when found, and before compaction (#326, #323)
 
 `templates/gotcha-log.md` now says when Capture happens: when the problem is found, since a context compaction before session end loses it; write pending entries before one, and ask its summary to keep the user's corrections verbatim. The project file's gotcha-log row adds "log a fix when found". This goes where capture is described rather than in `curate`, which runs after any compaction; the issues' `templates/README.md` rows are not added.
