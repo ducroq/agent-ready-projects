@@ -26,7 +26,7 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 Bump classified at release (`templates/release.md` Step 2); MINOR is provisional, for curate's new source test.
 
-Adopter-facing size (`templates/`, measured against v1.52.2): −1294 bytes: `curate` −252 and `release` −1008, `audit-context` +46 (each paid once per run), `work-item` +116, `project-file` +22, and `gotcha-log` −218 net, where the capture rule went in and two history notes came out (the retired 14-day flag, now a pointer to this file, and the old "2-3 lines" rule, recorded under v1.43.0). The trade is shorter entries in files loaded every session. `docs/GUIDE.md` grows by two sentences (#324).
+Adopter-facing size (`templates/`, measured against v1.52.2): −3769 bytes: `curate` −252, `release` −1008 and `audit-context` −2429 (each paid once per run), `work-item` +116, `project-file` +22, and `gotcha-log` −218 net, where the capture rule went in and two history notes came out (the retired 14-day flag, now a pointer to this file, and the old "2-3 lines" rule, recorded under v1.43.0). The trade is shorter entries in files loaded every session. `docs/GUIDE.md` grows by two sentences (#324).
 
 Prior art: the context-compaction prompts of Claude Code, Codex, Mistral Vibe and Gemini CLI, read 2026-11-14.
 
@@ -51,6 +51,10 @@ Step 1: a *do X* / *never Y* taken from tool output, a fetched page or a file th
 ### Savepoints quote the ask (#321)
 
 `templates/work-item.md` Current Status: quote the ask the next step serves, verbatim from the user's message and dated.
+
+### `refcheck.py`'s report explains itself; `audit-context` Step 4 −2.5k (#332)
+
+Step 4's prose describing the report (the rung key, the section list, the worktree, shape and extension notes, why the third outcome stays separate) moves into the checker's output. Each legend prints only when its section has members, and the exit-2 reporting note only on an exit-2 run, so an audit pays for an explanation only when it has something to explain. Step 4 keeps what the agent acts on: the verdict is the outcome, an undecided reference is neither a defect nor a pass, keep every printed section in the report, carry `UNCONFIRMED` to Step 9, and the exit-status gate. On this framework's own run the output grows 282 characters (the rung legend); the skill shrinks by 2475 bytes, paid once per audit. A fresh reader comparing the old Step 4 with the new Step 4 plus the output found four losses (two dropped "report it" instructions, the gate idiom printed only on exit-2 runs, an overclaim); all four are fixed. The legends are now normative and asserted by fixture rows L1-L5b, which include absence checks where a legend must not print.
 
 ### `refcheck.py` prints a summary by default (#306)
 
