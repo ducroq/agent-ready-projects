@@ -26,7 +26,7 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 Bump classified at release (`templates/release.md` Step 2); MINOR is provisional, for curate's new source test.
 
-Adopter-facing size (`templates/`, measured against v1.52.2): −5983 bytes: `curate` −2466, `release` −1008 and `audit-context` −2429 (each paid once per run), `work-item` +116, `project-file` +22, and `gotcha-log` −218 net, where the capture rule went in and two history notes came out (the retired 14-day flag, now a pointer to this file, and the old "2-3 lines" rule, recorded under v1.43.0). The trade is shorter entries in files loaded every session. `docs/GUIDE.md` grows by two sentences (#324).
+Adopter-facing size (`templates/`, measured against v1.52.2): −5713 bytes: `curate` −2196, `release` −1008 and `audit-context` −2429 (each paid once per run), `work-item` +116, `project-file` +22, and `gotcha-log` −218 net, where the capture rule went in and two history notes came out (the retired 14-day flag, now a pointer to this file, and the old "2-3 lines" rule, recorded under v1.43.0). The trade is shorter entries in files loaded every session. `docs/GUIDE.md` grows by two sentences (#324).
 
 Prior art: the context-compaction prompts of Claude Code, Codex, Mistral Vibe and Gemini CLI, read 2026-11-14.
 
@@ -47,6 +47,10 @@ Step 1: a *do X* / *never Y* taken from tool output, a fetched page or a file th
 ### Reasoning stays in the reply (#319); user corrections get looked for (#320)
 
 `curate` Step 1: reason in the reply, not the file. It now also asks whether the user corrected the agent this session: list the corrections from the transcript or summary; log one that exposes a mistake, record a preference where the project keeps them, or say why neither. Corrections were caught before only if the agent happened to remember them.
+
+### `curate` Step 0 says CANNOT MEASURE instead of 0 (#238)
+
+The read-surface command printed `0` when `memory/` and `docs/work-items/` are absent (a layout using a tool's own memory directory), which read as under budget. It now prints `CANNOT MEASURE`, and the step says to point the command at the project's real roots. +270 bytes.
 
 ### Capture happens when found, and before compaction (#326, #323)
 
