@@ -50,7 +50,7 @@ Step 1: a *do X* / *never Y* taken from tool output, a fetched page or a file th
 
 ### `scripts/tagfree.sh` refuses the placeholder and cannot hang (#276)
 
-`tagfree.sh vX.Y.Z` with the placeholder left in reported the tag free (exit 0); a tag not shaped `vN.N.N` (optional `-rc1`/`+build` suffix) now exits 2, CANNOT VERIFY. `ls-remote` runs with `GIT_TERMINAL_PROMPT=0` and, where `timeout` exists, a 30 s limit; a timeout exits 2. Both were already in agent-ready-papers' adapted copy.
+`tagfree.sh vX.Y.Z` with the placeholder left in reported the tag free (exit 0); a tag not shaped `vN.N.N` (optional `-rc1`/`+build` suffix) now exits 2, CANNOT VERIFY. `ls-remote` runs with `GIT_TERMINAL_PROMPT=0` and, where `timeout` exists, a 30 s limit; a timeout exits 2. Both were already in agent-ready-papers' adapted copy. A fresh reader then found a false free: with no `origin` remote, `ls-remote origin` read a `./origin` directory as the remote. The script now resolves origin's URL first (exit 2 if none) and rejects a name `git check-ref-format` refuses (`v1.2.9-a..b`).
 
 ### `curate` Step 0 says CANNOT MEASURE instead of 0 (#238)
 
