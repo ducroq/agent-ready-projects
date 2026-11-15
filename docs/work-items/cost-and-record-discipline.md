@@ -14,7 +14,7 @@ Goal: make the framework cheaper to run without cutting review of the shipped su
 
 ## Current Status
 
-**Savepoint — 2026-11-15 (second wrap): steps 1 and 2 are done. `continue` starts at step 7 (step 4 done in a third session 11-15). Steps 3 and 5 are the engineer's to call. Start nothing else. Prune, thin, mechanize, retire (the engineer, 11-14 and again 11-15: "Large read surface ?? that means we need to start pruning, thinning, mechanizing, retiring!").** Rank every cut by bytes × how often it loads.
+**Savepoint — 2026-11-15 (third wrap): steps 1, 2 and 4 are done; step 7 is two-thirds done. `continue` starts at step 7's last issue, #237, then step 8. Steps 3 and 5 are the engineer's to call. Start nothing else. Prune, thin, mechanize, retire (the engineer, 11-14 and again 11-15: "Large Read surface ?? that means we need to start pruning, thinning, mechanizing, retiring!").** Rank every cut by bytes × how often it loads. `curate` is ~19.9k against ≤18.9k.
 
 **Measured 11-15: thinning `curate` is exhausted, and scripting is now mostly exhausted too.** Rationale pointers are dead on adopter installs; only prose a shipped script prints can leave a skill body, and only if no step needs it before the script runs (gotcha 2026-11-15). Scripting sub-steps 3 and 6 bought −463 bytes, not 3k. `curate` is ~21.3k bytes against ≤18.9k: what remains needs judgement, so **retiring** (step 4) is the next lever.
 
@@ -22,9 +22,11 @@ Goal: make the framework cheaper to run without cutting review of the shipped su
 2. ✅ **`curate` Step 0 mechanized, partly**: `scripts/autoload-size.sh` carries sub-step 6's measurement and over-budget order; verify-runner notes two probe shapes. `curate` −463 bytes, not the 3k hoped: a fresh reader showed sub-step 3's examples are needed before the runner runs, and the trim rules serve Step 3 under budget. `curate` is ~21.3k against ≤18.9k; what remains needs intent, so the next cut is retiring (step 4), not scripting.
 3. **#333**: `review-changes` Step 1 into a script, after #268. Engineer's call.
 4. ✅ **Retired** H-031's "Before Step 0" from `curate` (−1751 bytes; engineer's go 11-15 without #201's reply). A fresh reader found no dangling refs; it noted the section's commit/push/watcher rules now survive nowhere in `curate` (GUIDE.md covers "don't commit unless asked").
-5. **Release v1.53.0** (`/release`, the engineer's to invoke): #312-#316, #327, #329, #330, #335, #336 are unreleased. The candidate's size line is measured (−1223 bytes vs v1.52.2).
+5. **Release v1.53.0** (`/release`, the engineer's to invoke): #312-#316, #327, #329, #330, #335, #336, #343-#345 are unreleased. The candidate's size line in `CHANGELOG.md` is the measurement; do not copy it here.
 6. **#303** (rationale pointer in each `SKILL.md` body; adds bytes, pay for it from step 2). H-026 at 4 of 5.
-7. Triage the open issues for any a prune or a check can close; #276, #238 and #237 looked cheapest on 11-14.
+7. Triage the open issues for any a prune or a check can close. ✅ #238 (#344, +270 bytes) and #276 (#345, `tagfree.sh`) merged 11-15. **Next: #237** (curate Step 1 misfiles in a newest-first gotcha log). #345 had no fresh-reader review, only seeded runs; give it one before the release.
+8. **The engineer's call**: the H-031 cut also dropped four rules that now live nowhere in `curate`: commit only when told, leave pushes to the engineer, turn off watchers the session started, and don't commit another session's changes. `docs/GUIDE.md` covers only the first. Restore them as one line, or leave them out.
+9. **Next retire candidate**: walk `memory/hypothesis-log.md` for any open hypothesis past its review date or bar, starting with H-026 (4 of 5).
 
 **Done 11-15** (merged #335, #336): `curate` Step 0 −364 bytes (only what the runner prints, a duplicate pointer, three anecdotes to the rationale); `CLAUDE.md` 14.9k → 14.1k (deleted what duplicates a named authority; the release snippet it dropped contradicted the CHANGELOG header). Both trims had a fresh-reader comparison; each caught losses the author missed (H-035 note). `/review-changes` was not run on either; the fresh readers were the review.
 
