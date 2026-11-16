@@ -22,9 +22,9 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.53.0 (candidate, unreleased)
+## v1.53.0 (2026-11-16)
 
-Bump classified at release (`templates/release.md` Step 2); MINOR is provisional, for curate's new source test.
+**MINOR.** No consumer has to act, so rule 1 of `templates/release.md` Step 2 does not fire; three new scripts (`gotcha-headers.sh`, `hypothesis-due.sh`, `autoload-size.sh`) are new artifacts, so rule 2 makes it MINOR, on the v1.10.1 precedent. What shipped: `curate` thinner by retiring a step that never caught anything (H-031) and by moving three Step 0 measurements into tested scripts; `refcheck.py` explains its own report; five adopter-reported bugs fixed (#237, #238, #276, #279, #341).
 
 Adopter-facing size (`templates/`, measured against v1.52.2): −5630 bytes: `curate` −2113, `release` −1008 and `audit-context` −2429 (each paid once per run), `work-item` +116, `project-file` +22, and `gotcha-log` −218 net, where the capture rule went in and two history notes came out (the retired 14-day flag, now a pointer to this file, and the old "2-3 lines" rule, recorded under v1.43.0). The trade is shorter entries in files loaded every session. `docs/GUIDE.md` grows by two sentences (#324).
 
@@ -97,6 +97,10 @@ Step 4's prose describing the report (the rung key, the section list, the worktr
 Every run of the Step 4 checker now seeds its own breaks in the same pass: a fabricated local path and, when a real neighbour is reachable, a throwaway neighbour repo with a random name holding one present and one absent path, which only a rung 4 that searched it resolves and misses correctly. It prints `LIVENESS` when all are ruled correctly, strips them from every section, and otherwise exits **70** (`CHECKER NOT ALIVE`), overriding the verdict; a seed that cannot be written also exits 70. Step 4 told the agent to do both by hand on every audit. Step 4's exit codes and Step 9's report name the 70 case. The seed is kept outside the audited tree, so a `TMPDIR` inside the repo does not fail a healthy run. Fixture cases T70/T70b/T71/T75 and mutants T72-T74 (rung 4 skips, searches nothing, lists nothing), each shown to fail with the behaviour removed; ablation A3's kill set widened from one row to eight, because the rung-4 seed now catches that mutant too.
 
 A caller that treated any non-zero exit as failure is unaffected; one that matched exit codes 0/1/2 exactly sees 70 only when the checker is broken.
+
+### `curate` sub-step 2 runs `scripts/gotcha-headers.sh`
+
+The gotcha log's headings and Promoted rows, with the entry count reconciled against `**Problem**` lines, now come from a shipped script instead of a grep + awk + grep the agent re-derived. Exit 0 reconciled, 1 not (it names the lines), 2 nothing examined. Promoted rows inside a comment count, because adopters fill in the template's commented table: on 37 real logs the old extractor and the script agree on 36, and on the 37th the script finds the 7 rows the old one missed. Fixture `tests/fixtures/gotcha-headers/`. To adopt in an adapted copy: replace sub-step 2's extractor block with `bash "$GH" <log>`; a current copy contains `gotcha-headers.sh`.
 
 ### `curate` sub-step 5 reads `scripts/hypothesis-due.sh`, not the hypothesis log
 
