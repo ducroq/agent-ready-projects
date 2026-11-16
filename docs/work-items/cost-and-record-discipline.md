@@ -14,7 +14,7 @@ Goal: make the framework cheaper to run without cutting review of the shipped su
 
 ## Current Status
 
-**Savepoint — 2026-11-15 (fourth): steps 1, 2, 4 and 7-11 are done. `continue` starts at step 12. Steps 3 and 5 are the engineer's to call. Start nothing else. Prune, thin, mechanize, retire (the engineer, 11-14 and again 11-15: "Large Read surface ?? that means we need to start pruning, thinning, mechanizing, retiring!").** Rank every cut by bytes × how often it loads. `curate` is ~19.9k against ≤18.9k.
+**Savepoint — 2026-11-16: the engineer decided four things (11-16). Order: (a) `/release` v1.53.0 today, the engineer invokes it; (b) #309, fix as proposed (~+100 bytes accepted); (c) #318 via a script check: before committing `memory/`, list files this session did not change and refuse them; (d) #268, then #333 (step 3). `continue` takes the first of these not done. Prune, thin, mechanize, retire (the engineer, 11-14 and again 11-15: "Large Read surface ?? that means we need to start pruning, thinning, mechanizing, retiring!").** Rank every cut by bytes × how often it loads. `curate` is ~19.9k against ≤18.9k.
 
 **Measured 11-15: thinning `curate` is exhausted, and scripting is now mostly exhausted too.** Rationale pointers are dead on adopter installs; only prose a shipped script prints can leave a skill body, and only if no step needs it before the script runs (gotcha 2026-11-15). Scripting sub-steps 3 and 6 bought −463 bytes, not 3k. `curate` is ~21.3k bytes against ≤18.9k: what remains needs judgement, so **retiring** (step 4) is the next lever.
 
