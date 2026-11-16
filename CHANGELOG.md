@@ -64,6 +64,10 @@ A new entry goes at the top of a log that says it runs newest-first, else above 
 
 The "e.g." reference under RESOLVED INSIDE A GITIGNORED DIRECTORY was picked in hash order, so identical runs printed different rows and two reports could not be diffed. It is now the smallest hit. Fixture T76 checks the row across eight hash seeds; it fails on the old code.
 
+### `refcheck` SPEC names the linked-worktree skip (#279)
+
+`SPEC.md` now lists a fourth cause of `UNRESOLVED`: the target exists only in one of the repo's own linked worktrees, which the walk leaves out and the report lists under `LINKED WORKTREES NOT SEARCHED`. It also states the remaining gap (worktrees of a `--separate-git-dir` repo, or nested ones, are still walked). Documentation only.
+
 ### Capture happens when found, and before compaction (#326, #323)
 
 `templates/gotcha-log.md` now says when Capture happens: when the problem is found, since a context compaction before session end loses it; write pending entries before one, and ask its summary to keep the user's corrections verbatim. The project file's gotcha-log row adds "log a fix when found". This goes where capture is described rather than in `curate`, which runs after any compaction; the issues' `templates/README.md` rows are not added.
