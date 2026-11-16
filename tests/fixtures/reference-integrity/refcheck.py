@@ -1513,7 +1513,8 @@ def main():
     elif ignored_hits:
         print("\n== RESOLVED INSIDE A GITIGNORED DIRECTORY (not findings — is any of these build output?) ==")
         for d in sorted(ignored_hits):
-            s_, f_, r_ = ignored_hits[d][0]
+            # Sorted: the hits come in hash order, so [0] varied between identical runs (#341).
+            s_, f_, r_ = min(ignored_hits[d], key=lambda h: tuple(map(str, h)))
             print(f"  {d:24s} {len(ignored_hits[d]):4d} reference(s), e.g. {s_} {f_} (rung {r_})")
         print(f"  total: {sum(len(v) for v in ignored_hits.values())}")
         print("  A build tree here resolves on this disk and not in CI; state kept out of git on\n"
