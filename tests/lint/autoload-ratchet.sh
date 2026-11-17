@@ -34,7 +34,11 @@ set -u
 root="${1:-}"; mode="${2:-}"; reason="${3:-}"
 [ -n "$root" ] && [ -d "$root" ] || { echo "usage: autoload-ratchet.sh <repo-root> [--update|--raise <reason>]" >&2; exit 2; }
 cd "$root" || exit 2
-BASELINE="tests/lint/autoload-baseline.tsv"
+# The baseline lives in memory/ (gitignored, its own local git), not in a tracked
+# file: it measures memory/MEMORY.md, which CI never has, and a tracked baseline
+# turned every index edit into a branch, a PR and a CI wait (2026-11-17: nine
+# wrap-only PRs in two days carried little else).
+BASELINE="memory/autoload-baseline.tsv"
 
 # DECLARED, not discovered — and that is the one place this differs from rule 8.
 # The auto-loaded set is a fact about the tool, not a directory: CLAUDE.md is read
@@ -49,6 +53,9 @@ if [ -n "$missing" ]; then
   # memory/ is gitignored, so a fresh clone and CI have no index. Measuring the
   # remaining member would read as a large shrink and FAIL on the "lock it in"
   # arm — a green CI turned red by a file that was never supposed to be there.
+  case "$mode" in --update|--raise)
+    echo "cannot $mode: the auto-loaded set is incomplete —$missing absent, so there is nothing to set a ceiling from and nothing was written" >&2; exit 2 ;;
+  esac
   echo "SKIPPED: the auto-loaded set is incomplete —$missing absent (gitignored here). A partial measure reads as a shrink, so this rule does not bind." >&2
   echo "      0 of 2 auto-loaded file(s) measured" >&2
   exit 0

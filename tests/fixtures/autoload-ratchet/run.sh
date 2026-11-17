@@ -73,7 +73,7 @@ p = pathlib.Path(sys.argv[1]); s = p.read_text()
 i = s.index("- pointer 1") + len("- pointer")
 p.write_text(s[:i] + "\n" + s[i+1:])
 EOF
-b_was=$(sed -n 's/^# BYTES \([0-9]*\).*/\1/p' "$WORK/t2/tests/lint/autoload-baseline.tsv")
+b_was=$(sed -n 's/^# BYTES \([0-9]*\).*/\1/p' "$WORK/t2/memory/autoload-baseline.tsv")
 b_now=$(( $(wc -c < "$WORK/t2/CLAUDE.md") + $(wc -c < "$WORK/t2/memory/MEMORY.md") ))
 [ "$b_was" = "$b_now" ] || { echo "  FAIL  T2 setup: bytes moved $b_was -> $b_now, so this case cannot isolate the line arm"; FAIL=1; }
 want_fail "T2 index line growth is reported at IDENTICAL bytes" "$WORK/t2" "GREW to"
@@ -88,7 +88,7 @@ want_fail "T3 an unlocked shrink is reported, not silently accepted" "$WORK/t3" 
 # down by itself and up only by a deliberate, recorded act.
 build "$WORK/t4"; printf 'growth\n' >> "$WORK/t4/CLAUDE.md"
 ( cd "$WORK/t4" && bash "$RULE" . --update >/dev/null 2>&1 )
-if [ "$?" -eq 2 ] && [ "$(sed -n 's/^# BYTES \([0-9]*\).*/\1/p' "$WORK/t4/tests/lint/autoload-baseline.tsv")" != "" ]; then
+if [ "$?" -eq 2 ] && [ "$(sed -n 's/^# BYTES \([0-9]*\).*/\1/p' "$WORK/t4/memory/autoload-baseline.tsv")" != "" ]; then
   run "$WORK/t4"
   if [ "$RC" -eq 1 ]; then printf '  PASS  %s\n' "T4 --update refuses to raise the ceiling"
   else printf '  FAIL  T4 --update raised the ceiling silently\n'; FAIL=1; fi
@@ -101,8 +101,14 @@ build "$WORK/t5"; rm -f "$WORK/t5/memory/MEMORY.md"
 skip_case "T5 an absent index SKIPS loudly instead of measuring half the set" "$WORK/t5"
 
 # T6 — no baseline is not a pass.
-build "$WORK/t6"; rm -f "$WORK/t6/tests/lint/autoload-baseline.tsv"
+build "$WORK/t6"; rm -f "$WORK/t6/memory/autoload-baseline.tsv"
 want_rc "T6 a missing baseline exits 2, never 0" "$WORK/t6" 2
+
+# T7 — a write mode with no index must not report success: it wrote nothing.
+build "$WORK/t7"; rm -f "$WORK/t7/memory/MEMORY.md"
+( cd "$WORK/t7" && bash "$RULE" . --update ) >/dev/null 2>&1; RC=$?
+if [ "$RC" -eq 2 ]; then printf '  PASS  %s\n' "T7 --update with no index exits 2, never 0"
+else printf '  FAIL  %s — rc=%s, wanted 2\n' "T7 --update with no index exits 2, never 0" "$RC"; FAIL=1; fi
 
 # ── Ablations ─────────────────────────────────────────────────────────────────
 ablate() {  # label, old, new, cases that must flip to clean
