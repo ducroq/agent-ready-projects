@@ -175,7 +175,9 @@ bash tests/lint/run.sh && bash tests/run-fixtures.sh
 ```
 
 ⚠️ **Both halves.** `tests/lint/run.sh` alone is a partial baseline — the fixture suite is
-where the seeded-defect and sensitivity guards live.
+where the seeded-defect and sensitivity guards live. **Locally, the fixture half is the suites
+the diff touches; CI runs every suite on every PR, and a release runs them all locally**
+(2026-11-17: the full suite takes ~3 min and was most of a wrap-up's test time).
 
 ## Always-full-depth carve-outs (project additions)
 
