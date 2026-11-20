@@ -57,7 +57,7 @@ want_fail "T5 a shipped skill no surface names is reported" "$WORK/t5" "test-ver
 
 # T6 — the authority moves, the surfaces do not: scope is DERIVED from the installer.
 build "$WORK/t6"
-seed "$WORK/t6" scripts/install-global-skills.sh 'GLOBAL_SKILLS="curate audit-context update-drift review-changes"' 'GLOBAL_SKILLS="curate audit-context update-drift"'
+seed "$WORK/t6" scripts/install-global-skills.sh 'GLOBAL_SKILLS="curate audit-context update-drift review-changes savepoint"' 'GLOBAL_SKILLS="curate audit-context update-drift savepoint"'
 seed "$WORK/t6" scripts/install-global-skills.sh 'LOCAL_ONLY="release test-verify-memory"' 'LOCAL_ONLY="release test-verify-memory review-changes"'
 want_fail "T6 the installer changes a skill's scope and the surfaces lag" "$WORK/t6" "review-changes is LOCAL_ONLY"
 
