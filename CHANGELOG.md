@@ -22,7 +22,15 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.54.0 (candidate, unreleased)
+## v1.54.0 (2026-11-20)
+
+**MINOR.** A new user-global skill, `savepoint`, for the cheap step between "task done" and clearing the context. No consumer has to act, so rule 1 of `templates/release.md` Step 2 does not fire; a new template is a new artifact, so rule 2 makes it MINOR, on the v1.40.0 precedent (`templates/review-profile.md`).
+
+Adopter-facing size: +7398 bytes (`templates/`, measured against v1.53.0): `savepoint` +6701 (paid only when it runs), `README` +507, `project-file` +190 (one Before You Start row, paid every session).
+
+**Consumer notes.** Nothing breaks. To adopt: install `.claude/skills/savepoint/SKILL.md` user-globally (Claude Code) or keep `templates/savepoint.md` as a task-boundary prompt; add the Before You Start row "A task is done, before clearing the context"; then run it once and approve the `## Savepoint` block it proposes for your project file. A current copy contains the strings `Handoff lives in:` and `never "safe to clear" on a commit that did not happen`.
+
+**Internal.** The session-start ratchet baseline moved from `tests/lint/autoload-baseline.tsv` to the gitignored `memory/` (#362); this repo's `CLAUDE.md` gains its own `## Savepoint` block.
 
 ### New skill: `savepoint`, a cheap handoff between tasks (#363)
 
