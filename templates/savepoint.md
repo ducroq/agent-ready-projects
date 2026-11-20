@@ -24,7 +24,8 @@ The project file carries a `Savepoint` block. Quote it exactly; the skill holds 
 
 ```
 ## Savepoint
-- Handoff: <path> § <heading> (cap <N> bytes)
+- Handoff: <path> § <heading | whole file> (cap <N> bytes) — the path may be outside the repo, e.g. ~/notes/next.md
+- Handoff lives in: this repo's git | another git at <path> | outside git (a durable store such as a tool's memory directory or a backed-up folder)
 - Commit route: direct | branch + PR
 - Blocking checks: <none | a file pattern or command; open = block>
 - Preserve: <none | lines or sections of the block that are standing, not open items>
@@ -38,7 +39,7 @@ The project file carries a `Savepoint` block. Quote it exactly; the skill holds 
 Do not say "safe to clear" while any of these holds. Name each one found, with the command or listing that found it.
 
 1. **Running work** — a background task, subagent, watcher or scheduled job this session started, still running and not written into the handoff block. Finish it, stop it, or write it into the block (what it is, how to check it, how to re-create it).
-2. **Uncommitted changes this session made.** List `git status --porcelain`; commit what this session changed by the declared route (Step 4), as a WIP commit if unfinished. **Never a bare `git stash`**: the stash is shared by every worktree and session in the clone. **Files this session did not touch are not yours to commit** — list them in the report and leave them.
+2. **Uncommitted changes this session made.** List `git status --porcelain` in this repo and in the handoff's git, if that is another one; commit what this session changed by the declared route (Step 4), as a WIP commit if unfinished. **Never a bare `git stash`**: the stash is shared by every worktree and session in the clone. **Files this session did not touch are not yours to commit** — list them in the report and leave them.
 3. **A gate passed but its action is not yet taken** (checks green, the deploy or merge it licenses not yet run). No file records this state; only the session knows it.
 4. **A declared blocking check is open** (a deploy or gate window, for example). The engineer can override; record the override and who gave it in the block.
 
@@ -46,7 +47,7 @@ A clean result states the checks run and what a positive would have looked like 
 
 ## Step 2 — Replace the handoff's top block
 
-**Replace it; never append.** An appended handoff grows past cheap reading. Resolved items leave the block, except what the declaration's `Preserve` line names (standing rulings, for example), which is carried over unchanged; history belongs in a session file or the log, not here. The block lists:
+**Replace it; never append.** With `whole file`, the block is the file. An appended handoff grows past cheap reading. Resolved items leave the block, except what the declaration's `Preserve` line names (standing rulings, for example), which is carried over unchanged; history belongs in a session file or the log, not here. The block lists:
 
 - **Open items**, and every wait with an absolute date and time (never "tomorrow").
 - **Rulings and approvals given only in chat**, with the date and who gave them — the transcript will not survive the clear.
@@ -64,12 +65,16 @@ Run each declared step and report its result. A step that cannot run blocks the 
 
 ## Step 4 — Commit by the repo's route
 
+First check the declaration against disk: `git -C <handoff dir> rev-parse --show-toplevel` must name the declared git, or fail for `outside git`, and an outside-git path must not sit under a temporary or scratch directory. A mismatch is a cannot-complete; report it and stop.
+
+Then commit the handoff where it lives: **this repo's git** or **another git** by the declared route; **outside git**, no commit, since the store is durable: say so in the report.
+
 - **direct**: commit the handoff (and anything Step 1 resolved) with a message naming the savepoint.
 - **branch + PR**: in a separate worktree branched from the default branch — **never by switching the shared checkout**, which other sessions or tools may be reading — commit, push, open the PR. **Never merge it**: merging follows the repo's own rules.
 
-Commit only the paths this session changed, by name, from your own record of edits; where you cannot tell, list the path and ask. Never `git add -A`.
+In any git, commit only the paths this session changed, by name, from your own record of edits; where you cannot tell, list the path and ask. Never `git add -A`.
 
-**Cannot complete**: the handoff is untracked or ignored (commit what is tracked, and say the handoff is local only), or the route needs a remote or PR tool the repo lacks. Report what was done and what was not; never "safe to clear" on a commit that did not happen.
+**Cannot complete**: the handoff is untracked or ignored in a git the declaration says holds it, or the route needs a remote or PR tool the repo lacks. Report what was done and what was not; never "safe to clear" on a commit that did not happen.
 
 ## Step 5 — Report
 
