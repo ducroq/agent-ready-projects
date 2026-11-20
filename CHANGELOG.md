@@ -22,6 +22,12 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.54.0 (candidate, unreleased)
+
+### New skill: `savepoint`, a cheap handoff between tasks (#363)
+
+`templates/savepoint.md` (user-global; reference install `.claude/skills/savepoint/SKILL.md`) is the step between "task done" and clearing the context. It refuses while a background task, uncommitted change, passed-but-unactioned gate or declared blocking check is open; **replaces** the handoff's top block (open items with absolute dates, rulings given only in chat, questions and promises to other sessions word for word, jobs to re-create, scratch files to keep), keeping what the repo marks as standing; commits by the repo's route, in a separate worktree for the PR route and never merging; then says "safe to clear". Each repo declares six lines in a `## Savepoint` block in its project file, including where the handoff lives: a handoff outside git (a tool's memory directory, a backed-up folder) is checked against disk and not committed; with none, the skill proposes one and stops. `curate` stays the end-of-day pass. Adopters who want it install it; no one has to act.
+
 ## v1.53.0 (2026-11-16)
 
 **MINOR.** No consumer has to act, so rule 1 of `templates/release.md` Step 2 does not fire; three new scripts (`gotcha-headers.sh`, `hypothesis-due.sh`, `autoload-size.sh`) are new artifacts, so rule 2 makes it MINOR, on the v1.10.1 precedent. What shipped: `curate` thinner by retiring a step that never caught anything (H-031) and by moving three Step 0 measurements into tested scripts; `refcheck.py` explains its own report; five adopter-reported bugs fixed (#237, #238, #276, #279, #341).

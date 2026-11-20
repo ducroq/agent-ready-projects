@@ -3,7 +3,7 @@
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and every raise is
 # recorded below, oldest first — notes accumulate and are never replaced.
-# BUDGET 160023
+# BUDGET 167421
 # SPILL 190933
 # RAISED 2026-09-06 from 247526 to 247969: #133: the #118 remedy string shipped unconditional and can turn a resolved reference into an AMBIGUOUS finding; the caveat that scopes it is +443 b on templates/audit-context.md, seeded as T39/T40/N39 (reason restored 2026-09-06 — write_baseline used to overwrite each note with the next)
 # RAISED 2026-09-06 from 247969 to 248237: #140: UNRESOLVED had two causes printing one reason. +268 b on templates/audit-context.md, seeded as T41/T41b/N40 (reason restored 2026-09-06)
@@ -124,6 +124,7 @@
 # ratcheted down 2026-11-15
 # RAISED 2026-11-15 from 159670 to 159940: curate Step 0 reports CANNOT MEASURE instead of 0 when memory roots are absent (#238); +270, after #343's -1751
 # RAISED 2026-11-15 from 159940 to 160023: curate Step 1 files gotchas at the top of a newest-first log, else above the first index heading, Promoted or Mechanized (#237); +83
+# RAISED 2026-11-20 from 160023 to 167421: #363: new user-global skill templates/savepoint.md (6701 b, paid per invocation, not per session), its map rows in templates/README.md, and one Before You Start row in templates/project-file.md (paid every session). One record for the whole change, amended after review added the row and the cannot-complete clause, and again after two smoketests added where the handoff lives (in a git or outside one) and a review pass added the disk check on that declaration; last, three wording fixes from the adopter's second smoketest. NEW CAPABILITY, engineer's go 2026-11-20 to build now; requested by an adopter estate. No shrink attempted: the skill is the whole change.
 templates/adr.md	2115
 templates/audit-context.md	15250
 templates/checklists/architect-checklist.md	1263
@@ -136,13 +137,14 @@ templates/curate.md	19946
 templates/gotcha-log.md	10638
 templates/hypothesis-log.md	3570
 templates/memory-index.md	3388
-templates/project-file.md	6717
-templates/README.md	12042
+templates/project-file.md	6907
+templates/README.md	12549
 templates/release.md	13820
 templates/review-agent.md	5720
 templates/review-changes.md	19868
 templates/review-profile.md	6222
 templates/RUNBOOK.md	2795
+templates/savepoint.md	6701
 templates/test-fixtures/memory/decision-no-verify.md	185
 templates/test-fixtures/memory/observation-no-verify.md	185
 templates/test-fixtures/memory/pattern-no-verify.md	216
