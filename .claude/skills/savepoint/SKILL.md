@@ -38,24 +38,24 @@ A clean result states the checks run and what a positive would have looked like 
 **Replace it; never append.** With `whole file`, the block is the file. An appended handoff grows past cheap reading. Resolved items leave the block, except what the declaration's `Preserve` line names (standing rulings, for example), which is carried over unchanged; history belongs in a session file or the log, not here. The block lists:
 
 - **Open items**, and every wait with an absolute date and time (never "tomorrow").
-- **Rulings and approvals given only in chat**, with the date and who gave them — the transcript will not survive the clear.
+- **Rulings and approvals given only in chat**, with the date and who gave them — the transcript will not survive the clear. One already recorded elsewhere gets one line and a pointer.
 - **Questions to other sessions or people, and promises made to them, word for word.**
 - **Reports and probe results not yet logged** anywhere durable.
 - **Scheduled jobs and watches to re-create**, with their interval — they die with the session.
 - **Temporary files worth keeping**, moved first to durable storage: a new session gets a new scratch path.
 - **The next step**, quoted from the engineer where they gave one.
 
-Point to an active work item rather than copying it. Measure the block (`wc -c`) against the declared cap; over the cap, cut resolved and duplicated lines, never preserved ones. Still over: report the size and stop — do not compress meaning to fit.
+Point to an active work item rather than copying it, and update any index line that describes the handoff. Measure the block (`wc -c`) against the declared cap; over the cap, cut resolved and duplicated lines, never preserved ones. Still over: report the size and stop — do not compress meaning to fit.
 
 ## Step 3 — Run the declared mandatory steps
 
-Run each declared step and report its result. A step that cannot run blocks the savepoint; it is not skipped in silence.
+Run each declared step and report its result. A step whose output feeds the block runs before Step 2. A step that cannot run blocks the savepoint; it is not skipped in silence.
 
 ## Step 4 — Commit by the repo's route
 
 First check the declaration against disk: `git -C <handoff dir> rev-parse --show-toplevel` must name the declared git, or fail for `outside git`, and an outside-git path must not sit under a temporary or scratch directory. A mismatch is a cannot-complete; report it and stop.
 
-Then commit the handoff where it lives: **this repo's git** or **another git** by the declared route; **outside git**, no commit, since the store is durable: say so in the report.
+Then commit the handoff where it lives: **this repo's git** by the declared route; **another git** by direct commit there unless the declaration names its route; **outside git**, no commit, since the store is durable: say so in the report.
 
 - **direct**: commit the handoff (and anything Step 1 resolved) with a message naming the savepoint.
 - **branch + PR**: in a separate worktree branched from the default branch — **never by switching the shared checkout**, which other sessions or tools may be reading — commit, push, open the PR. **Never merge it**: merging follows the repo's own rules.

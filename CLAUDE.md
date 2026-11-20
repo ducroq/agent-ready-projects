@@ -42,6 +42,15 @@ The source framework that teaches the layered memory method for AI coding agents
 - **Never stack PRs.** Branch each from master; deleting a merged base closes the PR on it (x3, `memory/gotcha-log.md`).
 - **Tool-agnostic in adopter-facing content.** `README.md`, `adopt.md`, `templates/` and `docs/GUIDE.md` must not assume Claude Code. Maintainer infrastructure (this file, `memory/`, `.claude/`) can be Claude-specific.
 
+## Savepoint
+
+- Handoff: memory/MEMORY.md § Current State (cap 4500 bytes)
+- Handoff lives in: another git at memory/ (local history, no remote; direct commit)
+- Commit route: branch + PR
+- Blocking checks: none
+- Preserve: the "If you were told only continue" directive, THE THROUGH-LINE, the Standing and Known-holes lines
+- Mandatory steps: `bash tests/lint/run.sh` (rules 14 and 15 read `memory/`)
+
 ## Architecture
 
 Orientation only: each file's own header, README or runner comment is the authority on what it does.
