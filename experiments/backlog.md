@@ -584,3 +584,146 @@ No reader ran, no answer was graded, no score exists.
     d27a967847903e9ede24bd2b09669d9fe341a8b8ca16369f9d528b13aa5088d9  fixture.py
 
 Where this text and a script disagree, the run stops. Run data: `lab/experiments/2026-11-11-exp009/`.
+
+## EXP-010: what do context-compaction prompts keep for later sessions? (DRAFT, not pinned)
+
+⚠️ **Draft.** Nothing below is frozen until a commit pins it in `pins.tsv`. Scripts are not
+written. Issue #325. Review rounds 1 and 2 (2026-11-14, adversarial) found six and three blockers; this text is
+the revision after round 2, not yet re-reviewed.
+
+**Hypotheses**: H1, the probe set detects deleted evidence (the instrument works). H2, a vendor
+compaction summary keeps more of what **later-session** questions need than size-matched
+**extractive** selection from the same transcript: H-035's claim, judgement against a mechanical
+cut, on a second text type. H3, whether the verbatim clauses of a long compaction prompt carry
+what later sessions need.
+**Decision it feeds**: (1) H-035's second replication, which #310 waits on; (2) whether
+`curate`'s verbatim rules (#321) and its compaction advice (#323) stay as shipped; (3) nothing
+ships on the size comparison alone.
+**Subject**: N = 6 Claude Code transcripts of this repo, drawn with a fixed seed from those whose
+**rendered** text is 40k-150k tokens and that contain **no compaction boundary** (a compacted
+session already holds a Claude Code summary, which would favour that arm). Whether a transcript
+contains a curate run is recorded and reported, not filtered on. Private: transcripts, probes and
+summaries stay in `lab/`; only aggregates are published.
+
+### Why this design
+
+Coding-agent tools compact long sessions with very different prompts, and none publishes an
+evaluation. Read 2026-11-14: Claude Code (v2.1.325, ~1,000 words, keeps every user message and
+quotes the next step verbatim), Codex (`codex-rs/prompts/templates/compact/prompt.md`, ~70 words),
+Mistral Vibe (`vibe/core/prompts/compact.md`, ~150 words), Gemini CLI (`getCompressionPrompt` in
+`packages/core/src/prompts/snippets.ts`, ~500 words). All are written to continue the current
+task. arXiv 2610.27301 found compaction tuned to a known question no better than random deletion
+on later ones; EXP-009 found probe-blind pruning of a project file beat random at 57-60% kept.
+Here the summaries keep roughly 1-3% of a transcript, where random deletion is near-empty by
+construction, so the control is extractive, not random.
+
+### Rendering (identical for every step)
+
+A **user message** is human-typed text only: tool results, system reminders, hook and command
+output, expanded skill or command bodies and subagent (sidechain) messages are excluded from it
+and rendered as tool output. Thinking blocks are dropped. One script renders a transcript to a
+single text file: user and assistant messages in full,
+each tool call as its command line, each tool result truncated to its first 2,000 characters.
+The writer, every summarizer and the **full** and control arms all receive that file, hashed in
+`lab/` before any call. A probe whose evidence lies outside it is refused. Transcripts are
+scanned for secrets (keys, tokens, emails) before any call, and a hit is redacted in the
+rendered file, not skipped.
+
+### Order of steps (the runner refuses to go out of order)
+
+1. Render and hash. 2. Probe writer; probes, kinds and sub-kinds hashed in `lab/`. 3. Summaries,
+refused without step 2's hash. 4. Controls, built by script. 5. Readers. 6. Grading. Every
+model call launches closed-book as `experiments/exp009/prompts.md` requires (text only, no tools,
+outside any repo), the probe writer and summarizers included.
+
+### Arms (per transcript)
+
+| Arm | How it is made |
+|---|---|
+| **full** | The rendered transcript. Ceiling. |
+| **empty** | Nothing. Floor; its exact-identifier score is reported separately, since a public repo can be guessed. |
+| **seeded** | full minus the evidence messages of 3 identifier probes drawn with the fixed seed, from those whose evidence backs no other probe and whose key appears in no rendered message outside their evidence (checked by script). H1's arm. |
+| **claude**, **codex**, **mistral**, **gemini** | One summary each, by `claude-sonnet-5-5`, with that vendor's prompt verbatim, same framing for all (rendered text as one user turn, the prompt after it) and one max-output-tokens value for all (8,000). A truncated summary is reported. This is each vendor's *prompt*, not its whole compaction (Claude Code also re-attaches files). Prompt texts live in `lab/`. Each is pinned here as package@version, file path and byte range (so it can be re-extracted) plus its sha256, never its text. |
+| **claude-noverbatim** | The Claude prompt with its "list all user messages" section and its "verbatim / direct quotes" sentences deleted. Pinned as line ranges of the source text, the sha256 of each deleted span, and word counts before and after. H3's arm. |
+| **extract-*X*** per summary *X* | Size-matched mechanical control: all user messages, newest first, then the newest other messages, until within ±5% of *X*'s bytes, emitted in transcript order. If one message would jump past the window, it is cut at a line boundary to land inside it, and that is reported. |
+| **tail-*X*** per summary *X* | The newest messages of any role to *X*'s bytes ±5%, same cut rule. Reported beside extract, no bar. |
+
+### Probes
+
+A fresh agent (`claude-opus-5-5`), seeing only the rendered transcript, writes 24 questions per
+transcript, each with a key, the message(s) it rests on, a kind and a sub-kind:
+
+- **continuation** (8): its evidence lies in the final 15% of rendered bytes (checked by script;
+  no writer marker) and concerns the open task (goal, current step, next step, pending work).
+- **later-session** (16), exactly 4 per sub-kind: **correction** (a user correction or stated
+  preference), **gotcha** (a problem and its fix), **decision** (a choice and its reason),
+  **identifier** (an exact path, command or issue number). At most 4 of the 16 may have evidence
+  in the final 15%; later-session scores are also reported without them.
+
+The split checks of `exp009.py` apply (evidence must be in the file, key on its evidence line, no
+key in its own question; a key leaking into another question bars that probe from seeding).
+
+### Reader and grading
+
+Closed-book readers, three per arm per transcript, `claude-sonnet-5-5`; on one transcript, a
+second reader model (`claude-opus-5-5`) also reads every arm, report-only, to show whether a
+Sonnet summary read by Sonnet is favoured. Identifier probes are graded by script as in EXP-009
+(whole-token match). That rewards verbatim text by design: an identifier a session cannot quote
+exactly is lost to it. The rest go to a fresh grader (`claude-opus-5-5`) with the key, answers
+pooled, shuffled and unlabelled. A probe passes for an arm when at least 2 of its 3 readers pass it; an arm's score is its
+number of passing probes.
+
+### Decision rule
+
+Comparisons are per transcript, on later-session probes, "above" means strictly above, and a
+tie counts against the hypothesis.
+
+- **H1 holds** if in at least 5 of 6 transcripts **seeded** fails at least 2 of its 3 seeded
+  probes while **full** passes at least 2. (At a 0.75 full pass rate and 0.9 seeded fail rate
+  this holds with probability about 0.70: a real risk of an inconclusive instrument, accepted.) Otherwise H1 is inconclusive: nothing else is read,
+  no rule changes, and the instrument is re-registered as a new EXP, never re-rendered in place.
+- **H2** is scored on the gotcha, decision and identifier sub-kinds only (extract keeps every
+  user message, so it gets corrections nearly free; correction is reported per arm, no bar).
+  **Holds** if the mean of the four vendor arms is above the mean of their extract controls in at
+  least 5 of 6 transcripts; **fails** if the extract mean is above the vendor mean in at least 5
+  of 6; inconclusive otherwise. Holds: H-035 is supported on a second text type, and #310's probe
+  check stays optional. Fails: compaction summaries do not beat size-matched extraction on these
+  transcripts; H-035 is marked contested and #310 is re-opened. Inconclusive: no change, reported
+  as no signal.
+- **H3** compares each arm's *margin over its own extract control*, not raw scores, so a longer
+  summary does not win on length. Checked in order, first match wins: (a) **claude**'s margin
+  above **claude-noverbatim**'s in at least 5 of 6 transcripts, the summed gap positive, and more
+  than 50% of it in the correction and identifier sub-kinds: the verbatim rules stay. (b) the
+  margins within 1 probe on average and **claude-noverbatim**'s above in at least 3 transcripts:
+  the verbatim rules are reviewed for cost. (c) Otherwise: no change.
+- **Reported without a bar**: each arm's margin over its own extract control (so length is not
+  the comparison); bytes against score; continuation against later-session per prompt; empty's
+  exact-identifier score; the second reader model; per-transcript margins.
+- **Published** to `experiments/artifacts/exp010.json`: per-arm aggregates, size bands (not
+  token counts), probe kinds. No probe, transcript or summary text, no session IDs, dates or
+  titles.
+
+N = 6. Under a null of no difference, 5 of 6 happens by chance about 11% of the time: this is a
+signal, not proof, and any rule it triggers ships saying so.
+
+### Stop rules
+
+A summarizer that returns nothing or errors is retried once, then the run stops. A probe set
+that fails the split checks after one re-ask stops the run. A transcript that fails the secret
+scan after redaction is replaced by the next draw, and that is reported.
+
+### Open before pinning
+
+1. Re-review this revision (round 2), then the scripts (`exp010.py`: render, scan, split, extract,
+   seed, grade; `prompts.md`), as EXP-008 had.
+2. Script hashes and the sha256 check line, as EXP-009.
+3. Spend: per transcript, 1 writer + 5 summaries + 18 arms (full, empty, seeded, 5 summaries,
+   5 extract, 5 tail) × 3 readers, + 18 Opus reader calls on one transcript, + grading; state the
+   total before the run.
+4. Pool measured 2026-11-14 with `experiments/exp010/render.py pool` (characters ÷ 4): 28
+   transcripts, 2 with a compaction boundary, **10 eligible**, so N = 6 is drawable. A first
+   ad-hoc count said 14: it read `api-request-blob` entries, which duplicate messages. ÷ 4 is an
+   estimate; re-measure with a real tokenizer before pinning.
+5. Scripts so far: `exp010/render.py` (render, user-message rule, secret redaction, pool) and
+   `exp010/fixture.py` (14 seeded cases; four rule mutations each turned it red). Still to write:
+   split checks, extract/tail/seeded builders, grading, scoring, `prompts.md`.
