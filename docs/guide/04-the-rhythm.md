@@ -79,8 +79,8 @@ flowchart TD
     StepHL --> SurfaceHL["Flag entries past Review by;<br/>flag entries whose Revisit trigger fired"]
     SurfaceHL --> Step4
 
-    Step4["4. Doc sync check"]
-    Step4 --> Sync["Verify project file, runbook,<br/>backlog match current repo"]
+    Step4["4. Work-item check"]
+    Step4 --> Sync["Fill finished Outcomes,<br/>flag idle work items"]
     Sync --> Report["5. Report summary"]
 
     style Start fill:#f0fdf4,stroke:#16803c
@@ -123,7 +123,7 @@ flowchart TD
         Curate --> Summarize["Summarize repeated lessons"]
         Curate --> Prune["Flag stale entries"]
         Curate --> Promote["Promote recurring patterns"]
-        Curate --> DocSync["Doc sync check<br/>(project file, runbook, backlog)"]
+        Curate --> DocSync["Work-item check<br/>(outcomes, idle items)"]
     end
 
     subgraph monthly["Monthly"]

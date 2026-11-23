@@ -86,22 +86,7 @@ Check for context rot from *previous* sessions. **Read metadata, not documents**
 
    Before writing one, read the rules on `--` and `-->`, one-line form, `|`, host guards, stamp-derived versions and absolute paths: <https://github.com/ducroq/agent-ready-projects/blob/master/docs/rationale/curate.md#writing-a-verify-command> <!-- lint-skip: maintainer-path — a URL, not a repo-relative path: it resolves for a reader with no such directory. -->. If you cannot reach them, write the probe, run it, and say so in the report.
 
-4. **Index self-consistency**: Check whether two index entries assert opposite things.
-
-   - **Start with the cheap cluster: entries citing the same identifier.** Against the index (`memory/MEMORY.md` for Claude Code, the project file for a tool without auto-memory):
-
-     ```
-     idx=/abs/path/to/index.md
-     [ -f "$idx" ] || echo "NO INDEX AT THAT PATH — this check examined nothing"
-     grep -onE '[A-Za-z0-9_.-]*#[0-9]+' "$idx" | sort -u | cut -d: -f2- | sort | uniq -d
-     ```
-
-     Read the surviving entries *together*. `adopterrepo#76` and a local `#76` are different trackers. Discard hex colours.
-   - The entity pass is retired (v1.45.0); re-add it only with a pair to point at.
-   - For ids like `ADR-023` or `PROJ-45`, change the pattern (`[A-Za-z]+-[0-9]+`) and check what it matches.
-   - **An entry that names and dates the claim it supersedes is a correction, not a contradiction.** A contradiction is two entries asserting without reference to each other.
-   - **Report the pair verbatim; do not pick a winner from the text.** Probe whichever claim can be probed; otherwise surface both to the engineer.
-   - If the index exceeds ~200 lines or the sub-step 6 budget, report that and run the identifier pass alone.
+4. **RETIRED** (index self-consistency, #367). Re-add it only with a contradicting pair to point at.
 
 5. **Hypothesis log surface**: If a hypothesis log exists (**check both `memory/hypothesis-log.md` and `docs/hypothesis-log.md`**), read the script's list, not the log:
 
@@ -182,17 +167,14 @@ Read the memory index (`MEMORY.md` for Claude Code, or the project file for othe
 
 **Don't accrete session narrative onto the project file footer.** Session-level "what happened today" belongs in `memory/project_session_YYYY_MM_DD.md`, with a one-line pointer added to `MEMORY.md`.
 
-## Step 4 — Doc sync check
+## Step 4 — Work-item check
 
-Check whether key docs reflect the current repo state.
+The doc sync checks (Architecture, commands, runbook) are retired (#367). Re-add one only with a catch to point at.
 
-1. **Project file Architecture section**: Compare listed files/directories against actual repo contents. Flag new files not listed, or listed files that no longer exist.
-2. **Project file Key Commands / How to Work Here**: Verify commands still match actual CLI flags and defaults. Flag any mismatches.
-3. **Runbook** (if it exists): Check that operational details (environment setup, deployment steps, common problems) match reality. Flag anything that looks stale.
-4. **Work-item check**: Scan `docs/work-items/` for files with an incomplete Outcome section. For each:
-   - If the work completed this session, fill the Outcome and suggest updating the pointer to `[done]` — wherever this project keeps them (memory index, or the project file's "Active work" section)
-   - If the Current Status shows no activity for 14+ days, flag as potentially abandoned — surface to the engineer
-   - If the file has no corresponding pointer in either list, add one to whichever this project uses (or flag if unclear)
+Scan `docs/work-items/` for files with an incomplete Outcome section. For each:
+- If the work completed this session, fill the Outcome and suggest updating the pointer to `[done]` — wherever this project keeps them (memory index, or the project file's "Active work" section)
+- If the Current Status shows no activity for 14+ days, flag as potentially abandoned — surface to the engineer
+- If the file has no corresponding pointer in either list, add one to whichever this project uses (or flag if unclear)
 
 Fix what you can. Flag anything that needs engineer input.
 
@@ -204,8 +186,7 @@ Fix what you can. Flag anything that needs engineer input.
 
 - **Freshness**: Gotcha log headers reconciled against the `**Problem**` count, and the Promoted table read
 - **Verification**: State claims checked — N passed, N failed, N unverified, N errored, N manual check needed, N cannot verify, N malformed. Report all seven, even zeros, plus **N commands run of M annotations**, the difference, and the exit status
-- **Index self-consistency**: N identifiers cited by more than one *entry*, and N contradicting pairs among them. Report both; say whether zero meant nothing to compare. Quote any pair verbatim
 - **Gotchas**: New entries added, entries resolved or promoted, and **N promoted patterns re-checked, N recurred; N constraint rows, N re-checked, N false**. Report all, even zeros: zero constraint rows looks like a skipped step unless reported (#183). Name any pattern that recurred *after* promotion
 - **Memory index**: Updates made
-- **Doc sync**: Project file, runbook, backlog updates made or flagged
+- **Work items**: Outcomes filled, pointers added or updated, items flagged as idle
 - **Action needed**: anything needing an engineer decision, including `audit-context` (don't run it) when the memory index's `Last audit:` is missing, `never` or over 30 days old
