@@ -61,7 +61,7 @@ The agent does four things:
 - **Correlate** — Link entries that stem from the same root cause
 - **Summarize** — Five timeout gotchas → "this API is unreliable under load"
 - **Prune** — Flag stale entries for removal
-- **Doc sync** — Verify project file, runbook, and backlog match the current repo state
+- **Work items** — Fill finished Outcomes and flag idle items
 
 **You don't write from recall.** The agent drafts; you review.
 

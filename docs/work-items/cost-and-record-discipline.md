@@ -27,7 +27,7 @@ Goal: make the framework cheaper to run without cutting review of the shipped su
 7. ✅ Cheap issues: #238 (#344), #276 (#345), #237 (#347) merged and closed 11-15; #296 closed as obsolete (its section was cut in #343).
 8. ✅ The four rules the H-031 cut dropped stay out (engineer, 11-15).
 9. ✅ H-021 resolved, supported for this repo with the fixer as classifier (engineer, 11-15); 10 hypotheses open.
-10. ✅ Retire candidates found and preregistered (engineer, 11-15): `curate` Step 0.4 index self-consistency (H-036, 1241 bytes) and Step 4 doc sync (H-037, 1128 bytes) had no recorded catch here. Each is kept at 2 of 8 curate runs, else cut. **Every curate run from now: tally both in the session file.** Together they would put `curate` under 18.9k.
+10. ✅ Retire candidates found and preregistered (engineer, 11-15): `curate` Step 0.4 index self-consistency (H-036, 1241 bytes) and Step 4 doc sync (H-037, 1128 bytes) had no recorded catch here. Each is kept at 2 of 8 curate runs, else cut. Both cut 2026-11-23 after three empty runs (#367); `curate` is now ~18.2k, under 18.9k.
 11. ✅ #345 fresh-read: one false free (no `origin` remote + a `./origin` dir) and invalid ref names, fixed in #350 (merged 11-15, seeded, no second reader). Release blocker cleared.
 12. **Triage, in progress**: #341 (#352, refcheck example row stable, T76) and #279 (#353, SPEC fourth UNRESOLVED cause) merged 11-16. **Next: #309** (future `Last audit:` date: treat as malformed in `curate`, write it from the system clock in `audit-context`; ~+100 bytes). Then #241 (adds bytes; needs a retire to pay).
 

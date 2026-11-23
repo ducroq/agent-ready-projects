@@ -22,6 +22,14 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.55.0 (candidate, unreleased)
+
+### `curate`: two steps retired for no catch (#367)
+
+`curate` Step 0 sub-step 4 (index self-consistency) and Step 4's doc sync checks (project file Architecture, Key Commands, runbook) are retired. Each was preregistered on 2026-11-15 to be kept only if it caught something in 2 of the next 8 `curate` runs in this repo; after three runs neither had a catch, and the engineer chose to cut now rather than wait, and without the adopter ask (#308) that #367 proposed (H-036, H-037). The evidence is from this repo only. The work-item check, formerly 4.4, stays as Step 4, and the report's "Doc sync" line becomes "Work items". The guide diagrams and the rationale follow.
+
+**Consumer notes.** Nothing breaks. An installed `curate` keeps working; a current copy contains `## Step 4 — Work-item check`. Re-add either check only with a catch to point at.
+
 ## v1.54.0 (2026-11-20)
 
 **MINOR.** A new user-global skill, `savepoint`, for the cheap step between "task done" and clearing the context. No consumer has to act, so rule 1 of `templates/release.md` Step 2 does not fire; a new template is a new artifact, so rule 2 makes it MINOR, on the v1.40.0 precedent (`templates/review-profile.md`).

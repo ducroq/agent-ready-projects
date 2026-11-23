@@ -297,21 +297,7 @@ Deprecated: a first line exactly `FAIL` with exit 0 is scored FAIL. Rewrite such
 
 **Evidence moved out of sub-step 6 (2026-11-15).** A template-sized project file is about 6k characters; one adopter's reached 35k. For one adopter, the instruction-loaded files were bigger than everything auto-loaded. On one adopter's trim that passed every `grep -F` check, a fresh reader comparing old and new found about 30 operative clauses missing or weakened (#256).
 
-4. **Index self-consistency**: Every check above compares the index to something *outside* it — gotcha ages, a verify probe, a hypothesis deadline. None asks whether the index agrees with itself, so two entries can assert opposite things indefinitely while each passes every check individually: both paths resolve, both files are fresh, neither is tagged as a state claim.
-
-This is worse than an ordinary stale entry. A stale entry is wrong; **a self-contradicting index is wrong while also carrying its own correction**, so which version an agent acts on depends on read order rather than on evidence. Where the index is always-loaded — the `@memory/MEMORY.md` import in `templates/memory-index.md` — both versions enter every session's context.
-
-`-o` with `-n` and `sort -u` counts an id **once per line**, so an entry that repeats `#34` four times is not a cluster of one. The optional prefix keeps a qualified id distinct: `adopterrepo#76` and a local `#76` are different trackers and must not be reconciled with each other. Read the surviving entries *together*, not in place. Known false positive: a six-digit hex colour reads as an id — discard it on sight. **An empty result with no index at that path is not a clean index**, which is why the guard prints rather than staying silent.
-
-- **The idea generalises to any stable identifier — the command does not.** For `ADR-023`, `GH-88` or `PROJ-45`, change the pattern (`[A-Za-z]+-[0-9]+`) and re-check what it matches before trusting the output.
-
-- ⚠️ **The entity pass was RETIRED in v1.45.0** — a pairwise read of the whole index, unbounded by anything but the index's size, which had **never found a contradicting pair**, including in the dog-food run that shipped it. The identifier grep above is one command and stays. Do not re-add the pairwise read without a pair to point at.
-
-- **Distinguish a contradiction from a recorded correction.** An entry that *names* the claim it supersedes and dates it — "this row asserted the opposite until 2026-08-11 and was false" — is correct practice, not a defect; the index is allowed to remember being wrong. A contradiction is two entries each asserting their version *without reference to the other*, so a reader has no way to tell which came second. If you cannot tell, say so and surface both.
-
-- **Report the contradicting pair verbatim and do not pick a winner from the text.** The more emphatic entry is not the more likely one; in the founding instance the false entry was the emphatic one *and* told the reader not to re-check. Resolve by measuring — whichever claim can be probed, probe it — and if neither can be, surface both to the engineer as an open question rather than deleting one.
-
-- This is model judgement, not a deterministic check. It is bounded only if the index is small: if it exceeds the ~200 lines `templates/memory-index.md` warns about, or the size budget in sub-step 6, report that as the finding and run the identifier pass alone.
+4. **RETIRED (#367): index self-consistency.** Three `curate` runs in this repo found no contradicting pair; the full text is in git history before the #367 cut.
 
 5. **Hypothesis log surface**: If a hypothesis log exists, scan its `## Open` section. **Check both `memory/hypothesis-log.md` and `docs/hypothesis-log.md`** — projects put it in either, so a single-path check silently scans nothing. For each entry:
 
@@ -371,11 +357,9 @@ A promoted pattern that recurs means the promotion did not take: the lesson is w
 
 **Don't accrete session narrative onto the project file footer.** Session-level "what happened today" belongs in `memory/project_session_YYYY_MM_DD.md`, with a one-line pointer added to `MEMORY.md`. The project file is structural context (constraints, architecture, key paths) — appending session footers there bloats it past the 40k Claude Code perf threshold within ~7 sessions and duplicates what the index already holds. If a previous workflow left footer blocks behind, Step 0 sub-step 6 catches and trims them.
 
-### Step 4 — Doc sync check
+### Step 4 — Work-item check
 
-Check whether key docs reflect the current repo state. Code changes during a session can leave docs stale — this step catches drift that inline updates missed.
-
-2. **Project file Key Commands / How to Work Here**: Verify commands still match actual CLI flags and defaults. Flag any mismatches (e.g., a renamed flag, a changed default).
+The doc sync checks (Architecture, commands, runbook) were retired in #367: three runs in this repo, no catch lint had not already made. The work-item check stayed, because it is the only step that closes a work item.
 
 ### Step 5 — Verify references
 
@@ -384,8 +368,6 @@ Check whether key docs reflect the current repo state. Code changes during a ses
 ### Step 6 — Report
 
 - **Verification**: State claims checked — N passed, N failed, N unverified, N errored, N manual check needed, N cannot verify, N malformed (from Step 0). Report all seven numbers even when they are zero; a disposition omitted because it was empty is indistinguishable from one that was never checked. Carry the runner's reconciliation line and its exit status through too — **N commands run of M annotations** — and say what the difference was. Seven zeroes and no reconciliation is the shape of a step that did not run
-
-- **Index self-consistency**: N identifiers cited by more than one *entry*, and N contradicting pairs among them (from Step 0). Report both. Zero pairs out of zero clusters means the check found nothing to compare, which is not the same as an index that agrees with itself — say which one it was. ⚠️ **Do not report a disposition for the entity pass**; it was retired in v1.45.0, and inventing one — or re-running the pairwise read to have something to say — is what that retirement forbids. Quote any pair verbatim and leave it unresolved unless a probe settled it
 
 - **Gotchas**: New entries added, entries resolved or promoted, and **N promoted patterns re-checked, N recurred** (from Step 2). Report both numbers even when the second is zero — "checked, nothing recurred" and "never checked" are otherwise indistinguishable, which is the failure the Occurrences column exists to prevent. Name any pattern that recurred *after* promotion; that is the signal the promotion did not take
 

@@ -529,7 +529,7 @@ The biggest shift in practice: **capture during work, curate at end-of-session.*
 | **After a decision** | Chose between approaches? | ADR + update index |
 | **Changed operations** | Process or infrastructure changed? | Project file or RUNBOOK.md |
 | **Before committing** | Agent reviews the pending diff, picking review depth from what changed — normative surfaces get more lenses than a changelog edit | The diff (nothing written unless a finding lands) |
-| **End of session** | Ask the agent to curate: correlate, summarize, prune, promote, doc sync (review its proposals) | Memory index + topic files + project file (1-2 min) |
+| **End of session** | Ask the agent to curate: correlate, summarize, prune, promote, close work items (review its proposals) | Memory index + topic files + project file (1-2 min) |
 | **Monthly** | Agent audits all memory files: flags resolved items, stale entries, facts now encoded in code. You review and confirm retirements. | All memory files |
 | **Start of session, after a framework you pin ships a release** | Agent finds the project's version stamps, lists the intervening releases and triages each into adopt / decline-with-reason / not-applicable / already-in-force — then stops before editing anything normative | Version stamps + the framework's changelog (a record of what was declined, and why) |
 | **Cutting a release** | Agent classifies the version bump, verifies preconditions, drafts the changelog entry, syncs version strings — then stops for you to publish | Changelog + version references |
