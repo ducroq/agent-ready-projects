@@ -25,6 +25,11 @@ Opened 2026-11-23. Nothing built. The engineer said "yes" to opening a work item
 
 ## Open Questions
 
+From a sibling project session (2026-11-23), to test before adopting:
+- Can a skill's text drift from the script it drives (e.g. audit-context Step 4 and `refcheck.py`)? Orca avoids this by having the binary serve the guide.
+- Should a skill's description say when *not* to use it: no fan-out to workers unless asked, and reads stay with the agent? Our cost lessons are in memory, not in any skill.
+- Before retrying a state-changing step (deploy, paid run), check whether it already took effect.
+
 - Does a digest ledger belong in `templates/` (adopter-facing, MINOR bump) or only in the maintainer installer?
 - Text-normalised hashes (Orca keeps exact, CRLF-normalised and identity hashes) — do we need more than one, given Windows adopters (#198)?
 - Does splitting a skill into stub plus reference files hurt tools that load a skill as one file? `templates/README.md` is the naming map to check.
