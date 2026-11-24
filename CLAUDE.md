@@ -39,6 +39,7 @@ The source framework that teaches the layered memory method for AI coding agents
 - **An absolute in an instruction is a decision; an absolute in a description is a measurement, and it needs one.** *Every*, *all*, *none*, *cannot* or *guaranteed* about how a tool, spec or codebase behaves needs a measurement with its command and scope, a spec citation, or a hedge. Seeds drawn from cases the implementation already handles are not a measurement; the account is in `docs/rationale/review-changes.md`.
 - **A user-global skill shadows a project-local one of the same name — in Claude Code** (the local copy is silently never loaded) (other tools differ; see `docs/GUIDE.md` § "Where a skill lives"). So `release` and `test-verify-memory` stay project-local while the installer's `GLOBAL_SKILLS` ship global, and a global install is always derived from tracked `.claude/skills/` via `scripts/install-global-skills.sh`, never authored in `~/.claude/`.
 - **Lead with the point; one or two lines.** The answer first, then stop. Side findings go in a short list or get dropped; no recaps, no restated decisions, no numbers nothing reads — in files as much as in replies.
+- **Keep new internal prose short (limits from ASD-STE100; no compliance claim).** Use at most 20 words in an instruction and 25 in any other sentence. Give one instruction per sentence and at most six sentences per paragraph. Use active voice and one term per thing. Keep each date, scope and condition in the sentence it qualifies. Do not rewrite old text only to fit. Code, quotes and verify probes are exempt. "Internal" means only this file, `memory/`, `docs/work-items/`, `experiments/` and `tests/lint/README.md`.
 - **Never stack PRs.** Branch each from master; deleting a merged base closes the PR on it (x3, `memory/gotcha-log.md`).
 - **Tool-agnostic in adopter-facing content.** `README.md`, `adopt.md`, `templates/` and `docs/GUIDE.md` must not assume Claude Code. Maintainer infrastructure (this file, `memory/`, `.claude/`) can be Claude-specific.
 
@@ -63,7 +64,6 @@ agent-ready-projects/
 ├── README.md                  <- Public-facing on-ramp
 ├── adopt.md                   <- Agent prompts: assess / adopt / update
 ├── CHANGELOG.md               <- Release notes; release process at top
-├── CLAUDE.md                  <- This file
 ├── LICENSE                    <- MIT
 ├── docs/
 │   ├── GUIDE.md               <- Full reference
@@ -74,12 +74,6 @@ agent-ready-projects/
 │   ├── work-items/            <- Per-work-item context files
 │   └── archive/               <- Archived positioning docs
 ├── templates/                 <- What adopters install; map in templates/README.md
-│   ├── project-file.md        <- Layer 1
-│   ├── RUNBOOK.md             <- Layer 2
-│   ├── memory-index.md        <- Layer 3 index
-│   ├── gotcha-log.md          <- Layer 4
-│   ├── coordination.md        <- Layer 5 (multi-contributor)
-│   └── ...                    <- The five skills and the rest: see templates/README.md
 ├── scripts/                   <- Run by skills; each header names its step
 ├── .github/workflows/checks.yml      <- CI: lint + fixtures
 ├── tests/                     <- Self-tests; read a fixture's README before loosening it
@@ -89,8 +83,6 @@ agent-ready-projects/
 │                                 for audit-context Step 4, so a fix there ships to them
 ├── experiments/               <- Pre-registered experiments; pins.tsv is the lock
 └── memory/                    <- Session memory (gitignored)
-    ├── MEMORY.md              <- Index + current state
-    └── project_*.md           <- Topic files
 ```
 
 ## What is intentionally not shipped
