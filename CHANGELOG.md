@@ -22,13 +22,24 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.55.0 (candidate, unreleased)
+## v1.54.1 (2026-11-24)
+
+**PATCH.** Two `curate` steps that caught nothing here are retired, inside existing files. No consumer has to act and nothing new is added, so rule 2 of `templates/release.md` Step 2 fires, on the v1.52.1 and v1.52.2 precedents. The candidate block was headed v1.55.0; the diff classifies as PATCH.
+
+Adopter-facing size: −1758 bytes (`templates/`, measured against v1.54.0), all in `curate` and paid on every `/curate` run.
+
+**Internal.** `CLAUDE.md` gains sentence and paragraph limits for new internal prose, from ASD-STE100, with no compliance claim (#369).
 
 ### `curate`: two steps retired for no catch (#367)
 
-`curate` Step 0 sub-step 4 (index self-consistency) and Step 4's doc sync checks (project file Architecture, Key Commands, runbook) are retired. Each was preregistered on 2026-11-15 to be kept only if it caught something in 2 of the next 8 `curate` runs in this repo; after three runs neither had a catch, and the engineer chose to cut now rather than wait, and without the adopter ask (#308) that #367 proposed (H-036, H-037). The evidence is from this repo only. The work-item check, formerly 4.4, stays as Step 4, and the report's "Doc sync" line becomes "Work items". The guide diagrams and the rationale follow.
+`curate` Step 0 sub-step 4 (index self-consistency) and Step 4's doc sync checks (project file Architecture, Key Commands, runbook) are retired. Each was preregistered on 2026-11-15 to be kept only if it caught something in 2 of the next 8 `curate` runs in this repo; after three runs neither had a catch, and the engineer chose to cut now rather than wait, and without the adopter ask (#308) that #367 proposed (H-036, H-037). The evidence is from this repo only. The work-item check, formerly 4.4, stays as Step 4, and the report's "Doc sync" line becomes "Work items". `docs/GUIDE.md`, the guide diagrams and the rationale follow.
 
-**Consumer notes.** Nothing breaks. An installed `curate` keeps working; a current copy contains `## Step 4 — Work-item check`. Re-add either check only with a catch to point at.
+**Consumer notes.** No action required: an installed `curate` keeps working. To carry the cut into an adapted copy, make three edits:
+- Step 0: replace sub-step 4 with `4. **RETIRED** (index self-consistency, #367).` Keep the numbers of sub-steps 5 and 6, because other text cites them.
+- Step 4: rename `## Step 4 — Doc sync check` to `## Step 4 — Work-item check`, delete items 1–3 and keep item 4.
+- Step 6: delete the **Index self-consistency** line and replace **Doc sync** with **Work items**.
+
+Re-add either check only with a catch to point at.
 
 ## v1.54.0 (2026-11-20)
 
