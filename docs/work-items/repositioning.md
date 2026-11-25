@@ -27,7 +27,7 @@ Switch commits are in H-032; R5's is still missing.
   after the fact. EXP-003's frozen result stays the official one. Beside it, report M1 and M2 with
   `<stdin>` events removed, then with memory-file paths removed too, using the same match as
   `hand-check-sample.py` in the lab folder.
-- [ ] **On or after 2026-11-18**: run `experiments/check_pins.sh`, then EXP-003 (same parser, new
+- [ ] **Due 2026-11-18, not run as of 2026-11-25**: run `experiments/check_pins.sh`, then EXP-003 (same parser, new
   transcripts). Same decision branch as EXP-002 confirms it.
 - [ ] **Open policy questions from the 2026-10-22 feedback; decide with EXP-005's result, not before**:
   a frozen/lite profile where not following every release is not drift; "never hand-maintain a
