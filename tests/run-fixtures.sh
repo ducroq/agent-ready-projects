@@ -33,7 +33,8 @@ NOT_A_GATE=" review-bench "
 # A floor, not a target: suites are only ever added, so this rises and never falls
 # without a deliberate edit. Lower it only when a suite is deleted on purpose, and
 # say why in the same commit.
-MIN_GATES=28   # 26 -> 28: autoload-size/ (curate Step 0 sub-step 6's script), and one
+MIN_GATES=29   # 28 -> 29: fetch-validates/ (rule 24).
+               # PREVIOUSLY 26 -> 28: autoload-size/ (curate Step 0 sub-step 6's script), and one
                # earlier suite the floor had not caught up with.
                # PREVIOUSLY 25 -> 26: gotcha-headers/ (curate Step 0 sub-step 2's extractor).
                # PREVIOUSLY 24 -> 25: drift-handoff/, the first cross-step suite (#113).

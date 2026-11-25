@@ -3,7 +3,7 @@
 # The budget only goes DOWN. Growth in one file must be paid for by a shrink in
 # another. Raising it takes --raise-budget "<reason>" and every raise is
 # recorded below, oldest first — notes accumulate and are never replaced.
-# BUDGET 165663
+# BUDGET 165654
 # SPILL 187409
 # RAISED 2026-09-06 from 247526 to 247969: #133: the #118 remedy string shipped unconditional and can turn a resolved reference into an AMBIGUOUS finding; the caveat that scopes it is +443 b on templates/audit-context.md, seeded as T39/T40/N39 (reason restored 2026-09-06 — write_baseline used to overwrite each note with the next)
 # RAISED 2026-09-06 from 247969 to 248237: #140: UNRESOLVED had two causes printing one reason. +268 b on templates/audit-context.md, seeded as T41/T41b/N40 (reason restored 2026-09-06)
@@ -126,6 +126,7 @@
 # RAISED 2026-11-15 from 159940 to 160023: curate Step 1 files gotchas at the top of a newest-first log, else above the first index heading, Promoted or Mechanized (#237); +83
 # RAISED 2026-11-20 from 160023 to 167421: #363: new user-global skill templates/savepoint.md (6701 b, paid per invocation, not per session), its map rows in templates/README.md, and one Before You Start row in templates/project-file.md (paid every session). One record for the whole change, amended after review added the row and the cannot-complete clause, and again after two smoketests added where the handoff lives (in a git or outside one) and a review pass added the disk check on that declaration; last, three wording fixes from the adopter's second smoketest. NEW CAPABILITY, engineer's go 2026-11-20 to build now; requested by an adopter estate. No shrink attempted: the skill is the whole change.
 # ratcheted down 2026-11-23
+# ratcheted down 2026-11-25
 templates/adr.md	2115
 templates/audit-context.md	15250
 templates/checklists/architect-checklist.md	1263
@@ -134,7 +135,7 @@ templates/checklists/qa-checklist.md	1836
 templates/checklists/README.md	1097
 templates/checklists/test-checklist.md	1234
 templates/coordination.md	3909
-templates/curate.md	18188
+templates/curate.md	18179
 templates/gotcha-log.md	10638
 templates/hypothesis-log.md	3570
 templates/memory-index.md	3388
