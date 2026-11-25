@@ -45,7 +45,7 @@ Check for context rot from *previous* sessions. **Read metadata, not documents**
 
    ```bash
    GH=~/repos/agent-ready-projects/scripts/gotcha-headers.sh   # this framework's clone
-   # No clone? curl -fsSL https://raw.githubusercontent.com/ducroq/agent-ready-projects/master/scripts/gotcha-headers.sh -o /tmp/gotcha-headers.sh && GH=/tmp/gotcha-headers.sh
+   # No clone? f=/tmp/gotcha-headers.sh; curl -fsSL https://raw.githubusercontent.com/ducroq/agent-ready-projects/master/scripts/gotcha-headers.sh -o $f && tail -n 1 $f | grep -q '^. "$log"$' && GH=$f
    bash "$GH" <log>
    ```
 
@@ -63,10 +63,9 @@ Check for context rot from *previous* sessions. **Read metadata, not documents**
    **Run the shipped runner; never hand-write one.** Run it **from the repo root**, with **absolute paths**, and include the project file (`CLAUDE.md`, `AGENTS.md`, or whatever your tool's naming map calls it):
 
    ```bash
-   CLONE=~/repos/agent-ready-projects   # this framework's clone
+   CLONE=~/repos/agent-ready-projects
    RUNNER="$CLONE/scripts/verify-runner.sh"
-   # No clone? Fetch it; never hand-write a runner:
-   # curl -fsSL https://raw.githubusercontent.com/ducroq/agent-ready-projects/master/scripts/verify-runner.sh -o /tmp/verify-runner.sh && RUNNER=/tmp/verify-runner.sh
+   # No clone? f=/tmp/verify-runner.sh; curl -fsSL https://raw.githubusercontent.com/ducroq/agent-ready-projects/master/scripts/verify-runner.sh -o $f && tail -n 1 $f | grep -qF 'exit 0: everything' && RUNNER=$f
    bash "$RUNNER" "$PWD"/memory/*.md "$PWD/CLAUDE.md"   # add "$PWD/docs/hypothesis-log.md" if yours lives there
    ```
 
@@ -87,8 +86,8 @@ Check for context rot from *previous* sessions. **Read metadata, not documents**
 5. **Hypothesis log surface**: If a hypothesis log exists (**check both `memory/hypothesis-log.md` and `docs/hypothesis-log.md`**), read the script's list, not the log:
 
    ```bash
-   HD=~/repos/agent-ready-projects/scripts/hypothesis-due.sh   # this framework's clone
-   # No clone? curl -fsSL https://raw.githubusercontent.com/ducroq/agent-ready-projects/master/scripts/hypothesis-due.sh -o /tmp/hypothesis-due.sh && HD=/tmp/hypothesis-due.sh
+   HD=~/repos/agent-ready-projects/scripts/hypothesis-due.sh
+   # No clone? f=/tmp/hypothesis-due.sh; curl -fsSL https://raw.githubusercontent.com/ducroq/agent-ready-projects/master/scripts/hypothesis-due.sh -o $f && tail -n 1 $f | grep -q '^. "$log"$' && HD=$f
    bash "$HD" <log>
    ```
 
@@ -100,8 +99,8 @@ Check for context rot from *previous* sessions. **Read metadata, not documents**
 6. **Auto-loaded size budget — the whole set, not the project file alone.** **List the set before measuring**: every file your tool loads without being asked (for Claude Code, the project file, `~/.claude/CLAUDE.md` *and* the user-level memory index), plus, after `--instructed`, files the project file tells the agent to read every session. Run the shipped script, project file first; leave out a file that does not exist and name it as uncounted:
 
    ```bash
-   AS=~/repos/agent-ready-projects/scripts/autoload-size.sh   # this framework's clone
-   # No clone? curl -fsSL https://raw.githubusercontent.com/ducroq/agent-ready-projects/master/scripts/autoload-size.sh -o /tmp/autoload-size.sh && AS=/tmp/autoload-size.sh
+   AS=~/repos/agent-ready-projects/scripts/autoload-size.sh
+   # No clone? f=/tmp/autoload-size.sh; curl -fsSL https://raw.githubusercontent.com/ducroq/agent-ready-projects/master/scripts/autoload-size.sh -o $f && tail -n 1 $f | grep -qF '"$total" -lt' && AS=$f
    SLUG=$(pwd | sed 's|[^A-Za-z0-9]|-|g')   # Claude Code's name for this project; if absent, find it in `ls ~/.claude/projects`
    bash "$AS" CLAUDE.md ~/.claude/CLAUDE.md ~/.claude/projects/"$SLUG"/memory/MEMORY.md --instructed memory/MEMORY.md
    ```

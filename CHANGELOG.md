@@ -32,6 +32,14 @@ To pay for it, `curate` Step 4 points at Step 3 for closing a finished work item
 
 **Consumer notes.** No action required. To carry it into an adapted copy, copy the **If you commit** paragraph in `curate` Step 6 and the paragraph starting "In any git" in `savepoint` Step 4.
 
+### `curate`: the four script fallbacks check the download (#268)
+
+`curate` Step 0 fetches a script with curl when there is no clone: `gotcha-headers.sh`, `verify-runner.sh`, `hypothesis-due.sh` or `autoload-size.sh`. An HTTP 200 with an empty body ran as an empty script and exited 0, which reads as a clean result. Each fallback now uses the file only if its last line is the script's; otherwise the path still points at the missing clone and the run exits 127, which `curate` already says is not a result. `release`, `review-changes` and `update-drift` have had the same check since #265/#266.
+
+**Consumer notes.** If you use `curate` without a clone of this repo, reinstall it, or copy the four `# No clone?` lines into an adapted copy. With a clone, nothing changes.
+
+**Internal.** Lint rule 24 (`tests/lint/fetch-validates.sh`) fails on an unchecked fetch, and on check text that does not match the script's last line or also matches an earlier one.
+
 ## v1.54.1 (2026-11-25)
 
 **PATCH.** Two `curate` steps that caught nothing here are retired, inside existing files. No consumer has to act and nothing new is added, so rule 2 of `templates/release.md` Step 2 fires, on the v1.52.1 and v1.52.2 precedents. The candidate block was headed v1.55.0; the diff classifies as PATCH.
