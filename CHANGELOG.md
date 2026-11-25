@@ -22,6 +22,16 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## v1.54.2 (candidate, unreleased)
+
+### `curate` and `savepoint`: commit only lines this session wrote (#318)
+
+Two sessions shared one checkout, and one session's commit after `/curate` took the other's uncommitted lines in `memory/MEMORY.md`. A per-file rule does not stop that: `curate` edits the same file. `savepoint` Step 4 now reads `git diff HEAD -- <path>` before each commit and commits a file only when every changed line is the session's own; it lists the rest and asks. `curate`, which said nothing about committing, says the same in Step 6. It is an instruction, not a script: uncommitted lines carry no author.
+
+To pay for it, `curate` Step 4 points at Step 3 for closing a finished work item instead of repeating it, and drops the note on the retired doc sync checks (#367, recorded under v1.54.1) and a closing line; the header and introduction are shorter.
+
+**Consumer notes.** No action required. To carry it into an adapted copy, copy the **If you commit** paragraph in `curate` Step 6 and the paragraph starting "In any git" in `savepoint` Step 4.
+
 ## v1.54.1 (2026-11-25)
 
 **PATCH.** Two `curate` steps that caught nothing here are retired, inside existing files. No consumer has to act and nothing new is added, so rule 2 of `templates/release.md` Step 2 fires, on the v1.52.1 and v1.52.2 precedents. The candidate block was headed v1.55.0; the diff classifies as PATCH.
