@@ -22,7 +22,7 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.54.1 (2026-11-24)
+## v1.54.1 (2026-11-25)
 
 **PATCH.** Two `curate` steps that caught nothing here are retired, inside existing files. No consumer has to act and nothing new is added, so rule 2 of `templates/release.md` Step 2 fires, on the v1.52.1 and v1.52.2 precedents. The candidate block was headed v1.55.0; the diff classifies as PATCH.
 
