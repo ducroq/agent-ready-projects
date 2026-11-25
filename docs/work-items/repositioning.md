@@ -27,14 +27,36 @@ Switch commits are in H-032; R5's is still missing.
   after the fact. EXP-003's frozen result stays the official one. Beside it, report M1 and M2 with
   `<stdin>` events removed, then with memory-file paths removed too, using the same match as
   `hand-check-sample.py` in the lab folder.
-- [ ] **Due 2026-11-18, not run as of 2026-11-25**: run `experiments/check_pins.sh`, then EXP-003 (same parser, new
-  transcripts). Same decision branch as EXP-002 confirms it.
+- [x] **EXP-003 run 2026-11-25: confirms EXP-002** (branch 4 in both). Pins passed, the instrument
+  check passed, and the parser was identical to `b77b45e`. 512 pooled main sessions; no event shared
+  with EXP-002. The parser only selects files before a cutoff, so it read a symlinked view of later files.
+  The frozen text sets no upper bound; files changed after the run began (19:15 that day) were skipped.
+  Artifact: `experiments/artifacts/exp003-grep-vs-memory.json` (its `experiment` field is hardcoded EXP-001).
+
+  | Count | M1, EXP-002 | M1, EXP-003 | M2, EXP-003 |
+  |---|---|---|---|
+  | Frozen (official) | 13.2% | 13.4% | 28.5% |
+  | No `<stdin>` (after the fact) | 10.3% | 9.96% | 29.8% |
+  | Nor memory files (after the fact) | 7.0% | 7.2% | 33.6% |
+  | Frozen parser, blob lines removed (after the fact) | not run | 13.6% | 29.2% |
+
+  Branch 4 means repeats are mostly absent from memory; it does not say a note would have helped (the
+  hand-check found 0 of 20). Without `<stdin>`, M1 sits on the 10% bar (9.96%; 10.3% with blob lines also
+  removed). Without memory files too, it is below the bar (7.2%; 7.5%). The blob-free rerun read 2,606
+  files against 2,611, because sessions still being written had passed the upper bound.
+- [x] **Parser defect found in the run**: newer transcripts hold `api-request-blob` entries that repeat
+  a tool call without a `cwd`. When one comes first, the parser keeps it and drops the real call (4,404
+  pooled main events lost). It does not change the branch. EXP-004 pins the same parser. Across all
+  repos, 72 of 911 main transcripts from before the cutoff hold such entries, against 559 of 564 after
+  it (`blob-count.sh` in the lab folder). R7 alone was not measured. Pooled, the defect lowers M1 by 0.3 points, so it may lean toward "holds".
+  Decided 2026-11-25 (owner): EXP-004 keeps its pinned parser. Report a second count with the blob
+  lines removed beside it. The frozen count decides.
 - [ ] **Open policy questions from the 2026-10-22 feedback; decide with EXP-005's result, not before**:
   a frozen/lite profile where not following every release is not drift; "never hand-maintain a
   number a script can derive"; curate/audit-context on a trigger, not every session; a
   meta-vs-code touch ratio per release; whether ADR-001 still holds (four of five wanted one index,
   three in auto-memory). Replies to adopters gave facts only. Defects found: #253 to #256.
-- [ ] **Then**: the EXP-004 switch, the slim setup in R7 (the mapping is in H-032), for 20 sessions or
+- [ ] **Then, on the engineer's go**: the EXP-004 switch, the slim setup in R7 (the mapping is in H-032), for 20 sessions or
   6 weeks. The engineer logs one guard line per session there.
 - [ ] **If EXP-004 holds**: draft the slim front door, build the demo, write the post. First, a
   deeper search for any context checker that tests its own checks (sentence B depends on it).

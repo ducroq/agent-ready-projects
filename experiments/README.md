@@ -11,4 +11,5 @@ result arrived.**
 | `artifacts/` | JSON the runner emits. Aggregates only: no project names, search strings or transcript text (this repo is public). |
 
 Raw data lives off-repo in `lab/experiments/<date>-<name>/` (the gitignored symlink to
-`~/lab/agent-ready-projects`). A registry of concluded experiments is deferred until EXP-003 confirms or overturns EXP-002.
+`~/lab/agent-ready-projects`). A registry of concluded experiments waited on EXP-003, which
+confirmed EXP-002 on 2026-11-25; whether to add one is open (#240).
