@@ -72,7 +72,7 @@ Then commit the handoff where it lives: **this repo's git** by the declared rout
 - **direct**: commit the handoff (and anything Step 1 resolved) with a message naming the savepoint.
 - **branch + PR**: in a separate worktree branched from the default branch — **never by switching the shared checkout**, which other sessions or tools may be reading — commit, push, open the PR. **Never merge it**: merging follows the repo's own rules.
 
-In any git, commit only the paths this session changed, by name, from your own record of edits; where you cannot tell, list the path and ask. Never `git add -A`.
+In any git, `git add` new files by name, then `git commit -- <paths>` (a bare commit takes what another session staged); never `git add -A`. First read `git diff HEAD -- <path>` where you edited: a file you edited can also hold another session's uncommitted lines (#318). Commit it only if your own record of edits covers every changed line; list the rest and ask.
 
 **Cannot complete**: the handoff is untracked or ignored in a git the declaration says holds it, or the route needs a remote or PR tool the repo lacks. Report what was done and what was not; never "safe to clear" on a commit that did not happen.
 

@@ -24,6 +24,14 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 ## v1.54.2 (candidate, unreleased)
 
+### `curate` and `savepoint`: commit only lines this session wrote (#318)
+
+Two sessions shared one checkout, and one session's commit after `/curate` took the other's uncommitted lines in `memory/MEMORY.md`. A per-file rule does not stop that: `curate` edits the same file. `savepoint` Step 4 now reads `git diff HEAD -- <path>` before each commit and commits a file only when every changed line is the session's own; it lists the rest and asks. `curate`, which said nothing about committing, says the same in Step 6. It is an instruction, not a script: uncommitted lines carry no author.
+
+To pay for it, `curate` Step 4 points at Step 3 for closing a finished work item instead of repeating it, and drops the note on the retired doc sync checks (#367, recorded under v1.54.1) and a closing line; the header and introduction are shorter.
+
+**Consumer notes.** No action required. To carry it into an adapted copy, copy the **If you commit** paragraph in `curate` Step 6 and the paragraph starting "In any git" in `savepoint` Step 4.
+
 ### `curate`: the four script fallbacks check the download (#268)
 
 `curate` Step 0 fetches a script with curl when there is no clone: `gotcha-headers.sh`, `verify-runner.sh`, `hypothesis-due.sh` or `autoload-size.sh`. An HTTP 200 with an empty body ran as an empty script and exited 0, which reads as a clean result. Each fallback now uses the file only if its last line is the script's; otherwise the path still points at the missing clone and the run exits 127, which `curate` already says is not a result. `release`, `review-changes` and `update-drift` have had the same check since #265/#266.

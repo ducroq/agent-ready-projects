@@ -4,9 +4,7 @@ description: End-of-session curation — review gotcha log, promote patterns, up
 disable-model-invocation: false
 ---
 
-End-of-session curation for the agent-ready-projects framework.
-
-Review the session's work and update the layered memory system:
+Review the session and update the memory layers:
 
 ## Step 0 — Freshness check
 
@@ -152,20 +150,18 @@ Read the memory index (`MEMORY.md` for Claude Code, or the project file for othe
 
 ## Step 4 — Work-item check
 
-The doc sync checks (Architecture, commands, runbook) are retired (#367). Re-add one only with a catch to point at.
-
 Scan `docs/work-items/` for files with an incomplete Outcome section. For each:
-- If the work completed this session, fill the Outcome and suggest updating the pointer to `[done]` — wherever this project keeps them (memory index, or the project file's "Active work" section)
-- If the Current Status shows no activity for 14+ days, flag as potentially abandoned — surface to the engineer
-- If the file has no corresponding pointer in either list, add one to whichever this project uses (or flag if unclear)
-
-Fix what you can. Flag anything that needs engineer input.
+- If the work completed this session, close it as Step 3 says
+- If the Current Status shows no activity for 14+ days, flag as potentially abandoned
+- If neither list points to the file, add a pointer to the one this project uses (or flag if unclear)
 
 ## Step 5 — Verify references
 
 **Always run this.** Spot-check that paths named in the memory index and project file still exist, and flag any that do not. `audit-context` Step 4 is the full check.
 
 ## Step 6 — Report
+
+**If you commit**: `git add` new files by name, then `git commit -- <paths>`; never `git add -A`. First read `git diff HEAD -- <path>`: a file you edited can also hold another session's uncommitted lines (#318). Commit it only if your own record of edits covers every changed line; list the rest and ask.
 
 - **Freshness**: Gotcha log headers reconciled against the `**Problem**` count, and the Promoted table read
 - **Verification**: State claims checked — N passed, N failed, N unverified, N errored, N manual check needed, N cannot verify, N malformed. Report all seven, even zeros, plus **N commands run of M annotations**, the difference, and the exit status
