@@ -60,7 +60,7 @@ Check for context rot from *previous* sessions. **Read metadata, not documents**
 - **The count travels and the enumeration does not.** Move the enumeration with the number, or make the number a probe.
 - **A state report decays.** Write state in the tense of what has actually run, and date it.
 
-   **Run the shipped runner; never hand-write one.** Run it **from the repo root**, with **absolute paths**, and include the project file (`CLAUDE.md`, `AGENTS.md`, or whatever your tool's naming map calls it):
+   **Run the shipped runner; never hand-write one.** Run it **from the repo root**, with **absolute paths**, and include the project file (`CLAUDE.md`, `AGENTS.md` or your tool's name for it):
 
    ```bash
    CLONE=~/repos/agent-ready-projects
@@ -69,9 +69,9 @@ Check for context rot from *previous* sessions. **Read metadata, not documents**
    bash "$RUNNER" "$PWD"/memory/*.md "$PWD/CLAUDE.md"   # add "$PWD/docs/hypothesis-log.md" if yours lives there
    ```
 
-   Probes run with `bash -c` in the current directory. Pass every file that holds a probe.
+   A probe runs at its file's repo root (`RUNS IN` names one other than here); outside git, here. Pass every file that holds a probe.
 
-   **Read the runner's closing lines**: they say what to do with each disposition it found, and what its exit status means. Count the rows you received against `ran N of M`, because a capture can lose rows. Exit **127** means the runner itself was not found (wrong `$CLONE` or failed fetch), not a claim result.
+   **Read the runner's closing lines**: they say what to do with each disposition found, and what the exit means. Count the rows you got against `ran N of M`: a capture can lose rows. Exit **127** means the runner was not found (wrong `$CLONE` or failed fetch), not a claim result.
 
    **Blind spot:** fenced blocks are skipped, but an annotation in an unfenced four-space-indented block or a blockquote **will run**. Write examples in fenced blocks. UNVERIFIED is your judgement, not a runner disposition.
 

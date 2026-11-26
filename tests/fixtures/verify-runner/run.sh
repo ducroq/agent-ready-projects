@@ -598,7 +598,7 @@ ablate A3-pipe-unescape  "table-cell pipe un-escaping"     '/a table cell escape
 ablate A4-stdin-closed   "closing each command's stdin"    's|</dev/null ||'                    drain:
 # A5 also removes the timeout, because both live on one line. That confound is why
 # M1/M1a exist: the timeout is ablated separately, so neither guard rests on this row.
-ablate A5-subshell       "the per-command subshell"        's|\${TO:-} bash -c "\$cmd" </dev/null >"\$OUTF"|eval "\$cmd" >"\$OUTF"|' nosummary:
+ablate A5-subshell       "the per-command subshell"        's|( cd "\${home:-.}" \&\& exec \${TO:-} bash -c "\$cmd" ) </dev/null >"\$OUTF"|eval "\$cmd" >"\$OUTF"|' nosummary:
 ablate A6-empty-error    "scoring silence as ERROR"        '/no output — it proved nothing/d'   row:p06=PASS
 # p10's marker sits *after* its redirect, so a truncated p10 is not merely
 # misclassified — it stops being recognizable as p10 at all. The consequence
@@ -690,6 +690,44 @@ else MOUT="$(cd "$WORK" && bash "$WORK/nolint.sh" "$LINTF" 2>&1)"
     printf '  PASS  mutant N: with the call removed, both notes are absent (N1/N2 would go red)\n'
   else printf '  FAIL  mutant N: notes survived removing the call\n'; FAIL=1; fi
 fi
+
+echo
+echo "where a probe runs (#305): the repo that holds its file, not the runner's cwd:"
+G="git -c user.name=t -c user.email=t@t -c init.defaultBranch=m -c advice.detachedHead=false"
+R="$WORK/repo"; mkdir -p "$R"; $G -C "$R" init -q
+printf 'stamp main\n- s <!-- verify: grep -q "^stamp wt" STAMP.txt && echo saw-wt || { echo "saw: $(cat STAMP.txt)"; exit 1; } -->\n' > "$R/STAMP.txt"
+printf 'memory/\n' > "$R/.gitignore"; $G -C "$R" add -A; $G -C "$R" commit -qm i
+$G -C "$R" worktree add -q "$WORK/wt" 2>/dev/null; sed -i.bak 's/^stamp main/stamp wt/' "$WORK/wt/STAMP.txt"
+mkdir -p "$R/memory"; $G -C "$R/memory" init -q
+printf -- '- n <!-- verify: [ -f STAMP.txt ] && echo at-outer || { echo "at: $PWD"; exit 1; } -->\n' > "$R/memory/M.md"
+D="$WORK/dot"; mkdir -p "$D/repos/proj"; $G -C "$D" init -q; printf '*\n' > "$D/.gitignore"
+$G -C "$D/repos/proj" init -q; : > "$D/repos/proj/HERE"
+printf -- '- d <!-- verify: [ -f HERE ] && echo at-clone || { echo "at: $PWD"; exit 1; } -->\n' > "$D/repos/proj/D.md"
+printf -- '- o <!-- verify: [ -f STAMP.txt ] && echo in-cwd || { echo "at: $PWD"; exit 1; } -->\n' > "$WORK/plain.md"
+wcase() {  # wcase <runner> <cwd> <file> <marker> <label>
+  local out; out="$(cd "$2" && bash "$1" "$3" 2>&1)"
+  grep -q "^${4//./[.]}" <<<"$out" && printf '  PASS  %s\n' "$5" || { printf '  FAIL  %s\n%s\n' "$5" "$out"; FAIL=1; }
+}
+wcase "$RUNNER" "$R"   "$WORK/wt/STAMP.txt" "PASS           $WORK/wt"      'W1 run from the main checkout, a worktree file probes the worktree'
+wcase "$RUNNER" "$WORK" "$R/memory/M.md"    "PASS           $R/memory"    'W2 a nested git whose directory an outer ignore rule names runs at the outer root'
+wcase "$RUNNER" "$R"   "$WORK/plain.md"     "PASS           $WORK/plain" 'W3 a file outside git runs in the current directory'
+wcase "$RUNNER" "$WORK" "$D/repos/proj/D.md" "PASS           $D/repos/proj" 'W5 a clone under a dotfiles repo that ignores * stays in the clone'
+wcase "$RUNNER" "$R"   "$WORK/wt/STAMP.txt" 'RUNS IN'   'W4 a probe run away from the cwd says where it ran'
+# Mutant: probes run in the cwd again. W1 must go red.
+sed 's|( cd "${home:-.}" \&\& exec|( exec|' "$RUNNER" > "$WORK/nohome.sh"
+if cmp -s "$WORK/nohome.sh" "$RUNNER"; then printf '  FAIL  mutant W: its site has moved\n'; FAIL=1
+elif ! grep -A1 "^FAIL " <<<"$(cd "$R" && bash "$WORK/nohome.sh" "$WORK/wt/STAMP.txt" 2>&1)" | grep -q "^  *saw: stamp main"; then printf '  FAIL  mutant W: the worktree probe passed without the cd\n'; FAIL=1
+else printf '  PASS  mutant W: without the cd, the worktree probe reads the main checkout (W1 would go red)\n'; fi
+# Mutant: no climb out of a nested git. W2 must go red.
+sed 's|names_dir "\$_d" "\$_p"; do|false; do|' "$RUNNER" > "$WORK/noclimb.sh"
+if cmp -s "$WORK/noclimb.sh" "$RUNNER"; then printf '  FAIL  mutant C: its site has moved\n'; FAIL=1
+elif ! grep -A1 "^FAIL " <<<"$(cd "$WORK" && bash "$WORK/noclimb.sh" "$R/memory/M.md" 2>&1)" | grep -q "^  *at: $R/memory$"; then printf '  FAIL  mutant C: the nested probe reached the outer root without the climb\n'; FAIL=1
+else printf '  PASS  mutant C: without the climb, the nested probe runs in memory/ (W2 would go red)\n'; fi
+# Mutant: climb on any ignore rule, even `*`. W5 must go red.
+sed 's|names_dir "\$_d" "\$_p"; do|git -C "$_p" check-ignore -q "$_d"; do|' "$RUNNER" > "$WORK/anyign.sh"
+if cmp -s "$WORK/anyign.sh" "$RUNNER"; then printf '  FAIL  mutant I: its site has moved\n'; FAIL=1
+elif ! grep -A1 "^FAIL " <<<"$(cd "$WORK" && bash "$WORK/anyign.sh" "$D/repos/proj/D.md" 2>&1)" | grep -q "^  *at: $D$"; then printf '  FAIL  mutant I: the clone probe did not climb to the dotfiles root\n'; FAIL=1
+else printf '  PASS  mutant I: climbing on a wildcard puts the clone probe at the dotfiles root (W5 would go red)\n'; fi
 
 echo
 if [ $FAIL -eq 0 ]; then echo "All verify-runner fixture cases passed."; else echo "Fixture failures above."; fi
