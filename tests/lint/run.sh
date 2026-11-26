@@ -413,6 +413,18 @@ else
   while IFS= read -r line; do
     [ -n "$line" ] && fail "$line"
   done < "$pn_out"
+  # The commits a PR would add (#247): their messages go public with the branch.
+  if git rev-parse --verify --quiet origin/master >/dev/null; then
+    bash tests/lint/private-names.sh --commits origin/master..HEAD >"$pn_out" 2>"$pn_err"; pn_rc=$?
+    grep -F 'name(s) checked against' "$pn_err"
+    if [ $pn_rc -ge 2 ] || ! grep -q 'name(s) checked against' "$pn_err"; then
+      fail "rule 12 could not check commit messages (exit $pn_rc): $(head -1 "$pn_err")"
+    else
+      while IFS= read -r line; do [ -n "$line" ] && fail "$line (origin/master..HEAD)"; done < "$pn_out"
+    fi
+  else
+    echo "      commit messages NOT checked: no origin/master to compare against"
+  fi
 fi
 rm -f "$pn_out" "$pn_err"
 
