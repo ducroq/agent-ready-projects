@@ -22,7 +22,11 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## v1.54.2 (candidate, unreleased)
+## v1.55.0 (2026-11-26)
+
+**MINOR.** `curate` and `savepoint` commit only lines the session wrote (#318), and `curate`'s four script fallbacks check the download (#268). No consumer has to act, so rule 1 of `templates/release.md` Step 2 does not fire. `curate` gains a commit rule it did not have, which is new behaviour, so this is MINOR on the v1.51.0 precedent. The candidate block was headed v1.54.2.
+
+Adopter-facing size: −47 bytes (`templates/`, measured against v1.54.1).
 
 ### `curate` and `savepoint`: commit only lines this session wrote (#318)
 
