@@ -38,6 +38,14 @@ One adopter's audit, run on 2026-11-03, wrote `Last audit: 2026-11-10`. A future
 
 **Consumer notes.** If your memory index holds a future `Last audit:` date, the next `curate` should ask for an audit. Both checks are instructions to the agent, not a script; no fixture or seeded run has measured them.
 
+### `curate`: two fallback checks work under ugrep (#378)
+
+`curate` Step 0 checks a downloaded `gotcha-headers.sh` or `hypothesis-due.sh` with `grep -q '^. "$log"$'` (#268, v1.55.0). In a Claude Code shell, `grep` runs ugrep, which reads the `$` before `log` as an anchor. So the check refused every whole download and the run exited 127. That fails safe, but the fallback could not succeed where the skill mostly runs. Both checks now escape it as `\$log`. Both now accept the real script and refuse an empty copy under ugrep 7.8.4, GNU grep 3.12 and busybox 1.37. Fixture B checks cut-off copies under GNU grep only.
+
+**Consumer notes.** Only `curate` without a clone is affected. Reinstall it, or in an adapted copy change `"$log"` to `"\$log"` in the two `# No clone?` checks.
+
+**Internal.** Lint rule 24 now fails on an unescaped `$` before the end of a check text, unless the check uses `-qF`. #189 had closed this class with a one-off sweep; the rule measured matches with GNU grep, so it passed. Fixture cases A17 and A18 seed a mid-pattern `$` and an end anchor. Rule 24 and fixture B still run GNU grep, so other ugrep differences pass unseen. Reverting the fix makes the rule report all four sites.
+
 ### `review-changes` Step 1 runs a script (#333)
 
 Step 1's baseline and size bash moved into a new `scripts/review-baseline.sh`, so the skill no longer carries it. The skill runs it from a framework clone, or fetches it and checks the download's last line. The script prints the four size terms, the changed files, and `ROOTFALLBACK=` and `BASE=` as its last two lines. The skill reads `BASE` from them. An empty size term now prints `none`. Two cases that read as clean now stop or warn. A branch with no history in common with the baseline prints `BASELINE UNRESOLVED (NO MERGE BASE)`. A bare repository exits 2.
