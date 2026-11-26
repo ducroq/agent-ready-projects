@@ -2,6 +2,12 @@
 # Rule 12: no private project name in a tracked file.
 #
 # Usage: private-names.sh <repo-root> [name-file]
+#        private-names.sh --commits <range> [name-file]   (in a repo: each commit message)
+#        private-names.sh --text <file> [name-file]       (one message: the commit-msg hook)
+#
+# A commit message is as public as a file once pushed, and `git commit --amend
+# --no-edit` keeps the old message after the file is fixed (#247). A PR title and
+# body are not scanned: CI has no name list, since the list cannot be tracked.
 #
 # Violations go to stdout, one per line, for the caller to count. Coverage notes
 # (how many names were checked over how many files) go to stderr — the caller
@@ -46,13 +52,36 @@ set -u
 
 MINLEN=6
 
-usage() { printf 'usage: private-names.sh <repo-root> [name-file]\n' >&2; exit 2; }
+usage() { printf 'usage: private-names.sh <repo-root> | --commits <range> | --text <file>  [name-file]\n' >&2; exit 2; }
 [ $# -ge 1 ] || usage
+MSGDIR="" KIND="a tracked file"
+case "$1" in
+  --commits|--text)
+    [ $# -ge 2 ] || usage
+    MSGDIR=$(mktemp -d) || exit 2; trap 'rm -rf "$MSGDIR"' EXIT
+    if [ "$1" = --text ]; then
+      # git drops `#` lines and everything under the `git commit -v` scissors, so a
+      # branch name in the template is not a leak. A `-F` message keeps its `#` lines;
+      # rule 12's --commits scan reads the stored message and still catches those.
+      [ -r "$2" ] || usage
+      sed '/^# -\{24\} >8 -\{24\}$/,$d; /^#/d' -- "$2" > "$MSGDIR/message" || exit 2
+      KIND="the commit message"
+    else
+      KIND="a commit message"
+      revs=$(git rev-list "$2" 2>/dev/null) || { printf 'private-names: cannot list commits %s\n' "$2" >&2; exit 2; }
+      for c in $revs; do git log -1 --format=%B "$c" > "$MSGDIR/commit $c" || exit 2; done
+    fi
+    shift 2; set -- . "$@" ;;
+esac
 ROOT="$1"
 [ -d "$ROOT" ] || usage
 NAMEFILE="${2:-${AGENT_READY_PRIVATE_NAMES:-$HOME/.config/agent-ready/private-names}}"
 
 cd "$ROOT" || exit 2
+GF=-niIF   # -F: a name may hold regex metacharacters. -i: an agent id arrives lowercased.
+population() {  # NUL-separated paths to scan
+  if [ -n "$MSGDIR" ]; then (cd "$MSGDIR" && find . -type f -print0); else git ls-files -z --cached --others --exclude-standard; fi
+}
 
 if [ ! -f "$NAMEFILE" ]; then
   printf 'private-names: SKIPPED — no name list at %s, so NOTHING was checked. See the header for how to generate one.\n' "$NAMEFILE" >&2
@@ -78,18 +107,16 @@ while IFS= read -r name; do
     unchecked=$((unchecked + 1)); continue
   fi
   names=$((names + 1))
-  # -F: a name may contain regex metacharacters (a dot in a domain-style name).
-  # -i: a name reaches
-  # prose in any case, and an agent id derived from one arrives lowercased.
   while IFS= read -r hit; do
-    printf '%s: private project name in a tracked file: %s\n' "$hit" "$name"
+    printf '%s: private project name in %s: %s\n' "${hit#./}" "$KIND" "$name"
     violations=$((violations + 1))
-  done < <(git ls-files -z --cached --others --exclude-standard | xargs -0 grep -niIF -- "$name" 2>/dev/null | cut -d: -f1,2)
+  done < <(population | { [ -z "$MSGDIR" ] || cd "$MSGDIR"; xargs -0 grep $GF -- "$name" /dev/null 2>/dev/null; } | cut -d: -f1,2)
 done < "$NAMEFILE"
 
-files=$(git ls-files --cached --others --exclude-standard | wc -l | tr -d ' ')
-printf 'private-names: %d name(s) checked against %d tracked file(s); %d unchecked (too short or generic)\n' \
-  "$names" "$files" "$unchecked" >&2
+files=$(population | tr -cd '\0' | wc -c | tr -d ' ')
+[ -n "$MSGDIR" ] && what="message(s)" || what="tracked file(s)"
+printf 'private-names: %d name(s) checked against %d %s; %d unchecked (too short or generic)\n' \
+  "$names" "$files" "$what" "$unchecked" >&2
 
 [ "$names" -gt 0 ] || { printf 'private-names: SKIPPED — the name list yielded 0 usable names, so NOTHING was checked.\n' >&2; exit 2; }
 [ "$violations" -eq 0 ] && exit 0 || exit 1

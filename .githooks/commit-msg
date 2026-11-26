@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# commit-msg: refuse a message that names a private project (#247). Lint rule 12 reads
+# files, but a pushed message is public too, and `--amend --no-edit` keeps the old one.
+# Enable once per clone: git config core.hooksPath .githooks. Bypass knowingly: git commit -n
+root=$(git rev-parse --show-toplevel) || exit 1
+err=$(mktemp) || exit 1
+out=$(bash "$root/tests/lint/private-names.sh" --text "$1" 2>"$err"); rc=$?
+why=$(grep -v 'UNCHECKED\|checked against' "$err" | head -1); rm -f "$err"
+case $rc in
+  0) exit 0 ;;
+  1) printf '%s\n' "$out" >&2
+     echo "commit-msg: the message names a private project; commit refused. Reword it." >&2; exit 1 ;;
+  *) echo "commit-msg: private-name check could not run (exit $rc); the message was NOT checked. ${why}" >&2; exit 0 ;;
+esac

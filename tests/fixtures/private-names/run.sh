@@ -142,7 +142,7 @@ ablate() { # ablate <label> <old> <new> <must-appear | !must-not> <control>
     printf '  PASS  ABLATION %-26s lethal to its own row, control survives\n' "$1"
   fi
 }
-ablate case-sensitivity 'grep -niIF' 'grep -nIF' \
+ablate case-sensitivity 'GF=-niIF' 'GF=-nIF' \
   '!docs/history.md:2' 'templates/shipped.md:1'
 # With the length gate open, a 4-char name matches ordinary prose — which is
 # the whole reason the gate exists, and the reason recall is traded for signal.
@@ -160,6 +160,59 @@ ablate missing-list-guard 'if [ ! -f "$NAMEFILE" ]; then' 'if false; then' \
   '!SKIPPED — no name list' 'templates/shipped.md:1'
 ablate zero-usable-guard '[ "$names" -gt 0 ] ||' '[ "$names" -ge 0 ] ||' \
   '!0 usable names' 'templates/shipped.md:1'
+
+# ── Commit messages (#247): a message is public once pushed, and an amend keeps it ──
+cd "$W/repo" || exit 1
+git commit -q --allow-empty -m "clean: a message that names nothing"
+git commit -q --allow-empty -m "fix the export
+Reported from the secretproject checkout."
+mo="$(bash "$CHECK" --commits HEAD~2..HEAD "$names" 2>&1)"; mrc=$?
+leak=$(git rev-parse HEAD)
+if [ "$mrc" -eq 1 ] && grep -qF "commit $leak:2: private project name in a commit message: SecretProject" <<<"$mo" &&
+   [ "$(grep -c 'private project name' <<<"$mo")" -eq 1 ] && grep -qF 'against 2 message(s)' <<<"$mo"; then
+  printf '  PASS  %-38s the leaking commit and line, and only it\n' "M1 --commits names the commit"
+else printf '  FAIL  %-38s got exit %s:\n%s\n' "M1 --commits names the commit" "$mrc" "$mo"; FAIL=1; fi
+# Mutant: --commits writes no message. M1 must go red.
+sed 's|> "\$MSGDIR/commit \$c"|> /dev/null|' "$CHECK" > "$W/nomsg.sh"
+if cmp -s "$W/nomsg.sh" "$CHECK"; then printf '  FAIL  %-38s its site has moved\n' "mutant M"; FAIL=1
+elif bash "$W/nomsg.sh" --commits HEAD~2..HEAD "$names" 2>/dev/null | grep -qF SecretProject; then
+  printf '  FAIL  %-38s the leak was still found\n' "mutant M"; FAIL=1
+else printf '  PASS  %-38s no messages, no leak found (M1 would go red)\n' "mutant M"; fi
+co="$(bash "$CHECK" --commits HEAD~2..HEAD~1 "$names" 2>&1)"; crc=$?
+[ "$crc" -eq 0 ] && grep -qF 'against 1 message(s)' <<<"$co" && printf '  PASS  %-38s exit 0 and counts 1 message\n' "M2 a clean range" \
+  || { printf '  FAIL  %-38s got exit %s: %s\n' "M2 a clean range" "$crc" "$co"; FAIL=1; }
+bo="$(bash "$CHECK" --commits no-such-ref..HEAD "$names" 2>&1)"; brc=$?
+[ "$brc" -eq 2 ] && printf '  PASS  %-38s exit 2, not a clean 0\n' "M3 a range git cannot list" \
+  || { printf '  FAIL  %-38s expected exit 2, got %s\n' "M3 a range git cannot list" "$brc"; FAIL=1; }
+# The hook, end to end: a commit whose message names a listed project is refused,
+# and so is an amend that keeps that message after the file was fixed.
+mkdir -p "$W/h/.githooks" "$W/h/tests/lint"
+cp "$ROOT/.githooks/commit-msg" "$W/h/.githooks/"; cp "$CHECK" "$W/h/tests/lint/"
+cd "$W/h" && git init -q . && git config user.email f@x && git config user.name f && git config core.hooksPath .githooks
+export AGENT_READY_PRIVATE_NAMES="$names"
+git commit -q --allow-empty -m "seed" 2>/dev/null
+if git commit -q --allow-empty -m "port the PrivateThing loader" 2>"$W/herr"; then
+  printf '  FAIL  %-38s the commit went through\n' "H1 hook refuses a leaking message"; FAIL=1
+elif grep -qF 'PrivateThing' "$W/herr"; then printf '  PASS  %-38s refused, naming the name\n' "H1 hook refuses a leaking message"
+else printf '  FAIL  %-38s refused without naming it: %s\n' "H1 hook refuses a leaking message" "$(cat "$W/herr")"; FAIL=1; fi
+git commit -q -n --allow-empty -m "port the PrivateThing loader" 2>/dev/null
+if git commit -q --amend --no-edit --allow-empty 2>"$W/herr"; then
+  printf '  FAIL  %-38s the amend kept the name\n' "H2 amend --no-edit is refused"; FAIL=1
+elif grep -qF PrivateThing "$W/herr"; then printf '  PASS  %-38s the kept message is checked\n' "H2 amend --no-edit is refused"
+else printf '  FAIL  %-38s refused without naming it\n' "H2 amend --no-edit is refused"; FAIL=1; fi
+# A name only in git's template comments (the branch line) never reaches history.
+git checkout -q -b feat-PrivateThing
+if GIT_EDITOR=true git commit -q -v --allow-empty -m "plain words" -e 2>"$W/herr"; then
+  printf '  PASS  %-38s allowed\n' "H5 name only in a # template line"
+else printf '  FAIL  %-38s refused: %s\n' "H5 name only in a # template line" "$(cat "$W/herr")"; FAIL=1; fi
+git checkout -q -
+git commit -q --allow-empty -m "a clean message" 2>/dev/null && printf '  PASS  %-38s allowed\n' "H3 hook allows a clean message" \
+  || { printf '  FAIL  %-38s refused\n' "H3 hook allows a clean message"; FAIL=1; }
+if AGENT_READY_PRIVATE_NAMES="$W/no-such-list" git commit -q --allow-empty -m "PrivateThing again" 2>"$W/herr"; then
+  grep -qF 'NOT checked' "$W/herr" && printf '  PASS  %-38s allowed, and says it checked nothing\n' "H4 no list: loud, not silent" \
+    || { printf '  FAIL  %-38s allowed in silence\n' "H4 no list: loud, not silent"; FAIL=1; }
+else printf '  FAIL  %-38s refused with no list to check against\n' "H4 no list: loud, not silent"; FAIL=1; fi
+unset AGENT_READY_PRIVATE_NAMES
 
 echo
 [ "$FAIL" -eq 0 ] && echo "All seeded cases behaved correctly." \
