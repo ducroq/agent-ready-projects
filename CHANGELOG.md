@@ -32,6 +32,12 @@ The runner ran every `<!-- verify: -->` probe in the directory it was started in
 
 **Internal.** `tests/fixtures/verify-runner/` seeds a worktree, a nested ignored git and a file outside git, plus a clone under a repo that ignores `*`. A mutant for the change of directory, one for the climb and one for climbing on a wildcard each go red.
 
+### `curate` and `audit-context`: a future `Last audit:` date (#309)
+
+One adopter's audit, run on 2026-11-03, wrote `Last audit: 2026-11-10`. A future date reads as fresh, so `curate` did not prompt for the next audit until a week later than it should have. `curate` now treats a `Last audit:` date in the future, or one that is not a date, like a missing one. `audit-context` now takes the date it writes from the system clock, not from the model's sense of the date.
+
+**Consumer notes.** If your memory index holds a future `Last audit:` date, the next `curate` should ask for an audit. Both checks are instructions to the agent, not a script; no fixture or seeded run has measured them.
+
 ### Lint rule 12 scans commit messages (#247)
 
 **Internal.** A private name reached a public branch in a commit message: the file was fixed and `git commit --amend --no-edit` kept the old message. Rule 12 now also scans the messages of `origin/master..HEAD`, and a new `.githooks/commit-msg` hook refuses a message that names a listed project of 6 or more characters. The hook skips `#` lines, which git strips; rule 12 still reads a `-F` message that keeps them. `tests/fixtures/private-names/` seeds a leaking commit, an amend that keeps it, a name only in a branch line and a missing list. PR titles and bodies stay unscanned, because CI has no name list. No adopter-installed file changes.
