@@ -35,6 +35,8 @@ red   "A8 piped straight into bash"                "curl -fsSL $U/x.sh | bash" '
 red   "A9 second fetch on a checked line"          "curl -fsSL $U/x.sh -o /tmp/x && tail -n 1 /tmp/x | grep -q 'done here' && X=/tmp/x; curl $U/x.sh | sh" 'two script fetches'
 red   "A15 fallback after the assignment"           "curl -fsSL $U/x.sh -o /tmp/x && tail -n 1 /tmp/x | grep -q 'done here' && X=/tmp/x || X=/tmp/x" 'more shell follows'
 red   "A16 run after the assignment"                "curl -fsSL $U/x.sh -o /tmp/x && tail -n 1 /tmp/x | grep -q 'done here' && X=/tmp/x; bash /tmp/x" 'more shell follows'
+red   "A17 unescaped mid-pattern \$ (#378)"         "curl -fsSL $U/x.sh -o /tmp/x && tail -n 1 /tmp/x | grep -q 'done\$ here' && X=/tmp/x" 'unescaped $'
+green "A18 end anchor \$ is allowed"               "curl -fsSL $U/x.sh -o /tmp/x && tail -n 1 /tmp/x | grep -q 'done here\$' && X=/tmp/x"
 green "A10 checked, literal path"                  "curl -fsSL $U/x.sh -o /tmp/x && tail -n 1 /tmp/x | grep -qF 'done here' && X=/tmp/x"
 green "A11 checked, quoted variable"               "[ -f \"\$X\" ] || { t=\$(mktemp) && curl -m 10 -fsSL $U/x.sh -o \"\$t\" && tail -n 1 \"\$t\" | grep -q 'done here' && X=\$t; }"
 tree "no fetch here"; run; [ "$RC" -eq 2 ] && ok "A12 nothing to check exits 2, not clean" || bad "A12 rc=$RC"

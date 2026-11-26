@@ -12,8 +12,10 @@
 # earlier line (a copy cut off there would pass). A text
 # that matches nothing makes every adopter's fetch fail; editing a script's last
 # line has the same effect, so this rule reads the script too.
+# A $ in <text> before its end must be escaped unless -qF: ugrep, which Claude Code
+# runs as grep, reads it as an anchor, GNU grep as a literal (#378).
 #
-# Not seen: another host, a URL built from variables or split across lines, or a
+# Not seen: a ugrep difference other than $, since matches run GNU grep; another host, a URL built from variables or split across lines, or a
 # later line that runs F. A raw URL in prose is reported: link the blob page instead.
 set -u
 root="${1:-}"
@@ -55,6 +57,8 @@ for f in files:
         out, tailed, opt, text, used = m.groups()
         if not (out == tailed == used):
             flag(where, f'saves {out}, checks {tailed}, uses {used}; all three must be the same file'); continue
+        if opt != '-qF' and re.search(r'(?<!\\)(?:\\\\)*\$.', text):
+            flag(where, 'unescaped $ before the end of the check text; ugrep reads it as an anchor and refuses every fetch (#378). Write \\$ or use -qF'); continue
         if not os.path.isfile(urls[0]):
             flag(where, f'{urls[0]} is not in this repo'); continue
         src = open(urls[0], encoding='utf-8').read().splitlines()

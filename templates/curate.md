@@ -45,7 +45,7 @@ Check for context rot from *previous* sessions. **Read metadata, not documents**
 
    ```bash
    GH=~/repos/agent-ready-projects/scripts/gotcha-headers.sh   # this framework's clone
-   # No clone? f=/tmp/gotcha-headers.sh; curl -fsSL https://raw.githubusercontent.com/ducroq/agent-ready-projects/master/scripts/gotcha-headers.sh -o $f && tail -n 1 $f | grep -q '^. "$log"$' && GH=$f
+   # No clone? f=/tmp/gotcha-headers.sh; curl -fsSL https://raw.githubusercontent.com/ducroq/agent-ready-projects/master/scripts/gotcha-headers.sh -o $f && tail -n 1 $f | grep -q '^. "\$log"$' && GH=$f
    bash "$GH" <log>
    ```
 
@@ -87,7 +87,7 @@ Check for context rot from *previous* sessions. **Read metadata, not documents**
 
    ```bash
    HD=~/repos/agent-ready-projects/scripts/hypothesis-due.sh
-   # No clone? f=/tmp/hypothesis-due.sh; curl -fsSL https://raw.githubusercontent.com/ducroq/agent-ready-projects/master/scripts/hypothesis-due.sh -o $f && tail -n 1 $f | grep -q '^. "$log"$' && HD=$f
+   # No clone? f=/tmp/hypothesis-due.sh; curl -fsSL https://raw.githubusercontent.com/ducroq/agent-ready-projects/master/scripts/hypothesis-due.sh -o $f && tail -n 1 $f | grep -q '^. "\$log"$' && HD=$f
    bash "$HD" <log>
    ```
 
@@ -113,7 +113,7 @@ Check for context rot from *previous* sessions. **Read metadata, not documents**
    - **Then have a fresh reader compare old and new** (#256): another agent or a person, given only the two versions, lists operative clauses missing or weakened; with neither available, report the comparison as not done and leave the trim for the engineer to approve. `grep -F` cannot see a paraphrase.
    - **Delete, don't reword** (#256). Where removed text survives elsewhere, leave `→ <path or ref>` (#322); report what survives nowhere.
 
-Report findings before proceeding. Don't fix anything in this step — just surface what's stale so the engineer can decide. A trim the engineer then approves follows sub-step 6's trim rules and, near budget, the order its script printed.
+Report findings before proceeding. Don't fix anything in this step: surface what's stale so the engineer can decide. A trim the engineer then approves follows sub-step 6's trim rules and, near budget, the order its script printed.
 
 ## Step 1 — Gotcha log review
 
