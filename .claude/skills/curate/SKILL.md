@@ -165,7 +165,7 @@ Scan `docs/work-items/` for files with an incomplete Outcome section. For each:
 
 - **Freshness**: Gotcha log headers reconciled against the `**Problem**` count, and the Promoted table read
 - **Verification**: State claims checked — N passed, N failed, N unverified, N errored, N manual check needed, N cannot verify, N malformed. Report all seven, even zeros, plus **N commands run of M annotations**, the difference, and the exit status
-- **Gotchas**: New entries added, entries resolved or promoted, and **N promoted patterns re-checked, N recurred; N constraint rows, N re-checked, N false**. Report all, even zeros: zero constraint rows looks like a skipped step unless reported (#183). Name any pattern that recurred *after* promotion
+- **Gotchas**: New entries added, entries resolved or promoted, and **N promoted patterns re-checked, N recurred; N constraint rows, N re-checked, N false**. Report all, even zeros: unreported, zero constraint rows looks skipped (#183). Name any pattern that recurred *after* promotion
 - **Memory index**: Updates made
 - **Work items**: Outcomes filled, pointers added or updated, items flagged as idle
-- **Action needed**: anything needing an engineer decision, including `audit-context` (don't run it) when the memory index's `Last audit:` is missing, `never` or over 30 days old
+- **Action needed**: anything needing an engineer decision, including `audit-context` (don't run it) when the memory index's `Last audit:` is missing, `never`, not a date, in the future, or over 30 days old

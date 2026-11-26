@@ -72,9 +72,9 @@ your report, non-defects included, and carry `UNCONFIRMED` into Step 9's *Unconf
 **If you automate this step**, gate on the exit status: 0 clean, 1 defects, 2 coverage incomplete
 (non-zero; accept it only by opting in, `|| [ $? -eq 2 ]`), 70 never a verdict.
 
-**Expect a residue; do not loosen the check to erase it.** Some references are *meant* not to resolve: instructional placeholders, files a runbook tells the reader to create, units owned and deployed by another repo. **Mark them** — `<!-- placeholder -->` **immediately after** the path, same line (`` `src/aggregators/<name>.py` <!-- placeholder --> ``). **Span-scoped**: it covers the nearest path *before* it, never the line or the rest of a row, so in a table it goes in that path's own cell; a marker at the row's end silently excuses the row's last path instead. Marked paths move to a counted section. **That form and no other**: a marker the checker never learned leaves the finding in the list. A short residue is a healthy result. **Zero is not the target**; a change that drives the count to zero has almost certainly disabled the check rather than fixed it.
+**Expect a residue; do not loosen the check to erase it.** Some references are *meant* not to resolve: instructional placeholders, files a runbook tells the reader to create, units owned and deployed by another repo. **Mark them** — `<!-- placeholder -->` **immediately after** the path, same line (`` `src/aggregators/<name>.py` <!-- placeholder --> ``). **Span-scoped**: it covers the nearest path *before* it, never the line or the rest of a row, so in a table it goes in that path's own cell; a marker at the row's end silently excuses the row's last path instead. Marked paths move to a counted section. **That form and no other**: a marker the checker never learned leaves the finding in the list. A short residue is a healthy result. **Zero is not the target**; a change that drives the count to zero has most likely disabled the check, not fixed it.
 
-If the same non-finding repeats on consecutive runs, fix the check — **but first distinguish wolf-crying from residue**: a repeated finding that is an acknowledged placeholder, a cross-repo unit, or a file the reader is told to create is residue; mark it rather than loosening the extractor. If `LIVENESS` printed and the repeat remains, the repeat is residue and the check is fine. **Loosening any check is the most dangerous edit you can make**: a run that found nothing real measures specificity, not sensitivity, so seed the failures the change newly *permits*. (`SPEC.md` carries the checker-specific rules.)
+If the same non-finding repeats on consecutive runs, fix the check — **but first distinguish wolf-crying from residue**: a repeated finding that is an acknowledged placeholder, a cross-repo unit, or a file the reader is told to create is residue; mark it rather than loosening the extractor. If `LIVENESS` printed and the repeat remains, the repeat is residue and the check is fine. **Loosening any check is the most dangerous edit there is**: a run that found nothing real measures specificity, not sensitivity, so seed the failures the change newly *permits*. (`SPEC.md` carries the checker-specific rules.)
 
 For every "Before You Start" pointer:
 - Verify the target file exists
@@ -88,7 +88,7 @@ For every "Before You Start" pointer:
 - **Layer 3 present**: check that every topic file has a task-triggered pointer in the "Before You Start" table. Flag orphaned topic files — they exist but no pointer leads to them, so an agent will never know to load them.
 - **No Layer 3 anywhere** — the case for every tool without auto-memory, where `docs/GUIDE.md` says plainly that everything goes into the project file: report the *topic-file* half as **not applicable, and say why**. A skipped check and a passing check are indistinguishable in a report that says neither.
 
-**The work-item half runs either way — only the artifact changes.** Check that every file in `docs/work-items/` (other than `README.md`) has a pointer and that no pointer names a missing file. Pointers live in the memory index's Current State section where Layer 3 exists, otherwise in the project file's **Active work** section. **Report which one you read — and if *both* exist, that is the finding**: name the memory index as canonical and propose removing the other. Flag pointers to finished work: only in-progress items belong in either list, and in the project file that list counts against Step 1's size budget.
+**The work-item half runs either way — only the artifact changes.** Check that every file in `docs/work-items/` (except `README.md`) has a pointer and that no pointer names a missing file. Pointers live in the memory index's Current State section where Layer 3 exists, otherwise in the project file's **Active work** section. **Report which one you read — and if *both* exist, that is the finding**: name the memory index as canonical and propose removing the other. Flag pointers to finished work: only in-progress items belong in either list, and in the project file that list counts against Step 1's size budget.
 
 **Do not substitute `docs/*.md` for the topic files** — it holds essays and reference material, and every one would report as an orphan — **and do not invent another home for the work-item pointers.**
 
@@ -138,7 +138,7 @@ Check what's tracked vs untracked:
 
 ## Step 9 — Report
 
-Open with the **verdict** — *defects*, *clean*, or *coverage incomplete*, Step 4's three outcomes, or *checker broken, no verdict* after an exit 70 — on a line of its own, above everything else, so a reader of only the first line cannot mistake an undecided run for a clean one.
+Open with the **verdict** — *defects*, *clean*, or *coverage incomplete*, Step 4's three outcomes, or *checker broken, no verdict* after an exit 70 — on its own first line, so a reader of only that line cannot mistake an undecided run for a clean one.
 
 Then summarize findings by severity:
 
@@ -146,8 +146,8 @@ Then summarize findings by severity:
 - **Fix soon**: duplication, bloated auto-loaded files, passive pointer language
 - **Consider**: minor size optimizations, optional restructuring
 
-Plus one bucket that is not a severity, because it is not a defect: **Unconfirmed** — Step 4's undecided references, naming the rung that could not run and why. Populate it whenever there are any, not only on a *coverage incomplete* run, and never under *fix now*. State an empty bucket too — it separates "everything was checked" from "everything checkable was checked".
+Plus one bucket that is not a severity, as it is not a defect: **Unconfirmed** — Step 4's undecided references, naming the rung that could not run and why. Populate it whenever any exist, not only on a *coverage incomplete* run, and never under *fix now*. State an empty bucket too: it tells "all was checked" from "all checkable was checked".
 
-For each finding, state what's wrong, where, and propose a specific fix. Don't make changes without showing the plan first.
+For each finding, state what's wrong, where, and propose a specific fix. Don't change anything before showing the plan.
 
-**Whatever the verdict, set `Last audit: YYYY-MM-DD (<verdict>)` after the memory index's first heading**, replacing any old one (no plan needed).
+**Whatever the verdict, set `Last audit: YYYY-MM-DD (<verdict>)` after the memory index's first heading**, replacing any old one (no plan needed). Take it from the system clock, not your sense of the date.
