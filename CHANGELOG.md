@@ -22,6 +22,16 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
+## Candidate (unreleased)
+
+### `verify-runner.sh`: a probe runs in its file's repo (#305)
+
+The runner ran every `<!-- verify: -->` probe in the directory it was started in. Run from the main checkout on a worktree's `CLAUDE.md`, a stamp probe read the main checkout's stamp and passed; from a sibling repo, every `git rev-parse` probe checked the wrong repo. Each probe now runs at the root of the repo that holds its file, and a `RUNS IN` row names any root other than the current directory. A linked worktree or submodule is its own root. A nested git runs at the outer root only when an outer ignore rule names its directory, as `/memory/` does for a `memory/` with its own history. A wildcard rule, such as a dotfiles `~` repo ignoring `*`, does not climb, so a clone under it stays its own root. Inherited `GIT_DIR` and `GIT_WORK_TREE` no longer decide where a probe runs. A file outside git runs in the current directory, as before.
+
+**Consumer notes.** Run from the repo root, as `curate` Step 0 says, nothing changes. A probe that relied on running somewhere other than its file's repo now runs there instead; rewrite it with an absolute path. A script that parses the runner's output sees a new `RUNS IN` row. With a clone, `git pull` it; without one, `curate` fetches the new runner.
+
+**Internal.** `tests/fixtures/verify-runner/` seeds a worktree, a nested ignored git and a file outside git, plus a clone under a repo that ignores `*`. A mutant for the change of directory, one for the climb and one for climbing on a wildcard each go red.
+
 ## v1.55.0 (2026-11-26)
 
 **MINOR.** `curate` and `savepoint` commit only lines the session wrote (#318), and `curate`'s four script fallbacks check the download (#268). No consumer has to act, so rule 1 of `templates/release.md` Step 2 does not fire. `curate` gains a commit rule it did not have, which is new behaviour, so this is MINOR on the v1.51.0 precedent. The candidate block was headed v1.54.2.

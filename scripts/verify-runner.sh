@@ -112,6 +112,28 @@ lint() {
   return 0
 }
 
+# A probe runs at the root of the repo that holds its file, not where the runner was
+# started (#305): from a sibling repo or the main checkout, a worktree's probe read the
+# wrong stamp and passed. A nested git runs at the outer root only when an outer ignore
+# rule names its directory (`memory/` for a memory/ with its own history). A wildcard
+# such as a dotfiles `~` ignoring `*` does not climb: a clone under it is its own
+# project. A linked worktree or submodule (.git is a file) is its own root. A file
+# outside git runs in the current directory, as before. Inherited GIT_DIR/GIT_WORK_TREE
+# would point every lookup at one repo, so home_of drops them (its own subshell).
+names_dir() {  # names_dir <dir> <outer>: the ignore rule matching <dir> is its own name
+  _r=$(git -C "$2" check-ignore -v "$1" 2>/dev/null) || return 1
+  _r=${_r%%$'\t'*}; _r=${_r#*:}; _r=${_r#*:}; _r=${_r#/}; _r=${_r%/}
+  [ "$_r" = "${1##*/}" ]
+}
+home_of() {
+  unset GIT_DIR GIT_WORK_TREE GIT_COMMON_DIR
+  _d=$(git -C "$(dirname "$1")" rev-parse --show-toplevel 2>/dev/null) || return 0
+  while [ ! -f "$_d/.git" ] && _p=$(git -C "$_d/.." rev-parse --show-toplevel 2>/dev/null) &&
+        names_dir "$_d" "$_p"; do _d=$_p; done
+  printf '%s' "$_d"
+}
+lastfile="" home=""
+
 case "${VERIFY_TIMEOUT:-30}" in *[!0-9]*|'') echo "VERIFY_TIMEOUT must be whole seconds" >&2; exit 2 ;; esac
 TMPD=$(mktemp -d); trap 'rm -rf "$TMPD"' EXIT
 TO=""; command -v timeout >/dev/null 2>&1 && TO="timeout ${VERIFY_TIMEOUT:-30}"
@@ -133,8 +155,12 @@ while IFS=$'\034' read -r kind file cmd; do
       manual=$((manual + 1)); printf 'MANUAL         %s :: %s\n' "$file" "$cmd"; continue ;;
   esac
   n=$((n + 1))
+  if [ "$file" != "$lastfile" ]; then
+    lastfile=$file; home=$(home_of "$file")
+    [ -z "$home" ] || [ "$home" = "$PWD" ] || printf 'RUNS IN        %s :: probes in %s\n' "$home" "$file"
+  fi
   OUTF="$TMPD/$n.out"; ERRF="$TMPD/$n.err"               # never reused: a backgrounded
-  ${TO:-} bash -c "$cmd" </dev/null >"$OUTF" 2>"$ERRF"; rc=$?   # child still holds the old
+  ( cd "${home:-.}" && exec ${TO:-} bash -c "$cmd" ) </dev/null >"$OUTF" 2>"$ERRF"; rc=$?  # child still holds the old
   head1=$(awk 'NF { sub(/^[ \t]+/, ""); print; exit }' "$OUTF") # one and writes into it
   note=""
   case "$head1" in
