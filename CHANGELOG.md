@@ -46,6 +46,14 @@ One adopter's audit, run on 2026-11-03, wrote `Last audit: 2026-11-10`. A future
 
 **Internal.** Lint rule 24 now fails on an unescaped `$` before the end of a check text, unless the check uses `-qF`. #189 had closed this class with a one-off sweep; the rule measured matches with GNU grep, so it passed. Fixture cases A17 and A18 seed a mid-pattern `$` and an end anchor. Rule 24 and fixture B still run GNU grep, so other ugrep differences pass unseen. Reverting the fix makes the rule report all four sites.
 
+### `review-changes` Step 1 runs a script (#333)
+
+Step 1's baseline and size bash moved into a new `scripts/review-baseline.sh`, so the skill no longer carries it. The skill runs it from a framework clone, or fetches it and checks the download's last line. The script prints the four size terms, the changed files, and `ROOTFALLBACK=` and `BASE=` as its last two lines. The skill reads `BASE` from them. An empty size term now prints `none`. Two cases that read as clean now stop or warn. A branch with no history in common with the baseline prints `BASELINE UNRESOLVED (NO MERGE BASE)`. A bare repository exits 2.
+
+**Consumer notes.** `/review-changes` now needs `scripts/review-baseline.sh`, from a clone of this framework, or it fetches it (`adopt.md`). Without either, Step 1 stops at its `BASE` guard instead of reviewing. A project that edited Step 1's bash keeps its copy until it takes this version.
+
+**Internal.** `tests/fixtures/baseline-fallback/` now runs the script, and the skill's caller lines under four caller shell modes. It adds rows for a missing script, untracked lines from a subdirectory, each size term and file listing, a bare repository and an orphan branch. Each of its seven ablations mutates the script and goes red. So did eleven mutants of the size terms and listings that two reviews ran. The editor comments from `docs/rationale/review-changes.md` moved back beside their code.
+
 ### Lint rule 12 scans commit messages (#247)
 
 **Internal.** A private name reached a public branch in a commit message: the file was fixed and `git commit --amend --no-edit` kept the old message. Rule 12 now also scans the messages of `origin/master..HEAD`, and a new `.githooks/commit-msg` hook refuses a message that names a listed project of 6 or more characters. The hook skips `#` lines, which git strips; rule 12 still reads a `-F` message that keeps them. `tests/fixtures/private-names/` seeds a leaking commit, an amend that keeps it, a name only in a branch line and a missing list. PR titles and bodies stay unscanned, because CI has no name list. No adopter-installed file changes.
