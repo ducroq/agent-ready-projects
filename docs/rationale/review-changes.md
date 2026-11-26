@@ -252,7 +252,7 @@ where the block reassigns BASE to `@{u}` and makes HEAD an ancestor by construct
 | state | `$BASE` resolves | fallback fires | diff empty | reported |
 |---|---|---|---|---|
 | baseline unresolvable | no | yes | maybe | unresolved-baseline finding |
-| root-commit fallback (#149) | yes (to root) | yes | yes, if one commit | finding, via `ROOTFALLBACK` |
+| root-commit fallback (#149) | yes (to root) | yes | yes, if one commit | finding, via the printed `BASELINE UNRESOLVED (ROOTFALLBACK=1)` |
 | **HEAD contained in `$BASE`** | **yes** | **no** | the `$BASE`...HEAD term only | **"nothing to review"** |
 
 Found by running the skill on a branch carrying three unreviewed commits after a concurrent
@@ -469,7 +469,7 @@ the skill at all: with the first fence as the file's opening construct a correct
 reported as unclosed, but with anything above it — a heading is enough — the file goes entirely
 silent and a genuine lossy row is lost. Both measured (#150).
 
-**Why the `set -e`/`|| :` guards in the Step 1 baseline block are shaped as they are.** Measured
+**Why the `set -e`/`|| :` guards in the Step 1 baseline (now `scripts/review-baseline.sh`) are shaped as they are.** Measured
 failure modes: a repo with no remote and no `main`/`master` died at the candidate loop with no
 output at all; without `|| :`, `set -eo pipefail` kills the shell before the message that reports
 the failure; and an empty repo was told to run `git show --stat` with no argument. Four modes are
@@ -640,64 +640,7 @@ State the lens set and the ceiling **before** starting; record the cost after. L
 
 An agent running these blocks does not need them; an editor of the blocks does. Read them before changing Step 1, the magnitude gate or Step 1.5. Each group is followed by the line of code it sat above.
 
-**Step 1, baseline block:**
-
-```text
-# Every arm ends in a success, or `set -e` aborts before the fallback that is the
-# one place reporting the failure.
-    ^ above: BASE=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD) ||
-
-# Fully qualified: `rev-parse` resolves refs/heads/ first, so a LOCAL branch named
-# `origin/main` would win and silently reintroduce #64.
-    ^ above: BASE=$(for c in refs/remotes/origin/main refs/remotes/origin/master main master; do
-
-# On the default branch HEAD...HEAD is empty, so the upstream is the baseline.
-    ^ above: if [ -n "${BASE:-}" ] && [ "$(git rev-parse --abbrev-ref HEAD 2>/dev/null)" = "${BASE##*/}" ]; then
-
-# An empty or dangling BASE diffs to nothing, which is what a clean tree yields.
-# The fallback is NOT "the whole branch": three-dot excludes the root's own
-# content, so a one-commit repo diffs to NOTHING (#149). No `${BASE:-sentinel}`
-# placeholder — any sentinel word is a legal branch name.
-    ^ above: ROOTFALLBACK=          # initialised, or a later `set -u` reader aborts on it
-
-# `|| :` is load-bearing: without it `set -eo pipefail` kills the shell here and
-# prints nothing. Four SHELL-OPTION modes are seeded in the fixture — the axis
-# matters, because the block was broken only in the ones without `set -e`.
-    ^ above: BASE=$(git rev-list --max-parents=0 HEAD 2>/dev/null | tail -1) || :
-
-# PRINTED as well as set: a shell variable does not reach the next tool call and
-# this one degrades toward PERMITTING a clean result. Key off the printed token.
-    ^ above: { echo "BASELINE UNRESOLVED (ROOTFALLBACK=1) — fell back to root commit $BASE,"
-
-# #153 — a baseline can RESOLVE and still leave every term legitimately empty
-# (HEAD already contained in $BASE). No other guard fires, so unreviewed commits
-# report as a clean review. A diagnostic, not an abort.
-# ⚠️ The equality case is EXCLUDED, or this fires on the commonest pre-commit
-# state there is, and a guard that cries wolf is skipped.
-    ^ above: if git merge-base --is-ancestor HEAD "$BASE" 2>/dev/null &&
-
-# #145 — no `git diff` variant lists a file git has not seen, so the carve-out for
-# "any new file in a HIGH path" fired on a class this step could not observe.
-# Step 1.5 having its own `ls-files` is no substitute: it checks markdown, not tiers.
-# ⚠️ ROOT-ANCHORED on purpose: `ls-files` defaults to the CWD SUBTREE while every
-# term above is repo-wide, and this skill runs with the cwd of whatever repo is
-# under review.
-    ^ above: git -C "$(git rev-parse --show-toplevel)" -c core.quotePath=false \
-```
-
-**Magnitude gate, line count:**
-
-```text
-# Untracked lines count too — none of the three terms above sees them (#145).
-# No `xargs -r` (a GNU extension) and no plain `xargs` either: on empty input that
-# runs `wc -l` with no argument, which reads stdin and BLOCKS on a terminal. The
-# form below prints 0 on an empty list. ⚠️ Not verified on BSD/macOS.
-# ⚠️ `-z`, not a plain list: `ls-files` C-QUOTES any path with a non-ASCII byte, a
-# tab or a newline, and `wc -l < "$f"` then opens nothing — measured 5 against a
-# true 105. Same quoting hits the TIER listing, hence `core.quotePath=false`.
-# `|| echo 0` keeps a broken symlink from aborting the stream under `set -e`.
-    ^ above: git -C "$(git rev-parse --show-toplevel)" ls-files -z --others --exclude-standard |
-```
+**Step 1, baseline block, and the magnitude gate's line count:** moved with their code into `scripts/review-baseline.sh` (#333), where an editor reads them and an agent running the skill does not.
 
 **Step 1.5, checker call:**
 

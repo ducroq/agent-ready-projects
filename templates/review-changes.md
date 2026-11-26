@@ -6,7 +6,7 @@
      from this repo.) A project-local copy is INERT — the global one shadows it.
      Diff an install against THAT file, never this one: the header differs by construction (#187).
      For other tools, run this as a pre-commit prompt manually.
-     Editing a bash block below? Its reasons are in <https://github.com/ducroq/agent-ready-projects/blob/master/docs/rationale/review-changes.md>. lint-skip: maintainer-path — a URL, not a repo-relative path.
+     Editing a bash block below? Step 1's reasons are in scripts/review-baseline.sh, the rest in <https://github.com/ducroq/agent-ready-projects/blob/master/docs/rationale/review-changes.md>. lint-skip: maintainer-path — a URL, not a repo-relative path.
 
      Claude Code skills require SKILL.md as the entry point inside a
      named directory under .claude/skills/. Add frontmatter:
@@ -20,45 +20,20 @@ Pre-commit review of pending changes. Scope and depth are driven by what changed
 
 ## Step 1 — Diff and classify
 
-Resolve the baseline first; everything below reads `$BASE`. It is the default branch — `@{u}` only on the default branch itself, since on a pushed, unmerged branch `@{u}` is empty.
+Resolve the baseline first; everything below reads `$BASE`. **Run the script; never hand-write it:**
 
 ```bash
-BASE=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD) ||
-BASE=$(for c in refs/remotes/origin/main refs/remotes/origin/master main master; do
-         git rev-parse --verify --quiet "$c" >/dev/null && { printf %s "$c"; break; }; done) || :
-if [ -n "${BASE:-}" ] && [ "$(git rev-parse --abbrev-ref HEAD 2>/dev/null)" = "${BASE##*/}" ]; then
-  BASE=$(git rev-parse --abbrev-ref '@{u}' 2>/dev/null || printf %s '')
-fi
-ROOTFALLBACK=          # initialised, or a later `set -u` reader aborts on it
-{ [ -n "${BASE:-}" ] && git rev-parse --verify --quiet "$BASE^{commit}" >/dev/null; } || {
-  BASE=$(git rev-list --max-parents=0 HEAD 2>/dev/null | tail -1) || :
-  : "${BASE:?no commits in this repository — nothing can be reviewed}"
-  ROOTFALLBACK=1
-  { echo "BASELINE UNRESOLVED (ROOTFALLBACK=1) — fell back to root commit $BASE,"
-    echo "  whose OWN content \"\$BASE\"...HEAD EXCLUDES. Run 'git show --stat $BASE'"
-    echo "  too. Report this as a FINDING, never a clean result — Step 1.5's file"
-    echo "  list carries the same term and the same hole."; } >&2
-}
-
-if git merge-base --is-ancestor HEAD "$BASE" 2>/dev/null &&
-   [ "$(git rev-parse HEAD)" != "$(git rev-parse "$BASE^{commit}" 2>/dev/null)" ]; then
-  { echo "HEAD IS CONTAINED IN $BASE — nothing on this branch is absent from the"
-    echo "  baseline, so an empty diff below is expected and is NOT a clean review."
-    echo "  If you expected changes you are not on the branch you think: check"
-    echo "  'git branch --show-current' and 'git log --oneline $BASE..<your-branch>'."
-    echo "  Report this as a FINDING, never as a clean result."; } >&2
-fi
-
-git diff --shortstat "$BASE"...HEAD    # committed on this branch
-git diff --shortstat                   # unstaged
-git diff --cached --shortstat          # staged
-git -C "$(git rev-parse --show-toplevel)" -c core.quotePath=false \
-    ls-files --others --exclude-standard    # untracked, not ignored
+RB=~/repos/agent-ready-projects/scripts/review-baseline.sh   # this framework's clone
+# No clone, or one older than the script: fetch it.
+[ -f "$RB" ] || { _rb=$(mktemp) && curl -m 10 -fsSL https://raw.githubusercontent.com/ducroq/agent-ready-projects/master/scripts/review-baseline.sh -o "$_rb" && tail -n 1 "$_rb" | grep -qF 'BASE=%s\n' && RB=$_rb; }
+out=$(bash "$RB"); printf '%s\n' "$out"
+BASE=$(printf '%s\n' "$out" | sed -n 's/^BASE=//p')
+: "${BASE:?no baseline: read the lines above, and do not review without one}"
 ```
 
-**Run Step 1.5 in the same shell invocation as this block**; a fresh shell does not inherit `$BASE`.
+It prints the size of all four terms (committed, unstaged, staged, untracked lines) and lists the changed files, renames and modes included. An untracked file is a changed file and gets a tier. `BASELINE UNRESOLVED` or `HEAD IS CONTAINED IN` on stderr is a finding, never a clean result.
 
-List the changed files with `git diff --stat "$BASE"...HEAD`, `git diff --stat`, `git diff --cached --stat`, `git diff --summary -M "$BASE"...HEAD` (renames, modes, binaries and submodules are invisible to `--stat`) and `git ls-files --others --exclude-standard` — an untracked file is a changed file and gets a tier.
+**Run Step 1.5 in the same shell invocation as this block**; a fresh shell does not inherit `$BASE`.
 
 **Read `.claude/review-profile.md` now.** It holds this project's risk tiers, guarantee surfaces, test baseline and carve-outs, plus four optional, additive sections: **Project lenses**, **Project additions to the shipped lens prompts** and **Reviewer model** (used in Step 2), and **Project procedure kept with the profile** (run it here). A profile without them is not an error.
 
@@ -80,16 +55,7 @@ Classify each changed file using the profile's tier table, then apply the magnit
 - **A new executable, or any new file in a HIGH path** — its tier has not been decided yet.
 - **Any diff that removes or loosens a check** — a deleted guard, a weakened assertion, a broadened exclusion. Loosenings are characteristically a handful of lines.
 
-**Otherwise size sets the depth** — the whole change that will land, all four terms together:
-
-```bash
-git diff --shortstat "$BASE"...HEAD    # committed on this branch
-git diff --shortstat                   # unstaged
-git diff --cached --shortstat          # staged
-git -C "$(git rev-parse --show-toplevel)" ls-files -z --others --exclude-standard |
-  while IFS= read -r -d '' f; do wc -l < "$f" 2>/dev/null || echo 0; done |
-  awk '{ n += $(1) } END { print n + 0, "untracked lines" }'
-```
+**Otherwise size sets the depth**: the whole change that will land, all four terms of the script's size lines together.
 
 When the line count and your read of the change disagree, the line count is wrong: escalate.
 
@@ -103,7 +69,7 @@ Run the single pass in a **fresh context** (a subagent, or a pass that re-reads 
 
 **A changed file matching no pattern is MEDIUM — HIGH if executable or copied into an adopter's tree — and is named under "Unclassified" in the report**, even when a HIGH file makes the tier moot.
 
-If no files changed, report "nothing to review" and stop — unless the block printed `BASELINE UNRESOLVED` or `HEAD IS CONTAINED IN`, which is a finding, never a clean result.
+If no files changed, report "nothing to review" and stop — unless the script printed `BASELINE UNRESOLVED` or `HEAD IS CONTAINED IN`, which is a finding, never a clean result.
 
 ## Step 1.5 — Structural pre-check
 
