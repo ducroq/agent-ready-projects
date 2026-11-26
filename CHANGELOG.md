@@ -22,7 +22,11 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
      Tags let adopters `git checkout vX.Y.Z` to inspect a pinned version and
      `git diff vX.Y.Z..vX.Y+1.0 -- templates/` to preview an upgrade. -->
 
-## Candidate (unreleased)
+## v1.56.0 (2026-11-26)
+
+**MINOR.** `review-changes` Step 1 runs a new script, `scripts/review-baseline.sh` (#333), and `curate` treats a future `Last audit:` date as stale (#309). Also: the verify runner runs each probe in its file's repo (#305), `curate`'s fallback checks work under ugrep (#378), and lint rule 12 scans commit messages (#247). No consumer has to act: without a clone, the skill fetches the script. So rule 1 of `templates/release.md` Step 2 does not fire. A new script adopters run and a new behaviour make this MINOR, on the v1.55.0 precedent.
+
+Adopter-facing size: −1881 bytes (`templates/`, measured against v1.55.0).
 
 ### `verify-runner.sh`: a probe runs in its file's repo (#305)
 
