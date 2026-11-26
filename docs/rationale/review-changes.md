@@ -648,3 +648,22 @@ An agent running these blocks does not need them; an editor of the blocks does. 
 # The tail check matters: an empty or cut-off 200 response would run, report nothing, and exit 0.
     ^ above: [ -f "$CHECK" ] || { _mc=$(mktemp) && curl -m 10 -fsSL https://raw.githubusercontent.com/ducroq/agent-ready-pr
 ```
+
+### The adversarial lens's claim paragraphs, moved out of the skill (2026-11-26)
+
+A reviewer needs the rule, not its reasons, so these left the lens prompt verbatim:
+
+> Do not attempt to register it here: this lens reports, it does
+> not write, and a hypothesis needs a Method and a Revisit trigger that the
+> reviewer of a diff is not placed to supply. `templates/hypothesis-log.md` says
+> what an entry requires, and it is written **by the author, at the time of the
+> claim** — not deferred to `/curate`, which runs at end of session and so
+> reinstates exactly the delay the log exists to remove. `/curate` Step 0 sub-step 5
+> keeps the entries that exist honest, reviewing open ones for staleness and due
+> dates;
+> it does **not** detect a claim that never got an entry, so writing it at claim
+> time is the only thing that does.
+>
+> A separate
+> "verify your claims" step is skippable in exactly the cases where it matters.
+> Making the check travel with the claim is what makes omitting it visible.
