@@ -24,6 +24,12 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 ## Candidate (unreleased)
 
+### `update-drift`: three passages leave the skill
+
+Step 3's collapsed fallback for a transforming installer becomes one sentence and a link to `docs/rationale/update-drift.md` § Step 3, which already held the method; its worked example moves there too. The "Do not" list keeps only its install rule; the other four bullets restated Steps 0, 4 and 6 and the opening line. Step 0 drops an anecdote that no step reads. The skill shrinks by 865 bytes (`wc -c`).
+
+**Consumer notes.** No action required. An adapted copy can keep the old text; no rule changed.
+
 ### `curate`: probe-writing guidance moves to the rationale
 
 Step 0 sub-step 3 carried two blocks needed only when writing a probe: the four ways an annotation passes while its claim is false, and the guarded example for a negative claim. They moved to `docs/rationale/curate.md` § Writing a verify command, which the step already links. The step keeps "run it once", the exit-status rule, and that a negative or a count is a state claim. It keeps one line for the target guard and the proxy warning, which a run needs without the link. The skill body is 672 characters shorter (`wc -m`).

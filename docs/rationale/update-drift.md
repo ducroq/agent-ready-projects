@@ -9,6 +9,13 @@ both, one of them is wrong.
 
 - Measured by an adopter across four tags — ⚠️ **and produced by comparing against the *template*, which v1.35.0 established is the wrong file.** Read them as an illustration of the minimise *shape*, not as evidence that any installer transforms:
 
+```
+audit-context   v1.28.0 diff 84   v1.29.0 diff 74   v1.30.0 diff 23   v1.31.0 diff 23
+curate          v1.28.0 diff 119  v1.29.0 diff 119  v1.30.0 diff 119  v1.31.0 diff 24
+```
+
+  `audit-context` is flat from v1.30.0 — current since then. `curate` falls only at v1.31.0 — current as of it.
+
 ## v1.43.0 — matcher 3, and the `bash -n` rung (#134, #135)
 
 ### Matcher 3: the connector-carried commit pin
