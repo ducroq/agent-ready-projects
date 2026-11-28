@@ -30,6 +30,12 @@ Step 3's collapsed fallback for a transforming installer becomes one sentence an
 
 **Consumer notes.** No action required. An adapted copy can keep the old text; no rule changed.
 
+### `review-changes`: the round cap's reasoning leaves the skill
+
+Step 5's round cap keeps its rule and drops the paragraph on why. That reasoning, and when to re-open the cap, was already in `docs/rationale/review-changes.md` § Step 5, which the template's header comment links.
+
+**Consumer notes.** No action required. An adapted copy can keep the old text; no rule changed.
+
 ### `curate`: probe-writing guidance moves to the rationale
 
 Step 0 sub-step 3 carried two blocks needed only when writing a probe: the four ways an annotation passes while its claim is false, and the guarded example for a negative claim. They moved to `docs/rationale/curate.md` § Writing a verify command, which the step already links. The step keeps "run it once", the exit-status rule, and that a negative or a count is a state claim. It keeps one line for the target guard and the proxy warning, which a run needs without the link. The skill body is 672 characters shorter (`wc -m`).

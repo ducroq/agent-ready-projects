@@ -282,7 +282,7 @@ Fixing is a major source of new defects.
 
 ### Round cap
 
-A round is one pass of the lens set, however many lenses it contains — not a re-run of a deterministic check. **Two rounds maximum.** A third runs only when round 2 found **the same defect a second time**, anywhere — a class — and then enumerate every site the class could occupy and check them all before running it. The cap is a cost decision: on the one measured four-round sequence, tokens per acted finding rose each round, compared within one target. Re-open it on a measured flattening of that per-target ratio, or on a class of defect a capped round demonstrably shipped, not on one missed finding.
+A round is one pass of the lens set, however many lenses it contains — not a re-run of a deterministic check. **Two rounds maximum.** A third runs only when round 2 found **the same defect a second time**, anywhere — a class — and then enumerate every site the class could occupy and check them all before running it.
 
 ### Budget: RETIRED (2026-11-28)
 
