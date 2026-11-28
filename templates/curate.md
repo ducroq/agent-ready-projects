@@ -53,13 +53,6 @@ Check for context rot from *previous* sessions. **Read metadata, not documents**
 
 3. **Unverified state claims**: Scan memory files **and the project file** for state claims ("shipped," "deployed," "live," "running," "working in production") and for counts about this repo. Claims carrying a `<!-- verify: ... -->` annotation are run by `scripts/verify-runner.sh` (below); **read its report, not the memory files**. A claim with no annotation is **UNVERIFIED** — suggest adding an annotation or requalifying it as a session observation.
 
-**An annotation is not automatically a check. Four ways one passes while its claim is false:**
-
-- **The probe asserts a PROXY.** `ls-remote | grep -q .` proves *some* tag exists, not the one claimed. Anchor the probe to the exact thing claimed.
-- **The check was never tight.** Remove the thing the check exists to catch and confirm it turns red; reading cannot answer this.
-- **The count travels and the enumeration does not.** Move the enumeration with the number, or make the number a probe.
-- **A state report decays.** Write state in the tense of what has actually run, and date it.
-
    **Run the shipped runner; never hand-write one.** Run it **from the repo root**, with **absolute paths**, and include the project file (`CLAUDE.md`, `AGENTS.md` or your tool's name for it):
 
    ```bash
@@ -75,11 +68,11 @@ Check for context rot from *previous* sessions. **Read metadata, not documents**
 
    **Blind spot:** fenced blocks are skipped, but an annotation in an unfenced four-space-indented block or a blockquote **will run**. Write examples in fenced blocks. UNVERIFIED is your judgement, not a runner disposition.
 
-   **A negative existence claim — or a count — is a state claim** ("nothing references the old path", "4 issues open"). Give each one a probe that fails loudly if the thing turns out to exist — **and guard the target first**, because `grep -rq` on a path that no longer exists returns "not found" and certifies the claim: `if [ ! -d /abs/path/other-repo ]; then echo "CANNOT VERIFY: repo not at that path"; elif grep -rq 'pattern' /abs/path/other-repo; then echo "CLAIM REFUTED: it exists"; exit 1; else echo "still absent"; fi`. **An instruction not to re-derive a claim is a reason to probe it, not a licence to skip it.**
+   **A negative existence claim — or a count — is a state claim** ("nothing references the old path", "4 issues open"). Its probe fails loudly if the thing exists, and prints CANNOT VERIFY when the target path is absent. A PASS is only as tight as its probe: one asserting a proxy (some tag, not the tag claimed) passes while its claim is false. **An instruction not to re-derive a claim is a reason to probe it, not a licence to skip it.**
 
    **Writing a verify command.** **Run it once, at the moment you write it.** **Print something on success — evidence by preference, `PASS` at minimum — and fail with a non-zero exit, not with a word**: exit status decides, so `git rev-parse v1.2.3 >/dev/null 2>&1 && echo OK || echo NOTAG` scores PASS when the tag is missing.
 
-   Before writing one, read the rules on `--` and `-->`, one-line form, `|`, host guards, stamp-derived versions and absolute paths: <https://github.com/ducroq/agent-ready-projects/blob/master/docs/rationale/curate.md#writing-a-verify-command> <!-- lint-skip: maintainer-path — a URL, not a repo-relative path: it resolves for a reader with no such directory. -->. If you cannot reach them, write the probe, run it, and say so in the report.
+   Before writing or fixing one, read the four ways a probe passes while its claim is false, how to guard a negative's target, and the rules on `--` and `-->`, one-line form, `|`, host guards, stamp-derived versions and absolute paths: <https://github.com/ducroq/agent-ready-projects/blob/master/docs/rationale/curate.md#writing-a-verify-command> <!-- lint-skip: maintainer-path — a URL, not a repo-relative path: it resolves for a reader with no such directory. -->. If you cannot reach it, write the probe, run it, and say so in the report.
 
 4. **RETIRED** (index self-consistency, #367). Re-add it only with a contradicting pair to point at.
 

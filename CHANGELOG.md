@@ -24,6 +24,12 @@ All notable changes to the agent-ready-projects framework. Adopters can check th
 
 ## Candidate (unreleased)
 
+### `curate`: probe-writing guidance moves to the rationale
+
+Step 0 sub-step 3 carried two blocks needed only when writing a probe: the four ways an annotation passes while its claim is false, and the guarded example for a negative claim. They moved to `docs/rationale/curate.md` § Writing a verify command, which the step already links. The step keeps "run it once", the exit-status rule, and that a negative or a count is a state claim. It keeps one line for the target guard and the proxy warning, which a run needs without the link. The skill body is 672 characters shorter (`wc -m`).
+
+**Consumer notes.** No action required. An adapted copy can keep the old blocks; no rule changed.
+
 ### `review-changes`: the adversarial lens drops its design notes
 
 Two paragraphs in the adversarial lens prompt explained to the author why the rule exists. They were judged unnecessary for the reviewer, so they moved verbatim to `docs/rationale/review-changes.md`. The lens keeps the rule: report a claim that cannot be measured yet, do not register it, and the author logs it. The skill is 593 bytes smaller.
