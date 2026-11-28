@@ -30,6 +30,18 @@ Two paragraphs in the adversarial lens prompt explained to the author why the ru
 
 **Consumer notes.** No action required. An adapted copy can keep the old paragraphs; the rule is unchanged.
 
+### Three steps retired: they never caught anything
+
+A retirement pass (`audit-context` Step 8) searched the record for what each step of `curate`, `review-changes` and `audit-context` had caught. Three had caught nothing, and each class stays covered elsewhere:
+
+- **`audit-context` Step 6, framework version drift.** `update-drift` does the same check at every session start.
+- **`audit-context` Step 1's project-file threshold.** `curate` Step 0 item 6 checks the same numbers every session.
+- **`review-changes` Budget.** Stating a ceiling and recording the cost never caught anything, and most runs skipped it. Its two lens-choice rules move to Step 2 unchanged.
+
+Each retired step leaves a tombstone: re-add it only with a catch to point at. Step numbers are unchanged.
+
+**Consumer notes.** No action required. A project that relies on `audit-context` for version drift should run `update-drift`.
+
 ## v1.56.0 (2026-11-26)
 
 **MINOR.** `review-changes` Step 1 runs a new script, `scripts/review-baseline.sh` (#333), and `curate` treats a future `Last audit:` date as stale (#309). Also: the verify runner runs each probe in its file's repo (#305), `curate`'s fallback checks work under ugrep (#378), and lint rule 12 scans commit messages (#247). No consumer has to act: without a clone, the skill fetches the script. So rule 1 of `templates/release.md` Step 2 does not fire. A new script adopters run and a new behaviour make this MINOR, on the v1.55.0 precedent.

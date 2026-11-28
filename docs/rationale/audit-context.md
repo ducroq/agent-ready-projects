@@ -112,10 +112,8 @@ The original wording of every passage that was removed or shortened when the ski
 **First establish what your tool actually auto-loads, rather than assuming.** Only the project file is auto-loaded in most setups; since ADR-001 put Layer 3 in the repo, the memory index is reached by a pointer, not by the tool. In Claude Code the auto-loaded `MEMORY.md` is the *user-level* one at `~/.claude/projects/<slug>/memory/`, which shares a name with the in-repo file and is not it. Record what you measured — a size budget that includes a file which never arrives is wrong by the size of that file, and the error is invisible because the number still looks reasonable. If a budget series exists from earlier audits, say plainly whether it measured the same set; a trajectory across a change in what is being measured is not a trajectory.
 
 - **Measure characters, not lines** — `wc -c`, with `wc -l` beside it as a readability signal only. *(`wc -c` counts bytes, so a file with multi-byte characters reads larger than its character count — `curate` sub-step 6 carries the same caveat. On this framework's own project file the gap is ~2%: 29,479 bytes to 28,915 characters. Budget in bytes and the error is on the safe side.)*
-- Flag the **project file** over **35,000 characters** (soft) or **40,000** (hard) — the same two numbers `curate`'s budget uses, on purpose: the hard one is where Claude Code itself warns, the soft one leaves headroom
+- *(The project-file threshold was retired on 2026-11-28: `curate` Step 0 item 6 checks the same numbers every session, and this copy never caught what `curate` missed.)*
 - Flag the **memory index** over ~**60 lines**, in lines deliberately: an index is a list, so a line is a unit of content there in a way it is not for prose (`templates/memory-index.md` separately warns that some tools truncate at ~200 lines). Report its characters too and say which number you acted on; no character threshold is prescribed, because none has been derived
-
-**Why characters for the project file.** This step and `curate`'s budget govern the same file and used to return opposite verdicts on it: **measured 2026-08-12**, 173 lines read as *73% over* here while 24,633 characters read as *comfortably under* there. A markdown source line has no length limit, so the two cannot be reconciled — that file averaged **142 characters per line**, being prose and wide table rows rather than code, and by 2026-08-26 it had drifted to 179 lines / 28,915 characters / 162 per line without the ratio's lesson changing. This step runs monthly and `curate` every session, so the weaker instrument was the one driving the expensive restructuring work.
 
 ### Step 3
 
@@ -169,9 +167,7 @@ That is a **situation the agent recognises**. Describing it instead by *when it 
 
 ### Step 6
 
-Search case-insensitively for `agent-ready-projects` followed by a version-shaped token anywhere in the project file, and read the surrounding line. **Do not assume a single stamp format** — adopters write it at least four ways: `agent-ready-projects: v1.14.0`, `framework: agent-ready-projects v1.14.0` in YAML frontmatter, `- **agent-ready-projects**: v1.12.0` as a bullet, and prose inside a status paragraph. A check that matches one format reports an *unstamped* project when the stamp is simply written differently — which is worse than no check, because it prompts work that has already been done.
-
-The most useful stamp is not a bare number but a short reconciliation record: what was adopted, what was declined, and why. Prefer that shape when proposing one.
+Retired on 2026-11-28. `update-drift` checks version drift at every session start, with more stamp shapes than this step knew. In this repo's record the step never caught anything. Re-add it only with a catch `update-drift` missed.
 
 ### Step 8
 

@@ -7,7 +7,7 @@
 # violations, 2 could not run. A `SKIPPED:` line on stderr means the rule did not
 # bind and the caller must count it as not-run, never as a pass.
 #
-# WHY A RATCHET AND NOT A LIMIT. `templates/audit-context.md` flags the project
+# WHY A RATCHET AND NOT A LIMIT. `templates/audit-context.md` flagged (until 2026-11-28; now `curate`'s) the project
 # file over 35,000 characters (soft) and 40,000 (hard), and says where those come
 # from: 40,000 is **where Claude Code itself warns**. That is an alarm, not a
 # budget — nothing anywhere claims 40,000 is a good size, and the same skill says
