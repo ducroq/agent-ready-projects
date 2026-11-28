@@ -91,6 +91,11 @@ For each lens, spawn a subagent with the prompt below; run lenses concurrently. 
 
 **Every path with a guarantee must sit in the profile's HIGH row**, or the HIGH-only lens never fires on it. Check each guarantee entry's tier.
 
+**Choosing lenses:**
+
+- Do not run a lens for a class a deterministic check covers *completely*; where coverage is partial, run it and say which part the check already settled. Read the Mechanized table in Step 1, before choosing lenses: a `live` row may narrow a mandated lens, never skip it: a row covers one shape, a lens a class.
+- Never collapse lenses into the author's own context. Fewer independent reviewers is a legitimate saving; none is not.
+
 ### Lens: guarantee-preservation (HIGH only)
 
 ```
@@ -266,9 +271,6 @@ Fixing is a major source of new defects.
 
 A round is one pass of the lens set, however many lenses it contains — not a re-run of a deterministic check. **Two rounds maximum.** A third runs only when round 2 found **the same defect a second time**, anywhere — a class — and then enumerate every site the class could occupy and check them all before running it. The cap is a cost decision: on the one measured four-round sequence, tokens per acted finding rose each round, compared within one target. Re-open it on a measured flattening of that per-target ratio, or on a class of defect a capped round demonstrably shipped, not on one missed finding.
 
-### Budget the round before you spawn it
+### Budget: RETIRED (2026-11-28)
 
-State the lens set and the ceiling before starting; record the cost after. A lens stopped part-way returns nothing.
-
-- Do not run a lens for a class a deterministic check covers *completely*; where coverage is partial, run it and say which part the check already settled. Read the Mechanized table in Step 1, before choosing lenses: a `live` row may narrow a mandated lens, never skip it: a row covers one shape, a lens a class.
-- Never collapse lenses into the author's own context. Fewer independent reviewers is a legitimate saving; none is not.
+It never caught anything in the framework's record. Re-add it only with a catch to point at.

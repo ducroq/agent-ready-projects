@@ -22,10 +22,10 @@ Structural audit of the agent-ready-projects layered memory system. Run monthly 
 
 Then check the project file and the memory index. For each:
 
-- **Measure characters, not lines** — `wc -c`, with `wc -l` beside it as a readability signal only. `wc -c` counts bytes, so multi-byte characters read slightly high; that error is on the safe side. **Name the unit with every number you report** (#179): `curate` counts characters (`wc -m`), so the same file can pass there and fail here.
-- Flag the **project file** over **35,000 characters** (soft) or **40,000** (hard) — the same numbers as `curate`'s budget; the hard one is where Claude Code itself warns
+- **Measure characters, not lines** — `wc -c`, with `wc -l` beside it as a readability signal only. `wc -c` counts bytes, so multi-byte characters read slightly high; that error is on the safe side. **Name the unit with every number you report** (#179): `curate` counts characters (`wc -m`).
+- **The project-file threshold is RETIRED (2026-11-28).** `curate` Step 0 item 6 flags the same numbers every session. In the framework's record (2026-11-28), this copy never caught what `curate` missed. Re-add it only with such a catch.
 - Flag the **memory index** over ~**60 lines** (an index is a list, so lines fit; `templates/memory-index.md` notes some tools truncate at ~200). Report its characters too and say which number you acted on; no character threshold is prescribed
-- If too long, identify sections that are reference material (looked up on demand, not needed every session) and propose moving them to topic files behind "Before You Start" pointers
+- If either is too long (for the project file, `curate`'s flag), identify sections that are reference material (looked up on demand, not needed every session) and propose moving them to topic files behind "Before You Start" pointers
 
 ## Step 2 — Cross-layer duplication
 
@@ -98,7 +98,7 @@ For every "Before You Start" pointer:
 - **Layer 3 present**: check that every topic file has a task-triggered pointer in the "Before You Start" table. Flag orphaned topic files — they exist but no pointer leads to them, so an agent will never know to load them.
 - **No Layer 3 anywhere** — the case for every tool without auto-memory, where `docs/GUIDE.md` says plainly that everything goes into the project file: report the *topic-file* half as **not applicable, and say why**. A skipped check and a passing check are indistinguishable in a report that says neither.
 
-**The work-item half runs either way — only the artifact changes.** Check that every file in `docs/work-items/` (except `README.md`) has a pointer and that no pointer names a missing file. Pointers live in the memory index's Current State section where Layer 3 exists, otherwise in the project file's **Active work** section. **Report which one you read — and if *both* exist, that is the finding**: name the memory index as canonical and propose removing the other. Flag pointers to finished work: only in-progress items belong in either list, and in the project file that list counts against Step 1's size budget.
+**The work-item half runs either way — only the artifact changes.** Check that every file in `docs/work-items/` (except `README.md`) has a pointer and that no pointer names a missing file. Pointers live in the memory index's Current State section where Layer 3 exists, otherwise in the project file's **Active work** section. **Report which one you read — and if *both* exist, that is the finding**: name the memory index as canonical and propose removing the other. Flag pointers to finished work: only in-progress items belong in either list, and in the project file that list counts against `curate`'s size budget.
 
 **Do not substitute `docs/*.md` for the topic files** — it holds essays and reference material, and every one would report as an orphan — **and do not invent another home for the work-item pointers.**
 
@@ -114,17 +114,9 @@ That is a **situation the agent recognises**. Describing it by *when it fires* �
 
 **For a row whose function is to fire on a situation, presence is not adoption — the wording is the artifact.** Report the row's actual text, so a reader can judge it rather than trust a tick.
 
-## Step 6 — Framework version drift
+## Step 6 — Framework version drift: RETIRED (2026-11-28)
 
-Find this project's adopted framework version and compare it against the latest in `agent-ready-projects/CHANGELOG.md`.
-
-Search case-insensitively for `agent-ready-projects` followed by a version-shaped token anywhere in the project file, and read the surrounding line. **Do not assume a single stamp format** — adopters write at least four: `agent-ready-projects: v1.14.0`, `framework: agent-ready-projects v1.14.0` in YAML frontmatter, `- **agent-ready-projects**: v1.12.0` as a bullet, and prose inside a status paragraph.
-
-- **No stamp found**: flag it. Without one there is nothing to compare, and drift accumulates unnoticed. Propose adding one.
-- **Behind the latest**: list the intervening versions and, for each, whether it applies here. Do not auto-update — adopting is the engineer's call.
-- **Behind, but with a recorded reason**: a stamp that says a version was *reviewed and declined* is current, not stale. Report it as reconciled and move on.
-
-When proposing a stamp, prefer a short reconciliation record to a bare number: what was adopted, what was declined, and why.
+`update-drift` does this at session start; without skills, use `adopt.md` §3. In the framework's record (2026-11-28), this copy never caught anything. Re-add it only with a catch `update-drift` missed.
 
 ## Step 7 — Gitignore correctness
 

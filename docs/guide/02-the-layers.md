@@ -33,7 +33,7 @@ block-beta
 - Key file paths (10-15 most needed)
 - How to work here (test, build, deploy commands)
 
-**Keep it under ~35,000 characters** (the soft budget `/curate` and `/audit-context` both use; Claude Code warns at 40,000). Measure characters, not lines — a markdown line has no length limit, and a prose-and-tables project file runs 140–165 characters per line. Every character competes for attention.
+**Keep it under ~35,000 characters** (the soft budget `/curate` uses; Claude Code warns at 40,000). Measure characters, not lines — a markdown line has no length limit, and a prose-and-tables project file runs 140–165 characters per line. Every character competes for attention.
 
 ```mermaid
 graph LR
