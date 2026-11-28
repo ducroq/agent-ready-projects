@@ -246,7 +246,16 @@ The four disposition-table rows whose cells were shortened, as they read before:
 
 #### Writing a verify command
 
-`curate` links here for these rules, the one place this file carries instructions: they are needed only when writing a probe, and every run would otherwise pay for them. The skill keeps "run it once" and "print on success, fail with a non-zero exit".
+`curate` links here for these rules, the one place this file carries instructions: they are needed mostly when writing a probe, and every run would otherwise pay for them. The skill keeps "run it once", "print on success, fail with a non-zero exit", that a negative or a count is a state claim, its guard in one line, and the proxy warning. The full four ways and the target guard moved here on 2026-11-28.
+
+**Four ways an annotation passes while its claim is false**: a terse restatement of the argued list above, kept here as instructions.
+
+- **The probe asserts a PROXY.** `ls-remote | grep -q .` proves *some* tag exists, not the one claimed. Anchor the probe to the exact thing claimed.
+- **The check was never tight.** Remove the thing the check exists to catch and confirm it turns red; reading cannot answer this.
+- **The count travels and the enumeration does not.** Move the enumeration with the number, or make the number a probe.
+- **A state report decays.** Write state in the tense of what has actually run, and date it.
+
+**A negative existence claim, or a count, needs a probe that fails loudly if the thing turns out to exist. Guard the target first**, because `grep -rq` on a path that no longer exists returns "not found" and certifies the claim: `if [ ! -d /abs/path/other-repo ]; then echo "CANNOT VERIFY: repo not at that path"; elif grep -rq 'pattern' /abs/path/other-repo; then echo "CLAIM REFUTED: it exists"; exit 1; else echo "still absent"; fi`.
 
 **Writing a verify command — it has to survive two syntaxes it is not written in.** The body sits inside an HTML comment, inside markdown, and shell is hostile to both. Check each command against the rules below, then **run it once, at the moment you write it**. A verify command that fails on day one is worthless; one that cannot be *extracted* is worse than none, because it reports nothing while looking like it ran.
 
