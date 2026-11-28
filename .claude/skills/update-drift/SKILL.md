@@ -10,7 +10,7 @@ Check whether this project is behind the framework it pins, and decide — per r
 
 A project may pin **more than one** framework, and the stamps move independently. Find them all before comparing anything, or every later drift check reports against the wrong baseline.
 
-**A project file in a subdirectory with its own stamp is a separate adopter**: report it and run this skill there too. Its gap often looks worse than it is (one arm: 38 releases behind, 5 adoptions).
+**A project file in a subdirectory with its own stamp is a separate adopter**: report it and run this skill there too.
 
 Read the project file (`CLAUDE.md`, `AGENTS.md`, or the tool's equivalent) and search for stamps **without keying on one format**. At least six shapes are in the wild:
 
@@ -104,20 +104,7 @@ curate, installed        vs templates/curate.md @v1.34.2       -> 24 differing l
 curate, installed        vs .claude/skills/curate/SKILL.md @v1.34.2 -> 0
 ```
 
-**Only fall back to the minimise-sweep below if your framework's installer genuinely transforms at install time** — check before assuming it does; ours does not.
-
-<details><summary>Fallback for a framework whose installer really does transform</summary>
-
-**Diff the installed file against EVERY tag and read which one MINIMISES.** This applies only to such a framework: there a single diff against latest reads *differs* whether the install is behind or current, and the false *not adopted* makes an adopter re-copy a skill they re-mapped. The **monotone fall to a floor** is the signal and the floor is the installer's constant.
-
-```
-audit-context   v1.28.0 diff 84   v1.29.0 diff 74   v1.30.0 diff 23   v1.31.0 diff 23
-curate          v1.28.0 diff 119  v1.29.0 diff 119  v1.30.0 diff 119  v1.31.0 diff 24
-```
-
-`audit-context` is flat from v1.30.0 — current since then. `curate` falls only at v1.31.0 — current as of it.
-
-</details>
+**Only if your framework's installer genuinely transforms at install time** (check first; ours does not): diff the install against every tag and read where the diff count stops falling: that tag is the install's version. The method and a worked example are in § Step 3 of <https://github.com/ducroq/agent-ready-projects/blob/master/docs/rationale/update-drift.md> <!-- lint-skip: maintainer-path — a URL, not a repo-relative path. -->.
 
 **Grep for the marker strings the release note names** — a defensive fix can look identical to the broken version in isolation. If no markers are named, ask, and record `not verified`.
 
@@ -171,8 +158,4 @@ Once the edits land, the adoption itself is a change like any other:
 
 ## Do not
 
-- **Do not auto-adopt.** Surfacing drift is this skill's job; deciding is the engineer's.
-- **Do not bump a stamp you did not earn.** See Step 6.
-- **Do not report "no stamp found" as "not adopted."** See Step 0.
-- **Do not treat the framework's changelog as verified.** See Step 4.
 - **Do not install this skill project-locally** if a user-global copy exists. It would be inert, and would drift from the copy actually loading.
